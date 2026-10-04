@@ -33,7 +33,9 @@ try {
       new URL(`../migrations/${name}`, import.meta.url),
       "utf8",
     );
-    const checksum = createHash("sha256").update(sql).digest("hex");
+    const checksum = createHash("sha256")
+      .update(sql.replace(/\r\n/g, "\n"))
+      .digest("hex");
     const { rows } = await client.query(
       "SELECT checksum FROM public.tpa_migrations WHERE name=$1",
       [name],
