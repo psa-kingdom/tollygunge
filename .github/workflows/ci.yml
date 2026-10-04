@@ -3,6 +3,18 @@ on: [push, pull_request]
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: tpa_ci
+          POSTGRES_PASSWORD: tpa_ci_disposable
+          POSTGRES_DB: tpa_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tpa_ci -d tpa_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -11,5 +23,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm test
+      - run: npm run test:db
+        env:
+          DATABASE_URL: postgresql://tpa_ci:tpa_ci_disposable@127.0.0.1:5432/tpa_ci
+          TPA_DATABASE_NAME: tpa_ci
       - run: npm run build
       - run: npm run typecheck

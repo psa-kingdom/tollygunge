@@ -41,3 +41,22 @@ Recheck the advisory before production release and update the lint chain when fi
 
 Pending: provider selection/access, server-side authentication, persistent data,
 uploads, CMS, payment/communication integrations and production verification.
+
+## Database and private storage preparation
+
+Railway/Vercel account access verified. User intends to use an existing distinct R2
+bucket; exact name, privacy status and bucket credentials remain pending. Auth.js
+maintainer guidance now recommends Better Auth for new projects; proposed change
+awaits confirmation. Dedicated Railway PostgreSQL provisioning also awaits a choice.
+
+Added server-only PostgreSQL pool and R2 S3 adapter, transactional/checksummed
+migrations, staff permission and private-document policies, file size/type/signature
+checks and namespaced object keys. No live route consumes these helpers yet. Five
+unit tests pass, as do lint, build and TypeScript. Database integration checks are
+configured against disposable PostgreSQL in CI. Local Docker start was attempted,
+but its engine remained unavailable; no local database was created.
+
+No R2 bucket was changed, no cloud service was created, and no live migration ran.
+Google OAuth configuration, approved initial staff identity and email provider remain
+needed before authenticated workflows. See PROVIDER_SETUP.md for the configuration
+contract; put credentials in ignored environment files or deployment secret stores.
