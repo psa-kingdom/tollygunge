@@ -98,4 +98,3 @@ image is stored. Staff explicitly publish saved description snapshots. Public re
 require a published media row and use no-store responses, allowing unpublication to
 close future access. Authorized content editors can preview drafts. There is no
 endpoint that converts a private application document to public media.
-

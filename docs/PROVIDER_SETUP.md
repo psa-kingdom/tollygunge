@@ -94,4 +94,3 @@ Record an independently verified finance decision before any membership review o
 activation. Membership fees, eligibility,
 declaration and rejection/refund terms remain unapproved. Do not activate checkout
 or treat saved application drafts as submissions. Resend remains deferred.
-
