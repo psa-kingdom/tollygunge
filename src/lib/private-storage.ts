@@ -9,6 +9,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { privateObjectKey } from "@/domain/documents";
+import { mediaObjectKey } from "@/domain/media";
 export function privateStorageConfigured() {
   return (
     process.env.NODE_ENV !== "production" &&
@@ -77,5 +78,32 @@ export async function removeFailedUpload(id: string) {
   const { bucket, client } = storage();
   await client.send(
     new DeleteObjectCommand({ Bucket: bucket, Key: privateObjectKey(id) }),
+  );
+}
+// Editorial assets use separate keys and metadata. No private-document key is accepted here.
+export async function storeEditorialMedia(id: string, bytes: Uint8Array) {
+  const { bucket, client } = storage();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: mediaObjectKey(id),
+      Body: bytes,
+      ContentType: "image/webp",
+      CacheControl: "private, no-store",
+    }),
+  );
+}
+export async function readEditorialMedia(id: string) {
+  const { bucket, client } = storage();
+  const result = await client.send(
+    new GetObjectCommand({ Bucket: bucket, Key: mediaObjectKey(id) }),
+  );
+  if (!result.Body) throw new Error("Asset unavailable.");
+  return result.Body.transformToByteArray();
+}
+export async function removeEditorialMedia(id: string) {
+  const { bucket, client } = storage();
+  await client.send(
+    new DeleteObjectCommand({ Bucket: bucket, Key: mediaObjectKey(id) }),
   );
 }

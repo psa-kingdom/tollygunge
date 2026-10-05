@@ -61,12 +61,60 @@ test(
         "/api/staff/crm",
         "/api/staff/communications",
         "/api/staff/flyers",
+        "/api/staff/access",
+        "/api/staff/audit",
         "/api/member/application",
         "/api/member/events",
         "/api/member/inquiries",
       ])
         assert.equal((await request(path)).status, 401);
       assert.equal((await request("/api/staff/content", 1)).status, 403);
+      assert.equal((await request("/api/staff/access", 3)).status, 403);
+      assert.equal((await request("/api/staff/audit", 1)).status, 403);
+      assert.equal(
+        (await request("/api/staff/audit?before=9223372036854775808", 0))
+          .status,
+        400,
+      );
+      assert.equal(
+        (
+          await request("/api/staff/access", 0, {
+            id: people[0],
+            roles: [],
+            expectedRoles: ["administrator"],
+          })
+        ).status,
+        409,
+      );
+      assert.equal(
+        (
+          await request("/api/staff/access", 0, {
+            id: people[3],
+            roles: ["invented"],
+            expectedRoles: ["content_editor"],
+          })
+        ).status,
+        400,
+      );
+      const access = await (
+        await request(`/api/staff/access?q=${encodeURIComponent(people[3])}`, 0)
+      ).json();
+      assert.deepEqual(access.people[0].roles, ["content_editor"]);
+      assert.equal(
+        (
+          await request("/api/staff/access", 0, {
+            id: people[3],
+            roles: ["content_editor"],
+            expectedRoles: ["content_editor"],
+          })
+        ).status,
+        200,
+      );
+      assert.equal(
+        (await request("/api/staff/content", 3)).status,
+        200,
+        "no-op preserves sessions",
+      );
       assert.equal(
         (await request("/api/staff/events", 3, { action: "save" })).status,
         403,
@@ -414,6 +462,118 @@ test(
       ).json();
       assert.deepEqual(Object.keys(editorReports), ["content"]);
       assert.equal((await request("/api/staff/reports", 1)).status, 403);
+      const changed = await request("/api/staff/access", 0, {
+        id: people[3],
+        roles: ["event_operator"],
+        expectedRoles: ["content_editor"],
+      });
+      assert.equal(changed.status, 200);
+      assert.equal((await changed.json()).sessionsRevoked, true);
+      assert.equal((await request("/api/staff/content", 3)).status, 401);
+      assert.equal(
+        (
+          await request("/api/staff/access", 0, {
+            id: people[3],
+            roles: [],
+            expectedRoles: ["content_editor"],
+          })
+        ).status,
+        409,
+      );
+      const logs = await (await request("/api/staff/audit", 0)).json();
+      assert.ok(
+        logs.entries.some(
+          (row: { action: string; entity_id: string }) =>
+            row.entity_id === people[3] &&
+            row.action === "staff.role_removed:content_editor",
+        ),
+      );
+      assert.ok(
+        logs.entries.some(
+          (row: { action: string; entity_id: string }) =>
+            row.entity_id === people[3] &&
+            row.action === "staff.role_granted:event_operator",
+        ),
+      );
+      await pool.query(
+        'UPDATE public."user" SET "emailVerified"=false WHERE id=$1',
+        [people[3]],
+      );
+      assert.equal(
+        (
+          await request("/api/staff/access", 0, {
+            id: people[3],
+            roles: ["finance_operator"],
+            expectedRoles: ["event_operator"],
+          })
+        ).status,
+        409,
+      );
+      assert.equal(
+        (
+          await request("/api/staff/access", 0, {
+            id: people[3],
+            roles: [],
+            expectedRoles: ["event_operator"],
+          })
+        ).status,
+        200,
+      );
+      await pool.query(
+        'UPDATE public."user" SET "emailVerified"=true WHERE id=$1',
+        [people[3]],
+      );
+      assert.equal(
+        (
+          await request("/api/staff/access", 0, {
+            id: people[3],
+            roles: ["administrator"],
+            expectedRoles: [],
+          })
+        ).status,
+        200,
+      );
+      const freshToken = randomBytes(32).toString("hex");
+      await pool.query(
+        'INSERT INTO public."session"(id,token,"userId","expiresAt","updatedAt") VALUES($1,$2,$3,now()+interval \'1 hour\',now())',
+        [randomUUID(), freshToken, people[3]],
+      );
+      cookies[3] =
+        "better-auth.session_token=" +
+        encodeURIComponent(
+          freshToken +
+            "." +
+            createHmac("sha256", process.env.BETTER_AUTH_SECRET!)
+              .update(freshToken)
+              .digest("base64"),
+        );
+      const crossRemoval = await Promise.all([
+        request("/api/staff/access", 0, {
+          id: people[3],
+          roles: [],
+          expectedRoles: ["administrator"],
+        }),
+        request("/api/staff/access", 3, {
+          id: people[0],
+          roles: [],
+          expectedRoles: ["administrator"],
+        }),
+      ]);
+      assert.equal(
+        crossRemoval.filter((r) => r.status === 200).length,
+        1,
+        "concurrent administrator removal must have only one winner",
+      );
+      assert.ok(crossRemoval.some((r) => [401, 403].includes(r.status)));
+      assert.equal(
+        (
+          await pool.query(
+            "SELECT count(*)::int AS n FROM tpa.staff_roles WHERE user_id=ANY($1::text[]) AND role='administrator'",
+            [[people[0], people[3]]],
+          )
+        ).rows[0].n,
+        1,
+      );
     } finally {
       for (const id of templateIds)
         await pool.query(

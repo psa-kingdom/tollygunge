@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "test": "tsx --test tests/*.test.ts",
     "test:db": "node --env-file-if-exists=.env.local --import tsx --test tests/database.integration.ts tests/identity.integration.ts",
-    "test:http": "node --env-file-if-exists=.env.local --import tsx --test tests/http.integration.ts tests/operations.integration.ts",
+    "test:http": "node --env-file-if-exists=.env.local --import tsx --test tests/http.integration.ts tests/operations.integration.ts tests/media.integration.ts",
     "test:storage": "node --env-file-if-exists=.env.local --import tsx scripts/verify-storage.mts",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs"
   },
@@ -25,7 +25,8 @@
     "qrcode": "^1.5.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

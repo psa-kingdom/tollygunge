@@ -22,13 +22,19 @@
 - Saved plain-text communication templates, previews and current consent counts.
   Sending is explicitly disabled. No inbox, campaign or WhatsApp delivery is claimed.
 - Saved one/two-speaker flyer templates, event links/QR, PNG and PDF export.
+- Administrator-only account lookup and staff role assignment, conflict checks,
+  verified/operator-approved identity requirement, session revocation, self-access
+  protection and paginated administrative action history.
+- Separate editorial media uploads, accessible descriptions, image decoding and
+  re-encoding, draft/published snapshots and public resource gallery. The bucket
+  remains private; application document keys never enter public media endpoints.
 - Permission-scoped event/attendance, content, inquiry and consent reports with CSV
   export. Staff overview shows publication drafts, unassigned inquiries and overdue
   follow-ups instead of decorative dashboard statistics.
 - Historical attendance CSV preview, header/date validation, existing-identity/event
   matching, ambiguous-person errors and duplicate detection. Nothing is committed.
 
-Migrations 001–006 use the checksummed, database-identity-checked transactional runner.
+Migrations 001–007 use the checksummed, database-identity-checked transactional runner.
 Dedicated Railway `tpa-platform` PostgreSQL and private R2 `tpa-private-documents`
 remain separate from other projects. Original Cloudflare credential values remain in
 only their supplied file; local operations read them transiently. No production app
@@ -37,7 +43,7 @@ pending, while Docs, Builds and Observability are available as previously verifi
 
 ## Verification
 
-14 unit tests cover permissions, file boundaries/cleanup, input validation, protected
+16 unit tests cover permissions, file boundaries/cleanup, image decoding/metadata removal, input validation, protected
 sitemap sections, attributed news restrictions, unapproved payment/hour rejection and
 CSV parsing/duplicates. PostgreSQL tests cover repeatable migrations, foreign keys,
 password/reset token behavior, audits and session revocation. HTTP tests cover all
@@ -45,9 +51,22 @@ staff permissions and member isolation, publication snapshots/conflicts, private
 application drafts/document ownership, concurrent last-seat registration, duplicate
 check-ins, cancellation history, CRM note privacy, disabled delivery and import commit.
 Synthetic records and any earlier storage objects are removed after tests.
+Additional HTTP checks cover staff identity eligibility, stale role replacements,
+no-op session preservation, immediate revocation, audit visibility and concurrent
+administrator removals. Editorial media tests cover private draft denial, separate
+published descriptions, conflicts, unknown/private document IDs, corrupt image
+rejection and local R2 upload/read/unpublish with cleanup. Production storage remains
+disabled and CI verifies that gate. Production dependencies have no known audit findings.
 Browser checks cover CMS draft save/private preview, event creation/publication with
 native keyboard date controls, one/two-speaker PNG generation and actual PDF download.
 Both exported PNG QR codes were decoded and matched the intended published event URL.
+Browser checks also verified staff self-access restrictions and audit history;
+editorial upload, private preview, explicit publication, loaded public image and
+gallery withdrawal after unpublication. All temporary media records/objects were
+removed; the editorial R2 prefix was empty afterward. The latest responsive check
+could not be completed: the browser viewport override retained 1280px and its
+screenshots failed until reset. Earlier application mobile verification remains valid;
+the new workspaces still need a device-sized browser check before release.
 
 ## Explicit remaining gates
 
@@ -56,14 +75,23 @@ email delivery. Google OAuth credentials are still needed for public Google onbo
 The approved administrator uses operator-approved password access; mailbox verification
 is not fabricated and no login or signup automatically grants roles.
 
-Payment gateway credentials/test mode plus approved plan/student fees, eligibility,
+Razorpay is selected. Its test credentials plus approved plan/student fees, eligibility,
 declarations and rejection/refund terms are required for checkout, paid application
 review, activation/numbering, renewals, receipts and refunds. Payment states must remain
 independent from approval and attendance; redirects cannot authorize payment completion.
 Learning-hour rules and historical mapping/provenance require confirmation before awards
 or imports can be committed. No external CPE accreditation is claimed.
 
-CMS public-media management, scheduled source collection, background delivery jobs,
+The user is not ready to approve membership fees or terms; these remain unset and
+applications remain drafts. The read-only Crazy Hands comparison is recorded in
+`REFERENCE_COMPARISON.md`, including the pending member directory, profile-change
+review, dedicated committee records and XLSX export workflows.
+Razorpay setup is deferred; the user intends to supply a UPI payment QR first.
+The QR/payee and verified-transaction workflow are pending. QR display or proof
+upload cannot authorize payment completion. Google OAuth is not set up; the exact
+development/production setup is documented in `GOOGLE_SIGN_IN_SETUP.md`.
+
+Scheduled source collection, background delivery jobs,
 shared inbox/replies, WhatsApp, membership/payment reports and production release remain
 incomplete. News can currently be entered as an attributed editorial draft. Approved
 source feeds and collection schedule are needed for collection; private application media

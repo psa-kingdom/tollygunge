@@ -34,6 +34,7 @@ try {
       "--test",
       "tests/http.integration.ts",
       "tests/operations.integration.ts",
+      "tests/media.integration.ts",
     ],
     {
       stdio: "inherit",

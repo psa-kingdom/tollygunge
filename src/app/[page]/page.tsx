@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
 import { publishedPage, publishedArticles } from "@/lib/public-content";
@@ -33,6 +34,14 @@ export default async function ContentPage({
         sections: fallback.sections.map((section) => ({ ...section })),
       };
   const articles = page === "resources" ? await publishedArticles() : [];
+  const media =
+    page === "resources" && process.env.DATABASE_URL
+      ? (
+          await getDatabase().query(
+            "SELECT id,published,width,height FROM tpa.public_media WHERE published IS NOT NULL ORDER BY created_at DESC LIMIT 100",
+          )
+        ).rows
+      : [];
   const events =
     page === "events" && process.env.DATABASE_URL
       ? (
@@ -54,6 +63,9 @@ export default async function ContentPage({
   if (!live && page === "resources" && articles.length)
     data.sections[0].text =
       "Editorially reviewed association insights and attributed professional updates.";
+  if (!live && page === "resources" && media.length)
+    data.sections[1].text =
+      "Editorially reviewed association images. Private application documents are excluded.";
   return (
     <SiteShell>
       <main id="main">
@@ -71,6 +83,25 @@ export default async function ContentPage({
             >
               <h2>{section.title}</h2>
               <p className="prose-text">{section.text}</p>
+              {page === "resources" && i === 1 && (
+                <div className="media-gallery">
+                  {media.map((asset) => (
+                    <figure key={asset.id}>
+                      <Image
+                        unoptimized
+                        src={`/media/${asset.id}`}
+                        width={asset.width}
+                        height={asset.height}
+                        alt={asset.published.altText}
+                      />
+                      <figcaption>
+                        <strong>{asset.published.title}</strong>
+                        <span>{asset.published.category}</span>
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              )}
               {page === "events" &&
                 i < 2 &&
                 events

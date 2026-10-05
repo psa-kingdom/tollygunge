@@ -80,3 +80,22 @@ Reports only query authorized domains and CSV output escapes formula-leading str
 Flyer exports render their own event/speaker content; no private application media is
 published or fetched. Production providers, worker delivery/collection, approved business
 rules and recovery verification remain release gates.
+# Additional operational boundaries
+
+Staff role replacements are administrator-only, reject self-access edits, compare
+the observed role set and serialize under a transaction advisory lock. The acting
+administrator's role is rechecked inside that lock. Each grant/removal is audited
+and all affected sessions are revoked atomically. Identity verification or explicit
+offline operator approval is required before a staff grant; roles never bootstrap
+mailbox verification or association membership. Audit inspection is administrator-only
+with keyset pagination and no private document contents.
+
+Editorial media occupies `tpa.public_media` and `tpa/editorial/media/<uuid>` object
+keys, separate from private application document records/keys. JPEG/PNG uploads
+must pass signature and full decoding checks, bounded pixel count, static-image
+validation and WebP re-encoding that removes original metadata. Only the normalized
+image is stored. Staff explicitly publish saved description snapshots. Public reads
+require a published media row and use no-store responses, allowing unpublication to
+close future access. Authorized content editors can preview drafts. There is no
+endpoint that converts a private application document to public media.
+

@@ -11,9 +11,11 @@ const workspaces: [string, Permission][] = [
   ["Flyers", "events:manage"],
   ["Imports", "events:manage"],
   ["Content", "content:publish"],
+  ["Media", "content:publish"],
   ["Communications", "communications:manage"],
   ["CRM", "communications:manage"],
   ["Payments", "payments:manage"],
+  ["Access", "staff:manage"],
 ];
 export const dynamic = "force-dynamic";
 export const metadata = {

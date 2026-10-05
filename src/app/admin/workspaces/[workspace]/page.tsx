@@ -9,6 +9,8 @@ import { OperationsReports } from "@/components/operations-reports";
 import { CommunicationsWorkspace } from "@/components/communications-workspace";
 import { FlyerBuilder } from "@/components/flyer-builder";
 import { HistoryImport } from "@/components/history-import";
+import { StaffAccess } from "@/components/staff-access";
+import { MediaWorkspace } from "@/components/media-workspace";
 const permissions: Record<string, Permission> = {
   members: "members:review",
   events: "events:manage",
@@ -18,6 +20,8 @@ const permissions: Record<string, Permission> = {
   crm: "communications:manage",
   flyers: "events:manage",
   imports: "events:manage",
+  access: "staff:manage",
+  media: "content:publish",
 };
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -40,7 +44,11 @@ export default async function Workspace({
     <main id="main" className="page-content">
       <Link href="/admin">← Staff workspace</Link>
       <h1>{workspace[0].toUpperCase() + workspace.slice(1)}</h1>
-      {workspace === "imports" ? (
+      {workspace === "media" ? (
+        <MediaWorkspace />
+      ) : workspace === "access" ? (
+        <StaffAccess />
+      ) : workspace === "imports" ? (
         <HistoryImport />
       ) : workspace === "communications" ? (
         <CommunicationsWorkspace />

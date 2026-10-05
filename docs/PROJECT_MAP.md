@@ -17,7 +17,11 @@ Membership activation, orders and payments remain separate pending records/workf
 Saved applications: /member/application and /api/member/application. Free events/history:
 /member/events and /api/member/events; public event details: /events/[id].
 Staff APIs: /api/staff/content, events, attendance, crm, communications, flyers, imports,
-reports. Workspaces mirror these domains; reports filter data by each permission.
+reports, media, access and audit. Workspaces mirror these domains; reports filter data by each permission.
+Administrator-only Access includes existing-account search, roles and audit history.
+Editorial Media uploads and publishes accessible images; /media/[id] serves only
+published editorial assets or authorized content-editor previews. Private documents
+are excluded. Public media table: 007_public_media.sql; separate editorial R2 keys.
 CMS draft preview: /admin/content/[id]; published insights/news: /resources/[slug].
 Historical attendance import validates a proposed CSV only; commit is disabled.
 

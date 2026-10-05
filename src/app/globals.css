@@ -1113,3 +1113,26 @@ button:disabled {
 .prose-text {white-space:pre-wrap;overflow-wrap:anywhere;}
 .flyer-preview {width:100%;height:auto;border:1px solid var(--line);border-radius:8px;}
 @media(max-width:800px){.operations-layout{grid-template-columns:minmax(0,1fr);}.record-list{max-height:300px;overflow:auto;}}
+/* Explicit editorial publication; originals and private application media are excluded. */
+.media-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 24px;
+}
+.media-gallery figure {
+  margin: 0;
+}
+.media-gallery img {
+  width: 100%;
+  height: auto;
+  max-height: 360px;
+  object-fit: contain;
+  background: var(--paper);
+}
+.media-gallery figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+}
+

@@ -85,3 +85,13 @@ OAuth. Main Cloudflare and Bindings require user consent (previous flows timed o
 Use `codex mcp login cloudflare` / `codex mcp login cloudflare-bindings` and complete
 the account consent page. Restart Codex if necessary to expose newly configured tools.
 Unrelated MCP settings were preserved. Optional beta Cloudflare CLI was skipped.
+# Latest decisions — 2026-10-05
+
+Razorpay is selected for later integration. The user intends to supply a UPI payment
+QR code first; that image/payee and transaction-verification rules are not supplied.
+Displaying a QR or accepting uploaded evidence must never mark payment complete.
+Record an independently verified finance decision before any membership review or
+activation. Membership fees, eligibility,
+declaration and rejection/refund terms remain unapproved. Do not activate checkout
+or treat saved application drafts as submissions. Resend remains deferred.
+
