@@ -66,12 +66,13 @@ export default async function Workspace({
         <div className="notice">
           Application drafts are private to applicants. The paid-application
           review queue will open after membership fees, eligibility,
-          declarations, refund terms and a payment gateway are confirmed.
+          declarations, refund terms and payment verification are confirmed.
         </div>
       ) : workspace === "payments" ? (
         <div className="notice">
-          Payment collection, receipts and refunds await the payment gateway and
-          approved financial rules. No payment has been collected.
+          Payment collection, receipts and refunds await approved financial rules
+          and transaction verification. Your UPI payment QR will be added when
+          supplied; Razorpay setup is deferred. No payment has been collected.
         </div>
       ) : (
         <>
