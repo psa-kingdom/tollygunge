@@ -1,53 +1,58 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
+import { currentActor } from "@/lib/actor";
+import { hasPermission, type Permission } from "@/domain/access";
 import { Brand } from "@/components/site-shell";
-import { ReviewWorkspace } from "./review-workspace";
+import { SignOut } from "@/components/auth-controls";
+const workspaces: [string, Permission][] = [
+  ["Members", "members:review"],
+  ["Events", "events:manage"],
+  ["Content", "content:publish"],
+  ["Communications", "communications:manage"],
+  ["Payments", "payments:manage"],
+];
+export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Admin workspace preview",
+  title: "Staff workspace",
   robots: { index: false, follow: false },
 };
-export default function Admin() {
+export default async function Admin() {
+  const actor = await currentActor();
+  if (!actor) redirect("/login");
+  if (!actor.roles.length) redirect("/member");
   return (
     <div className="workspace">
       <aside className="sidebar">
         <Brand />
-        <span className="eyebrow">ASSOCIATION WORKSPACE</span>
+        <span className="eyebrow">STAFF WORKSPACE</span>
         <nav aria-label="Workspace">
-          <Link className="current" href="/admin">
-            Members
+          <Link href="/admin" className="current">
+            Overview
           </Link>
-          {["Events", "Content", "CRM", "Communications", "Payments"].map(
-            (n) => (
-              <Link key={n} href={`/admin/workspaces/${n.toLowerCase()}`}>
-                {n}
+          {workspaces
+            .filter(([, permission]) => hasPermission(actor.roles, permission))
+            .map(([name]) => (
+              <Link key={name} href={`/admin/workspaces/${name.toLowerCase()}`}>
+                {name}
               </Link>
-            ),
-          )}
+            ))}
         </nav>
-        <p style={{ fontSize: 11, marginTop: 30 }}>
-          Design preview
-          <br />
-          Synthetic records only
-        </p>
-        <Link className="text-link" href="/">
-          ← Public website
-        </Link>
+        <Link href="/member">Your profile</Link>
+        <SignOut />
       </aside>
       <main id="main" className="workspace-main">
-        <div className="workspace-top">
-          <span>TPA / Members</span>
-          <span>Preview workspace · No live account</span>
-        </div>
-        <h1>Membership, thoughtfully managed.</h1>
-        <p>
-          Review applications, keep records clear and help people find their
-          place.
-        </p>
+        <span className="eyebrow">TPA / STAFF</span>
+        <h1>Welcome, {actor.name}.</h1>
+        <p>Your access reflects your assigned association responsibilities.</p>
         <div className="notice">
-          Interactive design preview. All records are fictional. Review actions
-          change this browser view only; they do not approve memberships or
-          issue refunds.
+          Business workspaces are being delivered in stages. No membership
+          applications or payments are active yet.
         </div>
-        <ReviewWorkspace />
+        <p>
+          <Link className="text-link" href="/preview/admin">
+            Explore the labelled design preview →
+          </Link>
+        </p>
       </main>
     </div>
   );

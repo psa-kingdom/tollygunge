@@ -1,4 +1,6 @@
 import "server-only";
+import { readFileSync } from "node:fs";
+import { parseR2Credentials } from "@/domain/r2-credentials";
 import {
   GetObjectCommand,
   PutObjectCommand,
@@ -7,30 +9,35 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { privateObjectKey } from "@/domain/documents";
+export function privateStorageConfigured() {
+  return (
+    process.env.NODE_ENV !== "production" &&
+    Boolean(
+      process.env.R2_BUCKET_NAME && process.env.CLOUDFLARE_CREDENTIAL_FILE,
+    )
+  );
+}
 function storage() {
-  const {
-    R2_ACCOUNT_ID,
-    R2_BUCKET_NAME,
-    R2_ACCESS_KEY_ID,
-    R2_SECRET_ACCESS_KEY,
-  } = process.env;
+  const { R2_BUCKET_NAME, CLOUDFLARE_CREDENTIAL_FILE } = process.env;
+  // Local development reads the original supplied file. Deployed uploads stay disabled
+  // until a production secret mechanism is explicitly selected.
   if (
-    !R2_ACCOUNT_ID ||
-    !R2_BUCKET_NAME ||
-    !R2_ACCESS_KEY_ID ||
-    !R2_SECRET_ACCESS_KEY
+    !privateStorageConfigured() ||
+    !CLOUDFLARE_CREDENTIAL_FILE ||
+    !R2_BUCKET_NAME
   )
     throw new Error("TPA private document storage is not configured.");
-  if (!/^[a-f0-9]{32}$/i.test(R2_ACCOUNT_ID))
-    throw new Error("Invalid R2 account configuration.");
+  const credentials = parseR2Credentials(
+    readFileSync(CLOUDFLARE_CREDENTIAL_FILE, "utf8"),
+  );
   return {
     bucket: R2_BUCKET_NAME,
     client: new S3Client({
       region: "auto",
-      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: `https://${credentials.accountId}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: R2_ACCESS_KEY_ID,
-        secretAccessKey: R2_SECRET_ACCESS_KEY,
+        accessKeyId: credentials.accessKeyId,
+        secretAccessKey: credentials.secretAccessKey,
       },
     }),
   };

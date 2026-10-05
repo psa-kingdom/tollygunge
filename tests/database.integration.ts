@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { Pool } from "pg";
+import { databaseOptions } from "../src/lib/database-options";
 
 const enabled = !!process.env.DATABASE_URL && !!process.env.TPA_DATABASE_NAME;
 test(
@@ -23,16 +24,18 @@ test(
   "database enforces staff role and private document constraints",
   { skip: !enabled },
   async () => {
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl:
-        process.env.DATABASE_SSL === "true"
-          ? { rejectUnauthorized: true }
-          : undefined,
-    });
+    const pool = new Pool(databaseOptions());
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+      await client.query(
+        'INSERT INTO public."user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)',
+        [
+          "test-user",
+          "Synthetic test",
+          "synthetic-" + randomUUID() + "@example.invalid",
+        ],
+      );
       for (const [sql, parameters] of [
         [
           "INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,$2)",

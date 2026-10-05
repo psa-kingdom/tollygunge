@@ -1,6 +1,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { Pool } from "pg";
+import { readFileSync } from "node:fs";
+import { checkServerIdentity } from "node:tls";
 if (!process.env.DATABASE_URL || !process.env.TPA_DATABASE_NAME) {
   throw new Error(
     "Set DATABASE_URL and TPA_DATABASE_NAME locally before running migrations.",
@@ -10,7 +12,16 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl:
     process.env.DATABASE_SSL === "true"
-      ? { rejectUnauthorized: true }
+      ? {
+          rejectUnauthorized: true,
+          ca: process.env.DATABASE_CA_FILE
+            ? readFileSync(process.env.DATABASE_CA_FILE, "utf8")
+            : undefined,
+          checkServerIdentity: process.env.DATABASE_TLS_SERVERNAME
+            ? (_host, cert) =>
+                checkServerIdentity(process.env.DATABASE_TLS_SERVERNAME, cert)
+            : undefined,
+        }
       : undefined,
   connectionTimeoutMillis: 5000,
   max: 1,

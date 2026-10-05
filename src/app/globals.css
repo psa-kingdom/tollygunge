@@ -1037,3 +1037,59 @@ td small {
     max-width: 100%;
   }
 }
+/* Account forms share the public site's restrained typography and spacing. */
+.page-content {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 64px 28px;
+  min-height: 65vh;
+}
+.page-content h1 {
+  max-width: 760px;
+}
+.page-content > p {
+  max-width: 680px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .page-content {
+    padding: 40px 20px;
+  }
+}
+.member-settings {
+  max-width: 680px;
+}
+.member-settings section {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border, #e6e6df);
+}
+.member-settings form {
+  display: grid;
+  gap: 18px;
+}
+.member-settings label {
+  display: grid;
+  gap: 7px;
+}
+.member-settings input:not([type="checkbox"]),
+.member-settings select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #ccd0d5;
+  border-radius: 6px;
+  background: white;
+  font: inherit;
+}
+.member-settings .consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.member-settings .button {
+  justify-self: start;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -134,18 +134,6 @@ const pages: Record<
       },
     ],
   },
-  login: {
-    label: "YOUR MEMBER SPACE",
-    title: "Welcome to your next chapter.",
-    intro:
-      "Your membership, events and learning history—together in one place.",
-    sections: [
-      {
-        title: "Member sign-in",
-        text: "Secure sign-in is being configured. Account creation and login are not available in this design preview. Existing Crazy Hands accounts are not TPA accounts.",
-      },
-    ],
-  },
 };
 export function generateStaticParams() {
   return Object.keys(pages).map((page) => ({ page }));

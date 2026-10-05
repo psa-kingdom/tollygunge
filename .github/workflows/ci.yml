@@ -3,6 +3,11 @@ on: [push, pull_request]
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://tpa_ci:tpa_ci_disposable@127.0.0.1:5432/tpa_ci
+      TPA_DATABASE_NAME: tpa_ci
+      BETTER_AUTH_SECRET: tpa_ci_disposable_auth_secret_only_for_isolated_tests
+      BETTER_AUTH_URL: http://127.0.0.1:3000
     services:
       postgres:
         image: postgres:17
@@ -25,8 +30,6 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run test:db
-        env:
-          DATABASE_URL: postgresql://tpa_ci:tpa_ci_disposable@127.0.0.1:5432/tpa_ci
-          TPA_DATABASE_NAME: tpa_ci
       - run: npm run build
       - run: npm run typecheck
+      - run: node scripts/verify-http-ci.mjs

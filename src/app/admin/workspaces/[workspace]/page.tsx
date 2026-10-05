@@ -1,34 +1,34 @@
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-const workspaces: Record<string, string> = {
-  events: "Event publishing, registration and attendance",
-  content: "Drafts, media and publishing",
-  crm: "Inquiries, assignments and follow-ups",
-  communications: "Shared inbox, templates and campaigns",
-  payments: "Transactions, receipts and staff-approved refunds",
+import { currentActor } from "@/lib/actor";
+import { hasPermission, type Permission } from "@/domain/access";
+const permissions: Record<string, Permission> = {
+  members: "members:review",
+  events: "events:manage",
+  content: "content:publish",
+  communications: "communications:manage",
+  payments: "payments:manage",
 };
+export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
 export default async function Workspace({
   params,
 }: {
   params: Promise<{ workspace: string }>;
 }) {
+  const actor = await currentActor();
+  if (!actor) redirect("/login");
   const { workspace } = await params;
-  if (!workspaces[workspace]) notFound();
+  if (
+    !permissions[workspace] ||
+    !hasPermission(actor.roles, permissions[workspace])
+  )
+    notFound();
   return (
-    <main id="main" className="content-page">
-      <div className="page-heading">
-        <span className="eyebrow">WORKSPACE PREVIEW</span>
-        <h1 style={{ textTransform: "capitalize" }}>{workspace}</h1>
-        <p>{workspaces[workspace]}</p>
-        <div className="notice">
-          This workspace is scheduled for a later delivery slice. No live
-          records or operations are available.
-        </div>
-        <Link className="button" href="/admin">
-          ← Return to members
-        </Link>
-      </div>
+    <main id="main" className="page-content">
+      <Link href="/admin">← Staff workspace</Link>
+      <h1>{workspace[0].toUpperCase() + workspace.slice(1)}</h1>
+      <p>This workspace will open with its corresponding operational slice.</p>
     </main>
   );
 }

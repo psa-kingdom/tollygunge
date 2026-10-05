@@ -1,6 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { hasPermission, canReadPrivateDocument } from "../src/domain/access";
+import { roles, type Permission } from "../src/domain/access";
+test("every staff role has exactly its intended permission set", () => {
+  const permissions: Permission[] = [
+    "members:review",
+    "content:publish",
+    "events:manage",
+    "communications:manage",
+    "payments:manage",
+    "documents:review",
+    "staff:manage",
+  ];
+  const expected = {
+    administrator: permissions,
+    membership_reviewer: ["members:review", "documents:review"],
+    content_editor: ["content:publish"],
+    event_operator: ["events:manage"],
+    communications_operator: ["communications:manage"],
+    finance_operator: ["payments:manage"],
+  };
+  for (const role of roles)
+    for (const permission of permissions)
+      assert.equal(
+        hasPermission([role], permission),
+        (expected[role] as string[]).includes(permission),
+        `${role} / ${permission}`,
+      );
+});
 test("staff roles only grant their domain permissions", () => {
   assert.equal(hasPermission(["membership_reviewer"], "members:review"), true);
   assert.equal(
