@@ -4,6 +4,11 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
 import { publishedPage, publishedArticles } from "@/lib/public-content";
 import { getDatabase } from "@/lib/database";
+import { PublicInquiry } from "@/components/public-inquiry";
+import {
+  PublicGovernance,
+  type PublicGovernanceEntry,
+} from "@/components/public-governance";
 export const dynamic = "force-dynamic";
 import { sitePages as pages } from "@/domain/site-pages";
 export function generateStaticParams() {
@@ -34,6 +39,30 @@ export default async function ContentPage({
         sections: fallback.sections.map((section) => ({ ...section })),
       };
   const articles = page === "resources" ? await publishedArticles() : [];
+  const people: PublicGovernanceEntry[] =
+    ["about", "governance"].includes(page) && process.env.DATABASE_URL
+      ? (
+          await getDatabase().query(
+            "SELECT g.id,g.published,(m.published IS NOT NULL) AS portrait_available,m.published->>'altText' AS portrait_alt FROM tpa.governance_profiles g LEFT JOIN tpa.public_media m ON m.id=g.published_portrait_id WHERE g.published IS NOT NULL ORDER BY (g.published->>'order')::int,g.published->>'name',g.id",
+          )
+        ).rows
+      : [];
+  if (!live && people.length) {
+    if (
+      page === "about" &&
+      people.some((p) => p.published.group === "founding")
+    )
+      data.sections[2].text =
+        "Meet the professionals who helped establish our association.";
+    if (page === "governance") {
+      if (people.some((p) => p.published.group === "executive"))
+        data.sections[0].text =
+          "Association-confirmed leadership profiles and responsibilities.";
+      if (people.some((p) => p.published.group === "subcommittee"))
+        data.sections[1].text =
+          "Working groups and their association responsibilities.";
+    }
+  }
   const media =
     page === "resources" && process.env.DATABASE_URL
       ? (
@@ -83,6 +112,20 @@ export default async function ContentPage({
             >
               <h2>{section.title}</h2>
               <p className="prose-text">{section.text}</p>
+              {((page === "about" && i === 2) ||
+                (page === "governance" && i < 2)) && (
+                <PublicGovernance
+                  entries={people.filter(
+                    (person) =>
+                      person.published.group ===
+                      (page === "about"
+                        ? "founding"
+                        : i === 0
+                          ? "executive"
+                          : "subcommittee"),
+                  )}
+                />
+              )}
               {page === "resources" && i === 1 && (
                 <div className="media-gallery">
                   {media.map((asset) => (
@@ -151,11 +194,7 @@ export default async function ContentPage({
                   </article>
                 ))}
               {page === "contact" && i === 3 && (
-                <p>
-                  <Link className="button secondary" href="/member/inquiries">
-                    Sign in to send and track an inquiry →
-                  </Link>
-                </p>
+                <PublicInquiry source="contact" />
               )}
               {page === "membership" && i === 1 && (
                 <>

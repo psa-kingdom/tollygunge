@@ -127,7 +127,7 @@ export const sitePages: Record<
       },
       {
         title: "Enquiry",
-        text: "Sign in to send an inquiry and track its status in your member space. Email and WhatsApp delivery will follow provider configuration.",
+        text: "Send an inquiry without an account. Share your contact details and optional company information so the TPA team can follow up. Signed-in accounts can also track their own inquiries.",
       },
     ],
   },

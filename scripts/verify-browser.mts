@@ -85,6 +85,7 @@ async function cleanup() {
   stopping = true;
   server.close();
   try {
+    await pool.query("DELETE FROM tpa.inquiry_updates WHERE inquiry_id IN (SELECT id FROM tpa.inquiries WHERE user_id=$1)",[id]);
     await pool.query(
       "DELETE FROM tpa.inquiry_notes WHERE inquiry_id IN (SELECT id FROM tpa.inquiries WHERE user_id=$1)",
       [id],

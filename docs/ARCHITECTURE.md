@@ -115,3 +115,11 @@ QR snapshots reference a separate private image table through generated foreign-
 columns, preserving historical file references. Member QR reads require a currently
 Active snapshot; finance reads allow private previews. No public gallery or document
 endpoint accepts a payment QR record. No scanning or screenshot authorizes payment.
+
+Association editorial profiles are independent from authentication and member
+profiles. Generated media foreign keys retain optional portrait references; only
+published editorial portraits may be selected for publication. Public readers get
+published snapshots only. Public inquiries allow nullable authentication ownership,
+require contact/provenance/consent for web forms, and restrict anonymous audit actors
+to the public-submission action; consequential staff audit actions still require
+an authenticated actor. Staff status/tag/assignment edits retain versioned history.

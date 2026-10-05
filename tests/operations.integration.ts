@@ -143,9 +143,12 @@ test(
       const entry = await saved.json();
       contentIds.push(entry.id);
       assert.equal((await request(`/resources/${slug}`)).status, 404);
+      const deniedPreview = await request(`/admin/content/${entry.id}`, 1);
+      assert.equal(deniedPreview.status, 307);
+      assert.ok(deniedPreview.headers.get("location")?.endsWith("/member"));
       assert.equal(
-        (await request(`/admin/content/${entry.id}`, 1)).status,
-        404,
+        (await request(`/admin/content/${entry.id}`, 3)).status,
+        200,
       );
       const publish = await request("/api/staff/content", 3, {
         action: "publish",
@@ -406,7 +409,9 @@ test(
         (await (await request("/api/member/inquiries", 2)).json()).length,
         0,
       );
-      const staff = await (await request("/api/staff/crm", 0)).json();
+      const staff = await (
+        await request(`/api/staff/crm?id=${record.id}`, 0)
+      ).json();
       const crm = staff.records.find(
         (row: { id: string }) => row.id === record.id,
       );
@@ -416,7 +421,7 @@ test(
           await request("/api/staff/crm", 0, {
             id: crm.id,
             version: crm.version,
-            status: "in_progress",
+            status: "contacted",
             assignedTo: people[3],
             note: "Wrong domain assignee",
           })
@@ -428,7 +433,7 @@ test(
           await request("/api/staff/crm", 0, {
             id: crm.id,
             version: crm.version,
-            status: "in_progress",
+            status: "contacted",
             assignedTo: people[0],
             followUpAt: new Date().toISOString(),
             note: "PRIVATE STAFF NOTE",
@@ -581,6 +586,10 @@ test(
           [id],
         );
       for (const id of inquiryIds) {
+        await pool.query(
+          "DELETE FROM tpa.inquiry_updates WHERE inquiry_id=$1",
+          [id],
+        );
         await pool.query("DELETE FROM tpa.inquiry_notes WHERE inquiry_id=$1", [
           id,
         ]);

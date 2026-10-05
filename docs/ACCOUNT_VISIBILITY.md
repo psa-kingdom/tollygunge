@@ -21,3 +21,7 @@ workspace link replacing login/join actions. Protected account pages use a separ
 account header, without public marketing dropdowns. Password and Google callbacks
 use `/account` so the server decides the correct destination. Signed-in visits to
 `/login` also redirect to the appropriate workspace.
+
+Every staff workspace now uses the same grouped, permission-filtered sidebar.
+CRM is labelled Inquiries. Public intake creates contact records, not identities;
+only communications operators/administrators see the private staff queue.

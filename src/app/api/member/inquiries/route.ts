@@ -45,8 +45,8 @@ export async function POST(request: Request) {
         );
       const row = (
         await client.query(
-          "INSERT INTO tpa.inquiries(id,user_id,subject,message) VALUES($1,$2,$3,$4) RETURNING id,subject,message,status,created_at",
-          [randomUUID(), actor.id, subject, message],
+          "INSERT INTO tpa.inquiries(id,user_id,subject,message,contact_name,contact_email) VALUES($1,$2,$3,$4,$5,$6) RETURNING id,subject,message,status,created_at",
+          [randomUUID(), actor.id, subject, message,actor.name,actor.email],
         )
       ).rows[0];
       await audit(client, actor.id, "inquiry.created", row.id);

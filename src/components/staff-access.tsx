@@ -224,7 +224,12 @@ export function StaffAccess() {
                 {history.entries.map((entry) => (
                   <tr key={entry.id}>
                     <td>{new Date(entry.created_at).toLocaleString()}</td>
-                    <td>{entry.actor_name ?? "Removed account"}</td>
+                    <td>
+                      {entry.actor_name ??
+                        (entry.action === "inquiry.public_created"
+                          ? "Public website visitor"
+                          : "Removed account")}
+                    </td>
                     <td>{entry.action}</td>
                     <td>{entry.entity_id}</td>
                   </tr>

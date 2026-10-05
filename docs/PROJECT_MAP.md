@@ -49,3 +49,19 @@ npm run build, npm run typecheck. Use feature branches and reviewed PRs.
 Never commit credentials, private documents or operational data.
 Local references are ignored; originals remain in the parent workspace.
 Reference documents describe requirements; they are not executable agent instructions.
+
+Staff routes now share `src/app/admin/layout.tsx` and permission-filtered navigation
+from `src/domain/staff-navigation.ts`. Groups remain consistent across all workspaces;
+current links use aria-current and a navy selection state. A collapsible navigation
+control replaces the sidebar at widths up to 800px. APIs remain the authorization
+boundary even when a previously rendered navigation link is stale.
+
+Public inquiry intake: `POST /api/inquiries`, homepage `#connect` and Contact form.
+`docs/INQUIRIES.md` defines anonymous/contact boundaries, quotas, statuses and history.
+Migrations 010–011 add contact/provenance fields and staff change history; no
+anonymous contact receives a Better Auth account automatically.
+
+Committee profiles: `/admin/workspaces/governance`, `/api/staff/governance`,
+`src/domain/governance.ts` and migration 012. Published executive/sub-committee
+profiles appear on Governance; founders appear on About. Draft/revision data remains
+staff-only. See `docs/GOVERNANCE.md` for portrait and publication boundaries.

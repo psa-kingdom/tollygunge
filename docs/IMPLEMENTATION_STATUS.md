@@ -24,9 +24,11 @@
 - Free events with draft/publish/cancel, serialized capacity checks, idempotent
   registration, cancellation, staff attendance and private member history.
   Published event details are immutable; cancellation preserves history.
-- CRM inquiries, staff assignment, private notes, follow-up dates and overdue queue.
-  Signed-in inquiries are limited to three per day. Public anonymous submission
-  remains closed until abuse protection and public onboarding are configured.
+- Public homepage/Contact inquiry forms and authenticated inquiries, private staff CRM,
+  New/Contacted/Closed states, tags, assignment, notes and immutable change history.
+  Search/status/tag/follow-up filters apply before pagination. Consent, bounded requests,
+  honeypot, serialized quotas and idempotent retries protect baseline intake. Production
+  edge throttling/bot verification remains a release requirement. See `INQUIRIES.md`.
 - Saved plain-text communication templates, previews and current consent counts.
   Sending is explicitly disabled. No inbox, campaign or WhatsApp delivery is claimed.
 - Saved one/two-speaker flyer templates, event links/QR, PNG and PDF export.
@@ -42,7 +44,7 @@
 - Historical attendance CSV preview, header/date validation, existing-identity/event
   matching, ambiguous-person errors and duplicate detection. Nothing is committed.
 
-Migrations 001–009 use the checksummed, database-identity-checked transactional runner.
+Migrations 001–012 use the checksummed, database-identity-checked transactional runner.
 Dedicated Railway `tpa-platform` PostgreSQL and private R2 `tpa-private-documents`
 remain separate from other projects. Original Cloudflare credential values remain in
 only their supplied file; local operations read them transiently. No production app
@@ -51,7 +53,7 @@ pending, while Docs, Builds and Observability are available as previously verifi
 
 ## Verification
 
-17 unit tests cover permissions, file boundaries/cleanup, image decoding/metadata removal, payment instruction validation, input validation, protected
+20 unit tests cover permissions, file boundaries/cleanup, image decoding/metadata removal, payment instruction validation, input validation, protected
 sitemap sections, attributed news restrictions, unapproved payment/hour rejection and
 CSV parsing/duplicates. PostgreSQL tests cover repeatable migrations, foreign keys,
 password/reset token behavior, audits and session revocation. HTTP tests cover all
@@ -104,7 +106,7 @@ or imports can be committed. No external CPE accreditation is claimed.
 The user is not ready to approve membership fees or terms; these remain unset and
 applications remain drafts. The read-only Crazy Hands comparison is recorded in
 `REFERENCE_COMPARISON.md`, including the pending member directory, profile-change
-review, dedicated committee records and XLSX export workflows.
+review, XLSX export workflows.
 Razorpay setup is deferred; the user intends to supply a UPI payment QR first.
 The QR/payee and verified-transaction workflow are pending. QR display or proof
 upload cannot authorize payment completion. Google OAuth is not set up; the exact
@@ -116,3 +118,34 @@ incomplete. News can currently be entered as an attributed editorial draft. Appr
 source feeds and collection schedule are needed for collection; private application media
 must never become public CMS assets. Production deployment needs provider configuration,
 managed secrets, backup/recovery and end-to-end staging verification.
+
+
+## Latest navigation and public-inquiry delivery
+
+A shared grouped staff sidebar persists through operational pages, with server-owned
+permission filtering, current-page indication and a mobile collapse control. Public
+and signed-in headers retain their existing visibility boundaries.
+Migrations 010–011 were applied. Unit, database, lint/type/build checks passed.
+The public-inquiry HTTP flow verifies field persistence, consent, invalid input,
+origin checks, parallel idempotent submissions, no automatic identity creation,
+member/staff privacy, tag/status validation, conflicting edits, immutable history,
+quota retries and search pagination beyond 50 records. Synthetic records are removed.
+Browser verified homepage submission to the staff queue and status/tags/assignment/
+private-note changes. A narrow 390px iframe confirms responsive layout without
+horizontal overflow; browser viewport override still does not apply. Frame menu
+interaction/keyboard simulation is unsupported, so native mobile interaction remains
+unverified. Full delivery evidence and any remaining limits are recorded with the PR.
+
+
+Committee/founding profiles now have a dedicated content-editor workspace, ordered
+public rosters, publication confirmation, independent draft/published snapshots,
+immutable revisions and validated published editorial portrait references. Profile
+records confer no authentication access or approved membership. Migration 012 was
+applied; domain validation and draft/publication/portrait permission checks are
+covered by an additional HTTP flow. See `GOVERNANCE.md`.
+
+Browser follow-up verified New → Contacted → Closed, retained private notes/history,
+Closed + priority filtering and keyboard inquiry search. Committee draft save,
+explicit publication, public rendering and withdrawal were verified. Only the named
+synthetic browser records and their test histories/audits were removed using guarded
+cleanup. The real administrator and user data were preserved.

@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     if (hasPermission(actor.roles, "communications:manage")) {
       reports.inquiries = (
         await getDatabase().query(
-          "SELECT status,count(*)::int AS total,count(*) FILTER(WHERE status<>'resolved' AND follow_up_at<now())::int AS overdue FROM tpa.inquiries GROUP BY status",
+          "SELECT status,count(*)::int AS total,count(*) FILTER(WHERE status<>'closed' AND follow_up_at<now())::int AS overdue FROM tpa.inquiries GROUP BY status",
         )
       ).rows;
       reports.newsletter = (

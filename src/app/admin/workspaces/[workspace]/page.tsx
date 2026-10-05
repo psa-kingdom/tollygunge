@@ -12,6 +12,8 @@ import { HistoryImport } from "@/components/history-import";
 import { StaffAccess } from "@/components/staff-access";
 import { MediaWorkspace } from "@/components/media-workspace";
 import { PaymentDetailsManager } from "@/components/payment-details";
+import { GovernanceWorkspace } from "@/components/governance-workspace";
+import { staffWorkspaceLabel } from "@/domain/staff-navigation";
 const permissions: Record<string, Permission> = {
   members: "members:review",
   events: "events:manage",
@@ -23,9 +25,20 @@ const permissions: Record<string, Permission> = {
   imports: "events:manage",
   access: "staff:manage",
   media: "content:publish",
+  governance: "content:publish",
 };
 export const dynamic = "force-dynamic";
-export const metadata = { robots: { index: false, follow: false } };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ workspace: string }>;
+}) {
+  const { workspace } = await params;
+  return {
+    title: staffWorkspaceLabel(workspace),
+    robots: { index: false, follow: false },
+  };
+}
 export default async function Workspace({
   params,
 }: {
@@ -42,10 +55,12 @@ export default async function Workspace({
   )
     notFound();
   return (
-    <main id="main" className="page-content">
+    <main id="main" className="workspace-main">
       <Link href="/admin">← Staff workspace</Link>
-      <h1>{workspace[0].toUpperCase() + workspace.slice(1)}</h1>
-      {workspace === "media" ? (
+      <h1>{staffWorkspaceLabel(workspace)}</h1>
+      {workspace === "governance" ? (
+        <GovernanceWorkspace />
+      ) : workspace === "media" ? (
         <MediaWorkspace />
       ) : workspace === "access" ? (
         <StaffAccess />

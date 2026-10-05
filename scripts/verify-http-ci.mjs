@@ -36,6 +36,8 @@ try {
       "tests/operations.integration.ts",
       "tests/media.integration.ts",
       "tests/payment-details.integration.ts",
+      "tests/inquiries.integration.ts",
+      "tests/governance.integration.ts",
     ],
     {
       stdio: "inherit",

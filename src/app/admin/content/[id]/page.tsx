@@ -32,7 +32,7 @@ export default async function Page({
   if (!row) notFound();
   const body = row.draft as ContentBody;
   return (
-    <main id="main" className="page-content">
+    <main id="main" className="workspace-main">
       <p className="notice">
         Private saved draft · only content staff can view this preview.
       </p>
