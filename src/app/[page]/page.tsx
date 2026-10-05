@@ -26,7 +26,12 @@ export default async function ContentPage({
   const fallback = pages[page];
   if (!fallback) notFound();
   const live = await publishedPage(page);
-  const data = live ? { ...fallback, ...live } : fallback;
+  const data = live
+    ? { ...fallback, ...live }
+    : {
+        ...fallback,
+        sections: fallback.sections.map((section) => ({ ...section })),
+      };
   const articles = page === "resources" ? await publishedArticles() : [];
   const events =
     page === "events" && process.env.DATABASE_URL
@@ -36,6 +41,19 @@ export default async function ContentPage({
           )
         ).rows
       : [];
+  if (!live && page === "events") {
+    data.sections[0].text = events.some(
+      (event) => new Date(event.ends_at) > new Date(),
+    )
+      ? "Choose a published event to view its details and registration."
+      : "No upcoming events are published yet.";
+    if (events.some((event) => new Date(event.ends_at) <= new Date()))
+      data.sections[1].text =
+        "Explore completed events. Your own attendance history remains private in your member space.";
+  }
+  if (!live && page === "resources" && articles.length)
+    data.sections[0].text =
+      "Editorially reviewed association insights and attributed professional updates.";
   return (
     <SiteShell>
       <main id="main">

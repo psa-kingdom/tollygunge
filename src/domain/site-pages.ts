@@ -127,7 +127,7 @@ export const sitePages: Record<
       },
       {
         title: "Enquiry",
-        text: "Online enquiries will open when secure storage and staff routing are configured. Please return once the association has published its contact details.",
+        text: "Sign in to send an inquiry and track its status in your member space. Email and WhatsApp delivery will follow provider configuration.",
       },
     ],
   },
