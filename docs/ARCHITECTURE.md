@@ -58,3 +58,25 @@ requires either verified email or that server-owned approval record. Role checks
 on every request. Removing approval from an unverified identity immediately blocks its
 business access. Password recovery is provider-gated, single-use, expires in 15 minutes
 and revokes sessions; recovery never assigns privileges. Production uses managed secrets.
+
+## Operational boundaries
+
+CMS content has a mutable draft, a separate published snapshot and immutable revision
+records. Every mutation checks its version and records an audit within the transaction.
+Public pages read only published snapshots. Structured page sections preserve the brief's
+submenu anchors; default site copy is shared with the editor rather than duplicated.
+News is an attributed short summary and source link; collection/publishing are distinct.
+
+Applications currently remain private drafts, with document references checked against
+their owner. No submission, payment, approval or membership is inferred from saving.
+Event capacity is serialized by an event-row lock shared by registration/cancellation
+and check-in. Unique registrations/attendance prevent duplication. Attendance does not
+award learning hours. Cancellation retains registration and attendance history.
+
+CRM staff notes are never returned through the member inquiry endpoint. Assignments
+require current communications/admin roles. Communication drafts cannot send messages;
+Resend is deferred. Import preview does not create identities or merge ambiguous rows.
+Reports only query authorized domains and CSV output escapes formula-leading strings.
+Flyer exports render their own event/speaker content; no private application media is
+published or fetched. Production providers, worker delivery/collection, approved business
+rules and recovery verification remain release gates.

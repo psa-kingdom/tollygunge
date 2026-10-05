@@ -1,5 +1,6 @@
 import { SiteShell } from "@/components/site-shell";
 import { ApplicationForm } from "./application-form";
+import Link from "next/link";
 export const metadata = { title: "Membership application preview" };
 export default function Join() {
   return (
@@ -17,6 +18,11 @@ export default function Join() {
             Membership fees and eligibility will be published before
             applications open.
           </div>
+          <p>
+            <Link className="button" href="/member/application">
+              Sign in to save your application →
+            </Link>
+          </p>
         </div>
         <ApplicationForm />
       </main>

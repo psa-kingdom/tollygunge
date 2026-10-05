@@ -1,140 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
-type Section = { title: string; text: string };
-const pages: Record<
-  string,
-  { label: string; title: string; intro: string; sections: Section[] }
-> = {
-  about: {
-    label: "OUR ASSOCIATION",
-    title: "Individual strengths. Collective progress.",
-    intro:
-      "TPA is a professional community created to bring together professionals, business leaders, entrepreneurs and the wider professional ecosystem around Tollygunge and beyond.",
-    sections: [
-      {
-        title: "About TPA",
-        text: "We create a platform where professionals can connect, collaborate, learn, contribute and grow together. Our focus areas include knowledge sharing, professional cooperation, leadership, technology and community engagement.",
-      },
-      {
-        title: "Vision & Mission",
-        text: "Our vision is a vibrant, connected and progressive professional community where people, ideas and opportunities create lasting value. We connect professionals, encourage learning, facilitate collaboration, support contribution and create opportunities for growth.",
-      },
-      {
-        title: "Founding Members",
-        text: "TPA is being built by professionals who believe in collaboration, knowledge sharing and collective growth. Verified founder profiles will be published here when supplied by the association.",
-      },
-    ],
-  },
-  governance: {
-    label: "RESPONSIBLE STEWARDSHIP",
-    title: "A clear foundation. A shared responsibility.",
-    intro:
-      "Association leadership and governing documents, in one accessible place.",
-    sections: [
-      {
-        title: "Executive Committee",
-        text: "The verified committee roster, roles and professional profiles will be published following association confirmation.",
-      },
-      {
-        title: "Sub-Committees",
-        text: "Committee responsibilities and participating members will be published as the association establishes its working groups.",
-      },
-      {
-        title: "Constitution & Bye-Laws",
-        text: "Approved governing documents are awaiting publication. No draft or unverified document is presented as official.",
-      },
-    ],
-  },
-  membership: {
-    label: "BELONG TO SOMETHING MEANINGFUL",
-    title: "A membership for your professional journey.",
-    intro:
-      "Bring your experience, your curiosity and your commitment to a stronger professional community.",
-    sections: [
-      {
-        title: "Why Become a Member",
-        text: "Connect across disciplines, participate in knowledge-sharing events, explore collaborations and contribute to initiatives that create value for members and society.",
-      },
-      {
-        title: "Membership Plans",
-        text: "Patron, Annual and Life plans share a single application workflow. Professional and student applicants have distinct eligibility requirements. Plan fees, benefits and eligibility are awaiting approval.",
-      },
-      {
-        title: "Renew Membership",
-        text: "Members will renew through their authenticated portal. Renewal availability and applicable fees will follow the confirmed membership rules.",
-      },
-    ],
-  },
-  events: {
-    label: "MEET. LEARN. PARTICIPATE.",
-    title: "Good conversations lead to new possibilities.",
-    intro:
-      "Seminars, workshops and discussions designed around professional connection and shared learning.",
-    sections: [
-      {
-        title: "Upcoming Events",
-        text: "No confirmed events have been published yet. Event dates, speakers, fees and registration availability will appear here after publication.",
-      },
-      {
-        title: "Past Events",
-        text: "The archive will bring together published event information and media. Attendance and learning-hour records remain private to each member.",
-      },
-      {
-        title: "Event Registration",
-        text: "Published events will offer free or paid registration. Registration does not count as attendance; learning hours are recorded after actual attendance and represent TPA learning activity.",
-      },
-    ],
-  },
-  resources: {
-    label: "KNOWLEDGE & PERSPECTIVE",
-    title: "Useful knowledge. Thoughtfully shared.",
-    intro:
-      "Professional insights, association media, downloadable documents and trusted reference links.",
-    sections: [
-      {
-        title: "Insights",
-        text: "Association articles and curated professional updates will be published following editorial review. Gathered news will link to its source and use attributed summaries.",
-      },
-      {
-        title: "Media",
-        text: "Published event photographs and videos will appear here. Private application photographs and certificates are never part of the public gallery.",
-      },
-      {
-        title: "Downloads",
-        text: "Approved association resources will be available here when published.",
-      },
-      {
-        title: "Important Links",
-        text: "Direct links to professional institutions and government portals are provided below.",
-      },
-    ],
-  },
-  contact: {
-    label: "START A CONVERSATION",
-    title: "Let’s connect.",
-    intro:
-      "Have a question about membership, an event or a potential collaboration? The secretariat will be your point of contact.",
-    sections: [
-      {
-        title: "Contact TPA",
-        text: "Verified association email and telephone details are awaiting confirmation.",
-      },
-      {
-        title: "Office / Secretariat",
-        text: "Tollygunge, Kolkata. The office address and visiting hours will be published once confirmed.",
-      },
-      {
-        title: "Location",
-        text: "A verified location and directions will be added alongside the confirmed office address.",
-      },
-      {
-        title: "Enquiry",
-        text: "Online enquiries will open when secure storage and staff routing are configured. Please return once the association has published its contact details.",
-      },
-    ],
-  },
-};
+import { publishedPage, publishedArticles } from "@/lib/public-content";
+import { getDatabase } from "@/lib/database";
+export const dynamic = "force-dynamic";
+import { sitePages as pages } from "@/domain/site-pages";
 export function generateStaticParams() {
   return Object.keys(pages).map((page) => ({ page }));
 }
@@ -144,7 +14,8 @@ export async function generateMetadata({
   params: Promise<{ page: string }>;
 }) {
   const { page } = await params;
-  return { title: pages[page]?.title ?? "Page not found" };
+  if (!pages[page]) return { title: "Page not found" };
+  return { title: (await publishedPage(page))?.title ?? pages[page].title };
 }
 export default async function ContentPage({
   params,
@@ -152,8 +23,19 @@ export default async function ContentPage({
   params: Promise<{ page: string }>;
 }) {
   const { page } = await params;
-  const data = pages[page];
-  if (!data) notFound();
+  const fallback = pages[page];
+  if (!fallback) notFound();
+  const live = await publishedPage(page);
+  const data = live ? { ...fallback, ...live } : fallback;
+  const articles = page === "resources" ? await publishedArticles() : [];
+  const events =
+    page === "events" && process.env.DATABASE_URL
+      ? (
+          await getDatabase().query(
+            "SELECT id,title,location,starts_at,ends_at FROM tpa.events WHERE status='published' ORDER BY starts_at DESC LIMIT 100",
+          )
+        ).rows
+      : [];
   return (
     <SiteShell>
       <main id="main">
@@ -170,7 +52,62 @@ export default async function ContentPage({
               key={section.title}
             >
               <h2>{section.title}</h2>
-              <p>{section.text}</p>
+              <p className="prose-text">{section.text}</p>
+              {page === "events" &&
+                i < 2 &&
+                events
+                  .filter((event) =>
+                    i === 0
+                      ? new Date(event.ends_at) > new Date()
+                      : new Date(event.ends_at) <= new Date(),
+                  )
+                  .map((event) => (
+                    <article className="event-row" key={event.id}>
+                      <div>
+                        <h3>
+                          <Link href={`/events/${event.id}`}>
+                            {event.title}
+                          </Link>
+                        </h3>
+                        <p>
+                          {new Date(event.starts_at).toLocaleString("en-IN", {
+                            timeZone: "Asia/Kolkata",
+                          })}{" "}
+                          IST · {event.location}
+                        </p>
+                      </div>
+                      <Link className="text-link" href={`/events/${event.id}`}>
+                        View event →
+                      </Link>
+                    </article>
+                  ))}
+              {page === "resources" &&
+                i === 0 &&
+                articles.map((article) => (
+                  <article className="event-row" key={article.slug}>
+                    <div>
+                      <h3>
+                        <Link href={`/resources/${article.slug}`}>
+                          {article.published.title}
+                        </Link>
+                      </h3>
+                      <p>{article.published.intro}</p>
+                    </div>
+                    <Link
+                      className="text-link"
+                      href={`/resources/${article.slug}`}
+                    >
+                      Read →
+                    </Link>
+                  </article>
+                ))}
+              {page === "contact" && i === 3 && (
+                <p>
+                  <Link className="button secondary" href="/member/inquiries">
+                    Sign in to send and track an inquiry →
+                  </Link>
+                </p>
+              )}
               {page === "membership" && i === 1 && (
                 <>
                   <div className="plan-grid">

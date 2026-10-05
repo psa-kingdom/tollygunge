@@ -85,6 +85,21 @@ async function cleanup() {
   stopping = true;
   server.close();
   try {
+    await pool.query(
+      "DELETE FROM tpa.inquiry_notes WHERE inquiry_id IN (SELECT id FROM tpa.inquiries WHERE user_id=$1)",
+      [id],
+    );
+    await pool.query("DELETE FROM tpa.inquiries WHERE user_id=$1", [id]);
+    await pool.query("DELETE FROM tpa.application_drafts WHERE user_id=$1", [
+      id,
+    ]);
+    await pool.query(
+      "DELETE FROM tpa.event_attendance WHERE registration_id IN (SELECT id FROM tpa.event_registrations WHERE user_id=$1)",
+      [id],
+    );
+    await pool.query("DELETE FROM tpa.event_registrations WHERE user_id=$1", [
+      id,
+    ]);
     for (const table of [
       "audit_events",
       "newsletter_consents",

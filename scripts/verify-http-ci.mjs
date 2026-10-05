@@ -28,7 +28,13 @@ try {
   if (!ready) throw new Error("Verification server did not become ready.");
   const tests = spawn(
     process.execPath,
-    ["--import", "tsx", "--test", "tests/http.integration.ts"],
+    [
+      "--import",
+      "tsx",
+      "--test",
+      "tests/http.integration.ts",
+      "tests/operations.integration.ts",
+    ],
     {
       stdio: "inherit",
       env: {

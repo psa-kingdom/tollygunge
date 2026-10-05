@@ -20,10 +20,23 @@ export default async function Member() {
         <h1>Hello, {actor.name}.</h1>
         <p>{actor.email}</p>
         <div className="notice">
-          Your account is ready. Membership approval, payments and event history
-          will appear as those services open.
+          Your account is ready. Save a membership draft, register for published
+          events and track your inquiries below. Membership approval and payment
+          services will open after association rules and checkout are
+          configured.
         </div>
         <MemberProfile storageEnabled={privateStorageConfigured()} />
+        <nav aria-label="Your account services" className="action-row">
+          <Link className="button secondary" href="/member/application">
+            Membership application
+          </Link>
+          <Link className="button secondary" href="/member/events">
+            Events & attendance
+          </Link>
+          <Link className="button secondary" href="/member/inquiries">
+            Your inquiries
+          </Link>
+        </nav>
         {actor.roles.length > 0 && (
           <p>
             <Link className="text-link" href="/admin">

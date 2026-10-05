@@ -64,6 +64,13 @@ the real administrator until delivery is configured.
 
 ## Production gate
 
+Resend is the selected transactional/campaign email provider (user decision, 2026-10-05).
+Configuration is explicitly deferred. Do not send email, provision a sender or require
+email configuration to continue independent slices. The existing SMTP recovery adapter
+is inactive; add the Resend adapter and verified sender when that phase is resumed.
+Communication template drafts are saved without queuing or sending campaigns. Official
+WhatsApp and shared mailbox/incoming-reply provider decisions remain separate gates.
+
 Storage refuses operations when NODE_ENV=production. Local credential-file access
 is not a production secret mechanism. Resolve least-privilege TPA bucket credentials
 and managed production secret storage before enabling deployed uploads. No deployment,

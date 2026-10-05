@@ -13,7 +13,13 @@ Authentication and actors: src/lib/auth*, actor.ts, database*. Business permissi
 profile, document and bounded-request policies: src/domain/.
 Own-profile API: /api/member/profile. Own-document listing/upload: /api/documents.
 Owner/reviewer download: /api/documents/[id]. Writes check origin and authenticated identity.
-Membership activation, events, registrations, orders and payments will be separate records.
+Membership activation, orders and payments remain separate pending records/workflows.
+Saved applications: /member/application and /api/member/application. Free events/history:
+/member/events and /api/member/events; public event details: /events/[id].
+Staff APIs: /api/staff/content, events, attendance, crm, communications, flyers, imports,
+reports. Workspaces mirror these domains; reports filter data by each permission.
+CMS draft preview: /admin/content/[id]; published insights/news: /resources/[slug].
+Historical attendance import validates a proposed CSV only; commit is disabled.
 
 Database migrations: migrations/*.sql; checksummed runner: scripts/migrate.mjs.
 Generated auth schema: 002_better_auth.sql; identity links: 003_identity_links.sql.
@@ -21,6 +27,7 @@ Operator approvals: 004_operator_identity.sql. Password UI: /login, /forgot-pass
 /reset-password and /member/security. SMTP recovery adapter: src/lib/auth-email.ts.
 Offline first-administrator provisioning: scripts/provision-first-admin.mts; never run
 on deployment. Local credential handoff: ignored .local/ with restricted Windows ACLs.
+Operational tables: 005_operations.sql; flyer/email drafts: 006_publishing_templates.sql.
 Unit, PostgreSQL and HTTP checks: tests/. CI runs against disposable PostgreSQL.
 Local R2 smoke: npm run test:storage. Local HTTP: set TPA_TEST_URL to the running app
 and optionally TPA_TEST_STORAGE=true, then npm run test:http. Fixtures remove their

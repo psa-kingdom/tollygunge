@@ -1097,3 +1097,19 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+.operations-layout {display:grid;grid-template-columns:minmax(200px,260px) minmax(0,1fr);gap:36px;margin-top:28px;}
+.record-list {display:flex;flex-direction:column;gap:8px;align-self:start;}
+.record-list > button:not(.button) {text-align:left;padding:16px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;overflow-wrap:anywhere;}
+.record-list > button.selected {background:#edf0eb;border-color:var(--navy);}
+.record-list small,.operations-table small {display:block;color:var(--muted);margin-top:5px;}
+.member-settings textarea {width:100%;min-height:120px;padding:12px;border:1px solid #ccd0d5;border-radius:6px;background:white;font:inherit;resize:vertical;}
+.member-settings fieldset {display:grid;gap:16px;border:1px solid var(--line);padding:20px;min-width:0;}
+.member-settings legend {padding:0 6px;font-weight:600;}
+.action-row {display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:24px 0;}
+.table-scroll {overflow:auto;max-width:100%;}
+.operations-table {width:100%;border-collapse:collapse;text-align:left;font-size:14px;}
+.operations-table th,.operations-table td {padding:14px;border-bottom:1px solid var(--line);vertical-align:top;}
+.operations-table th {font-weight:600;color:var(--muted);}
+.prose-text {white-space:pre-wrap;overflow-wrap:anywhere;}
+.flyer-preview {width:100%;height:auto;border:1px solid var(--line);border-radius:8px;}
+@media(max-width:800px){.operations-layout{grid-template-columns:minmax(0,1fr);}.record-list{max-height:300px;overflow:auto;}}
