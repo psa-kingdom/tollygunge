@@ -1,6 +1,7 @@
 import { SiteShell } from "@/components/site-shell";
 import { GoogleSignIn } from "@/components/auth-controls";
 import { authConfigured } from "@/lib/auth";
+import { PasswordSignIn } from "@/components/password-controls";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Member sign-in",
@@ -21,16 +22,16 @@ export default function Login() {
         <section className="login-panel">
           <h2>Sign in securely</h2>
           <p>
-            Use your Google account to continue. A TPA account does not
+            Sign in with your assigned account. A TPA account does not
             automatically confer approved membership.
           </p>
+          <PasswordSignIn enabled={authConfigured()} />
           <GoogleSignIn enabled={enabled} />
           {!enabled && (
             <p className="notice">
               Google sign-in is being configured. Please check back shortly.
             </p>
           )}
-          <p>Email sign-in will follow verified email delivery.</p>
         </section>
       </main>
     </SiteShell>

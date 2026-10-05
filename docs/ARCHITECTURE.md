@@ -48,3 +48,13 @@ failures create an audit event for reconciliation. Original Cloudflare credentia
 read transiently from their source file only during local development. Deployed storage
 is disabled until a managed production secret mechanism is confirmed. File signatures
 are format checks, not malware scanning; production hardening must consider scanning.
+
+## Operator-provisioned password identity
+
+Authentication and mailbox verification remain distinct. Public password registration is
+closed. Offline, user-authorized provisioning may grant a staff role and insert an explicit
+operator-approved identity record; it does not mark emailVerified true. Business access
+requires either verified email or that server-owned approval record. Role checks still run
+on every request. Removing approval from an unverified identity immediately blocks its
+business access. Password recovery is provider-gated, single-use, expires in 15 minutes
+and revokes sessions; recovery never assigns privileges. Production uses managed secrets.

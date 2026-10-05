@@ -17,6 +17,10 @@ Membership activation, events, registrations, orders and payments will be separa
 
 Database migrations: migrations/*.sql; checksummed runner: scripts/migrate.mjs.
 Generated auth schema: 002_better_auth.sql; identity links: 003_identity_links.sql.
+Operator approvals: 004_operator_identity.sql. Password UI: /login, /forgot-password,
+/reset-password and /member/security. SMTP recovery adapter: src/lib/auth-email.ts.
+Offline first-administrator provisioning: scripts/provision-first-admin.mts; never run
+on deployment. Local credential handoff: ignored .local/ with restricted Windows ACLs.
 Unit, PostgreSQL and HTTP checks: tests/. CI runs against disposable PostgreSQL.
 Local R2 smoke: npm run test:storage. Local HTTP: set TPA_TEST_URL to the running app
 and optionally TPA_TEST_STORAGE=true, then npm run test:http. Fixtures remove their

@@ -39,12 +39,29 @@ review interactions. See parent preview-evidence for screenshots outside Git.
 
 ## Remaining gates
 
-Google OAuth client configuration, user-approved first staff identity, two Cloudflare
+Google OAuth client configuration, verified password-recovery email sender, two Cloudflare
 OAuth consents and managed production secret storage. Real Google login cannot be
 verified without its client configuration. No production application deployment yet.
 
 Future slices: CMS; membership/payments; events/member history; CRM/communications;
 flyers/news; reports/hardening. Placeholder workspaces are not completed modules.
-Membership activation, payments, email delivery and external CPE accreditation remain
+Membership activation, payments, live email delivery and external CPE accreditation remain
 outside this slice. Approved fees, eligibility, declarations, refund terms, learning-hour
 rules, verified association copy and historical import mapping are still needed.
+
+## Administrator password follow-up
+
+The user-approved Gmail administrator is now provisioned with an explicit server-side
+administrator role, a separate profile and an auditable operator-approved identity record.
+Mailbox verification is not fabricated. Initial password is generated locally, handed off
+through a Windows ACL-protected ignored file and stored only as a scrypt hash in PostgreSQL.
+Password sign-in, authenticated password change, recovery request and reset screens are
+implemented. Public password signup stays closed. Recovery email awaits a verified sender.
+
+PostgreSQL tests verify successful/failed password login, disabled signup, current-password
+checks, expired/single-use reset tokens, session revocation and no automatic staff grant.
+The approved administrator's real local login, staff access, security route and sign-out
+were verified without printing credentials. Lint, unit tests, build and TypeScript passed.
+Browser verified the real administrator sign-in, protected security page, sign-out,
+keyboard focus and mobile password/recovery layouts. HTTP checks verified operator
+approval removal immediately blocks access. Password changes/reset actions are audited.

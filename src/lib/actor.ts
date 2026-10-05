@@ -7,7 +7,14 @@ export async function currentActor(requestHeaders?: Headers) {
   const session = await getAuth().api.getSession({
     headers: requestHeaders ?? (await headers()),
   });
-  if (!session || !session.user.emailVerified) return null;
+  if (!session) return null;
+  if (!session.user.emailVerified) {
+    const approved = await getDatabase().query(
+      "SELECT 1 FROM tpa.operator_approved_identities WHERE user_id=$1",
+      [session.user.id],
+    );
+    if (!approved.rowCount) return null;
+  }
   const { rows } = await getDatabase().query<{ role: string }>(
     "SELECT role FROM tpa.staff_roles WHERE user_id=$1",
     [session.user.id],

@@ -7,3 +7,4 @@ out/
 references/
 .postgres-ca.pem
 Credential.md
+.local/

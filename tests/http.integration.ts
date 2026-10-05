@@ -61,6 +61,26 @@ test(
       ])
         assert.equal((await request(path)).status, 401);
       assert.equal((await request("/member", 0)).status, 200);
+      await pool.query(
+        'UPDATE public."user" SET "emailVerified"=false WHERE id=$1',
+        [people[0]],
+      );
+      assert.equal((await request("/api/member/profile", 0)).status, 401);
+      await pool.query(
+        "INSERT INTO tpa.operator_approved_identities(user_id,source) VALUES($1,'user_authorized_bootstrap')",
+        [people[0]],
+      );
+      assert.equal((await request("/api/member/profile", 0)).status, 200);
+      // Removing operator approval revokes business access without needing cookie expiry.
+      await pool.query(
+        "DELETE FROM tpa.operator_approved_identities WHERE user_id=$1",
+        [people[0]],
+      );
+      assert.equal((await request("/api/member/profile", 0)).status, 401);
+      await pool.query(
+        'UPDATE public."user" SET "emailVerified"=true WHERE id=$1',
+        [people[0]],
+      );
       assert.equal(
         (await request("/admin", 0)).headers.get("location"),
         "/member",

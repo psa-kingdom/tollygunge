@@ -35,10 +35,32 @@ The runner verifies TPA_DATABASE_NAME and serializes checksummed transactional c
 Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET locally without sharing secrets in chat.
 Register a Google web OAuth client with local origin http://127.0.0.1:3000 and redirect
 URI http://127.0.0.1:3000/api/auth/callback/google. A production origin and callback must
-be configured before deployment. Sign-in stays disabled until configuration is complete.
-Email/password and passkeys are disabled; email sign-in awaits verified delivery.
-No account receives staff roles automatically. Initial staff access requires the user's
-explicitly approved, verified identity.
+be configured before deployment. Google sign-in stays disabled until configuration is complete.
+Password sign-in is enabled for explicitly provisioned accounts; public password signup
+is disabled. Passkeys remain deferred. Ordinary identities require verified email for
+business access. The user's explicitly approved first administrator is provisioned by
+an offline script and an auditable `operator_approved_identities` record; its emailVerified
+flag remains false until mailbox ownership is actually proven. No signup, login or email
+comparison automatically grants a staff role.
+
+The approved first administrator is tollygungecacpestudycircle@gmail.com. Its initial
+password was generated with 192 bits of randomness and hashed with Better Auth's scrypt.
+The local handoff is `.local/first-admin-password.txt` in an ignored directory with Windows
+ACLs restricted to the current Windows user and SYSTEM. Read it locally, save the password
+in a password manager, change it at `/member/security`, then delete the handoff file.
+Never paste it into chat, logs or Git. `scripts/provision-first-admin.mts` requires explicit
+approval, checks the target database and refuses existing identities/administrators;
+rerunning does not rotate credentials or silently grant roles.
+
+Configure SMTP_HOST, SMTP_PORT (465 or 587), SMTP_USER, SMTP_PASSWORD and AUTH_EMAIL_FROM
+using a verified transactional sender in secret storage. SMTP certificate validation and
+TLS are mandatory; provider diagnostics are not logged. No sender is configured yet,
+so `/forgot-password` accurately displays recovery as unavailable. Reset links carry the
+token in a URL fragment (not a server request URL), expire in 15 minutes, work once and
+revoke all sessions after reset. `/member/security` changes an existing password with
+current-password verification and revokes other sessions. Recovery never grants roles,
+membership or mailbox verification. Replacing a password via email is not tested against
+the real administrator until delivery is configured.
 
 ## Production gate
 

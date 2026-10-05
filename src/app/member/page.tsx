@@ -32,6 +32,11 @@ export default async function Member() {
           </p>
         )}
         <SignOut />
+        <p>
+          <Link className="text-link" href="/member/security">
+            Account security →
+          </Link>
+        </p>
       </main>
     </SiteShell>
   );

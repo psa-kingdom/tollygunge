@@ -1059,6 +1059,10 @@ td small {
 .member-settings {
   max-width: 680px;
 }
+form.member-settings {
+  display: grid;
+  gap: 18px;
+}
 .member-settings section {
   padding: 28px 0;
   border-bottom: 1px solid var(--border, #e6e6df);
