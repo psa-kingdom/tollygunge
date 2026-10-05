@@ -17,7 +17,7 @@ export function GoogleSignIn({ enabled }: { enabled: boolean }) {
           try {
             const result = await client.signIn.social({
               provider: "google",
-              callbackURL: "/member",
+              callbackURL: "/account",
             });
             if (result.error) {
               setError("Sign-in could not start. Please try again later.");

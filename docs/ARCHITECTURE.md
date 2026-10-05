@@ -98,3 +98,20 @@ image is stored. Staff explicitly publish saved description snapshots. Public re
 require a published media row and use no-store responses, allowing unpublication to
 close future access. Authorized content editors can preview drafts. There is no
 endpoint that converts a private application document to public media.
+# Account and payment instruction boundaries
+
+`/account` chooses the destination from server-owned roles. Staff sign-in goes to
+`/admin`, ordinary approved identities go to `/member`, and anonymous visitors go
+to login. Staff visiting `/member` redirect to their workspace; their own profile
+is accessible through `/account/profile`. Account pages use a dedicated header.
+Public pages remain public and personalize only their workspace/login action;
+request headers make these renders dynamic rather than shared session output.
+
+Payment instruction records are not payment/order/membership states. Draft saves
+and explicit Active/Draft/Past transitions use record locks and versions. Active
+snapshots stay stable across draft edits. Activation requires authorized finance
+access and a payee confirmation. All revisions and state transitions are audited.
+QR snapshots reference a separate private image table through generated foreign-key
+columns, preserving historical file references. Member QR reads require a currently
+Active snapshot; finance reads allow private previews. No public gallery or document
+endpoint accepts a payment QR record. No scanning or screenshot authorizes payment.

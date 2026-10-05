@@ -1144,3 +1144,10 @@ button:disabled {
   margin: 0;
   flex: 0 0 auto;
 }
+.account-header { flex-wrap:wrap; gap:20px; }
+.account-header nav { display:flex; flex-wrap:wrap; gap:16px; align-items:center; }
+.account-header nav a {font-size:14px; padding:8px 0;}
+.account-header .brand {flex-shrink:0;}
+.payment-confirm {display:flex;gap:12px;align-items:flex-start; margin:20px 0;}
+.payment-confirm input {margin-top:6px;flex:0 0 auto;}
+@media(max-width:800px){.account-header {padding:20px;}.account-header nav {width:100%;}.account-header .brand-name {display:none;}}

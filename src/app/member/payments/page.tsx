@@ -1,22 +1,20 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { currentActor } from "@/lib/actor";
-import { AccountShell as SiteShell } from "@/components/site-shell";
-import { MemberEvents } from "@/components/member-events";
+import { AccountShell } from "@/components/site-shell";
+import { MemberPaymentDetails } from "@/components/payment-details";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Your events",
+  title: "Payment details",
   robots: { index: false, follow: false },
 };
 export default async function Page() {
   if (!(await currentActor())) redirect("/login");
   return (
-    <SiteShell>
+    <AccountShell>
       <main id="main" className="page-content">
-        <Link href="/member">← Your member space</Link>
-        <h1>Events & attendance</h1>
-        <MemberEvents />
+        <h1>Association payment details</h1>
+        <MemberPaymentDetails />
       </main>
-    </SiteShell>
+    </AccountShell>
   );
 }

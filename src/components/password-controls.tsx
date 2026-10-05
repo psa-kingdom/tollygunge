@@ -50,7 +50,7 @@ export function PasswordSignIn({ enabled }: { enabled: boolean }) {
             );
             return;
           }
-          router.replace("/member");
+          router.replace("/account");
           router.refresh();
         } catch {
           setMessage("Unable to connect. Please try again.");

@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { SiteShell } from "@/components/site-shell";
-import { SignOut } from "@/components/auth-controls";
+import { AccountShell as SiteShell } from "@/components/site-shell";
 import { currentActor } from "@/lib/actor";
 import { MemberProfile } from "./profile";
 import { privateStorageConfigured } from "@/lib/private-storage";
@@ -13,6 +12,7 @@ export const metadata = {
 export default async function Member() {
   const actor = await currentActor();
   if (!actor) redirect("/login");
+  if (actor.roles.length) redirect("/admin");
   return (
     <SiteShell>
       <main id="main" className="page-content">
@@ -36,15 +36,10 @@ export default async function Member() {
           <Link className="button secondary" href="/member/inquiries">
             Your inquiries
           </Link>
+          <Link className="button secondary" href="/member/payments">
+            Association payment details
+          </Link>
         </nav>
-        {actor.roles.length > 0 && (
-          <p>
-            <Link className="text-link" href="/admin">
-              Open staff workspace →
-            </Link>
-          </p>
-        )}
-        <SignOut />
         <p>
           <Link className="text-link" href="/member/security">
             Account security →

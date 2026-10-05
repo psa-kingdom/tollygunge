@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { currentActor } from "@/lib/actor";
-import { SiteShell } from "@/components/site-shell";
+import { AccountShell as SiteShell } from "@/components/site-shell";
 import { PasswordUpdate } from "@/components/password-controls";
 import Link from "next/link";
 export const dynamic = "force-dynamic";

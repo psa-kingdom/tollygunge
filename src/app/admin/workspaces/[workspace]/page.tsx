@@ -11,6 +11,7 @@ import { FlyerBuilder } from "@/components/flyer-builder";
 import { HistoryImport } from "@/components/history-import";
 import { StaffAccess } from "@/components/staff-access";
 import { MediaWorkspace } from "@/components/media-workspace";
+import { PaymentDetailsManager } from "@/components/payment-details";
 const permissions: Record<string, Permission> = {
   members: "members:review",
   events: "events:manage",
@@ -69,11 +70,7 @@ export default async function Workspace({
           declarations, refund terms and payment verification are confirmed.
         </div>
       ) : workspace === "payments" ? (
-        <div className="notice">
-          Payment collection, receipts and refunds await approved financial rules
-          and transaction verification. Your UPI payment QR will be added when
-          supplied; Razorpay setup is deferred. No payment has been collected.
-        </div>
+        <PaymentDetailsManager />
       ) : (
         <>
           <p className="notice">

@@ -1,6 +1,14 @@
-# Implementation status — 2026-10-05
+# Implementation status — 2026-10-06
 
 ## Working locally
+
+- Role-based sign-in/entry, staff redirection away from `/member`, separate signed-in
+  account navigation and an own-profile route for staff. Public navigation substitutes
+  workspace actions for login/join when signed in. See `ACCOUNT_VISIBILITY.md`.
+- Multiple editable UPI payment instruction records with payee/UPI/contact/QR,
+  Draft/Active/Past states, immutable revisions, stale-save protection, explicit
+  activation confirmation and active snapshots. Private QR upload/read paths retain
+  historical image references. No transactions are marked paid. See `PAYMENT_DETAILS.md`.
 
 - Public navy/gold website and responsive navigation.
 - PostgreSQL-backed Better Auth sessions, approved first administrator, password
@@ -34,7 +42,7 @@
 - Historical attendance CSV preview, header/date validation, existing-identity/event
   matching, ambiguous-person errors and duplicate detection. Nothing is committed.
 
-Migrations 001–007 use the checksummed, database-identity-checked transactional runner.
+Migrations 001–009 use the checksummed, database-identity-checked transactional runner.
 Dedicated Railway `tpa-platform` PostgreSQL and private R2 `tpa-private-documents`
 remain separate from other projects. Original Cloudflare credential values remain in
 only their supplied file; local operations read them transiently. No production app
@@ -43,7 +51,7 @@ pending, while Docs, Builds and Observability are available as previously verifi
 
 ## Verification
 
-16 unit tests cover permissions, file boundaries/cleanup, image decoding/metadata removal, input validation, protected
+17 unit tests cover permissions, file boundaries/cleanup, image decoding/metadata removal, payment instruction validation, input validation, protected
 sitemap sections, attributed news restrictions, unapproved payment/hour rejection and
 CSV parsing/duplicates. PostgreSQL tests cover repeatable migrations, foreign keys,
 password/reset token behavior, audits and session revocation. HTTP tests cover all
@@ -51,6 +59,17 @@ staff permissions and member isolation, publication snapshots/conflicts, private
 application drafts/document ownership, concurrent last-seat registration, duplicate
 check-ins, cancellation history, CRM note privacy, disabled delivery and import commit.
 Synthetic records and any earlier storage objects are removed after tests.
+The payment/navigation HTTP flow verifies ordinary/staff landing routes, account
+headers, anonymous/non-finance denials, active-snapshot isolation during edits,
+activation confirmation, stale revision rejection, Past/Draft visibility and QR
+ownership boundaries. A synthetic UPI QR uploaded to private R2 decoded correctly
+after lossless normalization; the object, instruction revisions and test identities
+were removed. Migrations 008–009 were applied and repeatability checked.
+Browser verified administrator `/member` redirection, staff profile navigation,
+ordinary-account navigation, repeated payment draft edits and moving a draft to Past.
+The temporary ordinary-account proxy rendered navigation but its client data remained
+loading; ordinary-account data behavior was verified by HTTP instead. No real payment
+instructions or funds were changed. The named synthetic UI record was removed.
 Additional HTTP checks cover staff identity eligibility, stale role replacements,
 no-op session preservation, immediate revocation, audit visibility and concurrent
 administrator removals. Editorial media tests cover private draft denial, separate

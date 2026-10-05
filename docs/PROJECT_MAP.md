@@ -5,6 +5,12 @@ Next.js App Router/TypeScript with Better Auth, PostgreSQL and private R2 docume
 Public: /, /about, /governance, /membership, /events, /resources, /contact.
 Sign-in: /login and /api/auth/*. Protected account portal: /member.
 Protected staff: /admin and /admin/workspaces/[workspace].
+Role-based entry: /account. Own profile for either staff or members: /account/profile.
+Account pages use AccountShell; public SiteShell reflects signed-in workspace actions.
+Payment instructions: /admin/workspaces/payments, /api/staff/payment-details,
+/api/staff/payment-qr, /api/payment-qr/[id], /member/payments and
+/api/member/payment-details. Migrations 008–009 preserve instruction revisions
+and QR references; these do not create paid transactions or membership approval.
 Synthetic administrative preview: /preview/admin. /join remains an explicitly
 labelled application design preview; it does not submit applications or collect payments.
 

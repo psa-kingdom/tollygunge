@@ -10,6 +10,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { privateObjectKey } from "@/domain/documents";
 import { mediaObjectKey } from "@/domain/media";
+import { paymentQrKey } from "@/domain/payment-details";
 export function privateStorageConfigured() {
   return (
     process.env.NODE_ENV !== "production" &&
@@ -106,4 +107,34 @@ export async function removeEditorialMedia(id: string) {
   await client.send(
     new DeleteObjectCommand({ Bucket: bucket, Key: mediaObjectKey(id) }),
   );
+}
+export async function paymentQrStorage(
+  id: string,
+  action: "read" | "store" | "remove",
+  bytes?: Uint8Array,
+) {
+  const { bucket, client } = storage(),
+    Key = paymentQrKey(id);
+  if (action === "store") {
+    if (!bytes) throw new Error("Image required.");
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key,
+        Body: bytes,
+        ContentType: "image/png",
+        CacheControl: "private, no-store",
+      }),
+    );
+    return;
+  }
+  if (action === "remove") {
+    await client.send(new DeleteObjectCommand({ Bucket: bucket, Key }));
+    return;
+  }
+  const response = await client.send(
+    new GetObjectCommand({ Bucket: bucket, Key }),
+  );
+  if (!response.Body) throw new Error("Image unavailable.");
+  return response.Body.transformToByteArray();
 }

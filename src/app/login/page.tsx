@@ -2,12 +2,16 @@ import { SiteShell } from "@/components/site-shell";
 import { GoogleSignIn } from "@/components/auth-controls";
 import { authConfigured } from "@/lib/auth";
 import { PasswordSignIn } from "@/components/password-controls";
+import { currentActor } from "@/lib/actor";
+import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Member sign-in",
   robots: { index: false, follow: false },
 };
-export default function Login() {
+export default async function Login() {
+  const actor = await currentActor();
+  if (actor) redirect(actor.roles.length ? "/admin" : "/member");
   const enabled =
     authConfigured() &&
     Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);

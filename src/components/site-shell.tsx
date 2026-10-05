@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { currentActor } from "@/lib/actor";
+import { SignOut } from "./auth-controls";
 export const navigation = [
   {
     title: "About",
@@ -40,7 +42,8 @@ export function Brand() {
     </Link>
   );
 }
-export function Header() {
+export async function Header() {
+  const actor = await currentActor();
   return (
     <header className="site-header">
       <Brand />
@@ -63,12 +66,18 @@ export function Header() {
         <Link href="/contact">Contact</Link>
       </nav>
       <div className="header-actions">
-        <Link href="/login" className="login-link">
-          Member login ↗
+        <Link href={actor ? "/account" : "/login"} className="login-link">
+          {actor
+            ? actor.roles.length
+              ? "Staff workspace ↗"
+              : "Your account ↗"
+            : "Member login ↗"}
         </Link>
-        <Link className="button small" href="/join">
-          Join TPA <span>→</span>
-        </Link>
+        {!actor && (
+          <Link className="button small" href="/join">
+            Join TPA <span>→</span>
+          </Link>
+        )}
       </div>
       <details className="mobile-nav">
         <summary>Menu</summary>
@@ -84,10 +93,45 @@ export function Header() {
             </details>
           ))}
           <Link href="/contact">Contact</Link>
-          <Link href="/login">Member login</Link>
+          <Link href={actor ? "/account" : "/login"}>
+            {actor ? "Your workspace" : "Member login"}
+          </Link>
         </nav>
       </details>
     </header>
+  );
+}
+export async function AccountShell({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const actor = await currentActor();
+  const staff = Boolean(actor?.roles.length);
+  return (
+    <>
+      <header className="site-header account-header">
+        <Brand />
+        <nav aria-label="Account navigation">
+          <Link href={staff ? "/admin" : "/member"}>
+            {staff ? "Staff workspace" : "Your account"}
+          </Link>
+          <Link href="/account/profile">Profile</Link>
+          {!staff && (
+            <>
+              <Link href="/member/application">Application</Link>
+              <Link href="/member/events">Events</Link>
+              <Link href="/member/inquiries">Inquiries</Link>
+              <Link href="/member/payments">Payment details</Link>
+            </>
+          )}
+          <Link href="/member/security">Security</Link>
+          <Link href="/">Public website</Link>
+        </nav>
+        <SignOut />
+      </header>
+      {children}
+    </>
   );
 }
 export function Footer() {

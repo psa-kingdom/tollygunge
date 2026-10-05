@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { currentActor } from "@/lib/actor";
-import { SiteShell } from "@/components/site-shell";
+import { AccountShell as SiteShell } from "@/components/site-shell";
 import { Inquiries } from "@/components/inquiries";
 export const dynamic = "force-dynamic";
 export const metadata = {

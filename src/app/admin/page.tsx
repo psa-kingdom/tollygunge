@@ -74,7 +74,7 @@ export default async function Admin() {
             ))}
         </nav>
         <Link href="/admin/workspaces/reports">Reports</Link>
-        <Link href="/member">Your profile</Link>
+        <Link href="/account/profile">Your profile</Link>
         <SignOut />
       </aside>
       <main id="main" className="workspace-main">
