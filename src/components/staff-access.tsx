@@ -164,7 +164,7 @@ export function StaffAccess() {
                 disabled={
                   busy ||
                   selected.id === directory?.actorId ||
-                  !selected.eligible
+                  (!selected.eligible && !selected.roles.length)
                 }
               >
                 <legend>Staff responsibilities</legend>
@@ -172,6 +172,7 @@ export function StaffAccess() {
                   <label className="check-label" key={role}>
                     <input
                       type="checkbox"
+                      disabled={!selected.eligible && !chosen.includes(role)}
                       checked={chosen.includes(role)}
                       onChange={(e) =>
                         setChosen(
