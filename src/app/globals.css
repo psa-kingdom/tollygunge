@@ -1242,3 +1242,7 @@ button:disabled {
 .directory-recents { border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:18px 0; margin-bottom:22px; }
 .directory-recents h2 { font-size:19px; }.directory-recents h3 { font-size:14px; }.directory-recents p { font-size:12px; }.directory-recents .button { padding:8px 12px; }
 @media(max-width:850px) { .directory-layout {grid-template-columns:1fr;}.directory-preview {position:static;grid-row:1;} }
+
+.workspace-tabs {display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--line);padding:20px 0 12px;margin-bottom:22px;}
+.workspace-tabs button {border:1px solid var(--line);background:white;border-radius:7px;padding:10px 18px;color:var(--navy);cursor:pointer;font:inherit;font-size:13px;}
+.workspace-tabs button[aria-selected=true] {background:var(--navy);color:white;border-color:var(--navy);}

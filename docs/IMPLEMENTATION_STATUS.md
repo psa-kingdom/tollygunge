@@ -177,3 +177,21 @@ publication rendered the actual synthetic R2 image on homepage and Resources,
 and withdrawal removed both public listings and closed anonymous image access.
 Synthetic account, media metadata/audits and the R2 object were removed, with
 object absence checked. Native mobile interaction still requires later verification.
+
+## Campaign preparation
+
+Migration 014 adds campaign drafts and immutable revisions. Communications uses
+keyboard-accessible Campaign drafts / Email templates panels. Drafts support saved
+plain-text content, template reuse, city/profession audience filters, live eligible
+recipient previews, versioned edits, archive/restore and audit records. Preview
+excludes unsubscribed users, unverified email and disabled optional messages.
+Send, scheduling and enqueue operations remain disabled while Resend is deferred;
+no actual deliveries or delivery-status records are manufactured. See CAMPAIGNS.md.
+
+Validation: 23 unit tests, 4 PostgreSQL tests, migration repeatability, lint,
+TypeScript and production build passed. Campaign HTTP verification covered role
+isolation, current consent/preferences, concurrent edits, revisions and blocked
+send actions. Browser verified template reuse, keyboard tabs, preserved editors,
+archive/restore and revision history, and recipient removal after consent withdrawal.
+Synthetic campaign, template and recipient records were removed after verification.
+Native mobile interaction remains unverified.

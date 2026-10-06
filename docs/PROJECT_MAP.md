@@ -75,3 +75,8 @@ Staff account directory: /api/staff/members, src/components/members-workspace.ts
 docs/MEMBER_DIRECTORY.md documents filtering, permissions and temporary recents.
 Homepage editorial media: src/components/public-media.tsx plus published placement
 in public_media JSON; docs/MEDIA_PUBLICATION.md documents save/publish/withdraw.
+
+Campaign preparation: migration 014, src/domain/campaigns.ts,
+/api/staff/campaigns, src/components/campaign-workspace.tsx and
+communications-workspace.tsx panels. See docs/CAMPAIGNS.md. The new campaign HTTP
+flow runs in test:http and CI; provider delivery is intentionally gated.

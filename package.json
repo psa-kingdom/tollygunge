@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "test": "tsx --test tests/*.test.ts",
     "test:db": "node --env-file-if-exists=.env.local --import tsx --test tests/database.integration.ts tests/identity.integration.ts",
-    "test:http": "node --env-file-if-exists=.env.local --import tsx --test tests/http.integration.ts tests/operations.integration.ts tests/media.integration.ts tests/payment-details.integration.ts tests/inquiries.integration.ts tests/governance.integration.ts",
+    "test:http": "node --env-file-if-exists=.env.local --import tsx --test tests/http.integration.ts tests/operations.integration.ts tests/media.integration.ts tests/payment-details.integration.ts tests/inquiries.integration.ts tests/governance.integration.ts tests/campaigns.integration.ts",
     "test:storage": "node --env-file-if-exists=.env.local --import tsx scripts/verify-storage.mts",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs"
   },

@@ -38,6 +38,7 @@ try {
       "tests/payment-details.integration.ts",
       "tests/inquiries.integration.ts",
       "tests/governance.integration.ts",
+      "tests/campaigns.integration.ts",
     ],
     {
       stdio: "inherit",
