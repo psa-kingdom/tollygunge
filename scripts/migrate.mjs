@@ -14,9 +14,11 @@ const pool = new Pool({
     process.env.DATABASE_SSL === "true"
       ? {
           rejectUnauthorized: true,
-          ca: process.env.DATABASE_CA_FILE
-            ? readFileSync(process.env.DATABASE_CA_FILE, "utf8")
-            : undefined,
+          ca:
+            process.env.DATABASE_CA_PEM ||
+            (process.env.DATABASE_CA_FILE
+              ? readFileSync(process.env.DATABASE_CA_FILE, "utf8")
+              : undefined),
           checkServerIdentity: process.env.DATABASE_TLS_SERVERNAME
             ? (_host, cert) =>
                 checkServerIdentity(process.env.DATABASE_TLS_SERVERNAME, cert)

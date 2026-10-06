@@ -2,6 +2,10 @@ import "server-only";
 import { readFileSync } from "node:fs";
 import { parseR2Credentials } from "@/domain/r2-credentials";
 import {
+  managedStorageCredentials,
+  storageMode,
+} from "@/domain/storage-configuration";
+import {
   GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
@@ -12,26 +16,16 @@ import { privateObjectKey } from "@/domain/documents";
 import { mediaObjectKey } from "@/domain/media";
 import { paymentQrKey } from "@/domain/payment-details";
 export function privateStorageConfigured() {
-  return (
-    process.env.NODE_ENV !== "production" &&
-    Boolean(
-      process.env.R2_BUCKET_NAME && process.env.CLOUDFLARE_CREDENTIAL_FILE,
-    )
-  );
+  return Boolean(storageMode(process.env));
 }
 function storage() {
   const { R2_BUCKET_NAME, CLOUDFLARE_CREDENTIAL_FILE } = process.env;
-  // Local development reads the original supplied file. Deployed uploads stay disabled
-  // until a production secret mechanism is explicitly selected.
-  if (
-    !privateStorageConfigured() ||
-    !CLOUDFLARE_CREDENTIAL_FILE ||
-    !R2_BUCKET_NAME
-  )
+  if (!privateStorageConfigured() || !R2_BUCKET_NAME)
     throw new Error("TPA private document storage is not configured.");
-  const credentials = parseR2Credentials(
-    readFileSync(CLOUDFLARE_CREDENTIAL_FILE, "utf8"),
-  );
+  // Production uses independently scoped managed secrets, never the supplied file.
+  const credentials =
+    managedStorageCredentials(process.env) ??
+    parseR2Credentials(readFileSync(CLOUDFLARE_CREDENTIAL_FILE!, "utf8"));
   return {
     bucket: R2_BUCKET_NAME,
     client: new S3Client({

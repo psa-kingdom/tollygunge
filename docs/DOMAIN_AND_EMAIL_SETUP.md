@@ -9,7 +9,7 @@ and `www` CNAME to the apex. No MX/TXT answer was observed at the apex;
 These are public observations, not proof of account ownership or hosting readiness.
 
 Official Hostinger remote MCP is registered at `https://mcp.hostinger.com`.
-OAuth consent is pending. No DNS changes were made. Existing unrelated MCP
+OAuth consent completed. Hostinger tools are not yet available in the running chat; a Codex restart or local API-token handoff is required. No DNS changes were made. Existing unrelated MCP
 configuration was preserved; no token was written into configuration.
 
 Vercel CLI authentication succeeds, but there is no TPA project in the current
@@ -36,13 +36,13 @@ backend dashboards. Never distribute database connection URLs.
 
 1. Complete Hostinger OAuth and snapshot the current authoritative zone.
 2. Choose deployment roles and inspect hosting cost before resource creation.
-   Vercel is available for the integrated app, Railway for PostgreSQL and a later
+   The authenticated Vercel scope is Hobby (personal non-commercial use only). Railway app hosting is proposed pending cost approval, alongside PostgreSQL and a later
    worker, R2 for private storage. Hostinger remains registrar/DNS provider.
 3. Resolve managed runtime secrets. Generate an independent auth secret;
    configure database identity and verified TLS, canonical Better Auth origin,
    and a separate scoped R2 credential. Original Cloudflare credential values
    must remain only in their original file. Production storage currently refuses
-   local credential-file loading and needs an explicit production adapter.
+   local credential-file loading; the managed-secret adapter is implemented.
 4. Deploy and verify a staging origin before routing the purchased domain.
    Obtain the hosting provider's exact DNS targets and verification records;
    preserve existing MX/TXT/CAA and export a rollback snapshot.
@@ -72,3 +72,23 @@ tracking should stay disabled for recovery messages.
 Sources: [Hostinger MCP](https://www.hostinger.com/support/11079316-hostinger-api-mcp-server/),
 [Resend domains](https://resend.com/docs/dashboard/domains/introduction),
 [Resend SMTP](https://resend.com/docs/send-with-smtp).
+
+## Managed-secret authorization and packaging
+
+Managed hosting secrets were authorized. The app now accepts independent R2
+managed credentials and inline DATABASE_CA_PEM while preserving TLS verification.
+Production never reads CLOUDFLARE_CREDENTIAL_FILE. The supplied token could not
+verify token-management access; a new bucket-scoped object credential is still
+required. Original secrets remain only in their original file.
+
+Dockerfile builds a non-root standalone Next.js runtime. Docker context excludes
+local environment files, credentials, handoffs, certificates and repository data.
+No local Docker daemon is running, so container execution is unverified. Standalone
+Node runtime smoke passed: health ready, homepage 200, anonymous admin redirected
+to login. 26 unit tests, 4 database tests, lint, build and TypeScript passed.
+
+Railway cost approval is pending: indicative incremental app use US$3–6/month
+plus traffic for 0.25–0.5 GB average RAM and 0.01–0.05 vCPU. This is an estimate,
+not a spending cap. No account limits, plans or resources were changed.
+
+Resend remains deferred and no mail was sent. DNS remains unchanged.

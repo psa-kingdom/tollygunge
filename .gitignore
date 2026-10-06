@@ -8,3 +8,4 @@ references/
 .postgres-ca.pem
 Credential.md
 .local/
+.vercel/

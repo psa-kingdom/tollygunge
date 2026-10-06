@@ -13,9 +13,11 @@ export function databaseOptions(
       env.DATABASE_SSL === "true"
         ? {
             rejectUnauthorized: true,
-            ca: env.DATABASE_CA_FILE
-              ? readFileSync(env.DATABASE_CA_FILE, "utf8")
-              : undefined,
+            ca:
+              env.DATABASE_CA_PEM ||
+              (env.DATABASE_CA_FILE
+                ? readFileSync(env.DATABASE_CA_FILE, "utf8")
+                : undefined),
             servername: env.DATABASE_TLS_SERVERNAME,
             checkServerIdentity: env.DATABASE_TLS_SERVERNAME
               ? (_host, cert) =>
