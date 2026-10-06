@@ -200,3 +200,10 @@ HTTPS and verified administrator login/sign-out/revocation. Managed secrets are
 approved; original Cloudflare credentials were not copied. Uploads remain disabled
 until an independent scoped credential is configured. See HOSTING.md for DNS,
 rollback, links and the separate remaining release gates.
+
+## First-draft presentation refresh — 2026-10-06
+
+Public navigation, homepage guide, editorial sections, inquiry form and membership/
+sign-in surfaces were refined for desktop and phone presentation. Resend remains
+deferred. SHOWCASE_READINESS.md tracks demonstrable workflows, provider and policy
+gates, Crazy Hands comparison gaps and improvement priorities separately.

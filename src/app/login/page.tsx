@@ -33,7 +33,7 @@ export default async function Login() {
           <GoogleSignIn enabled={enabled} />
           {!enabled && (
             <p className="notice">
-              Google sign-in is being configured. Please check back shortly.
+              Google sign-in is not available yet. Use your assigned account to sign in.
             </p>
           )}
         </section>

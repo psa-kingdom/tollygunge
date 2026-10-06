@@ -60,3 +60,6 @@ background delivery infrastructure and release/recovery tooling. Membership revi
 certificates, renewals and transaction reconciliation require approved rules and
 payment verification; inbox/email/WhatsApp need provider configuration. Historical
 commit and learning awards still require mapping/provenance and learning policies.
+
+First-draft presentation refresh (2026-10-06): see SHOWCASE_READINESS.md for the
+remaining comparison gaps, explicit deferrals and release validation limits.

@@ -1246,3 +1246,313 @@ button:disabled {
 .workspace-tabs {display:flex;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--line);padding:20px 0 12px;margin-bottom:22px;}
 .workspace-tabs button {border:1px solid var(--line);background:white;border-radius:7px;padding:10px 18px;color:var(--navy);cursor:pointer;font:inherit;font-size:13px;}
 .workspace-tabs button[aria-selected=true] {background:var(--navy);color:white;border-color:var(--navy);}
+
+/* First-draft presentation: scoped public surfaces and clearer workspace hierarchy. */
+.public-shell {
+  background: #f7f6f2;
+}
+.public-shell .site-header {
+  background: #fff;
+  height: 88px;
+  border-bottom: 1px solid #e6e5df;
+}
+.public-shell .desktop-nav {
+  gap: 18px;
+}
+.public-shell .nav-dropdown {
+  border-radius: 12px;
+  box-shadow: 0 16px 40px #122c4214;
+}
+.public-shell .hero {
+  padding: 72px 6% 64px;
+  gap: 56px;
+  grid-template-columns: 1.15fr 1fr;
+}
+.public-shell .hero h1 {
+  font-size: clamp(40px, 4.3vw, 66px);
+  font-weight: 650;
+  letter-spacing: -0.055em;
+  line-height: 1.09;
+}
+.public-shell .hero h1 em {
+  color: #896528;
+}
+.public-shell .hero p {
+  font-size: 16px;
+  color: #53616b;
+}
+.public-shell .button {
+  border-radius: 8px;
+  min-height: 46px;
+  box-shadow: 0 3px 0 #122c4208;
+}
+.public-shell .eyebrow {
+  color: #53616b;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+}
+.community-guide {
+  border: 1px solid #d4dce0;
+  border-radius: 18px;
+  background: #fff;
+  overflow: hidden;
+  padding: 30px;
+  box-shadow: 0 16px 44px #122c4208;
+}
+.guide-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.guide-heading .eyebrow {
+  font-size: 9px;
+  max-width: 160px;
+}
+.guide-mark {
+  font-size: 29px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  color: #96743b;
+}
+.community-guide h2 {
+  font-size: 31px;
+  font-weight: 600;
+  margin: 22px 0 12px;
+}
+.community-guide > p {
+  font-size: 13px;
+  color: #626d74;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+.guide-links {
+  border-top: 1px solid #e4e8e9;
+}
+.guide-links a {
+  display: grid;
+  grid-template-columns: 26px 1fr 18px;
+  gap: 12px;
+  align-items: center;
+  padding: 19px 0;
+  border-bottom: 1px solid #e4e8e9;
+}
+.guide-links a:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.guide-links strong,
+.guide-links small {
+  display: block;
+}
+.guide-links strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.guide-links small {
+  font-size: 11px;
+  color: #626d74;
+  margin-top: 3px;
+}
+.guide-number {
+  font-size: 10px;
+  color: #896528;
+}
+.guide-location {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 10px;
+  color: #626d74;
+  padding-top: 20px;
+}
+.guide-location > span:last-child {
+  margin-left: auto;
+}
+.public-shell .values-strip {
+  background: #eaece6;
+  border: 0;
+  padding: 22px 6%;
+}
+.public-shell .section {
+  padding-top: 64px;
+  padding-bottom: 64px;
+}
+.public-shell .intro {
+  gap: 64px;
+}
+.public-shell .section h2 {
+  font-weight: 600;
+  font-size: 34px;
+}
+.public-shell .editorial-grid {
+  gap: 24px;
+  border: 0;
+}
+.public-shell .editorial-grid article,
+.public-shell .editorial-grid article + article {
+  border: 0;
+  border-top: 2px solid #c7b28f;
+  padding: 24px 0;
+}
+.public-shell .editorial-grid h3 {
+  font-weight: 600;
+}
+.public-shell .membership-callout {
+  margin: 12px 6%;
+  border-radius: 16px;
+  padding: 42px 40px;
+}
+.public-shell .membership-callout .eyebrow {
+  color: #d8bd91;
+}
+.public-shell .resource-row a:hover {
+  color: #896528;
+}
+.public-shell .contact-intake {
+  border-top: 1px solid #dedfd9;
+  align-items: start;
+}
+.public-shell .contact-intake form {
+  background: white;
+  border: 1px solid #dedfd9;
+  padding: 28px;
+  border-radius: 12px;
+}
+.public-shell .site-footer {
+  background: #eaece6;
+}
+.public-shell .page-heading {
+  padding-top: 56px;
+  padding-bottom: 32px;
+}
+.public-shell .page-heading h1 {
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
+.public-shell .form-panel,
+.public-shell .plan-card,
+.public-shell .login-panel {
+  border-radius: 12px;
+  box-shadow: 0 6px 24px #122c4205;
+}
+.public-shell .notice {
+  border-radius: 0 8px 8px 0;
+}
+.public-shell input,
+.public-shell select,
+.public-shell textarea {
+  border-radius: 6px;
+  min-height: 44px;
+}
+.staff-sidebar {
+  background: #eef1f1;
+  border-right: 1px solid #dce2e4;
+}
+.staff-sidebar .staff-navigation a.current {
+  background: #16374d;
+  box-shadow: none;
+}
+.workspace-main h1 {
+  font-weight: 600;
+}
+@media (max-width: 1100px) {
+  .public-shell .desktop-nav {
+    gap: 12px;
+  }
+  .public-shell .hero {
+    gap: 32px;
+  }
+}
+@media (max-width: 800px) {
+  .public-shell .site-header {
+    height: 78px;
+  }
+  .public-shell .hero {
+    grid-template-columns: 1fr;
+    padding: 40px 6%;
+    gap: 32px;
+  }
+  .public-shell .hero h1 {
+    font-size: clamp(36px, 7.8vw, 52px);
+  }
+  .public-shell .hero-note {
+    margin-top: 26px;
+  }
+  .community-guide {
+    padding: 24px;
+  }
+  .community-guide h2 {
+    font-size: 28px;
+  }
+  .public-shell .section {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+  .public-shell .section h2 {
+    font-size: 28px;
+  }
+  .public-shell .intro {
+    gap: 22px;
+  }
+  .public-shell .editorial-grid {
+    gap: 8px;
+  }
+  .public-shell .section-heading {
+    flex-direction: column;
+    gap: 0;
+  }
+  .public-shell .membership-callout {
+    padding: 30px 24px;
+  }
+  .public-shell .mobile-nav > summary {
+    padding: 10px 12px;
+    border: 1px solid #dce2e4;
+    border-radius: 6px;
+  }
+  .public-shell .mobile-nav nav {
+    width: min(310px, 88vw);
+    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px #122c421a;
+    max-height: 75dvh;
+    overflow: auto;
+  }
+  .public-shell .mobile-nav nav a,
+  .public-shell .mobile-nav nav summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .public-shell .contact-intake form {
+    padding: 20px;
+  }
+}
+@media (max-width: 480px) {
+  .public-shell .brand-name {
+    display: none;
+  }
+  .public-shell .header-actions {
+    gap: 12px;
+  }
+  .public-shell .button-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .public-shell .hero p {
+    font-size: 15px;
+  }
+  .guide-location > span:last-child {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+  .public-shell .footer-bottom {
+    line-height: 1.7;
+  }
+  .public-shell .field input,
+  .public-shell .field select,
+  .public-shell .field textarea {
+    font-size: 16px;
+  }
+}

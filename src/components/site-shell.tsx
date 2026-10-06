@@ -165,10 +165,10 @@ export function Footer() {
 }
 export function SiteShell({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <div className="public-shell">
       <Header />
       {children}
       <Footer />
-    </>
+    </div>
   );
 }

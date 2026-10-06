@@ -37,33 +37,52 @@ export default function Home() {
               next generation.
             </div>
           </div>
-          <div
-            className="hero-art"
-            aria-label="Connection, learning and collaboration at TPA"
-          >
-            <div className="art-top">
-              THE POWER OF COMING TOGETHER <span>01 / TPA</span>
-            </div>
-            <div className="connection-art">
-              <span className="orbit orbit-one" />
-              <span className="orbit orbit-two" />
-              <span className="orbit orbit-three" />
-              <span className="art-core">
-                tpa<span>·</span>
+          <aside className="community-guide" aria-label="Explore TPA">
+            <div className="guide-heading">
+              <span className="eyebrow">THE ASSOCIATION, AT A GLANCE</span>
+              <span className="guide-mark" aria-hidden="true">
+                tpa·
               </span>
-              <span className="node node-one">Ideas</span>
-              <span className="node node-two">People</span>
-              <span className="node node-three">Possibility</span>
             </div>
-            <div className="art-bottom">
-              <span>
-                Individual strengths.
-                <br />
-                <strong>Collective progress.</strong>
-              </span>
-              <span className="art-arrow">↗</span>
+            <h2>
+              A shared space.
+              <br />A wider perspective.
+            </h2>
+            <p>
+              Find your next conversation, a useful resource or a place to
+              contribute.
+            </p>
+            <div className="guide-links">
+              <Link href="/events">
+                <span className="guide-number">01</span>
+                <span>
+                  <strong>Meet & learn</strong>
+                  <small>Explore events and professional learning</small>
+                </span>
+                <span aria-hidden="true">↗</span>
+              </Link>
+              <Link href="/membership">
+                <span className="guide-number">02</span>
+                <span>
+                  <strong>Find your community</strong>
+                  <small>Understand membership at TPA</small>
+                </span>
+                <span aria-hidden="true">↗</span>
+              </Link>
+              <Link href="#connect">
+                <span className="guide-number">03</span>
+                <span>
+                  <strong>Start a conversation</strong>
+                  <small>Connect with the association</small>
+                </span>
+                <span aria-hidden="true">↗</span>
+              </Link>
             </div>
-          </div>
+            <div className="guide-location">
+              <span aria-hidden="true">◎</span> Tollygunge, Kolkata{" "}
+              <span>Open to new perspectives</span>
+            </div>
+          </aside>
         </section>
         <div className="values-strip">
           <span>ONE COMMUNITY. MANY PERSPECTIVES.</span>
