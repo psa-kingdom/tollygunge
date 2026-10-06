@@ -63,3 +63,8 @@ readiness. The updated homepage was verified on tpassociation.org at desktop and
 layout was checked locally at 768 pixels. All 26 unit tests pass. Authenticated
 hosted smoke verifies staff access, member-to-admin routing, sign-out and revoked
 session denial. Screenshots are in the workspace's preview-evidence directory.
+
+Additional hosted phone check: the real administrator signed in successfully;
+Workspace navigation opened with Enter and traversed to Members. The directory
+had no horizontal document overflow at 390 pixels, and sign-out completed.
+This verifies the staff shell traversal, not every directory action or workspace.
