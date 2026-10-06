@@ -10,11 +10,26 @@ test("profile fields exclude identities and privileges; consent requires explici
     contactPreference: "email",
     userId: "other",
     role: "administrator",
+    profession: " Chartered accountant ",
+    jobTitle: " Partner ",
+    city: " Kolkata ",
   });
   assert.equal(profile.organization, "TPA");
   assert.equal(profile.newsletter, false);
   assert.equal("role" in profile, false);
   assert.equal("userId" in profile, false);
+  assert.equal(profile.profession, "Chartered accountant");
+  assert.equal(profile.jobTitle, "Partner");
+  assert.equal(profile.city, "Kolkata");
+  assert.throws(() =>
+    validateProfile({
+      phone: "",
+      organization: "",
+      newsletter: false,
+      contactPreference: "email",
+      profession: "x".repeat(121),
+    }),
+  );
   for (const value of [
     { phone: "", organization: "", contactPreference: "email" },
     {

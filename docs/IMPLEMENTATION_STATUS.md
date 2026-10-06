@@ -149,3 +149,13 @@ Closed + priority filtering and keyboard inquiry search. Committee draft save,
 explicit publication, public rendering and withdrawal were verified. Only the named
 synthetic browser records and their test histories/audits were removed using guarded
 cleanup. The real administrator and user data were preserved.
+
+## Account details and period reporting
+
+Migration 013 adds optional private profession, job title and city fields to the
+separate account profile. These never grant eligibility, membership or staff access.
+Existing profiles default to blank fields. Ownership remains derived from the session.
+Report periods now filter events by start date and inquiries by received date using
+inclusive India calendar dates. Other aggregates remain explicitly current-state.
+Invalid dates and reversed periods are rejected; exports retain the applied range.
+See REPORTING.md for report semantics and the 200-event limit.

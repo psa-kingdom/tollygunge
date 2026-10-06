@@ -65,3 +65,8 @@ Committee profiles: `/admin/workspaces/governance`, `/api/staff/governance`,
 `src/domain/governance.ts` and migration 012. Published executive/sub-committee
 profiles appear on Governance; founders appear on About. Draft/revision data remains
 staff-only. See `docs/GOVERNANCE.md` for portrait and publication boundaries.
+
+Private professional profile fields: migration 013, src/domain/profile.ts,
+src/app/api/member/profile/route.ts and src/app/member/profile.tsx.
+Reporting ranges: src/domain/report-range.ts, staff reports API and
+src/components/operations-reports.tsx. See docs/REPORTING.md.

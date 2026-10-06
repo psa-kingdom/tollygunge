@@ -467,6 +467,32 @@ test(
       ).json();
       assert.deepEqual(Object.keys(editorReports), ["content"]);
       assert.equal((await request("/api/staff/reports", 1)).status, 403);
+      assert.equal(
+        (await request("/api/staff/reports?from=2025-02-29", 0)).status,
+        400,
+      );
+      await pool.query(
+        "UPDATE tpa.events SET starts_at='2024-12-31T18:30:00Z' WHERE id=$1",
+        [eventIds[0]],
+      );
+      const rangeReports = await (
+        await request("/api/staff/reports?from=2025-01-01&to=2025-01-01", 0)
+      ).json();
+      assert.ok(
+        rangeReports.events.some(
+          (row: { title: string }) => row.title === event.title,
+        ),
+        "India midnight belongs to the selected date",
+      );
+      const previousDay = await (
+        await request("/api/staff/reports?from=2024-12-31&to=2024-12-31", 0)
+      ).json();
+      assert.ok(
+        !previousDay.events.some(
+          (row: { title: string }) => row.title === event.title,
+        ),
+        "end boundary excludes the next India day",
+      );
       const changed = await request("/api/staff/access", 0, {
         id: people[3],
         roles: ["event_operator"],

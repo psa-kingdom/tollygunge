@@ -9,13 +9,16 @@ export async function GET(request: Request) {
   if (!actor)
     return Response.json({ error: "Sign in to continue." }, { status: 401 });
   const { rows } = await getDatabase().query(
-    "SELECT p.phone,p.organization,p.preferences,coalesce(n.subscribed,false) AS newsletter FROM tpa.member_profiles p LEFT JOIN tpa.newsletter_consents n ON n.user_id=p.user_id WHERE p.user_id=$1",
+    'SELECT p.phone,p.organization,p.profession,p.job_title AS "jobTitle",p.city,p.preferences,coalesce(n.subscribed,false) AS newsletter FROM tpa.member_profiles p LEFT JOIN tpa.newsletter_consents n ON n.user_id=p.user_id WHERE p.user_id=$1',
     [actor.id],
   );
   return Response.json(
     rows[0] ?? {
       phone: "",
       organization: "",
+      profession: "",
+      jobTitle: "",
+      city: "",
       preferences: { contact: "email" },
       newsletter: false,
     },
@@ -45,12 +48,15 @@ export async function POST(request: Request) {
   try {
     await client.query("BEGIN");
     await client.query(
-      "INSERT INTO tpa.member_profiles(user_id,phone,organization,preferences) VALUES($1,$2,$3,$4) ON CONFLICT(user_id) DO UPDATE SET phone=$2,organization=$3,preferences=$4,updated_at=now()",
+      "INSERT INTO tpa.member_profiles(user_id,phone,organization,preferences,profession,job_title,city) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(user_id) DO UPDATE SET phone=$2,organization=$3,preferences=$4,profession=$5,job_title=$6,city=$7,updated_at=now()",
       [
         actor.id,
         profile.phone,
         profile.organization,
         JSON.stringify(profile.preferences),
+        profile.profession,
+        profile.jobTitle,
+        profile.city,
       ],
     );
     await client.query(

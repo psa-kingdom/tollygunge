@@ -11,6 +11,15 @@ export function validateProfile(value: unknown) {
     throw new Error("Check your profile details.");
   const phone = input.phone.trim(),
     organization = input.organization.trim();
+  const optional = (key: string) => {
+    if (input[key] === undefined) return "";
+    if (
+      typeof input[key] !== "string" ||
+      (input[key] as string).trim().length > 120
+    )
+      throw new Error("Check your professional details.");
+    return (input[key] as string).trim();
+  };
   if (
     phone.length > 32 ||
     (phone && !/^[+\d ().-]{5,32}$/.test(phone)) ||
@@ -20,6 +29,9 @@ export function validateProfile(value: unknown) {
   return {
     phone,
     organization,
+    profession: optional("profession"),
+    jobTitle: optional("jobTitle"),
+    city: optional("city"),
     newsletter: input.newsletter,
     preferences: { contact: input.contactPreference },
   };

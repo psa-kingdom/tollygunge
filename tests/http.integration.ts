@@ -101,6 +101,9 @@ test(
       const own = {
         phone: "+91 1234567890",
         organization: "Synthetic association",
+        profession: "Chartered accountant",
+        jobTitle: "Partner",
+        city: "Kolkata",
         contactPreference: "none",
         newsletter: true,
         userId: people[1],
@@ -120,6 +123,9 @@ test(
         await request("/api/member/profile?userId=" + people[1], 0)
       ).json();
       assert.equal(p.organization, own.organization);
+      assert.equal(p.profession, own.profession);
+      assert.equal(p.jobTitle, own.jobTitle);
+      assert.equal(p.city, own.city);
       assert.equal(p.newsletter, true);
       assert.equal(
         (await (await request("/api/member/profile", 1)).json()).organization,

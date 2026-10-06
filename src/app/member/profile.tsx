@@ -13,6 +13,9 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
   const [profile, setProfile] = useState({
     phone: "",
     organization: "",
+    profession: "",
+    jobTitle: "",
+    city: "",
     contactPreference: "email",
     newsletter: false,
   });
@@ -33,6 +36,9 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
           setProfile({
             phone: data.phone ?? "",
             organization: data.organization ?? "",
+            profession: data.profession ?? "",
+            jobTitle: data.jobTitle ?? "",
+            city: data.city ?? "",
             contactPreference: data.preferences?.contact ?? "email",
             newsletter: data.newsletter,
           });
@@ -59,6 +65,10 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
     <div className="member-settings">
       <section>
         <h2>Your profile</h2>
+        <p>
+          Your contact and professional details are private. Saving them does
+          not approve membership or change your sign-in identity.
+        </p>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -115,6 +125,24 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
               <option value="none">No optional messages</option>
             </select>
           </label>
+          {(
+            [
+              ["profession", "Profession"],
+              ["jobTitle", "Job title"],
+              ["city", "City"],
+            ] as const
+          ).map(([key, label]) => (
+            <label key={key}>
+              {label} (optional)
+              <input
+                maxLength={120}
+                value={profile[key]}
+                onChange={(e) =>
+                  setProfile({ ...profile, [key]: e.target.value })
+                }
+              />
+            </label>
+          ))}
           <label className="consent">
             <input
               type="checkbox"
