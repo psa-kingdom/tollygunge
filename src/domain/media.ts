@@ -3,10 +3,16 @@ import { matchesFileSignature, MAX_DOCUMENT_BYTES } from "./documents";
 import { record, text, uuid } from "./operations";
 export function mediaDetails(value: unknown) {
   const body = record(value);
+  if (
+    body.homepageFeatured !== undefined &&
+    typeof body.homepageFeatured !== "boolean"
+  )
+    throw new Error("Choose a valid homepage placement.");
   return {
     title: text(body.title, "Title", 120, 3),
     altText: text(body.altText, "Image description", 240, 5),
     category: text(body.category, "Category", 60, 3),
+    homepageFeatured: body.homepageFeatured === true,
   };
 }
 export function mediaObjectKey(id: string) {

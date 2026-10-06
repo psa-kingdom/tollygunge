@@ -38,3 +38,16 @@ test("editorial keys cannot refer to private document objects", () => {
     mediaDetails({ title: "Title", altText: "", category: "Event" }),
   );
 });
+test("homepage media placement is explicit and cannot be enabled by a string", () => {
+  const details = {
+    title: "Community image",
+    altText: "People at a community event",
+    category: "Events",
+  };
+  assert.equal(mediaDetails(details).homepageFeatured, false);
+  assert.equal(
+    mediaDetails({ ...details, homepageFeatured: true }).homepageFeatured,
+    true,
+  );
+  assert.throws(() => mediaDetails({ ...details, homepageFeatured: "true" }));
+});

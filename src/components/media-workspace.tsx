@@ -2,7 +2,12 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { api } from "./operations-client";
-type Details = { title: string; altText: string; category: string };
+type Details = {
+  title: string;
+  altText: string;
+  category: string;
+  homepageFeatured?: boolean;
+};
 type Asset = {
   id: string;
   draft: Details;
@@ -12,7 +17,12 @@ type Asset = {
   version: number;
 };
 type Library = { assets: Asset[]; uploadEnabled: boolean };
-const empty: Details = { title: "", altText: "", category: "" };
+const empty: Details = {
+  title: "",
+  altText: "",
+  category: "",
+  homepageFeatured: false,
+};
 export function MediaWorkspace() {
   const [library, setLibrary] = useState<Library>(),
     [selected, setSelected] = useState<Asset>(),
@@ -64,6 +74,13 @@ export function MediaWorkspace() {
         Upload editorial images, review their descriptions, then explicitly
         publish them to Resources → Media. Upload only images you have
         permission to publish. Application documents are excluded.
+      </p>
+      <p>
+        Published assets appear in Resources. Choose homepage placement below to
+        include an image in the landing page gallery (latest three). Save
+        changes, then publish to update public descriptions and placement. Image
+        files are retained as separate assets; upload a new image and withdraw
+        the old one to replace a photograph.
       </p>
       {library && !library.uploadEnabled && (
         <p className="notice">
@@ -130,7 +147,7 @@ export function MediaWorkspace() {
                   const body = new FormData();
                   body.set("file", file);
                   for (const [key, value] of Object.entries(form))
-                    body.set(key, value);
+                    body.set(key, String(value));
                   const response = await fetch("/api/staff/media", {
                     method: "POST",
                     body,
@@ -200,6 +217,16 @@ export function MediaWorkspace() {
             >
               {selected ? "Save draft details" : "Upload private draft"}
             </button>
+            <label className="consent">
+              <input
+                type="checkbox"
+                checked={form.homepageFeatured === true}
+                onChange={(e) =>
+                  setForm({ ...form, homepageFeatured: e.target.checked })
+                }
+              />
+              Feature in the homepage gallery after publication
+            </label>
           </form>
           {selected && (
             <>

@@ -86,13 +86,46 @@ test(
       );
       assert.equal((await request(`/media/${asset}`, {}, false)).status, 404);
       assert.equal((await action(asset, 1, "publish")).status, 200);
-      const edited = { ...details, title: "UNPUBLISHED MEDIA DESCRIPTION" };
+      const edited = {
+        ...details,
+        title: "UNPUBLISHED MEDIA DESCRIPTION",
+        homepageFeatured: true,
+      };
       assert.equal((await action(asset, 2, "save", edited)).status, 200);
       assert.equal((await action(asset, 2, "publish")).status, 409);
       const page = await (await request("/resources", {}, false)).text();
       assert.ok(page.includes(details.title));
       assert.ok(!page.includes(edited.title));
-      assert.equal((await action(asset, 3, "unpublish")).status, 200);
+      assert.ok(
+        !(await (await request("/", {}, false)).text()).includes(edited.title),
+      );
+      assert.equal((await action(asset, 3, "publish")).status, 200);
+      const publishedHome = await (await request("/", {}, false)).text();
+      assert.ok(publishedHome.includes(edited.title));
+      assert.ok(publishedHome.includes(`/media/${asset}`));
+      const updatedResources = await (
+        await request("/resources", {}, false)
+      ).text();
+      assert.ok(updatedResources.includes(edited.title));
+      assert.ok(!updatedResources.includes(details.title));
+      assert.equal(
+        (await action(asset, 4, "save", { ...edited, homepageFeatured: false }))
+          .status,
+        200,
+      );
+      assert.ok(
+        (await (await request("/", {}, false)).text()).includes(edited.title),
+      );
+      assert.equal((await action(asset, 5, "publish")).status, 200);
+      assert.ok(
+        !(await (await request("/", {}, false)).text()).includes(edited.title),
+      );
+      assert.ok(
+        (await (await request("/resources", {}, false)).text()).includes(
+          edited.title,
+        ),
+      );
+      assert.equal((await action(asset, 6, "unpublish")).status, 200);
       assert.equal((await request(`/media/${asset}`, {}, false)).status, 404);
       await pool.query(
         "INSERT INTO tpa.private_documents(id,owner_user_id,kind,content_type,byte_size) VALUES($1,$2,'photograph','image/png',20)",

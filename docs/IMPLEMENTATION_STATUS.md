@@ -159,3 +159,21 @@ Report periods now filter events by start date and inquiries by received date us
 inclusive India calendar dates. Other aggregates remain explicitly current-state.
 Invalid dates and reversed periods are rejected; exports retain the applied range.
 See REPORTING.md for report semantics and the 200-event limit.
+
+## Staff directory and explicit public-media placement
+
+Members now provides an authorized account directory with multi-field search,
+verification/phone filters, stable 25-record pagination, session-only recent searches
+and views, and focus-aware quick contact/professional previews with copy actions.
+No approved membership is inferred and private application drafts stay excluded.
+Editorial media has an explicit draft homepage-placement flag. Publishing updates
+Resources and the latest-three homepage gallery; draft saves preserve publication.
+See MEMBER_DIRECTORY.md and MEDIA_PUBLICATION.md for scope and replacement behavior.
+
+Browser follow-up verified account search + phone filter, quick preview, recent
+profile reopening, email/phone clipboard values and clear history. Closing the
+preview restores focus to search. Media draft save kept the homepage private;
+publication rendered the actual synthetic R2 image on homepage and Resources,
+and withdrawal removed both public listings and closed anonymous image access.
+Synthetic account, media metadata/audits and the R2 object were removed, with
+object absence checked. Native mobile interaction still requires later verification.

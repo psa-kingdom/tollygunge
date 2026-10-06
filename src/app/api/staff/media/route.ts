@@ -78,6 +78,7 @@ export async function POST(request: Request) {
         title: form.get("title"),
         altText: form.get("altText"),
         category: form.get("category"),
+        homepageFeatured: form.get("homepageFeatured") === "true",
       });
       const file = form.get("file");
       if (!(file instanceof File)) throw new Error();

@@ -14,6 +14,7 @@ import { MediaWorkspace } from "@/components/media-workspace";
 import { PaymentDetailsManager } from "@/components/payment-details";
 import { GovernanceWorkspace } from "@/components/governance-workspace";
 import { staffWorkspaceLabel } from "@/domain/staff-navigation";
+import { MembersWorkspace } from "@/components/members-workspace";
 const permissions: Record<string, Permission> = {
   members: "members:review",
   events: "events:manage",
@@ -79,11 +80,7 @@ export default async function Workspace({
       ) : workspace === "reports" ? (
         <OperationsReports />
       ) : workspace === "members" ? (
-        <div className="notice">
-          Application drafts are private to applicants. The paid-application
-          review queue will open after membership fees, eligibility,
-          declarations, refund terms and payment verification are confirmed.
-        </div>
+        <MembersWorkspace />
       ) : workspace === "payments" ? (
         <PaymentDetailsManager />
       ) : (

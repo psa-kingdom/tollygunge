@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { PublicInquiry } from "@/components/public-inquiry";
+import { HomepageMedia } from "@/components/public-media";
 export default function Home() {
   return (
     <SiteShell>
@@ -184,8 +185,15 @@ export default function Home() {
             </Link>
           </div>
         </section>
+        <HomepageMedia />
         <section className="section contact-intake" id="connect">
-          <div><span className="eyebrow">LET’S CONNECT</span><h2>Start a conversation.</h2><p>Membership, events or a new collaboration—tell us how we can help.</p></div>
+          <div>
+            <span className="eyebrow">LET’S CONNECT</span>
+            <h2>Start a conversation.</h2>
+            <p>
+              Membership, events or a new collaboration—tell us how we can help.
+            </p>
+          </div>
           <PublicInquiry source="homepage" />
         </section>
       </main>

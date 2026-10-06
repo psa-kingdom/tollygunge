@@ -70,3 +70,8 @@ Private professional profile fields: migration 013, src/domain/profile.ts,
 src/app/api/member/profile/route.ts and src/app/member/profile.tsx.
 Reporting ranges: src/domain/report-range.ts, staff reports API and
 src/components/operations-reports.tsx. See docs/REPORTING.md.
+
+Staff account directory: /api/staff/members, src/components/members-workspace.tsx;
+docs/MEMBER_DIRECTORY.md documents filtering, permissions and temporary recents.
+Homepage editorial media: src/components/public-media.tsx plus published placement
+in public_media JSON; docs/MEDIA_PUBLICATION.md documents save/publish/withdraw.

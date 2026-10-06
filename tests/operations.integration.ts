@@ -467,6 +467,74 @@ test(
       ).json();
       assert.deepEqual(Object.keys(editorReports), ["content"]);
       assert.equal((await request("/api/staff/reports", 1)).status, 403);
+      assert.equal((await request("/api/staff/members")).status, 401);
+      assert.equal((await request("/api/staff/members", 1)).status, 403);
+      assert.equal((await request("/api/staff/members", 3)).status, 403);
+      await pool.query(
+        "INSERT INTO tpa.member_profiles(user_id,phone,organization,profession,city) VALUES($1,'1234567890','Directory fixture','Accounting','Kolkata')",
+        [people[1]],
+      );
+      const accountResults = await (
+        await request(
+          `/api/staff/members?q=${people[1]}&contact=phone&verification=verified`,
+          0,
+        )
+      ).json();
+      assert.equal(accountResults.total, 1);
+      assert.equal(accountResults.rows[0].id, people[1]);
+      assert.equal(accountResults.rows[0].phone, "1234567890");
+      assert.equal(accountResults.rows[0].profession, "Accounting");
+      assert.equal("preferences" in accountResults.rows[0], false);
+      assert.equal("token" in accountResults.rows[0], false);
+      assert.equal(
+        (
+          await (
+            await request(
+              `/api/staff/members?q=${people[1]}&contact=no-phone`,
+              0,
+            )
+          ).json()
+        ).total,
+        0,
+      );
+      assert.equal(
+        (
+          await (
+            await request(
+              `/api/staff/members?q=${people[1]}&verification=unverified`,
+              0,
+            )
+          ).json()
+        ).total,
+        0,
+      );
+      assert.equal(
+        (await request("/api/staff/members?verification=approved", 0)).status,
+        400,
+      );
+      assert.equal(
+        (await request("/api/staff/members?offset=-1", 0)).status,
+        400,
+      );
+      assert.equal(
+        (await request(`/api/staff/members?id=${randomUUID()}`, 0)).status,
+        404,
+      );
+      await pool.query(
+        "INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,'membership_reviewer')",
+        [people[2]],
+      );
+      assert.equal(
+        (await request(`/api/staff/members?id=${people[1]}`, 2)).status,
+        200,
+      );
+      await pool.query("DELETE FROM tpa.staff_roles WHERE user_id=$1", [
+        people[2],
+      ]);
+      assert.equal(
+        (await request(`/api/staff/members?id=${people[1]}`, 2)).status,
+        403,
+      );
       assert.equal(
         (await request("/api/staff/reports?from=2025-02-29", 0)).status,
         400,
@@ -638,6 +706,9 @@ test(
       for (const id of contentIds)
         await pool.query("DELETE FROM tpa.content_entries WHERE id=$1", [id]);
       for (const id of people) {
+        await pool.query("DELETE FROM tpa.member_profiles WHERE user_id=$1", [
+          id,
+        ]);
         await pool.query(
           "DELETE FROM tpa.application_drafts WHERE user_id=$1",
           [id],

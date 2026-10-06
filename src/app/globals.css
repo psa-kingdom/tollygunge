@@ -1232,3 +1232,13 @@ button:disabled {
   .staff-content .workspace-main{padding:24px 6% 48px;}.contact-intake{grid-template-columns:minmax(0,1fr);}.crm-layout{grid-template-columns:minmax(0,1fr);}.crm-layout .record-list{max-height:320px;}.crm-detail{padding:18px;}.contact-details{gap:14px;}.crm-detail .form-grid{grid-template-columns:1fr;}
 }
 @media(max-width:480px){.contact-details{grid-template-columns:1fr;}.crm-filters label{flex:1 1 120px;}.crm-result-bar>div{gap:10px;}.contact-intake h2{font-size:30px;}}
+
+.directory-layout { display:grid; grid-template-columns:minmax(250px,.9fr) minmax(300px,1.1fr); gap:24px; align-items:start; }
+.directory-layout .record-list button { display:grid; gap:7px; overflow-wrap:anywhere; }
+.directory-layout .record-list button[aria-pressed=true] { border-color:var(--navy); background:#edf2f5; }
+.directory-preview { border:1px solid var(--line); border-radius:12px; padding:24px; position:sticky; top:24px; overflow-wrap:anywhere; background:white; }
+.directory-preview h2 { font-size:23px; }
+.directory-preview .contact-details button { padding:8px 12px; min-height:36px; margin-top:8px; }
+.directory-recents { border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:18px 0; margin-bottom:22px; }
+.directory-recents h2 { font-size:19px; }.directory-recents h3 { font-size:14px; }.directory-recents p { font-size:12px; }.directory-recents .button { padding:8px 12px; }
+@media(max-width:850px) { .directory-layout {grid-template-columns:1fr;}.directory-preview {position:static;grid-row:1;} }
