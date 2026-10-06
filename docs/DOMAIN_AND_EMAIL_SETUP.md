@@ -1,6 +1,6 @@
 # Domain and email setup
 
-## Verified 2026-10-06
+## Initial discovery 2026-10-06 (superseded by HOSTING.md)
 
 Purchased domain: `tpassociation.org`. Public DNS returns Hostinger nameservers
 `artemis.dns-parking.com` / `hermes.dns-parking.com`, apex A `2.57.91.91`,

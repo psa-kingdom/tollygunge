@@ -3,7 +3,7 @@
 Approved: one Next.js/TypeScript application, PostgreSQL, private object storage and
 a background worker from the same codebase. Provider accounts and deployment roles
 must be confirmed at each dependent phase. Dedicated Railway PostgreSQL and a private
-Cloudflare R2 bucket are provisioned; the application is not deployed to production.
+Cloudflare R2 bucket are provisioned; an initial integrated app rollout is hosted on Railway; see HOSTING.md for live verification and remaining release gates.
 
 Product: Tollygunge Professional Association, broader than a CA-only forum.
 Public website, member portal and focused admin workspaces share domain services.

@@ -46,7 +46,10 @@ browser. [Better Auth Google integration](https://better-auth.com/docs/authentic
 
 ## Before enabling production
 
-Choose the final TPA domain and stable HTTPS origin first. Configure a production
+The chosen HTTPS origin is now `https://tpassociation.org`. Register the production
+callback exactly as `https://tpassociation.org/api/auth/callback/google`.
+Google sign-in remains disabled until the client is supplied in managed settings.
+Configure a production
 Web application client with only the exact production callback, TPA branding,
 verified association domain, public homepage/privacy/terms and reachable contacts.
 Complete the verification requirements Google presents for the selected branding

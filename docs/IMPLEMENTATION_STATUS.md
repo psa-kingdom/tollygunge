@@ -1,6 +1,6 @@
 # Implementation status — 2026-10-06
 
-## Working locally
+## Working locally and in the initial hosted rollout
 
 - Role-based sign-in/entry, staff redirection away from `/member`, separate signed-in
   account navigation and an own-profile route for staff. Public navigation substitutes
@@ -47,8 +47,7 @@
 Migrations 001–012 use the checksummed, database-identity-checked transactional runner.
 Dedicated Railway `tpa-platform` PostgreSQL and private R2 `tpa-private-documents`
 remain separate from other projects. Original Cloudflare credential values remain in
-only their supplied file; local operations read them transiently. No production app
-is deployed. Official Cloudflare skills/MCP setup persists; Main/Bindings consent is
+only their supplied file; local operations read them transiently. An initial app rollout is hosted on Railway; see HOSTING.md. Official Cloudflare skills/MCP setup persists; Main/Bindings consent is
 pending, while Docs, Builds and Observability are available as previously verified.
 
 ## Verification
@@ -195,3 +194,9 @@ send actions. Browser verified template reuse, keyboard tabs, preserved editors,
 archive/restore and revision history, and recipient removal after consent withdrawal.
 Synthetic campaign, template and recipient records were removed after verification.
 Native mobile interaction remains unverified.
+
+Current hosting: tpassociation.org serves the initial Railway rollout with valid
+HTTPS and verified administrator login/sign-out/revocation. Managed secrets are
+approved; original Cloudflare credentials were not copied. Uploads remain disabled
+until an independent scoped credential is configured. See HOSTING.md for DNS,
+rollback, links and the separate remaining release gates.

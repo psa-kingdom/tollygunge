@@ -65,3 +65,21 @@ public domain at a deployment that fails readiness or authentication checks.
 
 This is an initial hosted rollout, not acceptance of all planned production
 integrations, anti-abuse controls, recovery procedures or business policies.
+
+## Canonical origin verification
+
+Root-domain HTTPS and readiness passed. `BETTER_AUTH_URL` was updated to
+`https://tpassociation.org` in managed settings and redeployed. Administrator
+login, staff routing, sign-out and revoked-session denial passed again on this
+domain. Browser confirmed its homepage. The `www` permanent redirect preserves
+path/query and is implemented; both domains now have verified ownership and valid certificates. A live request to www/contact?source=verification returned 308 to the exact root-domain path and query.
+Both CI runs passed on implementation commit `c2efd89` (26 unit, 4 PostgreSQL,
+7 HTTP flows, lint, build and type checks). No messages or payment operations
+were performed. The application deployment remains separate from a main-branch
+merge; no automatic GitHub deployment source was connected.
+
+Live runtime deployment: ac5d0d96-4c52-43fc-8d62-050644b7971e, implementation
+commit c2efd89. Railway built and started the Docker image successfully. Browser
+viewport observations exposed the public mobile menu and keyboard expansion;
+the resized screenshot did not reliably match the reported viewport, so native
+mobile visual acceptance remains separate.

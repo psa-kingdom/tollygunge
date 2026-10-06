@@ -1,5 +1,10 @@
 # Provider setup
 
+Current hosted rollout and live-domain verification are in [HOSTING.md](HOSTING.md).
+The provisioning notes below retain their original discovery context. Managed
+runtime secrets are now approved; uploads still await an independent scoped R2
+credential, and Resend/Google/Razorpay remain unconfigured.
+
 ## Created and verified on 2026-10-05
 
 Cloudflare: dedicated `tpa-private-documents` R2 bucket. Managed public access is
