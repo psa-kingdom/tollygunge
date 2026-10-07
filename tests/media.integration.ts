@@ -4,7 +4,11 @@ import { randomUUID, randomBytes, createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
 import sharp from "sharp";
 import { Pool } from "pg";
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
 import { databaseOptions } from "../src/lib/database-options";
 import { parseR2Credentials } from "../src/domain/r2-credentials";
 import { mediaObjectKey } from "../src/domain/media";
@@ -194,14 +198,27 @@ test(
         ).metadata();
         assert.equal(metadata.format, "webp");
         assert.equal(metadata.exif, undefined);
-        assert.equal((await action(objectId!, 1, "publish")).status, 200);
+        assert.equal(
+          (
+            await action(objectId!, 1, "save", {
+              ...details,
+              homepageFeatured: true,
+            })
+          ).status,
+          200,
+        );
+        assert.equal((await action(objectId!, 2, "publish")).status, 200);
+        for (const page of ["/", "/resources"]) {
+          const html = await (await request(page, {}, false)).text();
+          assert.ok(html.includes(`/media/${objectId}`));
+        }
         const publicImage = await request(`/media/${objectId}`, {}, false);
         assert.equal(publicImage.status, 200);
         assert.equal(
           publicImage.headers.get("cache-control"),
           "private, no-store",
         );
-        assert.equal((await action(objectId!, 2, "unpublish")).status, 200);
+        assert.equal((await action(objectId!, 3, "unpublish")).status, 200);
         assert.equal(
           (await request(`/media/${objectId}`, {}, false)).status,
           404,
@@ -214,13 +231,26 @@ test(
       assert.equal((await request("/api/staff/media")).status, 403);
       assert.equal((await request(`/media/${asset}`)).status, 404);
     } finally {
-      if (storage && objectId)
+      if (storage && objectId) {
         await storage.send(
           new DeleteObjectCommand({
             Bucket: process.env.R2_BUCKET_NAME!,
             Key: mediaObjectKey(objectId),
           }),
         );
+        await assert.rejects(
+          storage.send(
+            new HeadObjectCommand({
+              Bucket: process.env.R2_BUCKET_NAME!,
+              Key: mediaObjectKey(objectId),
+            }),
+          ),
+          (error: unknown) =>
+            (error as { $metadata: { httpStatusCode: number } }).$metadata
+              .httpStatusCode === 404,
+        );
+        storage.destroy();
+      }
       await pool.query("DELETE FROM tpa.public_media WHERE uploaded_by=$1", [
         person,
       ]);

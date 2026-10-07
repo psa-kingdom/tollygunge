@@ -9,7 +9,11 @@ import jsQR from "jsqr";
 import { readFileSync } from "node:fs";
 import { parseR2Credentials } from "../src/domain/r2-credentials";
 import { paymentQrKey } from "../src/domain/payment-details";
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
 const base = process.env.TPA_TEST_URL;
 test(
   "role-aware navigation and versioned payment instructions preserve activation and QR privacy",
@@ -287,13 +291,26 @@ test(
         );
         await pool.query("DELETE FROM tpa.payment_details WHERE id=$1", [id]);
       }
-      if (storage && qrId)
+      if (storage && qrId) {
         await storage.send(
           new DeleteObjectCommand({
             Bucket: process.env.R2_BUCKET_NAME!,
             Key: paymentQrKey(qrId),
           }),
         );
+        await assert.rejects(
+          storage.send(
+            new HeadObjectCommand({
+              Bucket: process.env.R2_BUCKET_NAME!,
+              Key: paymentQrKey(qrId),
+            }),
+          ),
+          (error: unknown) =>
+            (error as { $metadata: { httpStatusCode: number } }).$metadata
+              .httpStatusCode === 404,
+        );
+        storage.destroy();
+      }
       if (qrId)
         await pool.query("DELETE FROM tpa.payment_qr_images WHERE id=$1", [
           qrId,

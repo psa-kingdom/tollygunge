@@ -41,3 +41,17 @@ test("complete managed storage credentials are required and preferred", () => {
     undefined,
   );
 });
+
+test("other buckets fail closed for managed and local-file storage", () => {
+  const env = {
+    NODE_ENV: "development",
+    R2_BUCKET_NAME: "another-project",
+    R2_ACCOUNT_ID: "a".repeat(32),
+    R2_ACCESS_KEY_ID: "fixture",
+    R2_SECRET_ACCESS_KEY: "fixture-secret",
+    CLOUDFLARE_CREDENTIAL_FILE: "original",
+  };
+  assert.equal(managedStorageCredentials(env), undefined);
+  assert.equal(storageMode(env), undefined);
+  assert.equal(storageMode({ ...env, NODE_ENV: "production" }), undefined);
+});

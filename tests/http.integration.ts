@@ -6,7 +6,11 @@ import { databaseOptions } from "../src/lib/database-options";
 import { roles } from "../src/domain/access";
 import { readFileSync } from "node:fs";
 import { parseR2Credentials } from "../src/domain/r2-credentials";
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
 import { privateObjectKey } from "../src/domain/documents";
 const base = process.env.TPA_TEST_URL;
 test(
@@ -328,14 +332,27 @@ test(
       ]);
       assert.equal((await request("/api/documents", 1)).status, 401);
     } finally {
-      for (const id of uploaded)
-        if (storage)
+      for (const id of uploaded) {
+        if (storage) {
           await storage.send(
             new DeleteObjectCommand({
               Bucket: process.env.R2_BUCKET_NAME!,
               Key: privateObjectKey(id),
             }),
           );
+          await assert.rejects(
+            storage.send(
+              new HeadObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME!,
+                Key: privateObjectKey(id),
+              }),
+            ),
+            (error: unknown) =>
+              (error as { $metadata: { httpStatusCode: number } }).$metadata
+                .httpStatusCode === 404,
+          );
+        }
+      }
       storage?.destroy();
       for (const id of people) {
         for (const table of [

@@ -14,6 +14,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { privateObjectKey } from "@/domain/documents";
 import { mediaObjectKey } from "@/domain/media";
+import { portraitObjectKey } from "@/domain/portrait-storage";
 import { paymentQrKey } from "@/domain/payment-details";
 export function privateStorageConfigured() {
   return Boolean(storageMode(process.env));
@@ -22,7 +23,8 @@ function storage() {
   const { R2_BUCKET_NAME, CLOUDFLARE_CREDENTIAL_FILE } = process.env;
   if (!privateStorageConfigured() || !R2_BUCKET_NAME)
     throw new Error("TPA private document storage is not configured.");
-  // Production uses independently scoped managed secrets, never the supplied file.
+  // Production uses managed secrets, never the supplied file. The configured
+  // credential is account-wide; storageMode restricts this application to TPA.
   const credentials =
     managedStorageCredentials(process.env) ??
     parseR2Credentials(readFileSync(CLOUDFLARE_CREDENTIAL_FILE!, "utf8"));
@@ -139,7 +141,7 @@ export async function portraitStorage(
   bytes?: Uint8Array,
 ) {
   const { bucket, client } = storage();
-  const Key = `tpa/portraits/${id}.webp`;
+  const Key = portraitObjectKey(id);
   if (action === "store") {
     if (!bytes) throw Error("Image required.");
     await client.send(

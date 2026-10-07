@@ -11,7 +11,7 @@ import { getDatabase } from "@/lib/database";
 import { boundedBody } from "@/domain/request-body";
 import { uuid, text } from "@/domain/operations";
 import { normalizeMedia } from "@/domain/media";
-import { uploadWithCleanup } from "@/domain/upload-workflow";
+import { uploadWithCleanup, UploadFailure } from "@/domain/upload-workflow";
 import {
   privateStorageConfigured,
   portraitStorage,
@@ -63,34 +63,45 @@ export async function POST(request: Request) {
     const alt = text(form.get("altText"), "Portrait description", 200, 2);
     if (!privateStorageConfigured())
       throw new OperationError(
-        "Portrait uploads require the scoped storage credential.",
+        "Portrait uploads require managed storage configuration.",
         503,
       );
     const id = randomUUID();
-    await uploadWithCleanup({
-      store: async () => {
-        await portraitStorage(id, "store", image.bytes);
-      },
-      persist: () =>
-        transaction(async (client) => {
-          await client.query(
-            "INSERT INTO tpa.profile_portraits(id,person_id,alt_text,width,height,byte_size,uploaded_by) VALUES($1,$2,$3,$4,$5,$6,$7)",
-            [
-              id,
-              personId,
-              alt,
-              image.width,
-              image.height,
-              image.bytes.length,
-              actor.id,
-            ],
-          );
-          await audit(client, actor.id, "portrait.uploaded", id);
-        }),
-      remove: async () => {
-        await portraitStorage(id, "remove");
-      },
-    });
+    try {
+      await uploadWithCleanup({
+        store: async () => {
+          await portraitStorage(id, "store", image.bytes);
+        },
+        persist: () =>
+          transaction(async (client) => {
+            await client.query(
+              "INSERT INTO tpa.profile_portraits(id,person_id,alt_text,width,height,byte_size,uploaded_by) VALUES($1,$2,$3,$4,$5,$6,$7)",
+              [
+                id,
+                personId,
+                alt,
+                image.width,
+                image.height,
+                image.bytes.length,
+                actor.id,
+              ],
+            );
+            await audit(client, actor.id, "portrait.uploaded", id);
+          }),
+        remove: async () => {
+          await portraitStorage(id, "remove");
+        },
+      });
+    } catch (error) {
+      if (error instanceof UploadFailure && error.cleanupFailed)
+        await getDatabase()
+          .query(
+            "INSERT INTO tpa.audit_events(actor_user_id,action,entity_id) VALUES($1,'portrait.cleanup_required',$2)",
+            [actor.id, id],
+          )
+          .catch(() => {});
+      throw new OperationError("Upload failed. Try again later.", 503);
+    }
     return { id };
   });
 }
