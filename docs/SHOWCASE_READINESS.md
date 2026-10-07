@@ -68,3 +68,5 @@ Additional hosted phone check: the real administrator signed in successfully;
 Workspace navigation opened with Enter and traversed to Members. The directory
 had no horizontal document overflow at 390 pixels, and sign-out completed.
 This verifies the staff shell traversal, not every directory action or workspace.
+
+Current work and feedback: [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md).

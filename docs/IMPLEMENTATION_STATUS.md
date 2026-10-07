@@ -207,3 +207,6 @@ Public navigation, homepage guide, editorial sections, inquiry form and membersh
 sign-in surfaces were refined for desktop and phone presentation. Resend remains
 deferred. SHOWCASE_READINESS.md tracks demonstrable workflows, provider and policy
 gates, Crazy Hands comparison gaps and improvement priorities separately.
+
+Current dependency-sorted checklist: [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md).
+Historical evidence below remains valid for its stated scope.

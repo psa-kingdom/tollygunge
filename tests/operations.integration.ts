@@ -57,6 +57,7 @@ test(
         });
       for (const path of [
         "/api/staff/content",
+        "/api/staff/content/preview?page=about",
         "/api/staff/events",
         "/api/staff/crm",
         "/api/staff/communications",
@@ -119,6 +120,105 @@ test(
         (await request("/api/staff/events", 3, { action: "save" })).status,
         403,
       );
+      assert.equal(
+        (await request("/api/staff/content/preview?page=about", 1)).status,
+        403,
+      );
+      assert.equal(
+        (await request("/api/staff/content/preview?page=about", 3)).status,
+        200,
+      );
+      assert.equal(
+        (await request("/api/staff/content/preview?page=unknown", 3)).status,
+        400,
+      );
+      const longSlug = `synthetic-rich-${randomUUID()}`;
+      const longBody = {
+        title: "Synthetic long rich insight",
+        intro: "Synthetic only",
+        formatVersion: 1,
+        titleSize: "large",
+        sections: [
+          {
+            title: "Long text",
+            text: "forged",
+            rich: {
+              type: "doc",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [
+                    {
+                      type: "text",
+                      text: "界".repeat(20000),
+                      marks: [{ type: "bold" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          { title: "More", text: "界".repeat(20000) },
+        ],
+        sourceUrl: "",
+        attribution: "",
+      };
+      const longSaved = await request("/api/staff/content", 3, {
+        action: "save",
+        kind: "insight",
+        slug: longSlug,
+        version: 0,
+        body: longBody,
+      });
+      assert.equal(longSaved.status, 200);
+      const longEntry = await longSaved.json();
+      contentIds.push(longEntry.id);
+      assert.equal(longEntry.draft.sections[0].text.length, 20000);
+      assert.equal((await request(`/resources/${longSlug}`)).status, 404);
+      const longPublish = await request("/api/staff/content", 3, {
+        action: "publish",
+        id: longEntry.id,
+        version: longEntry.version,
+      });
+      assert.equal(longPublish.status, 200);
+      const longLive = await longPublish.json(),
+        longHtml = await (await request(`/resources/${longSlug}`)).text();
+      assert.ok(longHtml.includes("<strong>"));
+      assert.ok(longHtml.includes("content-title-large"));
+      const bad = await request("/api/staff/content", 3, {
+        action: "save",
+        kind: "insight",
+        slug: longSlug,
+        id: longEntry.id,
+        version: longLive.version,
+        body: {
+          ...longBody,
+          sections: [
+            {
+              title: "Unsafe",
+              text: "forged",
+              rich: {
+                type: "doc",
+                content: [
+                  { type: "paragraph", attrs: { style: "position:fixed" } },
+                ],
+              },
+            },
+          ],
+        },
+      });
+      assert.equal(bad.status, 400);
+      assert.equal(
+        (
+          await request("/api/staff/content", 3, {
+            action: "unpublish",
+            id: longEntry.id,
+            version: longLive.version,
+          })
+        ).status,
+        200,
+      );
+      assert.equal((await request(`/resources/${longSlug}`)).status, 404);
       const slug = `synthetic-${randomUUID()}`,
         body = {
           title: "Synthetic editorial test",

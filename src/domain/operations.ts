@@ -1,3 +1,11 @@
+import {
+  contentLimits,
+  validateRich,
+  richText,
+  size,
+  type RichNode,
+  type ContentSize,
+} from "./rich-content";
 export const pageSlugs = [
   "about",
   "governance",
@@ -87,7 +95,15 @@ export function instant(value: unknown) {
 export type ContentBody = {
   title: string;
   intro: string;
-  sections: { title: string; text: string }[];
+  formatVersion?: 1;
+  introRich?: RichNode;
+  titleSize?: ContentSize;
+  sections: {
+    title: string;
+    text: string;
+    rich?: RichNode;
+    titleSize?: ContentSize;
+  }[];
   sourceUrl: string;
   attribution: string;
 };
@@ -96,21 +112,53 @@ export function content(value: unknown, kind: string): ContentBody {
   if (
     !Array.isArray(input.sections) ||
     input.sections.length < 1 ||
-    input.sections.length > 12
+    input.sections.length > contentLimits.sections
   )
     throw new Error("Use up to 12 sections.");
   const sections = input.sections.map((section) => {
     const s = record(section);
+    const rich = s.rich === undefined ? undefined : validateRich(s.rich);
     return {
-      title: text(s.title, "Section title", 120, 1),
-      text: text(s.text, "Section text", kind === "news" ? 1500 : 6000, 1),
+      title: text(s.title, "Section title", contentLimits.heading, 1),
+      text: text(
+        rich ? richText(rich) : s.text,
+        "Section text",
+        kind === "news" ? contentLimits.newsSection : contentLimits.section,
+        1,
+      ),
+      ...(rich ? { rich } : {}),
+      ...(s.titleSize !== undefined ? { titleSize: size(s.titleSize) } : {}),
     };
   });
   if (kind === "news" && sections.reduce((n, s) => n + s.text.length, 0) > 2000)
     throw new Error("News must be a short attributed summary.");
+  if (input.formatVersion !== undefined && input.formatVersion !== 1)
+    throw new Error("Unsupported content format.");
+  const introRich =
+    input.introRich === undefined ? undefined : validateRich(input.introRich);
+  if ((introRich || sections.some((s) => s.rich)) && input.formatVersion !== 1)
+    throw new Error("Rich content needs format version 1.");
+  const title = text(input.title, "Title", contentLimits.title, 3);
+  const intro = text(
+    introRich ? richText(introRich) : input.intro,
+    "Introduction",
+    kind === "news" ? contentLimits.newsIntro : contentLimits.intro,
+  );
+  if (
+    title.length +
+      intro.length +
+      sections.reduce((n, s) => n + s.title.length + s.text.length, 0) >
+    contentLimits.total
+  )
+    throw new Error("Entry exceeds 100,000 characters.");
   return {
-    title: text(input.title, "Title", 160, 3),
-    intro: text(input.intro, "Introduction", 1000),
+    title,
+    intro,
+    ...(input.formatVersion === 1 ? { formatVersion: 1 as const } : {}),
+    ...(introRich ? { introRich } : {}),
+    ...(input.titleSize !== undefined
+      ? { titleSize: size(input.titleSize) }
+      : {}),
     sections,
     sourceUrl: webLink(input.sourceUrl, kind === "news"),
     attribution: text(

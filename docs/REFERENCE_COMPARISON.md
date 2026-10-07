@@ -63,3 +63,5 @@ commit and learning awards still require mapping/provenance and learning policie
 
 First-draft presentation refresh (2026-10-06): see SHOWCASE_READINESS.md for the
 remaining comparison gaps, explicit deferrals and release validation limits.
+
+Current work and feedback: [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md).

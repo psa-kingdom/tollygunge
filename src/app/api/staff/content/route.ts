@@ -1,3 +1,4 @@
+import { contentLimits } from "@/domain/rich-content";
 import { randomUUID } from "node:crypto";
 import { getDatabase } from "@/lib/database";
 import { contentInput, record, uuid, version } from "@/domain/operations";
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return operation(async () => {
     const actor = await authorized(request, "content:publish", true),
-      raw = record(await jsonBody(request));
+      raw = record(await jsonBody(request, contentLimits.requestBytes));
     return transaction(async (client) => {
       if (raw.action === "publish" || raw.action === "unpublish") {
         const id = uuid(raw.id),

@@ -1,3 +1,4 @@
+import { ArticleContentView } from "@/components/public-content-view";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
 import { getDatabase } from "@/lib/database";
@@ -19,25 +20,7 @@ export default async function Page({
   const body = row.published as ContentBody;
   return (
     <SiteShell>
-      <main id="main" className="page-content">
-        <span className="eyebrow">TPA RESOURCES</span>
-        <h1>{body.title}</h1>
-        <p>{body.intro}</p>
-        {body.sections.map((s, i) => (
-          <section className="content-section" key={i}>
-            <h2>{s.title}</h2>
-            <p className="prose-text">{s.text}</p>
-          </section>
-        ))}
-        {body.sourceUrl && (
-          <p>
-            {body.attribution} ·{" "}
-            <a href={body.sourceUrl} rel="noopener noreferrer">
-              Original source ↗
-            </a>
-          </p>
-        )}
-      </main>
+      <ArticleContentView body={body} />
     </SiteShell>
   );
 }
