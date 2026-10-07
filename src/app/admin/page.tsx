@@ -26,7 +26,7 @@ export default async function Admin() {
       });
     const profileDrafts = (
       await getDatabase().query(
-        "SELECT count(*)::int AS n FROM tpa.people WHERE accepted_verified AND (published IS NULL OR accepted<>(published-'verified')) AND jsonb_array_length(coalesce(accepted->'assignments','[]'))>0",
+        "SELECT count(*)::int AS n FROM tpa.people WHERE accepted_verified AND (published IS NULL OR (jsonb_set(accepted,'{links}',coalesce((SELECT jsonb_agg(l) FROM jsonb_array_elements(coalesce(accepted->'links','[]')) l WHERE l->>'public'='true'),'[]'))-'phone')<>(published-'verified'-'phone')) AND jsonb_array_length(coalesce(accepted->'assignments','[]'))>0",
       )
     ).rows[0].n;
     if (profileDrafts)
