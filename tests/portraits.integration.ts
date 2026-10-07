@@ -26,7 +26,9 @@ test(
     let personId: string | undefined;
     const token = randomBytes(32).toString("hex"),
       cookie =
-        "better-auth.session_token=" +
+        (base!.startsWith("https:")
+          ? "__Secure-better-auth.session_token="
+          : "better-auth.session_token=") +
         encodeURIComponent(
           token +
             "." +

@@ -25,7 +25,9 @@ test(
       token = randomBytes(32).toString("hex");
     let objectId: string | undefined, storage: S3Client | undefined;
     const cookie =
-      "better-auth.session_token=" +
+      (base!.startsWith("https:")
+        ? "__Secure-better-auth.session_token="
+        : "better-auth.session_token=") +
       encodeURIComponent(
         token +
           "." +

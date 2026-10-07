@@ -37,7 +37,9 @@ test(
           [randomUUID(), token, id],
         );
         cookies.push(
-          "better-auth.session_token=" +
+          (base!.startsWith("https:")
+            ? "__Secure-better-auth.session_token="
+            : "better-auth.session_token=") +
             encodeURIComponent(
               token +
                 "." +

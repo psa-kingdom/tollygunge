@@ -407,7 +407,7 @@ export function PersonEditor({
               </label>
               {!portraitData.uploadEnabled && (
                 <p className="notice">
-                  Hosted portrait upload awaits scoped private storage.
+                  Portrait upload awaits managed private storage.
                   Available portraits can still be selected.
                 </p>
               )}
