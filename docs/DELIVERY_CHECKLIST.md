@@ -9,11 +9,11 @@ existing release gates. Resend remains deferred.
 | --- | --- | --- | --- | --- |
 | 1 | Foundation, hosting, identity, permissions | Done for first draft | Retain deployment/access checks | HOSTING.md; CI and hosted login/revocation |
 | 2 | Public responsive first draft | Done for first draft | Real content; broader devices/accessibility | SHOWCASE_READINESS.md; desktop/tablet/phone screenshots |
-| 3 | Content, governance, media publication | Partial | Rich editing done; people review batch below; hosted uploads need scoped R2 | CONTENT_EDITOR.md; MEDIA_PUBLICATION.md; publication HTTP flows |
+| 3 | Content, governance, media publication | Partial | Rich editing and hosted uploads done; broader editorial/release acceptance remains | CONTENT_EDITOR.md; MEDIA_PUBLICATION.md; publication HTTP flows |
 | 4 | CRM, directory/contact preview | Done for current scope | Production anti-abuse; fuller usability checks | INQUIRIES.md; MEMBER_DIRECTORY.md; HTTP/browser checks |
 | 5 | Rich editor/live preview | Done for this batch | Broader real-device/assistive-technology acceptance remains in release work | CONTENT_EDITOR.md; local, CI and hosted evidence below |
 | 6 | Report presets/XLSX, news preparation, release tooling | Added | After editor; independent work | Not implemented; Crazy Hands XLSX comparison |
-| 7 | Hosted private/editorial uploads | Blocked | Independent scoped R2 credential | Local storage checks; production disabled |
+| 7 | Hosted document/editorial/QR/portrait uploads | Done | Future TPA-only credential rotation is hardening; full release remains open | R2_UPLOAD_ROLLOUT.md; four configured hosted HTTP suites; 1440/768/390 controls/previews; exact object cleanup |
 | 8 | Membership decisions, activation, renewals, numbers/certificates, profile-change review | Partial / Blocked | Approved fees/eligibility/declaration/refund terms and verified transactions | Membership drafts only; personal profile review implemented separately |
 | 9 | Collection, reconciliation, receipts, refunds/payment history | Partial / Blocked | UPI details/manual policy or Razorpay setup | Versioned instruction management only |
 | 10 | Events, attendance, learning history | Partial | Paid events need payment; awards need learning policy | Free registrations/attendance HTTP checks |
@@ -58,7 +58,7 @@ Crazy Hands migration are added. See REFERENCE_COMPARISON.md for read-only evide
 
 ## People, groups and profile review — added batch
 
-Status: Done for people/groups/review and preview; hosted portrait upload remains Blocked. Dependencies: shared content renderer/editor; checked migrations; scoped R2 for hosted portrait upload. Existing provider and membership/payment gates remain unchanged.
+Status: Done for people/groups/review, preview and hosted portrait upload. Dependencies: shared content renderer/editor and checked migrations complete. Hosted R2 rollout evidence is below; existing provider and membership/payment gates remain unchanged.
 
 - [x] Preserve legacy snapshots/history and add people, groups, assignments and review records.
 - [x] Owner drafts/submission; restricted staff edits; admin-only decisions with conflict checks and history.
@@ -86,3 +86,25 @@ Status: Done for people/groups/review and preview; hosted portrait upload remain
 - The exact hosted synthetic profile, its revisions/reviews and target audit events were removed after withdrawal. Public retrieval no longer contains it and the final attention queue has no synthetic items. Both local storage test objects were removed with absence checks. No real profiles were modified or published during verification.
 - Screenshots: preview-evidence/people-desktop-hosted.png and people-phone-hosted.png, taken with the disposable profile before cleanup. Viewport reset; local development server retained. Original credentials remain uncopied; repository secret-boundary scan passes.
 - Existing gates remain: scoped managed R2 for hosted uploads, deferred Resend, Google OAuth, approved membership/payment/refund/learning/import rules, providers/news sources and broader production recovery/accessibility acceptance. Report presets/XLSX and news-source preparation remain the next independent checklist batch.
+
+## Hosted storage acceptance — 7 October 2026
+
+- [x] Fresh account-wide R2 pair transferred through stdin into managed Railway settings; unrelated settings unchanged.
+- [x] Dedicated bucket/namespace guards and production file-fallback denial; portrait compensation/reconciliation audit.
+- [x] r2.dev anonymous object denial verified after disablement; no custom domains confirmed by user.
+- [x] Four hosted upload/download/publication/withdrawal suites pass; ownership, staff permissions, image normalization and invalid-upload rejection.
+- [x] Four upload controls enabled at desktop/tablet/phone widths; actual private media/portrait previews render without page overflow. Chrome file-URL selection limitation recorded.
+- [x] Lint/typecheck/build, 36 unit tests, 5 PostgreSQL tests, 8 CI HTTP suites and hosted login/revocation pass.
+- [x] Exact synthetic objects/records/revisions/audits removed; HeadObject/image retrieval 404 verified. Credential scans have zero matches.
+- [x] Runtime e98180e deployed successfully as 9efdae03-9bb5-4b7d-97ef-764e43c9e277; test follow-up b0bb44a CI passes.
+
+See [R2_UPLOAD_ROLLOUT.md](R2_UPLOAD_ROLLOUT.md) for detailed evidence, scope, browser limitations and rollback. Earlier reports above remain historical. Account-wide credentials are not bucket-scoped; future TPA-only rotation is retained as hardening. Report presets/XLSX remain next independent work. Resend, OAuth, membership/payment/refund/learning/import/news and full-release dependencies are unchanged.
+
+## Documentation delivery status
+
+Blocked at GitHub after hosted verification: repeated documentation pushes return
+remote Internal Server Error; GraphQL and REST PR-description updates also fail.
+The remote feature branch retains b0bb44a with passing CI, and the healthy deployed
+runtime is e98180e. The full checklist/report is committed locally; push and PR refresh
+remain pending provider recovery. Main is unchanged. No rollback is needed for this
+documentation transport failure because hosted storage verification passed.

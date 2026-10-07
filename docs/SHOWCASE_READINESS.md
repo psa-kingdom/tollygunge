@@ -88,3 +88,15 @@ This batch is hosted and verified: CI 37599494566, deployment
 0cbc41c5-5601-4103-9d8d-1754d700b5f7. Desktop/tablet/phone and the synthetic
 review/publication/withdrawal journey pass; fixtures are removed. Hosted portrait
 upload remains blocked by scoped R2. See the checklist for evidence and retained gates.
+
+## Current storage rollout — 7 October 2026
+
+Hosted document, editorial-media, payment-QR and portrait uploads are enabled and verified.
+The fresh account-wide Object Read & Write pair is held in Railway managed settings;
+application bucket restrictions do not make the credential bucket-scoped. Production
+file fallback is disabled. Public development access is disabled (live object-denial
+probe passed); no custom domains are connected according to user confirmation.
+Publication/review/payment states remain independent. See [R2_UPLOAD_ROLLOUT.md](R2_UPLOAD_ROLLOUT.md)
+and [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md) for evidence and retained dependencies.
+Earlier missing-storage statements in this report describe their dated release state.
+Resend remains deferred; report presets/XLSX are next independent work.
