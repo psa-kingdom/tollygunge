@@ -130,7 +130,10 @@ export function content(value: unknown, kind: string): ContentBody {
       ...(s.titleSize !== undefined ? { titleSize: size(s.titleSize) } : {}),
     };
   });
-  if (kind === "news" && sections.reduce((n, s) => n + s.text.length, 0) > 2000)
+  if (
+    kind === "news" &&
+    sections.reduce((n, s) => n + s.text.length, 0) > contentLimits.newsSections
+  )
     throw new Error("News must be a short attributed summary.");
   if (input.formatVersion !== undefined && input.formatVersion !== 1)
     throw new Error("Unsupported content format.");
