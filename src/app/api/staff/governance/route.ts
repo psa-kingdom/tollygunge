@@ -1,106 +1,80 @@
-import { randomUUID } from "node:crypto";
 import { getDatabase } from "@/lib/database";
-import { governanceProfile } from "@/domain/governance";
-import { record, uuid, version } from "@/domain/operations";
+import { personBody, redactPerson } from "@/domain/people";
+import { uuid } from "@/domain/operations";
 import {
-  operation,
   authorized,
+  operation,
   jsonBody,
   transaction,
-  audit,
   OperationError,
 } from "@/lib/operation-api";
+import {
+  staffPeople,
+  privatePeople,
+  admin,
+  enriched,
+  changePerson,
+} from "@/lib/people-service";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
   return operation(async () => {
-    await authorized(request, "content:publish");
-    const records = (
-      await getDatabase().query(
-        "SELECT g.*,(SELECT coalesce(json_agg(r ORDER BY r.version DESC),'[]') FROM tpa.governance_revisions r WHERE r.profile_id=g.id) AS history FROM tpa.governance_profiles g ORDER BY updated_at DESC LIMIT 200",
-      )
-    ).rows;
-    const portraits = (
-      await getDatabase().query(
-        "SELECT id,published->>'title' AS title FROM tpa.public_media WHERE published IS NOT NULL ORDER BY created_at DESC LIMIT 200",
-      )
-    ).rows;
-    return { records, portraits };
+    const actor = await authorized(request);
+    if (!staffPeople(actor)) throw new OperationError("Access denied.", 403);
+    const client = await getDatabase().connect();
+    try {
+      const value = new URL(request.url).searchParams.get("id");
+      const id = value ? uuid(value) : null;
+      const rows = (
+        await client.query(
+          "SELECT * FROM tpa.people WHERE ($1::uuid IS NULL OR id=$1) ORDER BY updated_at DESC LIMIT 200",
+          [id],
+        )
+      ).rows;
+      const records = [];
+      for (const row of rows)
+        records.push(
+          id
+            ? await enriched(client, row, actor)
+            : {
+                ...row,
+                draft: privatePeople(actor)
+                  ? personBody(row.draft)
+                  : redactPerson(personBody(row.draft)),
+                accepted: privatePeople(actor)
+                  ? personBody(row.accepted)
+                  : redactPerson(personBody(row.accepted)),
+              },
+        );
+      return {
+        records,
+        groups: (
+          await client.query(
+            "SELECT * FROM tpa.profile_groups ORDER BY (draft->>'order')::int,id",
+          )
+        ).rows,
+        portraits: (
+          await client.query(
+            "SELECT id,published->>'title' AS title FROM tpa.public_media WHERE published IS NOT NULL ORDER BY created_at DESC LIMIT 200",
+          )
+        ).rows,
+        canReview: admin(actor),
+        canEditPrivate: privatePeople(actor),
+        canPublish:
+          actor.roles.includes("administrator") ||
+          actor.roles.includes("content_editor"),
+      };
+    } finally {
+      client.release();
+    }
   });
 }
 export async function POST(request: Request) {
   return operation(async () => {
-    const actor = await authorized(request, "content:publish", true),
-      input = record(await jsonBody(request, 12000)),
-      expected = version(input.version);
-    if (!["save", "publish", "unpublish"].includes(String(input.action)))
-      throw new OperationError("Choose a profile action.");
-    return transaction(async (client) => {
-      const id = input.id ? uuid(input.id) : randomUUID();
-      const current = input.id
-        ? (
-            await client.query(
-              "SELECT * FROM tpa.governance_profiles WHERE id=$1 FOR UPDATE",
-              [id],
-            )
-          ).rows[0]
-        : null;
-      if (input.id ? !current || current.version !== expected : expected !== 0)
-        throw new OperationError(
-          "This profile changed. Reload before saving.",
-          409,
-        );
-      if (input.action !== "save" && !current)
-        throw new OperationError("Save the profile first.");
-      const body =
-        input.action === "save"
-          ? governanceProfile(input.body)
-          : governanceProfile(current.draft);
-      if (
-        body.portraitId &&
-        input.action !== "unpublish" &&
-        !(
-          await client.query(
-            "SELECT 1 FROM tpa.public_media WHERE id=$1 AND published IS NOT NULL FOR SHARE",
-            [body.portraitId],
-          )
-        ).rowCount
-      )
-        throw new OperationError(
-          "Choose an explicitly published editorial portrait.",
-        );
-      if (input.action === "publish" && input.confirmPublication !== true)
-        throw new OperationError(
-          "Confirm association details and permission to publish.",
-        );
-      const row = current
-        ? (
-            await client.query(
-              "UPDATE tpa.governance_profiles SET draft=$2,published=CASE WHEN $3='publish' THEN $2::jsonb WHEN $3='unpublish' THEN NULL ELSE published END,version=version+1,updated_by=$4,updated_at=now() WHERE id=$1 RETURNING *",
-              [id, body, input.action, actor.id],
-            )
-          ).rows[0]
-        : (
-            await client.query(
-              "INSERT INTO tpa.governance_profiles(id,draft,updated_by) VALUES($1,$2,$3) RETURNING *",
-              [id, body, actor.id],
-            )
-          ).rows[0];
-      await client.query(
-        "INSERT INTO tpa.governance_revisions(profile_id,version,action,body,actor_id) VALUES($1,$2,$3,$4,$5)",
-        [
-          id,
-          row.version,
-          input.action === "save"
-            ? "saved"
-            : input.action === "publish"
-              ? "published"
-              : "unpublished",
-          body,
-          actor.id,
-        ],
-      );
-      await audit(client, actor.id, `governance.${input.action}`, id);
-      return row;
-    });
+    const actor = await authorized(request, undefined, true);
+    if (!staffPeople(actor)) throw new OperationError("Access denied.", 403);
+    const input = await jsonBody(request, 1048576);
+    if (["approve", "reject"].includes(input.action))
+      throw new OperationError("Use the administrator review endpoint.");
+    return transaction((client) => changePerson(client, actor, input));
   });
 }

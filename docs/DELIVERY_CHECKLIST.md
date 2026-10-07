@@ -9,12 +9,12 @@ existing release gates. Resend remains deferred.
 | --- | --- | --- | --- | --- |
 | 1 | Foundation, hosting, identity, permissions | Done for first draft | Retain deployment/access checks | HOSTING.md; CI and hosted login/revocation |
 | 2 | Public responsive first draft | Done for first draft | Real content; broader devices/accessibility | SHOWCASE_READINESS.md; desktop/tablet/phone screenshots |
-| 3 | Content, governance, media publication | Partial | Rich editing track below; hosted uploads need scoped R2 | CONTENT_EDITOR.md; MEDIA_PUBLICATION.md; publication HTTP flows |
+| 3 | Content, governance, media publication | Partial | Rich editing done; people review batch below; hosted uploads need scoped R2 | CONTENT_EDITOR.md; MEDIA_PUBLICATION.md; publication HTTP flows |
 | 4 | CRM, directory/contact preview | Done for current scope | Production anti-abuse; fuller usability checks | INQUIRIES.md; MEMBER_DIRECTORY.md; HTTP/browser checks |
 | 5 | Rich editor/live preview | Done for this batch | Broader real-device/assistive-technology acceptance remains in release work | CONTENT_EDITOR.md; local, CI and hosted evidence below |
 | 6 | Report presets/XLSX, news preparation, release tooling | Added | After editor; independent work | Not implemented; Crazy Hands XLSX comparison |
 | 7 | Hosted private/editorial uploads | Blocked | Independent scoped R2 credential | Local storage checks; production disabled |
-| 8 | Membership decisions, activation, renewals, numbers/certificates, profile-change review | Partial / Blocked | Approved fees/eligibility/declaration/refund terms and verified transactions | Private drafts work; no submission/approval |
+| 8 | Membership decisions, activation, renewals, numbers/certificates, profile-change review | Partial / Blocked | Approved fees/eligibility/declaration/refund terms and verified transactions | Membership drafts only; personal profile review implemented separately |
 | 9 | Collection, reconciliation, receipts, refunds/payment history | Partial / Blocked | UPI details/manual policy or Razorpay setup | Versioned instruction management only |
 | 10 | Events, attendance, learning history | Partial | Paid events need payment; awards need learning policy | Free registrations/attendance HTTP checks |
 | 11 | Historical import commit | Partial / Blocked | Approved mapping/provenance | Preview validation only |
@@ -55,3 +55,25 @@ Crazy Hands migration are added. See REFERENCE_COMPARISON.md for read-only evide
 - Railway deployment bd6fbc55-2e0c-4cf5-bcf2-b0d09c373123 is SUCCESS at https://tpassociation.org. Hosted admin editor verifies unsaved inline preview, publication gate and keyboard mobile tabs at 1440/768/390 widths without page overflow. Shared public rendering preserves bold/underline/Large text and the 12-column table after synthetic publication; withdrawal returns 404. Authenticated preview works; anonymous and revoked sessions are denied.
 - The exact synthetic browser record, cascading revisions and associated test audit records were removed after withdrawal. Test scripts clean their own fixtures. No existing content was published or rewritten by verification.
 - Screenshots: preview-evidence/content-desktop-hosted.png and content-phone-hosted.png (synthetic verification before cleanup). Resend remains deferred; hosted R2, policy, payment, import, Google and production-release gates remain above.
+
+## People, groups and profile review â€” added batch
+
+Status: Partial pending CI/hosted rollout. Dependencies: shared content renderer/editor; checked migrations; scoped R2 for hosted portrait upload. Existing provider and membership/payment gates remain unchanged.
+
+- [x] Preserve legacy snapshots/history and add people, groups, assignments and review records.
+- [x] Owner drafts/submission; restricted staff edits; admin-only decisions with conflict checks and history.
+- [x] Groups/subgroups, multiple assignments, optional rich biographies/links and private contacts.
+- [x] Shared card/placement preview, mobile tabs, unsaved protection and explicit verified publication.
+- [x] Purpose-bound portrait upload/replacement and publication-based retrieval; hosted storage accurately gated.
+- [x] Directory review filters and admin queue; immediate consent/preferences remain independent.
+- [ ] Security/compatibility/HTTP/PostgreSQL/browser acceptance, synthetic cleanup, CI and hosted delivery.
+
+## People acceptance evidence — 7 October 2026
+
+- Model, permissions, safe rich biographies/links, groups, multiple assignments, owner drafts, administrator review and separate approved publication are implemented. See PEOPLE_REVIEW.md.
+- Local lint/typecheck/build pass; 34 unit tests pass. Existing 7 HTTP suites pass, including supersession/conflicts, redacted content-editor contact access, immediate preferences and explicit publication/withdrawal.
+- Private-storage portrait HTTP verification passes: invalid signature/oversize rejection, normalized upload, owner/staff read, anonymous denial until publication, replacement revocation and withdrawal. Both synthetic objects are deleted and their absence verified. Generic normalization and failed-persistence compensation unit tests pass.
+- PostgreSQL checks pass for repeatability/checksums, wrong-database guard, constraints, recovery and session revocation. The added legacy-label/identity test passes; original records/history remain intact. No legacy governance edits occurred between migration and cutover.
+- Local browser checks at 1440/768/390 widths confirm rich save, private section/card previews, submission, admin approval, explicit publication, public biography rendering and withdrawal. Keyboard tabs/expansion/Escape and unsaved-discard protection work. Phone/tablet document widths show no horizontal overflow. Synthetic browser record/revisions/audit records removed.
+- Browser extension file upload is unavailable without the extension's file-URL permission; the same portrait endpoints were tested through HTTP without changing browser permissions. Browser extension-injected hydration warnings are present in development; no application rendering failure observed.
+- Screenshots: preview-evidence/people-desktop-local.png and people-phone-local.png. CI and hosted evidence will be appended after rollout. Hosted scoped R2 remains Blocked; Resend and all prior payment/membership/import/Google/release gates remain unchanged.

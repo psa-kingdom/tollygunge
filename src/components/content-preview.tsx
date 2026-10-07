@@ -1,5 +1,11 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ReactNode,
+} from "react";
 import { useModalFocus } from "./use-modal-focus";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
@@ -19,6 +25,7 @@ export function ContentPreview({
   contextError,
   contextLoading,
   onRetry,
+  rendered,
 }: {
   body: ContentBody;
   kind: string;
@@ -29,6 +36,7 @@ export function ContentPreview({
   contextError: string;
   contextLoading: boolean;
   onRetry: () => void;
+  rendered?: ReactNode;
 }) {
   const [width, setWidth] = useState(1280),
     [expanded, setExpanded] = useState(false),
@@ -63,16 +71,17 @@ export function ContentPreview({
   const scale = Math.min(1, available / width);
   const html = renderToStaticMarkup(
     <div className="public-shell">
-      {kind === "page" ? (
-        <PublicContentView
-          page={slug}
-          data={{ ...body, label: sitePages[slug]?.label }}
-          readOnly
-          context={context}
-        />
-      ) : (
-        <ArticleContentView body={body} />
-      )}
+      {rendered ??
+        (kind === "page" ? (
+          <PublicContentView
+            page={slug}
+            data={{ ...body, label: sitePages[slug]?.label }}
+            readOnly
+            context={context}
+          />
+        ) : (
+          <ArticleContentView body={body} />
+        ))}
     </div>,
   );
   const srcDoc = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${styles}<style>body{margin:0}a,button,input,select,textarea,summary{pointer-events:none}html{scrollbar-width:thin}</style></head><body>${html}</body></html>`;

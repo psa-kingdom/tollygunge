@@ -132,3 +132,34 @@ export async function paymentQrStorage(
   if (!response.Body) throw new Error("Image unavailable.");
   return response.Body.transformToByteArray();
 }
+
+export async function portraitStorage(
+  id: string,
+  action: "read" | "store" | "remove",
+  bytes?: Uint8Array,
+) {
+  const { bucket, client } = storage();
+  const Key = `tpa/portraits/${id}.webp`;
+  if (action === "store") {
+    if (!bytes) throw Error("Image required.");
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key,
+        Body: bytes,
+        ContentType: "image/webp",
+        CacheControl: "private, no-store",
+      }),
+    );
+    return;
+  }
+  if (action === "remove") {
+    await client.send(new DeleteObjectCommand({ Bucket: bucket, Key }));
+    return;
+  }
+  const result = await client.send(
+    new GetObjectCommand({ Bucket: bucket, Key }),
+  );
+  if (!result.Body) throw Error("Portrait unavailable.");
+  return result.Body.transformToByteArray();
+}

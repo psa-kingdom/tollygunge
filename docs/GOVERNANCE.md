@@ -17,3 +17,13 @@ media references in drafts, publications and history. If a portrait is withdrawn
 from the media library, public profile rendering stops using it. Profiles appear
 under the corresponding About/Governance submenu section, preserving sitemap order.
 Real rosters and publication permissions must be confirmed by TPA before publishing.
+
+## People review batch — 7 October 2026
+
+Richer people/groups, multiple assignments, owner/staff proposals and administrator
+review are implemented with separate accepted/public snapshots. The current
+[delivery checklist](DELIVERY_CHECKLIST.md) records acceptance and rollout status;
+[PEOPLE_REVIEW.md](PEOPLE_REVIEW.md) explains permissions, legacy compatibility and
+portrait privacy. Profile-change review is addressed; membership decisions/numbers/
+certificates, verified payment history, XLSX and live inbox/delivery remain governed
+by their existing gates. Hosted scoped R2 and deferred Resend remain unchanged.

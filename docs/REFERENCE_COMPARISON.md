@@ -68,3 +68,13 @@ Current work and feedback: [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md).
 
 
 7 October 2026: Rich content editing and isolated unsaved preview are deployed and verified. The [delivery checklist](DELIVERY_CHECKLIST.md) records 32 unit/4 PostgreSQL/7 HTTP tests, CI, hosted responsive acceptance and synthetic cleanup. Existing provider and business-policy gaps remain; Resend is deferred.
+
+## People review batch — 7 October 2026
+
+Richer people/groups, multiple assignments, owner/staff proposals and administrator
+review are implemented with separate accepted/public snapshots. The current
+[delivery checklist](DELIVERY_CHECKLIST.md) records acceptance and rollout status;
+[PEOPLE_REVIEW.md](PEOPLE_REVIEW.md) explains permissions, legacy compatibility and
+portrait privacy. Profile-change review is addressed; membership decisions/numbers/
+certificates, verified payment history, XLSX and live inbox/delivery remain governed
+by their existing gates. Hosted scoped R2 and deferred Resend remain unchanged.

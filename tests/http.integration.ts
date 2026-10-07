@@ -109,12 +109,52 @@ test(
         userId: people[1],
         role: "administrator",
       };
+      const current = await (await request("/api/member/profile", 0)).json();
+      const payload = {
+        action: "save",
+        version: current.person.version,
+        body: {
+          name: "Synthetic owner",
+          phone: own.phone,
+          organization: own.organization,
+          profession: own.profession,
+          jobTitle: own.jobTitle,
+          city: own.city,
+        },
+      };
       assert.equal(
         (
           await request("/api/member/profile", 0, {
             method: "POST",
             headers: { origin: base!, "Content-Type": "application/json" },
-            body: JSON.stringify(own),
+            body: JSON.stringify({
+              ...payload,
+              body: { ...payload.body, userId: people[1] },
+            }),
+          })
+        ).status,
+        403,
+      );
+      assert.equal(
+        (
+          await request("/api/member/profile", 0, {
+            method: "POST",
+            headers: { origin: base!, "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+        ).status,
+        200,
+      );
+      assert.equal(
+        (
+          await request("/api/member/profile", 0, {
+            method: "POST",
+            headers: { origin: base!, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "preferences",
+              newsletter: true,
+              contactPreference: "none",
+            }),
           })
         ).status,
         200,
@@ -122,10 +162,11 @@ test(
       const p = await (
         await request("/api/member/profile?userId=" + people[1], 0)
       ).json();
-      assert.equal(p.organization, own.organization);
-      assert.equal(p.profession, own.profession);
-      assert.equal(p.jobTitle, own.jobTitle);
-      assert.equal(p.city, own.city);
+      assert.equal(p.organization, "");
+      assert.equal(p.person.draft.organization, own.organization);
+      assert.equal(p.person.draft.profession, own.profession);
+      assert.equal(p.person.draft.jobTitle, own.jobTitle);
+      assert.equal(p.person.draft.city, own.city);
       assert.equal(p.newsletter, true);
       assert.equal(
         (await (await request("/api/member/profile", 1)).json()).organization,

@@ -1,3 +1,4 @@
+import { publishedPeople } from "@/lib/public-people";
 import "server-only";
 import { getDatabase } from "./database";
 import { publishedArticles } from "./public-content";
@@ -10,11 +11,7 @@ export async function previewContext(
 ): Promise<PublicContentContext> {
   const db = getDatabase();
   const people = ["about", "governance"].includes(page)
-    ? (
-        await db.query(
-          "SELECT g.id,g.published,(m.published IS NOT NULL) AS portrait_available,m.published->>'altText' AS portrait_alt FROM tpa.governance_profiles g LEFT JOIN tpa.public_media m ON m.id=g.published_portrait_id WHERE g.published IS NOT NULL ORDER BY (g.published->>'order')::int,g.published->>'name',g.id",
-        )
-      ).rows
+    ? await publishedPeople()
     : [];
   const media =
     page === "resources"

@@ -3,6 +3,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "./operations-client";
 type Person = {
   id: string;
+  person_id: string | null;
+  profile_review: string;
   name: string;
   email: string;
   email_verified: boolean;
@@ -14,14 +16,24 @@ type Person = {
   staff_account: boolean;
   created_at: string;
 };
-type Filters = { q: string; verification: string; contact: string };
+type Filters = {
+  q: string;
+  verification: string;
+  contact: string;
+  review: string;
+};
 type Directory = {
   rows: Person[];
   total: number;
   offset: number;
   pageSize: number;
 };
-const empty: Filters = { q: "", verification: "all", contact: "all" };
+const empty: Filters = {
+  q: "",
+  verification: "all",
+  contact: "all",
+  review: "all",
+};
 export function MembersWorkspace() {
   const [filters, setFilters] = useState(empty),
     [applied, setApplied] = useState(empty);
@@ -54,7 +66,10 @@ export function MembersWorkspace() {
       setMessage("");
       if (
         remember &&
-        (next.q || next.verification !== "all" || next.contact !== "all")
+        (next.q ||
+          next.verification !== "all" ||
+          next.contact !== "all" ||
+          next.review !== "all")
       )
         setSearches((old) =>
           [
@@ -170,6 +185,22 @@ export function MembersWorkspace() {
             <option value="no-phone">No phone</option>
           </select>
         </label>
+        <label>
+          Profile review
+          <select
+            disabled={busy}
+            value={filters.review}
+            onChange={(e) => setFilters({ ...filters, review: e.target.value })}
+          >
+            {["all", "unverified", "pending", "verified", "rejected"].map(
+              (v) => (
+                <option key={v} value={v}>
+                  {v === "all" ? "Any review status" : v}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
         <button className="button" disabled={busy}>
           Search
         </button>
@@ -278,7 +309,8 @@ export function MembersWorkspace() {
               <span>{person.email}</span>
               <small>
                 {person.organization || "Organization not supplied"} ·{" "}
-                {person.email_verified ? "Verified email" : "Unverified email"}
+                {person.email_verified ? "Verified email" : "Unverified email"}{" "}
+                · Profile: {person.profile_review}
                 {person.staff_account ? " · Staff account" : ""}
               </small>
             </button>
@@ -310,6 +342,16 @@ export function MembersWorkspace() {
                   ? "Verified email"
                   : "Unverified email"}
               </p>
+              {selected?.person_id && (
+                <p>
+                  <a
+                    className="text-link"
+                    href={`/admin/workspaces/governance?id=${selected.person_id}`}
+                  >
+                    Edit / review personal details →
+                  </a>
+                </p>
+              )}
               <dl className="contact-details">
                 <div>
                   <dt>Email</dt>

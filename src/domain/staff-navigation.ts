@@ -106,7 +106,11 @@ export function staffNavigation(roles: readonly string[]) {
     .map((group) => ({
       ...group,
       items: group.items.filter(
-        (item) => !item.permission || hasPermission(roles, item.permission),
+        (item) =>
+          !item.permission ||
+          hasPermission(roles, item.permission) ||
+          (item.href === "/admin/workspaces/governance" &&
+            hasPermission(roles, "members:review")),
       ),
     }))
     .filter((group) => group.items.length);

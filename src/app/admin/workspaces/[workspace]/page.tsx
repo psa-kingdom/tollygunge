@@ -51,8 +51,11 @@ export default async function Workspace({
   if (
     workspace === "reports"
       ? !actor.roles.length
-      : !permissions[workspace] ||
-        !hasPermission(actor.roles, permissions[workspace])
+      : workspace === "governance"
+        ? !hasPermission(actor.roles, "content:publish") &&
+          !hasPermission(actor.roles, "members:review")
+        : !permissions[workspace] ||
+          !hasPermission(actor.roles, permissions[workspace])
   )
     notFound();
   return (

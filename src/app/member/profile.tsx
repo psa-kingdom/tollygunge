@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { PersonalProfile } from "@/components/personal-profile";
 type DocumentRecord = {
   id: string;
   kind: string;
@@ -10,15 +11,6 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
   const [loading, setLoading] = useState(true),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
-  const [profile, setProfile] = useState({
-    phone: "",
-    organization: "",
-    profession: "",
-    jobTitle: "",
-    city: "",
-    contactPreference: "email",
-    newsletter: false,
-  });
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [loadError, setLoadError] = useState(false);
   useEffect(() => {
@@ -30,18 +22,8 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
           fetch("/api/documents"),
         ]);
         if (!p.ok || !d.ok) throw new Error();
-        const data = await p.json(),
-          docs = await d.json();
+        const docs = await d.json();
         if (active) {
-          setProfile({
-            phone: data.phone ?? "",
-            organization: data.organization ?? "",
-            profession: data.profession ?? "",
-            jobTitle: data.jobTitle ?? "",
-            city: data.city ?? "",
-            contactPreference: data.preferences?.contact ?? "email",
-            newsletter: data.newsletter,
-          });
           setDocuments(docs);
         }
       } catch {
@@ -63,102 +45,7 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
     );
   return (
     <div className="member-settings">
-      <section>
-        <h2>Your profile</h2>
-        <p>
-          Your contact and professional details are private. Saving them does
-          not approve membership or change your sign-in identity.
-        </p>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setBusy(true);
-            setMessage("");
-            try {
-              const response = await fetch("/api/member/profile", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(profile),
-              });
-              setMessage(
-                response.ok
-                  ? "Profile saved."
-                  : "Unable to save. Check your details and try again.",
-              );
-            } catch {
-              setMessage("Unable to connect. Please try again.");
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          <label>
-            Phone
-            <input
-              maxLength={32}
-              type="tel"
-              value={profile.phone}
-              onChange={(e) =>
-                setProfile({ ...profile, phone: e.target.value })
-              }
-            />
-          </label>
-          <label>
-            Organization
-            <input
-              maxLength={200}
-              value={profile.organization}
-              onChange={(e) =>
-                setProfile({ ...profile, organization: e.target.value })
-              }
-            />
-          </label>
-          <label>
-            Contact preference
-            <select
-              value={profile.contactPreference}
-              onChange={(e) =>
-                setProfile({ ...profile, contactPreference: e.target.value })
-              }
-            >
-              <option value="email">Email</option>
-              <option value="none">No optional messages</option>
-            </select>
-          </label>
-          {(
-            [
-              ["profession", "Profession"],
-              ["jobTitle", "Job title"],
-              ["city", "City"],
-            ] as const
-          ).map(([key, label]) => (
-            <label key={key}>
-              {label} (optional)
-              <input
-                maxLength={120}
-                value={profile[key]}
-                onChange={(e) =>
-                  setProfile({ ...profile, [key]: e.target.value })
-                }
-              />
-            </label>
-          ))}
-          <label className="consent">
-            <input
-              type="checkbox"
-              checked={profile.newsletter}
-              onChange={(e) =>
-                setProfile({ ...profile, newsletter: e.target.checked })
-              }
-            />
-            I consent to the TPA newsletter. I can withdraw this choice here at
-            any time.
-          </label>
-          <button className="button" disabled={busy}>
-            {busy ? "Saving…" : "Save profile"}
-          </button>
-        </form>
-      </section>
+      <PersonalProfile />
       <section>
         <h2>Private documents</h2>
         {!storageEnabled && (

@@ -72,17 +72,12 @@ export function PublicContentView({
               {section.title}
             </h2>
             <RichContent document={section.rich} text={section.text} />
-            {((page === "about" && i === 2) ||
-              (page === "governance" && i < 2)) && (
+            {["about", "governance"].includes(page) && (
               <PublicGovernance
                 entries={people.filter(
                   (person) =>
-                    person.published.group ===
-                    (page === "about"
-                      ? "founding"
-                      : i === 0
-                        ? "executive"
-                        : "subcommittee"),
+                    person.published.page === page &&
+                    person.published.section === i,
                 )}
               />
             )}

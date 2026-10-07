@@ -1,196 +1,335 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { api } from "./operations-client";
-import type { GovernanceProfile } from "@/domain/governance";
-type Entry = {
-  id: string;
-  draft: GovernanceProfile;
-  published: GovernanceProfile | null;
-  version: number;
-  history?: { version: number; action: string; created_at: string }[];
+import { PersonEditor } from "./person-editor";
+import { useUnsavedProfile } from "./use-unsaved-profile";
+import type { PersonEntry, ProfileGroup } from "@/domain/people";
+type Data = {
+  records: PersonEntry[];
+  groups: ProfileGroup[];
+  portraits: { id: string; title: string }[];
+  canReview: boolean;
+  canEditPrivate: boolean;
+  canPublish: boolean;
 };
-type Data = { records: Entry[]; portraits: { id: string; title: string }[] };
-const empty: GovernanceProfile = {
-  name: "",
-  role: "",
-  group: "executive",
-  committee: "",
-  profession: "",
-  biography: "",
-  term: "",
-  order: 0,
-  portraitId: null,
-};
+const emptyGroup = { name: "", page: "governance", section: 0, order: 0 };
 export function GovernanceWorkspace() {
-  const [data, setData] = useState<Data>({ records: [], portraits: [] }),
-    [selected, setSelected] = useState<Entry | null>(null),
-    [body, setBody] = useState(empty),
-    [confirmed, setConfirmed] = useState(false),
-    [busy, setBusy] = useState(false),
-    [ready, setReady] = useState(false),
-    [message, setMessage] = useState("Loading association profiles…");
-  useEffect(() => {
-    api<Data>("/api/staff/governance")
-      .then((value) => {
-        setData(value);
-        setReady(true);
-        setMessage("");
-      })
-      .catch((e) => setMessage(e.message));
-  }, []);
-  const dirty =
-    JSON.stringify(body) !== JSON.stringify(selected?.draft ?? empty);
-  function select(entry: Entry | null) {
-    if (dirty && !window.confirm("Discard unsaved profile edits?")) return;
-    setSelected(entry);
-    setBody(entry?.draft ?? empty);
-    setConfirmed(false);
+  const [data, setData] = useState<Data>(),
+    [selected, setSelected] = useState<PersonEntry | null>(null),
+    [tab, setTab] = useState("people"),
+    [dirty, setDirty] = useState(false),
+    [q, setQ] = useState(""),
+    [filter, setFilter] = useState("association"),
+    [message, setMessage] = useState("Loading people…");
+  const { guard, dialog } = useUnsavedProfile(dirty, false);
+  const [group, setGroup] = useState<ProfileGroup | null>(null),
+    [body, setBody] = useState(emptyGroup),
+    [parent, setParent] = useState(""),
+    [groupBusy, setGroupBusy] = useState(false);
+  const groupDirty =
+    JSON.stringify(body) !== JSON.stringify(group?.draft ?? emptyGroup) ||
+    parent !== (group?.parent_id ?? "");
+  const { guard: groupGuard, dialog: groupDialog } =
+    useUnsavedProfile(groupDirty);
+  async function load() {
+    const d = await api<Data>("/api/staff/governance");
+    setData(d);
     setMessage("");
+    return d;
   }
-  async function act(action: string) {
-    setBusy(true);
-    try {
-      const row = await api<Entry>("/api/staff/governance", {
-        action,
-        id: selected?.id,
-        version: selected?.version ?? 0,
-        body,
-        confirmPublication: confirmed,
+  useEffect(() => {
+    let active = true;
+    api<Data>("/api/staff/governance")
+      .then((d) => {
+        if (active) {
+          setData(d);
+          setMessage("");
+          const params = new URLSearchParams(window.location.search);
+          if (params.get("review") === "pending") setFilter("pending");
+          const id = params.get("id");
+          if (id) {
+            setFilter("all");
+            void api<Data>(`/api/staff/governance?id=${encodeURIComponent(id)}`)
+              .then((v) => {
+                if (active) setSelected(v.records[0] ?? null);
+              })
+              .catch((e) => {
+                if (active) setMessage(e.message);
+              });
+          }
+        }
+      })
+      .catch((e) => {
+        if (active) setMessage(e.message);
       });
-      const refreshed = await api<Data>("/api/staff/governance");
-      setData(refreshed);
-      setSelected(refreshed.records.find((r) => r.id === row.id) ?? row);
-      setBody(row.draft);
-      setConfirmed(false);
-      setMessage(
-        action === "save"
-          ? "Draft saved. Existing publication is unchanged."
-          : action === "publish"
-            ? "Profile published on the association website."
-            : "Public profile withdrawn; history retained.",
-      );
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to save.");
-    } finally {
-      setBusy(false);
+    return () => {
+      active = false;
+    };
+  }, []);
+  async function openPerson(p: PersonEntry) {
+    try {
+      const details = await api<Data>(`/api/staff/governance?id=${p.id}`);
+      setSelected(details.records[0]);
+    } catch (e) {
+      setMessage((e as Error).message);
     }
   }
-  function field<K extends keyof GovernanceProfile>(
-    key: K,
-    value: GovernanceProfile[K],
-  ) {
-    setBody((current) => ({ ...current, [key]: value }));
-    setConfirmed(false);
+  async function groupAction(action: string) {
+    setGroupBusy(true);
+    try {
+      const row = await api<ProfileGroup>("/api/staff/profile-groups", {
+        action,
+        id: group?.id,
+        version: group?.version ?? 0,
+        body,
+        parentId: parent || null,
+      });
+      setGroup(row);
+      setBody(row.draft);
+      setParent(row.parent_id ?? "");
+      await load();
+      setMessage(
+        action === "save"
+          ? "Group draft saved. Publish to update public placement."
+          : `Group ${action} completed.`,
+      );
+    } catch (e) {
+      setMessage((e as Error).message);
+    } finally {
+      setGroupBusy(false);
+    }
   }
   return (
     <>
       <p>
-        Manage executive, sub-committee and founding-member profiles. These
-        public association records do not grant staff access or activate
-        membership.
+        One person, multiple responsibilities. Personal verification and public
+        publication are separate.
       </p>
-      <div className="operations-layout">
-        <aside className="record-list">
+      <div
+        className="workspace-tabs"
+        role="tablist"
+        aria-label="People workspace"
+      >
+        {["people", ...(data?.canPublish ? ["groups"] : [])].map((t) => (
           <button
-            className="button secondary"
-            disabled={busy || !ready}
-            onClick={() => select(null)}
+            className={tab === t ? "selected" : ""}
+            role="tab"
+            aria-selected={tab === t}
+            key={t}
+            onClick={() =>
+              guard(() =>
+                groupGuard(() => {
+                  setTab(t);
+                  setDirty(false);
+                  setBody(group?.draft ?? emptyGroup);
+                  setParent(group?.parent_id ?? "");
+                }),
+              )
+            }
           >
-            New association profile
+            {t === "people" ? "People & reviews" : "Groups & subgroups"}
           </button>
-          {data.records.length === 0 && ready && (
-            <p>No association profiles saved.</p>
-          )}
-          {data.records.map((entry) => (
+        ))}
+      </div>
+      {tab === "people" && data && (
+        <>
+          <div className="profile-list-controls">
+            <label>
+              Find people
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Name, organization or role"
+              />
+            </label>
+            <label>
+              Show
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              >
+                <option value="association">Association profiles</option>
+                <option value="all">All account profiles</option>
+                <option value="pending">Pending admin review</option>
+                <option value="unverified">Unverified</option>
+                <option value="verified">Verified</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </label>
+          </div>
+          <div className="content-workspace">
+            <aside className="record-list">
+              <button
+                className="button secondary"
+                onClick={() => guard(() => setSelected(null))}
+              >
+                New person
+              </button>
+              {data.records
+                .filter(
+                  (p) =>
+                    (filter === "all" ||
+                      (filter === "association" &&
+                        p.draft.assignments?.length) ||
+                      p.status === filter) &&
+                    JSON.stringify([
+                      p.draft.name,
+                      p.draft.organization,
+                      p.draft.assignments,
+                    ])
+                      .toLowerCase()
+                      .includes(q.toLowerCase()),
+                )
+                .map((p) => (
+                  <button
+                    key={p.id}
+                    className={selected?.id === p.id ? "selected" : ""}
+                    onClick={() =>
+                      guard(() => {
+                        void openPerson(p);
+                      })
+                    }
+                  >
+                    <strong>{p.draft.name}</strong>
+                    <small>
+                      {p.status === "pending" ? "Pending review" : p.status} ·{" "}
+                      {p.published ? "Published" : "Private"}
+                    </small>
+                  </button>
+                ))}
+            </aside>
+            <div className="content-editing-area">
+              <PersonEditor
+                key={selected?.id ?? "new"}
+                entry={selected}
+                groups={data.groups}
+                editorial={data.portraits}
+                canReview={data.canReview}
+                canPublish={data.canPublish}
+                canEditPrivate={data.canEditPrivate}
+                onDirty={setDirty}
+                onSaved={(row) => {
+                  setSelected(row);
+                  void load().catch((e) => setMessage(e.message));
+                }}
+              />
+            </div>
+          </div>
+        </>
+      )}
+      {tab === "groups" && data && (
+        <div className="operations-layout">
+          <aside className="record-list">
             <button
-              type="button"
-              disabled={busy}
-              key={entry.id}
-              className={entry.id === selected?.id ? "selected" : ""}
-              onClick={() => select(entry)}
+              className="button secondary"
+              onClick={() =>
+                groupGuard(() => {
+                  setGroup(null);
+                  setBody(emptyGroup);
+                  setParent("");
+                })
+              }
             >
-              <strong>{entry.draft.name}</strong>
-              <small>
-                {entry.draft.role} · {entry.published ? "Published" : "Draft"}
-              </small>
+              New group
             </button>
-          ))}
-        </aside>
-        <section>
-          <h2>
-            {selected
-              ? body.name || "Association profile"
-              : "New association profile"}
-          </h2>
-          <form
-            className="member-settings"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void act("save");
-            }}
-          >
-            <fieldset disabled={busy || !ready} className="plain-fieldset">
-              <div className="form-grid">
+            {data.groups.map((g) => (
+              <button
+                key={g.id}
+                className={group?.id === g.id ? "selected" : ""}
+                onClick={() =>
+                  groupGuard(() => {
+                    setGroup(g);
+                    setBody(g.draft);
+                    setParent(g.parent_id ?? "");
+                  })
+                }
+              >
+                <strong>
+                  {g.parent_id ? "↳ " : ""}
+                  {g.draft.name}
+                </strong>
+                <small>
+                  {g.archived
+                    ? "Archived"
+                    : g.published
+                      ? "Published"
+                      : "Draft"}
+                </small>
+              </button>
+            ))}
+          </aside>
+          <section>
+            <h2>{group ? "Edit group" : "Create group"}</h2>
+            <p>
+              Top-level groups choose a public section. Subgroups inherit their
+              parent’s placement. Existing navigation stays intact.
+            </p>
+            <form
+              className="member-settings"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void groupAction("save");
+              }}
+            >
+              <fieldset className="plain-fieldset" disabled={groupBusy}>
                 <label>
-                  Full name
+                  Group name
                   <input
                     required
                     minLength={2}
                     maxLength={120}
                     value={body.name}
-                    onChange={(e) => field("name", e.target.value)}
+                    onChange={(e) => setBody({ ...body, name: e.target.value })}
                   />
                 </label>
                 <label>
-                  Association role
-                  <input
-                    required
-                    minLength={2}
-                    maxLength={120}
-                    value={body.role}
-                    onChange={(e) => field("role", e.target.value)}
-                  />
-                </label>
-                <label>
-                  Profile group
+                  Parent group
                   <select
-                    value={body.group}
-                    onChange={(e) =>
-                      field(
-                        "group",
-                        e.target.value as GovernanceProfile["group"],
-                      )
-                    }
+                    value={parent}
+                    onChange={(e) => setParent(e.target.value)}
                   >
-                    <option value="executive">Executive Committee</option>
-                    <option value="subcommittee">Sub-Committee</option>
-                    <option value="founding">Founding Member</option>
+                    <option value="">Top-level group</option>
+                    {data.groups
+                      .filter(
+                        (g) =>
+                          !g.parent_id && !g.archived && g.id !== group?.id,
+                      )
+                      .map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.draft.name}
+                        </option>
+                      ))}
                   </select>
                 </label>
                 <label>
-                  Committee name
-                  <input
-                    required={body.group === "subcommittee"}
-                    maxLength={120}
-                    value={body.committee}
-                    onChange={(e) => field("committee", e.target.value)}
-                  />
+                  Public page
+                  <select
+                    disabled={!!parent}
+                    value={body.page}
+                    onChange={(e) => setBody({ ...body, page: e.target.value })}
+                  >
+                    <option value="about">About</option>
+                    <option value="governance">Governance</option>
+                  </select>
                 </label>
                 <label>
-                  Professional title (optional)
-                  <input
-                    maxLength={160}
-                    value={body.profession}
-                    onChange={(e) => field("profession", e.target.value)}
-                  />
-                </label>
-                <label>
-                  Term / year (optional)
-                  <input
-                    maxLength={80}
-                    value={body.term}
-                    onChange={(e) => field("term", e.target.value)}
-                  />
+                  Section
+                  <select
+                    disabled={!!parent}
+                    value={body.section}
+                    onChange={(e) =>
+                      setBody({ ...body, section: Number(e.target.value) })
+                    }
+                  >
+                    {(body.page === "about"
+                      ? ["About TPA", "Vision & Mission", "Founding Members"]
+                      : ["Executive Committee", "Sub-Committees", "Governance"]
+                    ).map((n, i) => (
+                      <option key={i} value={i}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   Display order
@@ -200,105 +339,46 @@ export function GovernanceWorkspace() {
                     min={0}
                     max={999}
                     value={body.order}
-                    onChange={(e) => field("order", Number(e.target.value))}
+                    onChange={(e) =>
+                      setBody({ ...body, order: Number(e.target.value) })
+                    }
                   />
                 </label>
-                <label>
-                  Published editorial portrait (optional)
-                  <select
-                    value={body.portraitId ?? ""}
-                    onChange={(e) =>
-                      field("portraitId", e.target.value || null)
-                    }
-                  >
-                    <option value="">No portrait</option>
-                    {data.portraits.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.title}
-                      </option>
-                    ))}
-                    {body.portraitId &&
-                      !data.portraits.some((p) => p.id === body.portraitId) && (
-                        <option value={body.portraitId}>
-                          Portrait no longer published — choose another
-                        </option>
-                      )}
-                  </select>
-                </label>
-              </div>
-              <label>
-                Professional biography (optional)
-                <textarea
-                  maxLength={1200}
-                  rows={4}
-                  value={body.biography}
-                  onChange={(e) => field("biography", e.target.value)}
-                />
-              </label>
-              <button className="button">Save profile draft</button>
-            </fieldset>
-          </form>
-          {selected && (
-            <>
-              <p>
-                Version {selected.version} ·{" "}
-                {selected.published
-                  ? "Published snapshot retained"
-                  : "Not published"}
-                {dirty ? " · Unsaved edits" : ""}
-              </p>
-              <label className="consent-row">
-                <input
-                  type="checkbox"
-                  checked={confirmed}
-                  onChange={(e) => setConfirmed(e.target.checked)}
-                  disabled={busy || dirty}
-                />
-                I confirm these association details and permission to publish
-                the profile and portrait.
-              </label>
-              <div className="action-row">
-                <button
-                  className="button"
-                  disabled={busy || dirty || !confirmed}
-                  onClick={() => void act("publish")}
-                >
-                  Publish saved profile
-                </button>
-                <button
-                  className="button secondary"
-                  disabled={busy || dirty || !selected.published}
-                  onClick={() => void act("unpublish")}
-                >
-                  Withdraw public profile
-                </button>
-              </div>
-              {selected.published && (
-                <div className="notice">
-                  <strong>
-                    Currently published: {selected.published.name}
-                  </strong>
-                  <p>
-                    {selected.published.role} · {selected.published.profession}
-                  </p>
+                <div className="action-row">
+                  <button className="button">Save group draft</button>
+                  {group && (
+                    <>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        disabled={groupDirty || group.archived}
+                        onClick={() => void groupAction("publish")}
+                      >
+                        Publish saved group
+                      </button>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        disabled={groupDirty}
+                        onClick={() =>
+                          void groupAction(
+                            group.archived ? "restore" : "archive",
+                          )
+                        }
+                      >
+                        {group.archived ? "Restore group" : "Archive group"}
+                      </button>
+                    </>
+                  )}
                 </div>
-              )}
-              <details>
-                <summary>
-                  Saved history ({selected.history?.length ?? 0})
-                </summary>
-                {selected.history?.map((h) => (
-                  <p key={h.version}>
-                    Version {h.version} · {h.action} ·{" "}
-                    {new Date(h.created_at).toLocaleString("en-IN")}
-                  </p>
-                ))}
-              </details>
-            </>
-          )}
-          <p role="status">{message}</p>
-        </section>
-      </div>
+              </fieldset>
+            </form>
+          </section>
+        </div>
+      )}
+      <p role="status">{message}</p>
+      {dialog}
+      {groupDialog}
     </>
   );
 }

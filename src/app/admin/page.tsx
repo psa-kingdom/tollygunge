@@ -26,13 +26,25 @@ export default async function Admin() {
       });
     const profileDrafts = (
       await getDatabase().query(
-        "SELECT count(*)::int AS n FROM tpa.governance_profiles WHERE published IS NULL OR draft<>published",
+        "SELECT count(*)::int AS n FROM tpa.people WHERE accepted_verified AND (published IS NULL OR accepted<>(published-'verified')) AND jsonb_array_length(coalesce(accepted->'assignments','[]'))>0",
       )
     ).rows[0].n;
     if (profileDrafts)
       attention.push({
         label: `${profileDrafts} saved association profiles awaiting publication`,
         href: "/admin/workspaces/governance",
+      });
+  }
+  if (actor.roles.includes("administrator")) {
+    const count = (
+      await getDatabase().query(
+        "SELECT count(*)::int AS n FROM tpa.profile_reviews WHERE status='pending'",
+      )
+    ).rows[0].n;
+    if (count)
+      attention.push({
+        label: `${count} personal profile changes awaiting administrator review`,
+        href: "/admin/workspaces/governance?review=pending",
       });
   }
   if (hasPermission(actor.roles, "communications:manage")) {
