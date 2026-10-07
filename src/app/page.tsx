@@ -2,6 +2,8 @@ import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { PublicInquiry } from "@/components/public-inquiry";
 import { HomepageMedia } from "@/components/public-media";
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   return (
     <SiteShell>
