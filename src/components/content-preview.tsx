@@ -84,7 +84,7 @@ export function ContentPreview({
         ))}
     </div>,
   );
-  const srcDoc = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${styles}<style>body{margin:0}a,button,input,select,textarea,summary{pointer-events:none}html{scrollbar-width:thin}</style></head><body>${html}</body></html>`;
+  const srcDoc = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${styles}<style>body{margin:0}a,button,input,select,textarea{pointer-events:none}html{scrollbar-width:thin}</style></head><body>${html}</body></html>`;
   return (
     <>
       {" "}
@@ -111,7 +111,7 @@ export function ContentPreview({
                 : isNew
                   ? "New entry · private"
                   : "Saved draft · private"}{" "}
-              · interactions disabled
+              · navigation and submissions disabled
             </small>
           </div>
           <button
@@ -165,7 +165,7 @@ export function ContentPreview({
             }}
             onLoad={() => {
               frame.current?.contentDocument
-                ?.querySelectorAll("a,button,input,select,textarea,summary")
+                ?.querySelectorAll("a,button,input,select,textarea")
                 .forEach((el) => el.setAttribute("tabindex", "-1"));
             }}
           />
