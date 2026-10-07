@@ -22,7 +22,9 @@ test(
   async () => {
     const pool = new Pool(databaseOptions()),
       user = randomUUID(),
-      portraits: string[] = [];
+      portraits: string[] = [],
+      members = [randomUUID(), randomUUID()],
+      memberCookies: string[] = [];
     let personId: string | undefined;
     const token = randomBytes(32).toString("hex"),
       cookie =
@@ -52,7 +54,11 @@ test(
       assert.equal(r.status, 200);
       return r.json();
     };
-    const upload = async (bytes: Buffer, type: string) => {
+    const upload = async (
+      bytes: Buffer,
+      type: string,
+      uploadCookie = cookie,
+    ) => {
       const form = new FormData();
       form.set("personId", personId!);
       form.set("altText", "Synthetic portrait");
@@ -63,7 +69,7 @@ test(
       );
       return fetch(base + "/api/profile-portraits", {
         method: "POST",
-        headers: { cookie, origin: base! },
+        headers: { cookie: uploadCookie, origin: base! },
         body: form,
       });
     };
@@ -80,6 +86,29 @@ test(
         "INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,'administrator')",
         [user],
       );
+      for (const member of members) {
+        const memberToken = randomBytes(32).toString("hex");
+        await pool.query(
+          'INSERT INTO public."user"(id,name,email,"emailVerified") VALUES($1,\'Portrait member fixture\',$2,true)',
+          [member, member + "@example.invalid"],
+        );
+        await pool.query(
+          'INSERT INTO public."session"(id,token,"userId","expiresAt","updatedAt") VALUES($1,$2,$3,now()+interval \'1 hour\',now())',
+          [randomUUID(), memberToken, member],
+        );
+        memberCookies.push(
+          (base!.startsWith("https:")
+            ? "__Secure-better-auth.session_token="
+            : "better-auth.session_token=") +
+            encodeURIComponent(
+              memberToken +
+                "." +
+                createHmac("sha256", process.env.BETTER_AUTH_SECRET!)
+                  .update(memberToken)
+                  .digest("base64"),
+            ),
+        );
+      }
       let row = await ok("/api/staff/governance", {
         action: "save",
         version: 0,
@@ -96,6 +125,38 @@ test(
         },
       });
       personId = row.id;
+      row = await ok("/api/staff/governance", {
+        action: "link",
+        id: personId,
+        version: row.version,
+        userId: members[0],
+      });
+      assert.equal(
+        (
+          await fetch(base + "/api/profile-portraits?personId=" + personId, {
+            headers: { cookie: memberCookies[0] },
+          })
+        ).status,
+        200,
+      );
+      assert.equal(
+        (
+          await fetch(base + "/api/profile-portraits?personId=" + personId, {
+            headers: { cookie: memberCookies[1] },
+          })
+        ).status,
+        403,
+      );
+      assert.equal(
+        (
+          await upload(
+            Buffer.from("not an image"),
+            "image/png",
+            memberCookies[1],
+          )
+        ).status,
+        403,
+      );
       assert.equal(
         (await upload(Buffer.from("not an image"), "image/png")).status,
         400,
@@ -116,12 +177,32 @@ test(
         return;
       }
       for (let i = 0; i < 2; i++) {
-        const r = await upload(png, "image/png");
+        const r = await upload(
+          png,
+          "image/png",
+          i === 0 ? memberCookies[0] : cookie,
+        );
         assert.equal(r.status, 200);
         const image = await r.json();
         portraits.push(image.id);
         assert.equal(
           (await fetch(base + "/api/profile-portraits/" + image.id)).status,
+          404,
+        );
+        assert.equal(
+          (
+            await fetch(base + "/api/profile-portraits/" + image.id, {
+              headers: { cookie: memberCookies[0] },
+            })
+          ).status,
+          200,
+        );
+        assert.equal(
+          (
+            await fetch(base + "/api/profile-portraits/" + image.id, {
+              headers: { cookie: memberCookies[1] },
+            })
+          ).status,
           404,
         );
         const own = await req("/api/profile-portraits/" + image.id);
@@ -206,10 +287,16 @@ test(
       }
       if (personId)
         await pool.query("DELETE FROM tpa.people WHERE id=$1", [personId]);
-      await pool.query("DELETE FROM tpa.audit_events WHERE actor_user_id=$1", [
-        user,
-      ]);
-      await pool.query('DELETE FROM public."user" WHERE id=$1', [user]);
+      for (const id of [user, ...members]) {
+        await pool.query(
+          "DELETE FROM tpa.audit_events WHERE actor_user_id=$1",
+          [id],
+        );
+        await pool.query("DELETE FROM tpa.member_profiles WHERE user_id=$1", [
+          id,
+        ]);
+        await pool.query('DELETE FROM public."user" WHERE id=$1', [id]);
+      }
       await pool.end();
     }
   },
