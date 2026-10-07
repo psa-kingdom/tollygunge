@@ -210,3 +210,6 @@ gates, Crazy Hands comparison gaps and improvement priorities separately.
 
 Current dependency-sorted checklist: [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md).
 Historical evidence below remains valid for its stated scope.
+
+
+7 October 2026: Rich content editing and isolated unsaved preview are deployed and verified. The [delivery checklist](DELIVERY_CHECKLIST.md) records 32 unit/4 PostgreSQL/7 HTTP tests, CI, hosted responsive acceptance and synthetic cleanup. Existing provider and business-policy gaps remain; Resend is deferred.

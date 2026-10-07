@@ -65,3 +65,6 @@ First-draft presentation refresh (2026-10-06): see SHOWCASE_READINESS.md for the
 remaining comparison gaps, explicit deferrals and release validation limits.
 
 Current work and feedback: [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md).
+
+
+7 October 2026: Rich content editing and isolated unsaved preview are deployed and verified. The [delivery checklist](DELIVERY_CHECKLIST.md) records 32 unit/4 PostgreSQL/7 HTTP tests, CI, hosted responsive acceptance and synthetic cleanup. Existing provider and business-policy gaps remain; Resend is deferred.

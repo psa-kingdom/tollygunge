@@ -11,7 +11,7 @@ existing release gates. Resend remains deferred.
 | 2 | Public responsive first draft | Done for first draft | Real content; broader devices/accessibility | SHOWCASE_READINESS.md; desktop/tablet/phone screenshots |
 | 3 | Content, governance, media publication | Partial | Rich editing track below; hosted uploads need scoped R2 | CONTENT_EDITOR.md; MEDIA_PUBLICATION.md; publication HTTP flows |
 | 4 | CRM, directory/contact preview | Done for current scope | Production anti-abuse; fuller usability checks | INQUIRIES.md; MEMBER_DIRECTORY.md; HTTP/browser checks |
-| 5 | Rich editor/live preview | Partial | Implementation and local acceptance complete; CI/hosted verification next | CONTENT_EDITOR.md; evidence below |
+| 5 | Rich editor/live preview | Done for this batch | Broader real-device/assistive-technology acceptance remains in release work | CONTENT_EDITOR.md; local, CI and hosted evidence below |
 | 6 | Report presets/XLSX, news preparation, release tooling | Added | After editor; independent work | Not implemented; Crazy Hands XLSX comparison |
 | 7 | Hosted private/editorial uploads | Blocked | Independent scoped R2 credential | Local storage checks; production disabled |
 | 8 | Membership decisions, activation, renewals, numbers/certificates, profile-change review | Partial / Blocked | Approved fees/eligibility/declaration/refund terms and verified transactions | Private drafts work; no submission/approval |
@@ -33,8 +33,8 @@ existing release gates. Resend remains deferred.
 - [x] Isolated unsaved inline preview; desktop/tablet/phone widths and expansion.
 - [x] Unsaved-change protection; saved-only explicit publication/conflicts retained.
 - [x] Unit and HTTP compatibility/limits/security/publication tests; PostgreSQL checks.
-- [ ] Desktop/tablet/phone and keyboard browser verification; synthetic lifecycle cleanup.
-- [ ] CI, hosted rollout, screenshots and final evidence.
+- [x] Desktop/tablet/phone and keyboard browser verification; synthetic lifecycle cleanup.
+- [x] CI, hosted rollout, screenshots and final evidence.
 
 ## Separate future improvements
 
@@ -50,4 +50,8 @@ Crazy Hands migration are added. See REFERENCE_COMPARISON.md for read-only evide
 - PostgreSQL migration/identity checks: 4 tests pass, including checksums, foreign keys and revoked sessions.
 - Operational HTTP flow passes: private drafts, permission-protected previews, stale-write/publication conflicts, rich save/publish/withdraw, derived text and a payload exceeding the former 96 KiB cap. Disposable HTTP fixtures are removed by the test.
 - Browser checks at 1440, 768 and 390 pixels: formatting persists after save/reload; saved state enables publication; unsaved state disables it; mobile Edit/Preview tabs and expanded Escape dismissal work. A 20,001-character paste stays visible and prevents saving. A 12-column table scrolls inside its 350-pixel phone container; the preview remains 390 pixels wide.
-- Synthetic browser draft lifecycle/cleanup and hosted checks remain next, with CI/deployment evidence to be recorded here.
+- Unsafe HTML clipboard paste retains ordinary text/approved bold while scripts, image handlers and JavaScript links are removed; forged documents and unsafe URLs are also rejected server-side.
+- [CI run 37582667107](https://github.com/psa-kingdom/tollygunge/actions/runs/37582667107) passes for code commit 1f2fb50: 32 unit, 4 PostgreSQL, 7 HTTP tests, lint/build/typecheck.
+- Railway deployment bd6fbc55-2e0c-4cf5-bcf2-b0d09c373123 is SUCCESS at https://tpassociation.org. Hosted admin editor verifies unsaved inline preview, publication gate and keyboard mobile tabs at 1440/768/390 widths without page overflow. Shared public rendering preserves bold/underline/Large text and the 12-column table after synthetic publication; withdrawal returns 404. Authenticated preview works; anonymous and revoked sessions are denied.
+- The exact synthetic browser record, cascading revisions and associated test audit records were removed after withdrawal. Test scripts clean their own fixtures. No existing content was published or rewritten by verification.
+- Screenshots: preview-evidence/content-desktop-hosted.png and content-phone-hosted.png (synthetic verification before cleanup). Resend remains deferred; hosted R2, policy, payment, import, Google and production-release gates remain above.
