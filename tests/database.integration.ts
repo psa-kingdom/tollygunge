@@ -8,6 +8,20 @@ import { readFileSync } from "node:fs";
 
 const enabled = !!process.env.DATABASE_URL && !!process.env.TPA_DATABASE_NAME;
 test(
+  "migrations are repeatable and reject the wrong database identity",
+  { skip: !enabled },
+  () => {
+    execFileSync(process.execPath, ["scripts/migrate.mjs"], { stdio: "pipe" });
+    execFileSync(process.execPath, ["scripts/migrate.mjs"], { stdio: "pipe" });
+    assert.throws(() =>
+      execFileSync(process.execPath, ["scripts/migrate.mjs"], {
+        stdio: "pipe",
+        env: { ...process.env, TPA_DATABASE_NAME: "not-the-tpa-database" },
+      }),
+    );
+  },
+);
+test(
   "people preserve legacy committee labels without inventing verification or identities",
   { skip: !enabled },
   async () => {
@@ -78,20 +92,6 @@ test(
       client.release();
       await pool.end();
     }
-  },
-);
-test(
-  "migrations are repeatable and reject the wrong database identity",
-  { skip: !enabled },
-  () => {
-    execFileSync(process.execPath, ["scripts/migrate.mjs"], { stdio: "pipe" });
-    execFileSync(process.execPath, ["scripts/migrate.mjs"], { stdio: "pipe" });
-    assert.throws(() =>
-      execFileSync(process.execPath, ["scripts/migrate.mjs"], {
-        stdio: "pipe",
-        env: { ...process.env, TPA_DATABASE_NAME: "not-the-tpa-database" },
-      }),
-    );
   },
 );
 test(
