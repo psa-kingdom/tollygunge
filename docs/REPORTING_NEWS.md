@@ -1,6 +1,6 @@
 # Reporting and news-source preparation — 8 October 2026
 
-Current status: implemented; acceptance evidence is appended after rollout.
+Current status: delivered and verified for this batch; full production acceptance remains open.
 Source of truth: [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md).
 
 ## Reports
@@ -71,3 +71,16 @@ parsed XLSX string/boolean/header/filter/metadata contents, empty exports, priva
 shared ownership, stale preset updates, source approval/edit-to-draft/pause/history,
 revoked roles/sessions and exact synthetic cleanup. CI additionally exercises a real
 10,001-event export rejection in disposable PostgreSQL (never production).
+
+## Hosted delivery evidence
+
+Runtime da2abcb, Railway a70b29b3-7c4e-4731-b7fb-22cff8092bc5 is healthy at
+https://tpassociation.org. CI 37727570318 and 37727574348 pass (38 unit/5 PostgreSQL/9 HTTP).
+Configured hosted report/source tests and authenticated release smoke pass. Actual
+Chrome CSV/XLSX downloads were parsed and removed. Shared preset save/apply, keyboard
+Sources views and draft/approve/edit/reapprove/pause with five revisions were verified
+at desktop/tablet/phone widths; exact disposable records/audits/revisions removed.
+The catalogue remains empty after cleanup. Sources never fetched the example.invalid URL.
+Screenshots and automation limitations are recorded in the delivery checklist; browser
+native date-input simulation was unreliable, so calendar boundary validation relies on
+unit/HTTP tests. Backup restore is still unverified, not implicitly accepted by these checks.

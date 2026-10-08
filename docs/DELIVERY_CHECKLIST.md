@@ -12,7 +12,7 @@ existing release gates. Resend remains deferred.
 | 3 | Content, governance, media publication | Partial | Rich editing and hosted uploads done; broader editorial/release acceptance remains | CONTENT_EDITOR.md; MEDIA_PUBLICATION.md; publication HTTP flows |
 | 4 | CRM, directory/contact preview | Done for current scope | Production anti-abuse; fuller usability checks | INQUIRIES.md; MEMBER_DIRECTORY.md; HTTP/browser checks |
 | 5 | Rich editor/live preview | Done for this batch | Broader real-device/assistive-technology acceptance remains in release work | CONTENT_EDITOR.md; local, CI and hosted evidence below |
-| 6 | Report presets/XLSX, news preparation, release tooling | Partial | Implemented; CI/hosted/browser acceptance next | REPORTING_NEWS.md; RELEASE_RUNBOOK.md |
+| 6 | Report presets/XLSX, news preparation, release tooling | Done for this batch | Actual news sources/schedule and full recovery remain gated | REPORTING_NEWS.md; RELEASE_RUNBOOK.md; CI 37727570318 and hosted/browser evidence below |
 | 7 | Hosted document/editorial/QR/portrait uploads | Done | Future TPA-only credential rotation is hardening; full release remains open | R2_UPLOAD_ROLLOUT.md; four configured hosted HTTP suites; 1440/768/390 controls/previews; exact object cleanup |
 | 8 | Membership decisions, activation, renewals, numbers/certificates, profile-change review | Partial / Blocked | Approved fees/eligibility/declaration/refund terms and verified transactions | Membership drafts only; personal profile review implemented separately |
 | 9 | Collection, reconciliation, receipts, refunds/payment history | Partial / Blocked | UPI details/manual policy or Razorpay setup | Versioned instruction management only |
@@ -21,7 +21,7 @@ existing release gates. Resend remains deferred.
 | 12 | Communications/inbox/delivery logs | Partial / Deferred | Resend deferred; WhatsApp/shared mailbox setup | Drafts/templates/audiences work; sending disabled |
 | 13 | Google onboarding/emailed recovery | Blocked / Deferred | OAuth client; verified email delivery | Assigned password account works |
 | 14 | Scheduled attributed news | Blocked | Approved feeds/schedule | Editorial drafts only |
-| 15 | Full production release | Added | Staging, backup/restore, recovery, security/accessibility and integrations | First draft only; release acceptance pending |
+| 15 | Full production release | Partial | Staging, backup/restore, recovery, security/accessibility and integrations | First draft only; release acceptance pending |
 
 ## Rich editing batch — dependency order
 
@@ -39,7 +39,7 @@ existing release gates. Resend remains deferred.
 ## Separate future improvements
 
 Homepage/layout builder, global design controls and collaborative editing are not
-part of this batch. Other priorities: report presets/XLSX, news preparation,
+part of this batch. Other priorities: approved payment/membership reporting, scheduled collection,
 background delivery after provider setup, anti-abuse controls, fuller empty/error
 states, approved imagery/copy and recovery exercises. No NGO-specific fields or
 Crazy Hands migration are added. See REFERENCE_COMPARISON.md for read-only evidence.
@@ -117,8 +117,49 @@ documentation transport failure because hosted storage verification passed.
 - [x] Owned private presets and administrator-managed shared presets; version conflicts and audit records.
 - [x] Empty news-source catalogue, explicit admin approval/pause, edit-to-draft, revision history; no collection.
 - [x] Read-only release checker and deployment/rollback/recovery runbook. Recovery remains unverified.
-- [ ] Unit/PostgreSQL/HTTP/CI and parsed workbook acceptance; exact fixture cleanup.
-- [ ] Desktop/tablet/phone, keyboard/error/download acceptance; hosted deployment and checks.
+- [x] Unit/PostgreSQL/HTTP/CI and parsed workbook acceptance; exact fixture cleanup.
+- [x] Desktop/tablet/phone, keyboard/error/download acceptance; hosted deployment and checks.
 
 See [REPORTING_NEWS.md](REPORTING_NEWS.md) and [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md).
 All prior provider/policy gates remain. Scheduled news is not enabled by source approval.
+
+## Reporting/source/release acceptance evidence — 8 October 2026
+
+- Code da2abcb: lint/typecheck/build pass; 38 unit, 5 PostgreSQL and 9 HTTP suites pass
+  in [CI 37727570318](https://github.com/psa-kingdom/tollygunge/actions/runs/37727570318)
+  and [CI 37727574348](https://github.com/psa-kingdom/tollygunge/actions/runs/37727574348).
+  Migration 017 repeatability/checksums and foreign keys use the existing runner.
+- CI's isolated database verifies real 10,001-event exports reject both formats and
+  explicitly mark the 200-row preview limit. No 10,001-row fixture was inserted in production.
+- Railway deployment a70b29b3-7c4e-4731-b7fb-22cff8092bc5 is SUCCESS. Hosted report/source
+  HTTP checks pass: all report role combinations, anonymous/member denial, accepted
+  directory filters, parsed CSV/XLSX types/formula safety/metadata, empty reports,
+  private/shared preset ownership and stale versions, admin-only source decisions,
+  edit-to-draft, pause/history and live role/session revocation. Exact fixtures removed.
+- Read-only release checker passes public/readiness/anonymous denial and optional
+  administrator login/read/sign-out/revocation. R2 control enabled; Google and emailed
+  recovery controls remain disabled as expected. Recovery exercise remains UNVERIFIED.
+- Browser: report filters and India last-30-day dates, shared preset save/apply and
+  source save → approve → edit-to-draft → reapprove → pause verified. Arrow-key view
+  switching retains source edits; failed unsafe-URL saves retain input. Loading/disabled
+  controls and errors are visible. Report and Sources layouts at 1440/768/390 widths
+  show no horizontal page overflow; history/empty states and download feedback work.
+- Actual Chrome CSV/XLSX files parsed: matching event headers, frozen XLSX header and
+  applied-date metadata. Files removed from Downloads; all fixture accounts, the exact
+  browser shared preset/source, five source revisions and fixture audit records removed.
+  Browser download-event observation timed out but the actual local files and UI feedback
+  confirmed delivery. An old local tab became unresponsive during dialog automation;
+  fresh hosted tabs completed verification. Browser date-field automation did not reliably
+  commit changes; server/HTTP calendar validation and retention logic are tested instead.
+- Production dependency audit reports zero advisories after the scoped uuid override.
+  Development-tool advisories remain a separate full-release hardening review. Original
+  Cloudflare/admin credential values have zero matches in tracked/non-ignored repository
+  files. No credentials are copied into this batch's source, documentation or fixtures.
+- Screenshots in preview-evidence: reports-desktop/tablet/phone-hosted.png and
+  sources-desktop/tablet/phone-hosted.png. Disposable records pictured are now removed.
+  Browser viewport reset; user's existing authenticated sessions/local server retained.
+
+Retained gates: deferred Resend, Google client, approved membership terms, verified
+payment/refund rules, learning policy, import mappings and actual news sources/schedule.
+No new cloud resources/services were created. Full production/recovery/accessibility
+acceptance remains open; layout building/global style controls/collaboration remain future.

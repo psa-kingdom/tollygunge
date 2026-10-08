@@ -106,3 +106,9 @@ procedures are recorded, with recovery still unverified. Acceptance evidence liv
 [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md) remains the source of truth and retains
 all provider/policy gates. Earlier statements about these gaps are dated historical evidence.
 R2 documentation push/PR update succeeded on 8 October after GitHub recovered.
+
+Reporting/source-preparation batch is delivered: runtime da2abcb, healthy Railway
+release a70b29b3-7c4e-4731-b7fb-22cff8092bc5; CI 37727570318/37727574348 pass. Hosted
+HTTP/smoke, actual parsed downloads, preset/source review and responsive/keyboard checks
+pass with exact fixture cleanup. See DELIVERY_CHECKLIST.md for evidence and automation
+limits. Scheduled collection and backup restoration remain unverified/gated.

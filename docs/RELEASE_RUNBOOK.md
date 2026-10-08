@@ -63,3 +63,11 @@ access. Do not clone live sessions into an accessible staging application; revok
 Record elapsed recovery time, object presence, errors and cleanup. Remove only exact
 exercise resources after verification. Establish scheduled retention/access and repeat
 restore drills before marking full recovery Done. Backup creation alone is insufficient.
+
+## Verified batch deployment
+
+Current healthy runtime: da2abcb, Railway deployment
+`a70b29b3-7c4e-4731-b7fb-22cff8092bc5`. Public/readiness/anonymous denial and optional
+administrator login/reports/presets/sources/media controls/sign-out/revoked-session smoke
+passed on 8 October. Google/recovery remain gated; R2 enabled. Rollback baseline above
+remains available. No backup restore was performed; recovery remains UNVERIFIED.
