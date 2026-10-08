@@ -55,6 +55,11 @@ DELIVERY_CHECKLIST.md.
   overrides were reset. Repository credential scan found zero matches.
 - Local checks: 40 unit tests, 5 PostgreSQL tests, lint, typecheck and build pass.
   Backup restore remains unverified independently of password recovery.
+- Final status UI runtime `baac007` is deployed successfully as
+  `c4566be1-c9a6-4f2c-ad94-a3c1536cfed4`; CI runs 37770288707 and
+  37770295620 pass. Hosted administrator Communications shows recovery enabled
+  and keeps templates/campaign drafts available without enabling dispatch.
+  Eleven public responses/bundles contain no supplied or runtime credential values.
 
 Provider contracts: [sending API](https://resend.com/docs/api-reference/emails/send-email)
 and [idempotency](https://resend.com/docs/dashboard/emails/idempotency-keys).
