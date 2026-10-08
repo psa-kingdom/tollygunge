@@ -89,7 +89,7 @@ export default async function Workspace({
       ) : (
         <>
           <p className="notice">
-            Resend is selected for email delivery and will be configured later.
+            Transactional email and campaign delivery have separate readiness checks.
             Shared inbox and official WhatsApp also await provider setup.
           </p>
           <Link href="/admin/workspaces/crm">

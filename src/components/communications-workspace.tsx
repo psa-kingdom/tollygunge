@@ -14,15 +14,19 @@ const empty: Template = { version: 0, name: "", subject: "", body: "" };
 export function CommunicationsWorkspace() {
   const [view, setView] = useState<"campaigns" | "templates">("campaigns");
   const [templates, setTemplates] = useState<Template[]>([]),
+    [recoveryEnabled, setRecoveryEnabled] = useState(false),
     [form, setForm] = useState(empty),
     [optedIn, setOptedIn] = useState(0),
     [message, setMessage] = useState("Loading templates…"),
     [busy, setBusy] = useState(false);
   useEffect(() => {
-    api<{ templates: Template[]; optedIn: number }>("/api/staff/communications")
+    api<{ templates: Template[]; optedIn: number; recoveryEnabled: boolean }>(
+      "/api/staff/communications",
+    )
       .then((data) => {
         setTemplates(data.templates);
         setOptedIn(data.optedIn);
+        setRecoveryEnabled(data.recoveryEnabled);
         setMessage("");
       })
       .catch((e) => setMessage(e.message));
@@ -30,9 +34,12 @@ export function CommunicationsWorkspace() {
   return (
     <>
       <div className="notice">
-        Resend is selected and will be configured later. These are saved drafts;
-        no messages are sent. Shared inbox, delivery events and official
-        WhatsApp await provider setup.
+        {recoveryEnabled
+          ? "Password recovery email is enabled. "
+          : "Password recovery email awaits sender setup. "}
+        Campaigns and templates remain saved drafts. Campaign sending needs
+        consent-safe delivery jobs, unsubscribe handling and delivery events.
+        Shared inbox and official WhatsApp await setup.
       </div>
       <p>
         {optedIn} accounts currently consent to the newsletter. Campaign

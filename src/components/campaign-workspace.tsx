@@ -124,7 +124,8 @@ export function CampaignWorkspace() {
       <h2>Campaign drafts</h2>
       <p>
         Prepare a newsletter, review its audience and retain revisions. Sending
-        and scheduling will open after email delivery is configured.
+        and scheduling await delivery jobs, unsubscribe and delivery-event
+        handling.
       </p>
       <p>
         Eligible recipients must have newsletter consent, a verified email and

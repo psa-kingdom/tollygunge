@@ -3,18 +3,20 @@
 Current source of truth. Historical implementation, comparison and showcase reports
 remain evidence. Statuses: Done (only the stated capability), Partial, Added,
 Blocked, Deferred. Dependencies determine order; feedback adds work without removing
-existing release gates. Resend setup is now requested; production delivery remains
-blocked until sender-domain verification and rotated-key access are available.
+existing release gates. Resend transactional password recovery is enabled and hosted
+verified. Campaign delivery, shared inbox and WhatsApp remain separate work.
 
 ## Resend activation batch — 8 October 2026
 
 - [x] Add a gated transactional recovery adapter, retaining SMTP compatibility,
   bounded requests, opaque stable idempotency and suppressed provider diagnostics.
-- [ ] Rotate the key exposed in chat; obtain domain-management access or signed-in
-  Resend access. The supplied key returned `restricted_api_key` on domain discovery.
-- [ ] Verify TPA sender DNS through Hostinger without changing web/mailbox records.
-- [ ] Configure managed hosting secrets; test provider delivery, reset/revocation,
-  desktop/mobile recovery and hosted rollout before marking recovery Done.
+- [x] Full-access setup credentials supplied; updates.tpassociation.org verified.
+  A separate sending-only runtime key is stored in managed Railway secrets.
+  The old restricted key remains in the source file; revocation is not asserted.
+- [x] Resend verifies existing sender DNS; no DNS changes were necessary.
+- [x] Configure managed secrets and verify hosted test-recipient delivery, one-use
+  reset, old-session revocation, replacement sign-in and desktop/phone controls.
+  See RESEND_ROLLOUT.md; production deployment 2c26ad17-0213-465e-81c1-eec81fa2008a.
 - [ ] Implement durable campaign jobs, consent rechecks, unsubscribe handling and
   verified delivery webhooks before enabling campaign sends.
 - [ ] Configure shared inbox and WhatsApp separately. All other policy/provider
@@ -33,8 +35,8 @@ blocked until sender-domain verification and rotated-key access are available.
 | 9 | Collection, reconciliation, receipts, refunds/payment history | Partial / Blocked | UPI details/manual policy or Razorpay setup | Versioned instruction management only |
 | 10 | Events, attendance, learning history | Partial | Paid events need payment; awards need learning policy | Free registrations/attendance HTTP checks |
 | 11 | Historical import commit | Partial / Blocked | Approved mapping/provenance | Preview validation only |
-| 12 | Communications/inbox/delivery logs | Partial / Deferred | Resend deferred; WhatsApp/shared mailbox setup | Drafts/templates/audiences work; sending disabled |
-| 13 | Google onboarding/emailed recovery | Blocked / Deferred | OAuth client; verified email delivery | Assigned password account works |
+| 12 | Communications/inbox/delivery logs | Partial | Resend recovery enabled; campaign outbox/consent/unsubscribe/webhooks and WhatsApp/shared inbox remain | RESEND_ROLLOUT.md; campaign sends disabled |
+| 13 | Google onboarding/emailed recovery | Partial | Recovery Done for test-recipient acceptance; Google OAuth client remains blocked | RESEND_ROLLOUT.md; hosted reset/revocation; real-mailbox acceptance remains |
 | 14 | Scheduled attributed news | Blocked | Approved feeds/schedule | Editorial drafts only |
 | 15 | Full production release | Partial | Staging, backup/restore, recovery, security/accessibility and integrations | First draft only; release acceptance pending |
 

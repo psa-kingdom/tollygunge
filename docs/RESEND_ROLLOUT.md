@@ -1,8 +1,9 @@
 # Resend rollout — 8 October 2026
 
-Status: Partial. The provider adapter is implemented; production remains unchanged.
-The supplied sending-only key cannot inspect domains (`restricted_api_key`).
-Rotation of the key pasted in chat and domain-management access are pending.
+Status: Transactional recovery enabled; campaign delivery remains Partial.
+Full-access setup credentials inspect the verified `updates.tpassociation.org`
+domain. The application uses a separately generated sending-only managed key.
+The setup key remains only in its original file. No DNS changes were necessary.
 
 ## Activation order
 
@@ -27,8 +28,33 @@ a claim of mailbox delivery. An incomplete Resend configuration fails closed;
 SMTP remains available when no Resend key is configured.
 
 No local credential-file fallback or browser-exposed key is added. No campaign,
-real recipient email, DNS modification or production secret update was made in
-this preparation pass. All other gates remain in DELIVERY_CHECKLIST.md.
+real-recipient email or DNS modification was made. All other gates remain in
+DELIVERY_CHECKLIST.md.
+
+## Hosted evidence
+
+- Deployment `2c26ad17-0213-465e-81c1-eec81fa2008a` is SUCCESS for code
+  `4cf367f`; both GitHub CI runs passed.
+- `RESEND_API_KEY`, `AUTH_EMAIL_FROM` and `RESEND_DOMAIN_VERIFIED` were stored
+  through Railway stdin. Existing database, identity, domain and R2 settings were
+  compared and preserved. Sender is `no-reply@updates.tpassociation.org`.
+- A uniquely labelled Resend delivered test recipient completed the hosted
+  request → provider message → reset → replacement sign-in journey. Resend
+  reported `delivered`; repeat token use and the old password were rejected,
+  and the old session was revoked. Exact synthetic identity/sessions/audits were
+  removed. Resend retains its test-message record. Real-mailbox acceptance remains
+  unverified; no real-user passwords were changed.
+- Anonymous public/protected-route release checks and enabled recovery UI pass.
+  Stored first-admin password smoke failed authentication; that credential may be
+  stale and its successful login is not asserted. Synthetic login/reset succeeded.
+- Existing administrator browser session opens Communications successfully.
+  Hosted campaign permission/consent/draft tests pass after using the correct
+  HTTPS session cookie; campaign dispatch still returns a controlled rejection.
+- Desktop 1440px and phone 390px checks show enabled controls, loading feedback,
+  keyboard submission and generic unknown-account feedback. Temporary viewport
+  overrides were reset. Repository credential scan found zero matches.
+- Local checks: 40 unit tests, 5 PostgreSQL tests, lint, typecheck and build pass.
+  Backup restore remains unverified independently of password recovery.
 
 Provider contracts: [sending API](https://resend.com/docs/api-reference/emails/send-email)
 and [idempotency](https://resend.com/docs/dashboard/emails/idempotency-keys).

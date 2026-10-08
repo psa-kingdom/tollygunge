@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     }
     if (!["save", "archive", "restore"].includes(String(input.action)))
       throw new OperationError(
-        "Sending and scheduling await Resend configuration. No messages were sent.",
+        "Campaign sending awaits consent-safe jobs, unsubscribe and delivery events. No messages were sent.",
         409,
       );
     const id = input.id ? uuid(input.id) : randomUUID();

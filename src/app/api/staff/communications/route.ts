@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDatabase } from "@/lib/database";
+import { recoveryConfigured } from "@/lib/auth-email";
 import { record, text, uuid, version } from "@/domain/operations";
 import {
   operation,
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
       ).rows[0].n,
       provider: "Resend",
       deliveryEnabled: false,
+      recoveryEnabled: recoveryConfigured(),
     };
   });
 }
@@ -35,7 +37,7 @@ export async function POST(request: Request) {
       input = record(await jsonBody(request, 10000));
     if (input.action !== "save")
       throw new OperationError(
-        "Delivery is disabled until Resend is configured.",
+        "Campaign delivery awaits consent-safe jobs and delivery-event handling.",
         409,
       );
     const id = input.id ? uuid(input.id) : randomUUID(),
