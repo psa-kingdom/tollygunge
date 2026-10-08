@@ -87,6 +87,12 @@ try {
   if (args.includes("--expect-deferred")) {
     if (!googleGated || !reset || !/disabled/.test(reset[1])) failures++;
   }
+  if (args.includes("--expect-recovery-enabled")) {
+    if (!reset || /disabled/.test(reset[1])) failures++;
+    console.log(
+      "INFO Recovery UI acceptance does not establish email delivery.",
+    );
+  }
   const file = option("--credential-file");
   if (file) {
     const raw = await readFile(file, "utf8"),

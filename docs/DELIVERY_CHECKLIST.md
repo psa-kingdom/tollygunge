@@ -3,7 +3,22 @@
 Current source of truth. Historical implementation, comparison and showcase reports
 remain evidence. Statuses: Done (only the stated capability), Partial, Added,
 Blocked, Deferred. Dependencies determine order; feedback adds work without removing
-existing release gates. Resend remains deferred.
+existing release gates. Resend setup is now requested; production delivery remains
+blocked until sender-domain verification and rotated-key access are available.
+
+## Resend activation batch — 8 October 2026
+
+- [x] Add a gated transactional recovery adapter, retaining SMTP compatibility,
+  bounded requests, opaque stable idempotency and suppressed provider diagnostics.
+- [ ] Rotate the key exposed in chat; obtain domain-management access or signed-in
+  Resend access. The supplied key returned `restricted_api_key` on domain discovery.
+- [ ] Verify TPA sender DNS through Hostinger without changing web/mailbox records.
+- [ ] Configure managed hosting secrets; test provider delivery, reset/revocation,
+  desktop/mobile recovery and hosted rollout before marking recovery Done.
+- [ ] Implement durable campaign jobs, consent rechecks, unsubscribe handling and
+  verified delivery webhooks before enabling campaign sends.
+- [ ] Configure shared inbox and WhatsApp separately. All other policy/provider
+  dependencies and historical evidence below remain in force.
 
 | Order | Capability | Status | Dependency / next action | Acceptance evidence |
 | --- | --- | --- | --- | --- |
