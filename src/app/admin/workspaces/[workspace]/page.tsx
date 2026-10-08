@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { currentActor } from "@/lib/actor";
 import { hasPermission, type Permission } from "@/domain/access";
-import { ContentEditor } from "@/components/content-editor";
+import { ContentWorkspace } from "@/components/content-workspace";
 import { EventManager } from "@/components/event-manager";
 import { CrmWorkspace } from "@/components/crm-workspace";
 import { OperationsReports } from "@/components/operations-reports";
@@ -75,7 +75,7 @@ export default async function Workspace({
       ) : workspace === "flyers" ? (
         <FlyerBuilder />
       ) : workspace === "content" ? (
-        <ContentEditor />
+        <ContentWorkspace />
       ) : workspace === "events" ? (
         <EventManager />
       ) : workspace === "crm" ? (

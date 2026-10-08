@@ -80,3 +80,14 @@ Campaign preparation: migration 014, src/domain/campaigns.ts,
 /api/staff/campaigns, src/components/campaign-workspace.tsx and
 communications-workspace.tsx panels. See docs/CAMPAIGNS.md. The new campaign HTTP
 flow runs in test:http and CI; provider delivery is intentionally gated.
+
+## Reporting and source preparation — 8 October 2026
+
+The next batch adds domain-permitted reports, account-directory filters, private/shared
+presets, server CSV/XLSX exports and Content → Sources. Source approval prepares future
+collection; it never fetches, schedules or publishes. Release tooling and recovery
+procedures are recorded, with recovery still unverified. Acceptance evidence lives in
+[REPORTING_NEWS.md](REPORTING_NEWS.md) and [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md).
+[DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md) remains the source of truth and retains
+all provider/policy gates. Earlier statements about these gaps are dated historical evidence.
+R2 documentation push/PR update succeeded on 8 October after GitHub recovered.

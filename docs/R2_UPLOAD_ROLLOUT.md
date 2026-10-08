@@ -95,3 +95,8 @@ The remote feature branch retains b0bb44a with passing CI, and the healthy deplo
 runtime is e98180e. The full checklist/report is committed locally; push and PR refresh
 remain pending provider recovery. Main is unchanged. No rollback is needed for this
 documentation transport failure because hosted storage verification passed.
+
+## Documentation delivery resolved — 8 October 2026
+
+Commit 3a0b81a was pushed to the existing feature branch and draft PR #1 description
+updated successfully. The transport outage above is historical; main remains unchanged.

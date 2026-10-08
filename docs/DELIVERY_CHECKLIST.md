@@ -1,4 +1,4 @@
-# TPA delivery checklist — 7 October 2026
+# TPA delivery checklist — 8 October 2026
 
 Current source of truth. Historical implementation, comparison and showcase reports
 remain evidence. Statuses: Done (only the stated capability), Partial, Added,
@@ -12,7 +12,7 @@ existing release gates. Resend remains deferred.
 | 3 | Content, governance, media publication | Partial | Rich editing and hosted uploads done; broader editorial/release acceptance remains | CONTENT_EDITOR.md; MEDIA_PUBLICATION.md; publication HTTP flows |
 | 4 | CRM, directory/contact preview | Done for current scope | Production anti-abuse; fuller usability checks | INQUIRIES.md; MEMBER_DIRECTORY.md; HTTP/browser checks |
 | 5 | Rich editor/live preview | Done for this batch | Broader real-device/assistive-technology acceptance remains in release work | CONTENT_EDITOR.md; local, CI and hosted evidence below |
-| 6 | Report presets/XLSX, news preparation, release tooling | Added | After editor; independent work | Not implemented; Crazy Hands XLSX comparison |
+| 6 | Report presets/XLSX, news preparation, release tooling | Partial | Implemented; CI/hosted/browser acceptance next | REPORTING_NEWS.md; RELEASE_RUNBOOK.md |
 | 7 | Hosted document/editorial/QR/portrait uploads | Done | Future TPA-only credential rotation is hardening; full release remains open | R2_UPLOAD_ROLLOUT.md; four configured hosted HTTP suites; 1440/768/390 controls/previews; exact object cleanup |
 | 8 | Membership decisions, activation, renewals, numbers/certificates, profile-change review | Partial / Blocked | Approved fees/eligibility/declaration/refund terms and verified transactions | Membership drafts only; personal profile review implemented separately |
 | 9 | Collection, reconciliation, receipts, refunds/payment history | Partial / Blocked | UPI details/manual policy or Razorpay setup | Versioned instruction management only |
@@ -108,3 +108,17 @@ The remote feature branch retains b0bb44a with passing CI, and the healthy deplo
 runtime is e98180e. The full checklist/report is committed locally; push and PR refresh
 remain pending provider recovery. Main is unchanged. No rollback is needed for this
 documentation transport failure because hosted storage verification passed.
+
+## Reporting, news preparation and release batch — 8 October 2026
+
+- [x] R2 documentation commit 3a0b81a pushed; existing draft PR #1 description refreshed. The earlier GitHub outage is resolved.
+- [x] Shared permission-filtered report queries, account-directory filters, India periods and compatible summaries.
+- [x] Server CSV/XLSX exports with 10,000-row rejection, safe text and metadata; private/no-store, no R2 retention.
+- [x] Owned private presets and administrator-managed shared presets; version conflicts and audit records.
+- [x] Empty news-source catalogue, explicit admin approval/pause, edit-to-draft, revision history; no collection.
+- [x] Read-only release checker and deployment/rollback/recovery runbook. Recovery remains unverified.
+- [ ] Unit/PostgreSQL/HTTP/CI and parsed workbook acceptance; exact fixture cleanup.
+- [ ] Desktop/tablet/phone, keyboard/error/download acceptance; hosted deployment and checks.
+
+See [REPORTING_NEWS.md](REPORTING_NEWS.md) and [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md).
+All prior provider/policy gates remain. Scheduled news is not enabled by source approval.

@@ -10,9 +10,10 @@
     "lint": "eslint .",
     "test": "tsx --test tests/*.test.ts",
     "test:db": "node --env-file-if-exists=.env.local --import tsx --test tests/database.integration.ts tests/identity.integration.ts",
-    "test:http": "node --env-file-if-exists=.env.local --import tsx --test tests/http.integration.ts tests/operations.integration.ts tests/media.integration.ts tests/payment-details.integration.ts tests/inquiries.integration.ts tests/governance.integration.ts tests/portraits.integration.ts tests/campaigns.integration.ts",
+    "test:http": "node --env-file-if-exists=.env.local --import tsx --test tests/http.integration.ts tests/operations.integration.ts tests/media.integration.ts tests/payment-details.integration.ts tests/inquiries.integration.ts tests/governance.integration.ts tests/portraits.integration.ts tests/campaigns.integration.ts tests/reports-news.integration.ts",
     "test:storage": "node --env-file-if-exists=.env.local --import tsx scripts/verify-storage.mts",
-    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs"
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
+    "release:check": "node scripts/verify-release.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",
@@ -24,6 +25,7 @@
     "@tiptap/react": "3.31.4",
     "@tiptap/starter-kit": "3.31.4",
     "better-auth": "1.7.7",
+    "exceljs": "4.4.0",
     "jspdf": "^4.2.1",
     "next": "^16.3.8",
     "nodemailer": "^10.0.14",
@@ -50,5 +52,10 @@
     "prettier": "^3.9.9",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
   }
 }
