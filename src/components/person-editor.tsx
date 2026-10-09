@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { api } from "./operations-client";
 import { RichEditor, TextCounter } from "./rich-editor";
 import { ContentPreview } from "./content-preview";
@@ -38,6 +39,8 @@ export function PersonEditor({
   groups = [],
   editorial = [],
   owner = false,
+  verificationRequired = false,
+  onboardingDetails = false,
   canReview = false,
   canPublish = false,
   canEditPrivate = false,
@@ -48,6 +51,8 @@ export function PersonEditor({
   groups?: ProfileGroup[];
   editorial?: { id: string; title: string }[];
   owner?: boolean;
+  verificationRequired?: boolean;
+  onboardingDetails?: boolean;
   canReview?: boolean;
   canPublish?: boolean;
   canEditPrivate?: boolean;
@@ -314,6 +319,12 @@ export function PersonEditor({
             }}
           >
             <fieldset className="plain-fieldset" disabled={busy}>
+              {owner && onboardingDetails && (
+                <p>
+                  Name, organization and phone are managed in your{" "}
+                  <Link href="/member/application">verification form</Link>.
+                </p>
+              )}
               <div className="form-grid">
                 {(
                   [
@@ -331,6 +342,11 @@ export function PersonEditor({
                     {label}
                     <input
                       value={String(body[key] ?? "")}
+                      readOnly={
+                        owner &&
+                        onboardingDetails &&
+                        ["name", "organization", "phone"].includes(key)
+                      }
                       required={key === "name"}
                       maxLength={limit}
                       onChange={(e) => field(key, e.target.value as never)}
@@ -407,8 +423,8 @@ export function PersonEditor({
               </label>
               {!portraitData.uploadEnabled && (
                 <p className="notice">
-                  Portrait upload awaits managed private storage.
-                  Available portraits can still be selected.
+                  Portrait upload awaits managed private storage. Available
+                  portraits can still be selected.
                 </p>
               )}
               <label>
@@ -668,6 +684,14 @@ export function PersonEditor({
                   </button>
                 </>
               )}
+              {verificationRequired && (
+                <p>
+                  <Link href="/member/application">
+                    Complete the five-step verification form
+                  </Link>{" "}
+                  to request your initial badge.
+                </p>
+              )}
               {error && <p role="status">{error}</p>}
               <div className="action-row">
                 <button className="button" disabled={busy || !!error}>
@@ -676,10 +700,14 @@ export function PersonEditor({
                 <button
                   type="button"
                   className="button secondary"
-                  disabled={busy || dirty || !entry || !!error}
+                  disabled={
+                    busy || dirty || !entry || !!error || verificationRequired
+                  }
                   onClick={() => void act("submit")}
                 >
-                  Submit for review
+                  {verificationRequired
+                    ? "Complete verification form first"
+                    : "Submit for review"}
                 </button>
               </div>
             </fieldset>

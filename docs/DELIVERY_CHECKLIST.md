@@ -6,6 +6,19 @@ Blocked, Deferred. Dependencies determine order; feedback adds work without remo
 existing release gates. Resend transactional password recovery is enabled and hosted
 verified. Durable campaigns/shared inbox and delivery logs are hosted verified; WhatsApp remains a separate provider gate.
 
+## Signup and verification batch — 9 October 2026
+
+Implemented behind `ONBOARDING_ENABLED`: password signup, persistent five-step form, private evidence associations, versioned administrator requirements/review, retained badges with update requests, bulk CSV/XLSX invitations, and shared-worker transactional mail. See ONBOARDING_ACCEPTANCE.md and DTPA_FIELD_MAPPING.md.
+
+- [x] Isolated signup/auth/worker and HTTP lifecycle/import acceptance.
+- [x] Desktop/tablet/phone signup, verification, recovery and returning-session journeys; desktop failed-save/offline/local-recovery/stale-tab acceptance.
+- [ ] Final integrated CI and hosted migration/runtime acceptance.
+- [ ] Actual onboarding welcome/invitation mailbox receipt and user-followed links.
+- [ ] Hosted private evidence upload/review with exact synthetic cleanup.
+- [ ] Teammate UI/UX and accessibility acceptance before polished release.
+
+Existing synchronous recovery and verified updates-domain sender are preserved. Profile verification remains independent from email verification, membership, payment and public publication. Onboarding has not been enabled for public acceptance yet.
+
 ## Resend activation batch — 8 October 2026
 
 - [x] Add a gated transactional recovery adapter, retaining SMTP compatibility,

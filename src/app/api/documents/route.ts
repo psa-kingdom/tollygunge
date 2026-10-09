@@ -1,3 +1,4 @@
+import { policy } from "@/lib/verification-service";
 import { randomUUID } from "node:crypto";
 import { currentActor } from "@/lib/actor";
 import { getDatabase } from "@/lib/database";
@@ -36,7 +37,11 @@ export async function POST(request: Request) {
       { error: "Request origin is not allowed." },
       { status: 403 },
     );
-  let bytes: Uint8Array, kind: string, contentType: string;
+  let bytes: Uint8Array,
+    kind: string,
+    contentType: string,
+    fieldId = "",
+    applicationVersion = 0;
   try {
     const body = await boundedBody(request, MAX_DOCUMENT_BYTES + 64 * 1024);
     const form = await new Response(body as BodyInit, {
@@ -44,6 +49,8 @@ export async function POST(request: Request) {
     }).formData();
     const file = form.get("file");
     kind = String(form.get("kind") ?? "");
+    fieldId = String(form.get("fieldId") ?? "");
+    applicationVersion = Number(form.get("applicationVersion") ?? 0);
     if (!(file instanceof File)) throw new Error();
     contentType = file.type;
     validateDocument(kind, contentType, file.size);
@@ -67,11 +74,51 @@ export async function POST(request: Request) {
   const client = await getDatabase().connect();
   try {
     await client.query("BEGIN");
+    await client.query('SELECT id FROM public."user" WHERE id=$1 FOR UPDATE', [
+      actor.id,
+    ]);
+    if (fieldId) {
+      const p = await policy(client),
+        field = p.fields.find(
+          (f) =>
+            f.id === fieldId &&
+            f.type === "document" &&
+            f.visible &&
+            f.documentKind === kind,
+        );
+      const draft = (
+        await client.query(
+          "SELECT * FROM tpa.application_drafts WHERE user_id=$1 FOR UPDATE",
+          [actor.id],
+        )
+      ).rows[0];
+      if (
+        !field ||
+        !draft ||
+        draft.version !== applicationVersion ||
+        !field.categories.includes(draft.category)
+      ) {
+        await client.query("ROLLBACK");
+        return Response.json(
+          { error: "Save the latest form before uploading." },
+          { status: 409 },
+        );
+      }
+      await client.query(
+        "UPDATE tpa.application_drafts SET details=jsonb_set(details,ARRAY[$2::text],to_jsonb($3::text)),version=version+1,updated_at=now() WHERE id=$1",
+        [draft.id, fieldId, id],
+      );
+    }
     // Write metadata transaction first, then storage. Failed storage/commit removes only this request's object.
     await client.query(
       "INSERT INTO tpa.private_documents(id,owner_user_id,kind,content_type,byte_size) VALUES($1,$2,$3,$4,$5)",
       [id, actor.id, kind, contentType, bytes.byteLength],
     );
+    if (fieldId)
+      await client.query(
+        "INSERT INTO tpa.application_documents(application_id,document_id) SELECT id,$2 FROM tpa.application_drafts WHERE user_id=$1",
+        [actor.id, id],
+      );
     await uploadWithCleanup({
       store: () => storePrivateDocument(id, bytes, contentType),
       persist: async () => {

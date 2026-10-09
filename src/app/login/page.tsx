@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { GoogleSignIn } from "@/components/auth-controls";
 import { authConfigured } from "@/lib/auth";
+import { OnboardingSignIn } from "@/components/onboarding-auth";
 import { PasswordSignIn } from "@/components/password-controls";
 import { currentActor } from "@/lib/actor";
 import { redirect } from "next/navigation";
@@ -29,7 +31,8 @@ export default async function Login() {
             Sign in with your assigned account. A TPA account does not
             automatically confer approved membership.
           </p>
-          <PasswordSignIn enabled={authConfigured()} />
+          {process.env.ONBOARDING_ENABLED === "true" ? <OnboardingSignIn/> : <PasswordSignIn enabled={authConfigured()} />}
+          {process.env.ONBOARDING_ENABLED === "true" && <Link href="/signup">Create an account</Link>}
           <GoogleSignIn enabled={enabled} />
           {!enabled && (
             <p className="notice">

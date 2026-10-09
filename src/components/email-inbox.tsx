@@ -151,7 +151,7 @@ export function EmailInbox({
     });
   }
   return (
-    <section className="content-section">
+    <section className="content-section email-inbox">
       <h2>Shared inbox</h2>
       <p>
         contact@updates.tpassociation.org · Staff-only conversations.

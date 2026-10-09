@@ -5,7 +5,7 @@ import { AccountShell as SiteShell } from "@/components/site-shell";
 import { ApplicationDraft } from "@/components/application-draft";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Your membership application",
+  title: "Your verification details",
   robots: { index: false, follow: false },
 };
 export default async function Page() {
@@ -15,8 +15,8 @@ export default async function Page() {
     <SiteShell>
       <main id="main" className="page-content">
         <Link href="/member">← Your member space</Link>
-        <h1>Your membership application</h1>
-        <ApplicationDraft name={actor.name} />
+        <h1>Your verification details</h1>
+        <ApplicationDraft name={actor.name} userId={actor.id} />
       </main>
     </SiteShell>
   );

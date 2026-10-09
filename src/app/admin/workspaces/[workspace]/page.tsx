@@ -1,3 +1,5 @@
+import { VerificationWorkspace } from "@/components/verification-workspace";
+import { BulkOnboarding, OnboardingEmailSettings } from "@/components/bulk-onboarding";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { currentActor } from "@/lib/actor";
@@ -16,6 +18,9 @@ import { GovernanceWorkspace } from "@/components/governance-workspace";
 import { staffWorkspaceLabel } from "@/domain/staff-navigation";
 import { MembersWorkspace } from "@/components/members-workspace";
 const permissions: Record<string, Permission> = {
+  verification:"members:review",
+  onboarding:"staff:manage",
+  "onboarding-email":"staff:manage",
   members: "members:review",
   events: "events:manage",
   content: "content:publish",
@@ -62,7 +67,7 @@ export default async function Workspace({
     <main id="main" className="workspace-main">
       <Link href="/admin">← Staff workspace</Link>
       <h1>{staffWorkspaceLabel(workspace)}</h1>
-      {workspace === "governance" ? (
+      {workspace === "verification" ? <VerificationWorkspace/> : workspace === "onboarding" ? <BulkOnboarding/> : workspace === "onboarding-email" ? <OnboardingEmailSettings/> : workspace === "governance" ? (
         <GovernanceWorkspace />
       ) : workspace === "media" ? (
         <MediaWorkspace />

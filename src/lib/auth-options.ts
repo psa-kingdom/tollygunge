@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import type { Pool } from "pg";
+import { queueOnboardingMail, hashToken } from "./onboarding-mail";
 import { recoveryConfigured, sendRecoveryEmail } from "./auth-email";
 
 export function createAuth(
@@ -13,6 +14,51 @@ export function createAuth(
     baseURL: env.BETTER_AUTH_URL,
     trustedOrigins: env.BETTER_AUTH_URL ? [env.BETTER_AUTH_URL] : [],
     databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            if (env.ONBOARDING_ENABLED === "true")
+              await database.query(
+                "UPDATE tpa.onboarding_mail SET user_id=$1 WHERE user_id IS NULL AND recipient=$2 AND kind='verification'",
+                [user.id, user.email.toLowerCase()],
+              );
+            if (env.ONBOARDING_ENABLED === "true")
+              await queueOnboardingMail(
+                database,
+                user.id,
+                user.email,
+                "welcome",
+                `${env.BETTER_AUTH_URL}/member`,
+                "welcome-" + user.id,
+              );
+          },
+        },
+      },
+      session: {
+        create: {
+          before: async (session, context) => {
+            const staff = (
+              await database.query(
+                "SELECT 1 FROM tpa.staff_roles WHERE user_id=$1",
+                [session.userId],
+              )
+            ).rowCount;
+            const days =
+              env.ONBOARDING_ENABLED === "true" &&
+              !staff &&
+              context?.headers?.get("x-tpa-keep-signed-in") === "true"
+                ? 30
+                : 7;
+            return {
+              data: {
+                ...session,
+                durationDays: days,
+                expiresAt: new Date(Date.now() + days * 86400000),
+              },
+            };
+          },
+        },
+      },
       account: {
         update: {
           after: async (account, context) => {
@@ -31,7 +77,7 @@ export function createAuth(
     },
     emailAndPassword: {
       enabled: true,
-      disableSignUp: true,
+      disableSignUp: env.ONBOARDING_ENABLED !== "true",
       minPasswordLength: 12,
       maxPasswordLength: 128,
       resetPasswordTokenExpiresIn: 15 * 60,
@@ -79,6 +125,41 @@ export function createAuth(
             },
           }
         : {},
-    session: { cookieCache: { enabled: false }, expiresIn: 60 * 60 * 24 * 7 },
+    emailVerification: {
+      expiresIn: 86400,
+      sendOnSignUp: env.ONBOARDING_ENABLED === "true",
+      sendOnSignIn: false,
+      sendVerificationEmail: async ({ user, url, token }) => {
+        if (env.ONBOARDING_ENABLED !== "true") return;
+        await queueOnboardingMail(
+          database,
+          user.id,
+          user.email,
+          "verification",
+          url,
+          "verify-" + hashToken(token),
+        );
+      },
+    },
+    rateLimit: {
+      enabled: env.ONBOARDING_ENABLED === "true",
+      storage: "database",
+      modelName: "rateLimit",
+      window: 60,
+      max: 30,
+      customRules: {
+        "/sign-up/email": { window: 60, max: 5 },
+        "/send-verification-email": { window: 60, max: 3 },
+        "/request-password-reset": { window: 60, max: 3 },
+      },
+    },
+    session: {
+      cookieCache: { enabled: false },
+      expiresIn: 60 * 60 * 24 * 7,
+      disableSessionRefresh: true,
+      additionalFields: {
+        durationDays: { type: "number", defaultValue: 7, input: false },
+      },
+    },
   });
 }

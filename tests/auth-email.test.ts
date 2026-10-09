@@ -42,7 +42,8 @@ test("Resend reset requests use stable opaque idempotency and suppress provider 
       assert.match(keys.at(-1)!, /^recovery-[a-f0-9]{64}$/);
       const body = JSON.parse(String(init?.body));
       assert.deepEqual(body.to, ["test@example.invalid"]);
-      assert.equal(body.html, undefined);
+      assert.match(body.html, /TPA/);
+      assert.match(body.html, /15 minutes/);
       return Response.json({ id: "synthetic-id" });
     };
     const url = "https://tpassociation.org/reset-password#token=synthetic";

@@ -8,17 +8,23 @@ export function PersonalProfile() {
     [message, setMessage] = useState("Loading your profile…"),
     [newsletter, setNewsletter] = useState(false),
     [contact, setContact] = useState("email"),
+    [onboardingDetails, setOnboardingDetails] = useState(false),
+    [verificationRequired, setVerificationRequired] = useState(false),
     [busy, setBusy] = useState(false);
   useEffect(() => {
     let active = true;
     api<{
       person: PersonEntry;
+      verificationRequired?: boolean;
+      onboardingDetails?: boolean;
       newsletter: boolean;
       preferences: { contact: string };
     }>("/api/member/profile")
       .then((d) => {
         if (active) {
           setEntry(d.person);
+          setOnboardingDetails(!!d.onboardingDetails);
+          setVerificationRequired(!!d.verificationRequired);
           setNewsletter(d.newsletter);
           setContact(d.preferences.contact);
           setMessage("");
@@ -40,7 +46,14 @@ export function PersonalProfile() {
         private.
       </p>
       {entry && (
-        <PersonEditor entry={entry} owner canEditPrivate onSaved={setEntry} />
+        <PersonEditor
+          entry={entry}
+          verificationRequired={verificationRequired}
+          onboardingDetails={onboardingDetails}
+          owner
+          canEditPrivate
+          onSaved={setEntry}
+        />
       )}
       <form
         className="member-settings"

@@ -1,4 +1,5 @@
 "use client";
+import { clearRecovery } from "./draft-recovery";
 import { createAuthClient } from "better-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -49,6 +50,7 @@ export function SignOut() {
           try {
             const result = await client.signOut();
             if (result.error) throw new Error();
+            await clearRecovery().catch(()=>{});
             router.replace("/login");
             router.refresh();
           } catch {

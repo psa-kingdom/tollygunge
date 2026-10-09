@@ -14,7 +14,9 @@
     "test:storage": "node --env-file-if-exists=.env.local --import tsx scripts/verify-storage.mts",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "release:check": "node scripts/verify-release.mjs",
-    "test:email": "node --env-file-if-exists=.env.local --import tsx --test tests/email.integration.ts"
+    "test:email": "node --env-file-if-exists=.env.local --import tsx --test tests/email.integration.ts",
+    "test:onboarding": "node --env-file-if-exists=.env.local --import tsx scripts/test-onboarding-local.mts",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",
@@ -56,7 +58,8 @@
     "pngjs": "^7.0.0",
     "prettier": "^3.9.9",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "@playwright/test": "1.58.2"
   },
   "overrides": {
     "exceljs": {

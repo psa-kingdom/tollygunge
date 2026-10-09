@@ -22,6 +22,9 @@ export async function GET(request: Request) {
       ).rows[0];
       return {
         ...row.accepted,
+        onboardingDetails: process.env.ONBOARDING_ENABLED === "true",
+        verificationRequired:
+          process.env.ONBOARDING_ENABLED === "true" && !row.accepted_verified,
         preferences: consent?.preferences ?? { contact: "email" },
         newsletter: consent?.newsletter ?? false,
         person: await enriched(client, row, actor),

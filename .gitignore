@@ -9,3 +9,6 @@ references/
 Credential.md
 .local/
 .vercel/
+
+playwright-report/
+test-results/

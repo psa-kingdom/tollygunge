@@ -1,9 +1,10 @@
 export const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
-export type DocumentKind = "certificate" | "photograph" | "student_evidence";
+export type DocumentKind = "certificate" | "photograph" | "student_evidence" | "supporting";
 export const documentKinds: readonly DocumentKind[] = [
   "certificate",
   "photograph",
   "student_evidence",
+  "supporting",
 ];
 export function validateDocument(
   kind: string,

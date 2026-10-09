@@ -22,6 +22,18 @@ const groups: {
         permission: "members:review",
       },
       {
+        label: "Verification",
+        href: "/admin/workspaces/verification",
+        icon: "shield",
+        permission: "members:review",
+      },
+      {
+        label: "Bulk onboarding",
+        href: "/admin/workspaces/onboarding",
+        icon: "upload",
+        permission: "staff:manage",
+      },
+      {
         label: "Inquiries",
         href: "/admin/workspaces/crm",
         icon: "message",
@@ -89,6 +101,12 @@ const groups: {
         href: "/admin/workspaces/payments",
         icon: "wallet",
         permission: "payments:manage",
+      },
+      {
+        label: "Email settings",
+        href: "/admin/workspaces/onboarding-email",
+        icon: "mail",
+        permission: "staff:manage",
       },
       { label: "Reports", href: "/admin/workspaces/reports", icon: "chart" },
       {

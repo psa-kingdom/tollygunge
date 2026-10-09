@@ -1,3 +1,4 @@
+import { MemberOnboarding } from "@/components/member-onboarding";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AccountShell as SiteShell } from "@/components/site-shell";
@@ -25,6 +26,7 @@ export default async function Member() {
           services will open after association rules and checkout are
           configured.
         </div>
+        {process.env.ONBOARDING_ENABLED === "true" && <MemberOnboarding/>}
         <MemberProfile storageEnabled={privateStorageConfigured()} />
         <nav aria-label="Your account services" className="action-row">
           <Link className="button secondary" href="/member/application">

@@ -18,7 +18,7 @@ export function onboardingEmail(kind: string, url: string) {
   };
   const messages: Record<string, string> = {
     welcome:
-      "Your account is ready. Complete your details and evidence to request profile verification. Account creation does not approve membership.",
+      "Your account is ready; your profile is not yet verified. Verify your email, then complete your details and evidence to request administrator review. Account creation does not approve membership.",
     verification:
       "Verify your email using the link below. This link expires in 24 hours.",
     recovery:
@@ -97,6 +97,15 @@ export async function queueOnboardingMail(
   url: string,
   dedupe: string,
 ) {
+  // Better Auth invokes initial verification before its signup transaction commits.
+  // The post-commit user hook links this job without fabricating an identity.
+  if (kind === "verification" && userId) {
+    const existing = await db.query(
+      'SELECT id FROM public."user" WHERE id=$1',
+      [userId],
+    );
+    if (!existing.rowCount) userId = null;
+  }
   await db.query(
     "INSERT INTO tpa.onboarding_mail(id,dedupe,user_id,recipient,kind,payload) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(dedupe) DO NOTHING",
     [

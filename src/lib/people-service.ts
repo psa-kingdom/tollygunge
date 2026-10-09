@@ -185,6 +185,15 @@ export async function changePerson(
     );
   if (!row && action !== "save")
     throw new OperationError("Save the profile first.");
+  if (
+    process.env.ONBOARDING_ENABLED === "true" &&
+    row?.user_id &&
+    action === "approve" &&
+    !row.accepted_verified
+  )
+    throw new OperationError(
+      "Use Verification to check this account’s requirements before granting its badge.",
+    );
   const id = row?.id ?? randomUUID();
   let draft: PersonBody = row?.draft;
   if (action === "save") {
@@ -198,6 +207,19 @@ export async function changePerson(
       throw new OperationError(
         "Association assignments and verification are staff-managed.",
         403,
+      );
+    if (
+      ownerOnly &&
+      process.env.ONBOARDING_ENABLED === "true" &&
+      row &&
+      ["name", "organization", "phone"].some(
+        (key) =>
+          Object.hasOwn(submitted, key) && submitted[key] !== row.draft[key],
+      )
+    )
+      throw new OperationError(
+        "Update name, organization and phone in your verification form.",
+        409,
       );
     draft = personBody({
       ...row?.draft,

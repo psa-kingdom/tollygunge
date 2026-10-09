@@ -35,3 +35,42 @@ jobs:
       - run: node --import tsx scripts/verify-email-runtime.mjs
       - run: npm run typecheck
       - run: node scripts/verify-http-ci.mjs
+
+  onboarding:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://tpa_ci:tpa_ci_disposable@127.0.0.1:5432/tpa_onboarding_test_ci
+      TPA_DATABASE_NAME: tpa_onboarding_test_ci
+      BETTER_AUTH_SECRET: tpa_ci_disposable_auth_secret_only_for_isolated_tests
+      BETTER_AUTH_URL: http://127.0.0.1:3000
+      ONBOARDING_ENABLED: "true"
+      TPA_MAIL_SINK: "true"
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: tpa_ci
+          POSTGRES_PASSWORD: tpa_ci_disposable
+          POSTGRES_DB: tpa_onboarding_test_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tpa_ci -d tpa_onboarding_test_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: node scripts/verify-onboarding-ci.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onboarding-browser-report
+          path: |
+            playwright-report/
+            test-results/

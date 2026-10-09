@@ -1,3 +1,10 @@
+import {
+  onboardingEmail,
+  queueOnboardingMail,
+  hashToken,
+} from "./onboarding-mail";
+import { Pool } from "pg";
+import { databaseOptions } from "./database-options";
 import nodemailer from "nodemailer";
 import { createHash } from "node:crypto";
 
@@ -17,6 +24,7 @@ export function resendRecoveryConfigured(
 export function recoveryConfigured(
   env: Record<string, string | undefined> = process.env,
 ) {
+  if (mailSinkEnabled(env)) return true;
   if (env.RESEND_API_KEY) return resendRecoveryConfigured(env);
   return (
     resendRecoveryConfigured(env) ||
@@ -34,7 +42,31 @@ export async function sendRecoveryEmail(
   url: string,
   env: Record<string, string | undefined>,
 ) {
-  const subject = "Reset your TPA password";
+  if (mailSinkEnabled(env)) {
+    const db = new Pool(databaseOptions(env));
+    try {
+      const user = (
+        await db.query(
+          'SELECT id FROM public."user" WHERE lower(email)=lower($1)',
+          [email],
+        )
+      ).rows[0];
+      if (user)
+        await queueOnboardingMail(
+          db,
+          user.id,
+          email,
+          "recovery",
+          url,
+          "recovery-" + hashToken(url),
+        );
+    } finally {
+      await db.end();
+    }
+    return;
+  }
+  const branded = onboardingEmail("recovery", url);
+  const subject = branded.subject;
   const text = `A password reset was requested for your TPA account.\n\n${url}\n\nThis link expires in 15 minutes and can be used once. If you did not request this, ignore this email.`;
   if (env.RESEND_API_KEY) {
     // A partly configured Resend deployment must not silently switch providers.
@@ -53,6 +85,7 @@ export async function sendRecoveryEmail(
           to: [email],
           subject,
           text,
+          html: branded.html,
         }),
         signal: AbortSignal.timeout(20000),
         redirect: "error",
@@ -89,6 +122,7 @@ export async function sendRecoveryEmail(
       to: email,
       subject,
       text,
+      html: branded.html,
     });
   } catch {
     // Provider errors can include addresses, credentials or message bodies.
@@ -96,4 +130,12 @@ export async function sendRecoveryEmail(
   } finally {
     transport.close();
   }
+}
+
+export function mailSinkEnabled(env: Record<string, string | undefined>) {
+  return (
+    env.TPA_MAIL_SINK === "true" &&
+    /^tpa_onboarding_test_/.test(env.TPA_DATABASE_NAME ?? "") &&
+    /^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(env.BETTER_AUTH_URL ?? "")
+  );
 }
