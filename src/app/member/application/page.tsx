@@ -13,7 +13,7 @@ export default async function Page() {
   if (!actor) redirect("/login");
   return (
     <SiteShell>
-      <main id="main" className="page-content">
+      <main id="main" className="page-content member-application">
         <Link href="/member">← Your member space</Link>
         <h1>Your verification details</h1>
         <ApplicationDraft name={actor.name} userId={actor.id} />

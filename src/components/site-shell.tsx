@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { currentActor } from "@/lib/actor";
 import { SignOut } from "./auth-controls";
+import { MemberNavigation } from "./member-navigation";
 export const navigation = [
   {
     title: "About",
@@ -109,29 +110,33 @@ export async function AccountShell({
   const actor = await currentActor();
   const staff = Boolean(actor?.roles.length);
   return (
-    <>
+    <div className={staff ? "staff-account-shell" : "member-shell"}>
       <header className="site-header account-header">
         <Brand />
-        <nav aria-label="Account navigation">
-          <Link href={staff ? "/admin" : "/member"}>
-            {staff ? "Staff workspace" : "Your account"}
-          </Link>
-          <Link href="/account/profile">Profile</Link>
-          {!staff && (
-            <>
-              <Link href="/member/application">Application</Link>
-              <Link href="/member/events">Events</Link>
-              <Link href="/member/inquiries">Inquiries</Link>
-              <Link href="/member/payments">Payment details</Link>
-            </>
-          )}
-          <Link href="/member/security">Security</Link>
-          <Link href="/">Public website</Link>
-        </nav>
+        {staff ? (
+          <nav aria-label="Account navigation">
+            <Link href={staff ? "/admin" : "/member"}>
+              {staff ? "Staff workspace" : "Your account"}
+            </Link>
+            <Link href="/account/profile">Profile</Link>
+            {!staff && (
+              <>
+                <Link href="/member/application">Application</Link>
+                <Link href="/member/events">Events</Link>
+                <Link href="/member/inquiries">Inquiries</Link>
+                <Link href="/member/payments">Payment details</Link>
+              </>
+            )}
+            <Link href="/member/security">Security</Link>
+            <Link href="/">Public website</Link>
+          </nav>
+        ) : (
+          <MemberNavigation />
+        )}
         <SignOut />
       </header>
       {children}
-    </>
+    </div>
   );
 }
 export function Footer() {

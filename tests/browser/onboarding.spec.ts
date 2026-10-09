@@ -354,6 +354,16 @@ test(
       await expect(
         page.getByRole("heading", { name: "Your profile verification" }),
       ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Edit person", exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole("link", { name: "Continue your details", exact: true }),
+      ).toBeVisible();
+      await page.screenshot({
+        path: info.outputPath("member-dashboard-unverified.png"),
+        fullPage: true,
+      });
       await page
         .getByRole("link", { name: "Continue your details", exact: true })
         .click();
@@ -368,6 +378,7 @@ test(
       await page
         .getByRole("button", { name: "2. Personal details", exact: true })
         .click();
+      await page.getByText("Family & health details", { exact: false }).click();
       await page.getByLabel("Father’s name (optional)").fill("Test parent");
       await expect(page.getByRole("status").last()).toHaveText("Saved");
       await page.reload();
@@ -392,6 +403,7 @@ test(
       await page
         .getByRole("button", { name: "4. Evidence & referrals", exact: true })
         .click();
+      await page.locator("summary").filter({ hasText: "Referrals" }).click();
       await page
         .getByLabel("Proposer name (optional)")
         .fill("Unverified test referral");
@@ -641,4 +653,89 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
     path: info.outputPath("persistence-desktop.png"),
     fullPage: true,
   });
+});
+
+test("member dashboard separates verification states and keeps the editor off the landing page", async ({
+  page,
+}, info) => {
+  const origin = process.env.TPA_TEST_URL!;
+  const email = randomUUID() + "@example.invalid";
+  const signup = await page.request.post(origin + "/api/auth/sign-up/email", {
+    headers: { origin },
+    data: {
+      name: "Portal design test",
+      email,
+      password: "Browser-test-password-123!",
+    },
+  });
+  expect(signup.ok()).toBeTruthy();
+  const states = [
+    {
+      label: "Not verified",
+      verified: false,
+      updateRequested: false,
+      reviews: [],
+    },
+    {
+      label: "Under review",
+      verified: false,
+      updateRequested: false,
+      reviews: [{ status: "pending", reason: "" }],
+    },
+    {
+      label: "Corrections requested",
+      verified: false,
+      updateRequested: false,
+      reviews: [
+        {
+          status: "corrections",
+          reason: "Please upload a clearer certificate.",
+        },
+      ],
+    },
+    { label: "Verified", verified: true, updateRequested: false, reviews: [] },
+    {
+      label: "Verified · Update requested",
+      verified: true,
+      updateRequested: true,
+      reviews: [],
+    },
+  ];
+  for (const [index, state] of states.entries()) {
+    await page.route("**/api/member/verification", (route) =>
+      route.fulfill({
+        json: {
+          email,
+          emailVerified: index > 0,
+          missing: index > 2 ? [] : ["Photograph"],
+          ...state,
+        },
+      }),
+    );
+    await page.goto("/member");
+    await expect(page.locator(".member-badge")).toHaveText(state.label);
+    await expect(
+      page.getByRole("heading", { name: "Edit person", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Manage profile", exact: false }),
+    ).toBeVisible();
+    if (state.reviews[0]?.reason)
+      await expect(page.getByText(state.reviews[0].reason)).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBeTruthy();
+    await page.getByRole("link", { name: "Overview", exact: true }).focus();
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("link", { name: "Verification", exact: true }),
+    ).toBeFocused();
+    await page.screenshot({
+      path: info.outputPath(`dashboard-state-${index}.png`),
+      fullPage: true,
+    });
+    await page.unroute("**/api/member/verification");
+  }
 });

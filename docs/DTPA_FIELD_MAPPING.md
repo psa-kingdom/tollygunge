@@ -15,7 +15,7 @@ Reference: `client/dtpa membership form.pdf`, one printed page; no AcroForm widg
 | Blood group (self/spouse) | Step 2: `bloodGroup`, `spouseBloodGroup`, optional/private |
 | Spouse name | Step 2: `spouseName`, optional/private |
 | Office/residence addresses | Step 3: `officeAddress`, `residenceAddress` |
-| Office/residence telephone, fax, mobile | Step 3: `officePhone`, `residencePhone`, `fax`, `phone` |
+| Office/residence telephone, fax, mobile | Step 3: `officePhone`, `residencePhone`, `fax`, `phone`. Fax is archived (hidden/optional); existing answers and its stable identifier are retained. |
 | Email | Step 3: authenticated account email, read-only; mailbox verification separate |
 | Circular correspondence address: office/residence | Step 3: `correspondenceAddress`; selected address must be present |
 | Contribute journal articles, faculty/speaker, research, fellowship, residential seminar, others | Step 3: `contributions`, `contributionsOther`; does not infer consent/appointment |

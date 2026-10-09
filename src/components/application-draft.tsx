@@ -262,6 +262,157 @@ export function ApplicationDraft({
       setBusy(false);
     }
   }
+  function renderField(f: VerificationField) {
+    const value = draft.details[f.id] ?? "",
+      required =
+        f.required ||
+        (f.regulated &&
+          ["CA", "CS", "ICMAI", "Bar Council"].includes(
+            draft.details.professionalBody,
+          ));
+    return (
+      <label
+        key={f.id}
+        className={f.type === "checkbox" ? "member-check-field" : undefined}
+      >
+        {f.label}
+        {required ? " *" : " (optional)"}
+        {f.help && <small>{f.help}</small>}
+        {f.type === "multiline" ? (
+          <textarea
+            id={"verification-" + f.id}
+            value={value}
+            maxLength={f.maxLength ?? 1000}
+            onChange={(e) => answer(f.id, e.target.value)}
+          />
+        ) : f.type === "select" ? (
+          <select
+            id={"verification-" + f.id}
+            value={value}
+            onChange={(e) => answer(f.id, e.target.value)}
+          >
+            <option value="">Select…</option>
+            {f.options?.map((o) => (
+              <option key={o}>{o}</option>
+            ))}
+          </select>
+        ) : f.type === "multiselect" ? (
+          <select
+            id={"verification-" + f.id}
+            multiple
+            value={value ? JSON.parse(value) : []}
+            onChange={(e) =>
+              answer(
+                f.id,
+                JSON.stringify(
+                  [...e.target.selectedOptions].map((o) => o.value),
+                ),
+              )
+            }
+          >
+            {f.options?.map((o) => (
+              <option key={o}>{o}</option>
+            ))}
+          </select>
+        ) : f.type === "checkbox" ? (
+          <input
+            id={"verification-" + f.id}
+            type="checkbox"
+            checked={value === "true"}
+            onChange={(e) => answer(f.id, String(e.target.checked))}
+          />
+        ) : f.type === "document" ? (
+          <>
+            <input
+              id={"verification-" + f.id}
+              type="file"
+              accept={
+                f.documentKind === "photograph"
+                  ? "image/jpeg,image/png"
+                  : "application/pdf,image/jpeg,image/png"
+              }
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void upload(f, file);
+              }}
+            />
+            {value ? (
+              <a
+                href={"/api/documents/" + value}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View saved document
+              </a>
+            ) : (
+              <small>No document uploaded. Maximum 5 MB.</small>
+            )}
+          </>
+        ) : (
+          <input
+            id={"verification-" + f.id}
+            type={
+              ["date", "number"].includes(f.type)
+                ? f.type
+                : f.id === "phone"
+                  ? "tel"
+                  : "text"
+            }
+            value={value}
+            maxLength={f.maxLength ?? 1000}
+            onChange={(e) => answer(f.id, e.target.value)}
+          />
+        )}
+      </label>
+    );
+  }
+  const optionalGroups = [
+    {
+      title: "Family & health details",
+      ids: ["fatherName", "spouseName", "bloodGroup", "spouseBloodGroup"],
+    },
+    {
+      title: "Additional contact numbers",
+      ids: ["officePhone", "residencePhone", "fax"],
+    },
+    {
+      title: "Referrals",
+      ids: [
+        "proposerName",
+        "proposerNumber",
+        "proposerSignature",
+        "seconderName",
+        "seconderNumber",
+        "seconderSignature",
+      ],
+    },
+  ];
+  const activeFields =
+    status?.policy.fields.filter(
+      (f) => f.step === draft.step && applicable(f, draft.category),
+    ) ?? [];
+  const isRequired = (f: VerificationField) =>
+    f.required ||
+    !!(
+      f.regulated &&
+      ["CA", "CS", "ICMAI", "Bar Council"].includes(
+        draft.details.professionalBody,
+      )
+    );
+  const optionalIds = optionalGroups.flatMap((g) => g.ids);
+  useEffect(() => {
+    if (!status) return;
+    const invalid = status.policy.fields.find(
+      (f) =>
+        message.includes(f.label) && /Check|too long|invalid/i.test(message),
+    );
+    if (invalid) {
+      const input = document.getElementById("verification-" + invalid.id);
+      const section = input?.closest("details");
+      if (section) section.open = true;
+      input?.focus();
+    }
+  }, [message, status]);
   const missing = status
     ? missingFields(
         status.policy.fields,
@@ -271,11 +422,11 @@ export function ApplicationDraft({
       )
     : [];
   return (
-    <>
-      <p className="notice">
+    <div className="member-journey">
+      <p className="member-form-intro">
         Profile verification confirms reviewed details. Membership approval and
-        payments are separate. Family and health details are optional unless a
-        published requirement says otherwise.
+        payments are separate. Only fields marked * are required for your
+        profile review.
       </p>
       {status && (
         <>
@@ -329,10 +480,11 @@ export function ApplicationDraft({
           </button>
         </div>
       )}
-      <nav className="action-row" aria-label="Application steps">
+      <nav className="member-stepper" aria-label="Application steps">
         {verificationSteps.map((s, i) => (
           <button
             key={s}
+            aria-label={`${i + 1}. ${s}`}
             className="button secondary"
             aria-current={draft.step === i ? "step" : undefined}
             disabled={!ready || busy}
@@ -343,12 +495,15 @@ export function ApplicationDraft({
               }
             }}
           >
-            {i + 1}. {s}
+            <span className="member-step-number" aria-hidden="true">
+              {i + 1}
+            </span>
+            <span>{s}</span>
           </button>
         ))}
       </nav>
       <form
-        className="member-settings"
+        className="member-settings member-form-card"
         onBlur={() => {
           void save();
         }}
@@ -357,9 +512,14 @@ export function ApplicationDraft({
           await save();
         }}
       >
-        <h2>
-          {draft.step + 1}. {verificationSteps[draft.step]}
-        </h2>
+        <div className="member-form-heading">
+          <span className="eyebrow">STEP {draft.step + 1} OF 5</span>
+          <h2>{verificationSteps[draft.step]}</h2>
+          <p>
+            Fields marked * are required. You can save an incomplete form and
+            return later.
+          </p>
+        </div>
         <fieldset disabled={!ready || busy || conflict}>
           <div className="form-grid">
             {draft.step === 0 && (
@@ -401,112 +561,28 @@ export function ApplicationDraft({
                 </small>
               </label>
             )}
-            {status?.policy.fields
-              .filter(
-                (f) => f.step === draft.step && applicable(f, draft.category),
-              )
-              .map((f) => {
-                const value = draft.details[f.id] ?? "",
-                  required =
-                    f.required ||
-                    (f.regulated &&
-                      ["CA", "CS", "ICMAI", "Bar Council"].includes(
-                        draft.details.professionalBody,
-                      ));
-                return (
-                  <label key={f.id}>
-                    {f.label}
-                    {required ? " *" : " (optional)"}
-                    {f.help && <small>{f.help}</small>}
-                    {f.type === "multiline" ? (
-                      <textarea
-                        id={"verification-" + f.id}
-                        value={value}
-                        maxLength={f.maxLength ?? 1000}
-                        onChange={(e) => answer(f.id, e.target.value)}
-                      />
-                    ) : f.type === "select" ? (
-                      <select
-                        id={"verification-" + f.id}
-                        value={value}
-                        onChange={(e) => answer(f.id, e.target.value)}
-                      >
-                        <option value="">Select…</option>
-                        {f.options?.map((o) => (
-                          <option key={o}>{o}</option>
-                        ))}
-                      </select>
-                    ) : f.type === "multiselect" ? (
-                      <select
-                        id={"verification-" + f.id}
-                        multiple
-                        value={value ? JSON.parse(value) : []}
-                        onChange={(e) =>
-                          answer(
-                            f.id,
-                            JSON.stringify(
-                              [...e.target.selectedOptions].map((o) => o.value),
-                            ),
-                          )
-                        }
-                      >
-                        {f.options?.map((o) => (
-                          <option key={o}>{o}</option>
-                        ))}
-                      </select>
-                    ) : f.type === "checkbox" ? (
-                      <input
-                        id={"verification-" + f.id}
-                        type="checkbox"
-                        checked={value === "true"}
-                        onChange={(e) => answer(f.id, String(e.target.checked))}
-                      />
-                    ) : f.type === "document" ? (
-                      <>
-                        <input
-                          id={"verification-" + f.id}
-                          type="file"
-                          accept={
-                            f.documentKind === "photograph"
-                              ? "image/jpeg,image/png"
-                              : "application/pdf,image/jpeg,image/png"
-                          }
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) void upload(f, file);
-                          }}
-                        />
-                        {value ? (
-                          <a
-                            href={"/api/documents/" + value}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            View saved document
-                          </a>
-                        ) : (
-                          <small>No document uploaded. Maximum 5 MB.</small>
-                        )}
-                      </>
-                    ) : (
-                      <input
-                        id={"verification-" + f.id}
-                        type={
-                          ["date", "number"].includes(f.type)
-                            ? f.type
-                            : f.id === "phone"
-                              ? "tel"
-                              : "text"
-                        }
-                        value={value}
-                        maxLength={f.maxLength ?? 1000}
-                        onChange={(e) => answer(f.id, e.target.value)}
-                      />
-                    )}
-                  </label>
-                );
-              })}
+            {activeFields
+              .filter((f) => !optionalIds.includes(f.id) || isRequired(f))
+              .map(renderField)}
           </div>
+          {optionalGroups.map((group) => {
+            const fields = activeFields.filter(
+              (f) => group.ids.includes(f.id) && !isRequired(f),
+            );
+            return fields.length ? (
+              <details
+                className="member-optional-section"
+                key={group.title}
+                open={fields.some((f) => !!draft.details[f.id]) || undefined}
+              >
+                <summary>
+                  {group.title}
+                  <span>Optional</span>
+                </summary>
+                <div className="form-grid">{fields.map(renderField)}</div>
+              </details>
+            ) : null;
+          })}
         </fieldset>
         {draft.step === 4 && (
           <section>
@@ -556,9 +632,14 @@ export function ApplicationDraft({
                           edit({ ...current.current, step: field.step });
                           await save();
                           requestAnimationFrame(() =>
-                            document
-                              .getElementById("verification-" + field.id)
-                              ?.focus(),
+                            (() => {
+                              const input = document.getElementById(
+                                "verification-" + field.id,
+                              );
+                              const section = input?.closest("details");
+                              if (section) section.open = true;
+                              input?.focus();
+                            })(),
                           );
                         }
                       }}
@@ -636,7 +717,7 @@ export function ApplicationDraft({
           )}
         </div>
       </form>
-      <p role="status" aria-live="polite">
+      <p className="member-save-status" role="status" aria-live="polite">
         {message}
       </p>
       {conflict && (
@@ -653,6 +734,6 @@ export function ApplicationDraft({
       >
         Return to dashboard
       </Link>
-    </>
+    </div>
   );
 }

@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AccountShell as SiteShell } from "@/components/site-shell";
 import { currentActor } from "@/lib/actor";
-import { MemberProfile } from "./profile";
-import { privateStorageConfigured } from "@/lib/private-storage";
+
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Your member space",
@@ -16,36 +15,82 @@ export default async function Member() {
   if (actor.roles.length) redirect("/admin");
   return (
     <SiteShell>
-      <main id="main" className="page-content">
-        <span className="eyebrow">YOUR MEMBER SPACE</span>
-        <h1>Hello, {actor.name}.</h1>
-        <p>{actor.email}</p>
-        <div className="notice">
-          Your account is ready. Save a membership draft, register for published
-          events and track your inquiries below. Membership approval and payment
-          services will open after association rules and checkout are
-          configured.
-        </div>
-        {process.env.ONBOARDING_ENABLED === "true" && <MemberOnboarding/>}
-        <MemberProfile storageEnabled={privateStorageConfigured()} />
-        <nav aria-label="Your account services" className="action-row">
-          <Link className="button secondary" href="/member/application">
-            Membership application
+      <main id="main" className="page-content member-home">
+        <header className="member-welcome">
+          <div>
+            <span className="eyebrow">YOUR MEMBER SPACE</span>
+            <h1>Hello, {actor.name}.</h1>
+            <p>{actor.email}</p>
+          </div>
+          <span className="member-welcome-mark" aria-hidden="true">
+            tpa<span>·</span>
+          </span>
+        </header>
+        {process.env.ONBOARDING_ENABLED === "true" ? (
+          <MemberOnboarding />
+        ) : (
+          <Link className="button" href="/member/application">
+            Continue your application
           </Link>
-          <Link className="button secondary" href="/member/events">
-            Events & attendance
+        )}
+        <section className="member-card member-profile-summary">
+          <div>
+            <span className="eyebrow">PERSONAL PROFILE</span>
+            <h2>Your presence at TPA</h2>
+            <p>
+              Manage your biography, interests and public profile preferences.
+              Your phone and evidence remain private.
+            </p>
+          </div>
+          <Link className="button secondary" href="/account/profile">
+            Manage profile →
           </Link>
-          <Link className="button secondary" href="/member/inquiries">
-            Your inquiries
-          </Link>
-          <Link className="button secondary" href="/member/payments">
-            Association payment details
-          </Link>
-        </nav>
-        <p>
-          <Link className="text-link" href="/member/security">
-            Account security →
-          </Link>
+        </section>
+        <section
+          className="member-services"
+          aria-labelledby="member-services-title"
+        >
+          <h2 id="member-services-title">Explore your member space</h2>
+          <div className="member-service-grid">
+            {[
+              [
+                "/member/events",
+                "01",
+                "Events & attendance",
+                "Discover learning opportunities and manage your registrations.",
+              ],
+              [
+                "/member/inquiries",
+                "02",
+                "Your inquiries",
+                "Follow your conversations with the association.",
+              ],
+              [
+                "/member/security",
+                "03",
+                "Account security",
+                "Manage your password and signed-in sessions.",
+              ],
+              [
+                "/member/payments",
+                "04",
+                "Payment details",
+                "View association payment information when available.",
+              ],
+            ].map(([href, number, title, description]) => (
+              <Link className="member-service-tile" href={href} key={href}>
+                <span className="eyebrow">{number}</span>
+                <h3>
+                  {title}
+                  <span aria-hidden="true">↗</span>
+                </h3>
+                <p>{description}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+        <p className="member-footnote">
+          Profile verification, membership approval and payments are separate.
         </p>
       </main>
     </SiteShell>

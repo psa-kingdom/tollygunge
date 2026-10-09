@@ -191,8 +191,34 @@ test("only new requirements prompt legacy approvals and unreviewed drafts cannot
   );
 });
 
-test("required multiselects reject empty arrays even with JSON whitespace",()=>{
- const field={id:"choices",label:"Required choices",type:"multiselect" as const,step:1,required:true,visible:true,categories:["Professional"],options:["A"]};
- const answers=validateAnswers({choices:" [ ] "},[field]);
- assert.deepEqual(missingFields([field],answers,"Professional",true),["Required choices"]);
+test("required multiselects reject empty arrays even with JSON whitespace", () => {
+  const field = {
+    id: "choices",
+    label: "Required choices",
+    type: "multiselect" as const,
+    step: 1,
+    required: true,
+    visible: true,
+    categories: ["Professional"],
+    options: ["A"],
+  };
+  const answers = validateAnswers({ choices: " [ ] " }, [field]);
+  assert.deepEqual(missingFields([field], answers, "Professional", true), [
+    "Required choices",
+  ]);
+});
+
+test("archived Fax preserves stored answers and can be restored without changing identity", () => {
+  const fax = initialFields.find((f) => f.id === "fax")!;
+  assert.equal(fax.visible, false);
+  assert.equal(fax.required, false);
+  assert.deepEqual(validateAnswers({ fax: "12345678" }, initialFields), {
+    fax: "12345678",
+  });
+  const restored = validateFields(
+    initialFields.map((f) => (f.id === "fax" ? { ...f, visible: true } : f)),
+    initialFields,
+  );
+  assert.equal(restored.find((f) => f.id === "fax")?.visible, true);
+  assert.equal(restored.find((f) => f.id === "fax")?.type, fax.type);
 });

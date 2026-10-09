@@ -294,7 +294,9 @@ export function VerificationWorkspace() {
                     })
                   }
                 />
-                Visible
+                {f.visible
+                  ? "Visible to members"
+                  : "Archived — answers preserved"}
               </label>
               <label className="consent">
                 <input

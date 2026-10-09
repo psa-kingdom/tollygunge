@@ -78,7 +78,7 @@ export function VerifyEmail({
 }) {
   const [message, setMessage] = useState("");
   return (
-    <section className="notice">
+    <section className="member-email-card">
       <strong>Email: {verified ? "Verified" : "Not verified"}</strong>
       <p>{email}</p>
       {!verified && (

@@ -96,7 +96,7 @@ export const initialFields: VerificationField[] = [
   ]),
   field("officePhone", "Office phone", 2),
   field("residencePhone", "Residence phone", 2),
-  field("fax", "Fax", 2),
+  { ...field("fax", "Fax", 2), visible: false, required: false },
   field("deliveryPreference", "Preferred delivery", 2, false, "select", [
     "Email",
     "Courier",
