@@ -9,7 +9,7 @@ Member dashboard: https://tpassociation.org/member
 Signup: https://tpassociation.org/signup
 Verification form: https://tpassociation.org/member/application
 
-Availability: new onboarding is being released behind a feature flag. Wait for the testing coordinator to confirm it is enabled before starting signup tests.
+Availability: onboarding is enabled for controlled testing. The testing coordinator will confirm completion of actual mailbox/link checks before broader team acceptance.
 
 Admin access: request your assigned tester account privately. Please do not share the real administrator password in this group. Ordinary signup does not grant admin access.
 

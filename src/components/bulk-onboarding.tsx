@@ -7,7 +7,11 @@ export function BulkOnboarding() {
     [headers, setHeaders] = useState<string[]>([]),
     [fields, setFields] = useState<string[]>([]),
     [mapping, setMapping] = useState<Record<string, string>>({}),
-    [preview, setPreview] = useState<{ id: string; rows: Row[] } | null>(null),
+    [preview, setPreview] = useState<{
+      id: string;
+      rows: Row[];
+      committed_at?: string | null;
+    } | null>(null),
     [results, setResults] = useState<
       {
         email: string;
@@ -82,7 +86,7 @@ export function BulkOnboarding() {
   }
   return (
     <section>
-      <h2>Bulk onboarding</h2>
+      <h2>Import accounts</h2>
       <p>
         Create ordinary unverified accounts and send password-setup invitations.
         Existing accounts are skipped. No passwords or verification badges can
@@ -150,7 +154,7 @@ export function BulkOnboarding() {
           </button>
         </>
       )}
-      {preview && (
+      {preview && !preview.committed_at && (
         <>
           <ul>
             {preview.rows.map((r, i) => (
@@ -176,6 +180,10 @@ export function BulkOnboarding() {
                   { action: "commit", id: preview.id },
                 );
                 setResults(d.results);
+                setPreview({
+                  ...preview,
+                  committed_at: new Date().toISOString(),
+                });
                 setMessage(
                   "Import committed. Check Email settings for delivery status.",
                 );

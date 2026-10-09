@@ -12,12 +12,13 @@ Implemented behind `ONBOARDING_ENABLED`: password signup, persistent five-step f
 
 - [x] Isolated signup/auth/worker and HTTP lifecycle/import acceptance.
 - [x] Desktop/tablet/phone signup, verification, recovery and returning-session journeys; desktop failed-save/offline/local-recovery/stale-tab acceptance.
-- [ ] Final integrated CI and hosted migration/runtime acceptance.
+- [x] Final integrated CI, additive migration and hosted runtime acceptance.
 - [ ] Actual onboarding welcome/invitation mailbox receipt and user-followed links.
-- [ ] Hosted private evidence upload/review with exact synthetic cleanup.
+- [x] Hosted private evidence upload/review and other-member denial.
+- [ ] Exact live synthetic record/object cleanup after mailbox checks.
 - [ ] Teammate UI/UX and accessibility acceptance before polished release.
 
-Existing synchronous recovery and verified updates-domain sender are preserved. Profile verification remains independent from email verification, membership, payment and public publication. Onboarding has not been enabled for public acceptance yet.
+Existing synchronous recovery and verified updates-domain sender are preserved. Profile verification remains independent from email verification, membership, payment and public publication. Onboarding is enabled for controlled testing; actual mailbox/link acceptance and synthetic cleanup remain open.
 
 ## Resend activation batch — 8 October 2026
 

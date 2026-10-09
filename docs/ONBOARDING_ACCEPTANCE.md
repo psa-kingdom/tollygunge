@@ -1,6 +1,6 @@
 # Signup, verification and bulk onboarding acceptance
 
-Implementation batch: 9 October 2026. This document distinguishes isolated acceptance from hosted and mailbox acceptance. The production onboarding flag remains disabled until those gates pass.
+Implementation batch: 9 October 2026. This document distinguishes isolated acceptance from hosted and mailbox acceptance. Onboarding is enabled for controlled testing after schema/runtime and isolated acceptance. Actual mailbox/link acceptance and the polished release gates remain separate.
 
 ## Implemented
 
@@ -30,13 +30,20 @@ Migrations 019 and 020 are additive, checksummed and preserve legacy form keys, 
 - Four browser journeys passed: signup/form/email verification/recovery/returning-session at desktop, tablet and phone, plus desktop failed saves/offline/local recovery/stale-tab isolation. Two redundant tablet/phone persistence runs were intentionally skipped. Screenshots and traces are generated under test-results and CI artifacts.
 - An actual responsive account-header overlap was found and fixed; viewport tests assert the header stays above the main content.
 
-Final integration lint/typecheck/build passed, as did all nine baseline HTTP regression suites with onboarding disabled. The final focused rerun checks the conditional cross-tab recovery-buffer clear, owner-profile restriction and dashboard-data screenshot waits. Browser screenshots must wait for dashboard data, not only its heading.
+Final integration lint/typecheck/build passed, as did all nine baseline HTTP regression suites with onboarding disabled. The final focused HTTP/desktop rerun passed the owner-profile restriction, conditional cross-tab recovery-buffer clear and dashboard-data screenshot waits. Browser screenshots must wait for dashboard data, not only its heading.
+
+## Hosted rollout
+
+Runtime c439895 deployed successfully as 3bc34024-1257-4d83-8e97-0202cb158f6c with onboarding disabled. After disposable-reviewer reads and public health checks passed, controlled onboarding was enabled in deployment c8195494-cf71-4b03-8348-1ace959817fc. CI 37915314579 and 37915309222 both pass, including the separate browser job.
+
+Hosted signup, saved form text, successful photograph/certificate association, actual reviewer downloads, anonymous/other-member denial and idempotent one-row bulk commit pass. The shared worker accepted/delivered welcome, verification and invitation jobs once each, with signed outcomes. Requirements/bulk/navigation layouts pass at 1440/768/390; the member phone review shows saved documents and an email-gated submission. Provider outcomes are not claimed as actual inbox acceptance.
+
+The main app checkout is synchronized to the tested commit; earlier uncommitted implementation copies are preserved in a Git stash named `Preserve pre-integration onboarding and communications work 2026-10-09`.
 
 ## Remaining live gates
 
-- Hosted migration/runtime rollout with onboarding disabled, then controlled signup enablement after acceptance.
 - Actual welcome and invitation receipt in the designated inbox; user-followed email verification, password setup and recovery links. Provider accepted/delivered receipts alone do not establish mailbox acceptance.
-- Private photo/evidence upload and authorized review download against managed R2 with exact synthetic-object cleanup. Isolated browser acceptance covers upload failure/retry but does not claim a successful live R2 upload.
+- Exact cleanup of the identified live synthetic records and R2 objects after mailbox/link acceptance. Hosted private photo/evidence upload and reviewer downloads already pass.
 - Broader real-user UI/UX and assistive-technology testing before a polished release.
 
 No real administrator identity is used for onboarding acceptance. Test databases are randomly named `tpa_onboarding_test_*`, created explicitly and dropped by the runner. Only identified synthetic live records/objects may be cleaned.
