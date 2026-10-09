@@ -2222,4 +2222,4 @@ button:disabled {
 .text-button:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
 .email-health { display:flex; flex-wrap:wrap; gap:.5rem 1rem; align-items:center; margin-block:1rem; }
 .email-inbox .crm-filters label.checkbox { display:inline-flex; align-items:center; gap:.5rem; }
-.email-inbox .crm-filters input[type="checkbox"] { width:1rem; height:1rem; padding:0; flex:none; }
+.email-inbox .crm-filters input[type="checkbox"] { width:1rem; min-width:0; max-width:1rem; height:1rem; min-height:0; padding:0; flex:none; }
