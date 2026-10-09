@@ -1,3 +1,4 @@
+import { openMail } from "../src/lib/onboarding-mail";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -216,8 +217,9 @@ test(
       assert.equal((await state(j.id)).status, "review");
       const row = await state(j.id),
         token = new URLSearchParams(
-          new URL(row.payload.unsubscribe).hash.slice(1),
+          new URL(openMail(row.payload.unsubscribe)).hash.slice(1),
         ).get("token")!;
+      assert.ok(!JSON.stringify(row).includes(token));
       await unsubscribe(pool, token);
       await unsubscribe(pool, token);
       assert.equal(

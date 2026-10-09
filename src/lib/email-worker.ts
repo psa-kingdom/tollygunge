@@ -1,3 +1,4 @@
+import { sealMail, openMail } from "./onboarding-mail";
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import {
@@ -229,16 +230,35 @@ export async function processEmailJob(
       return;
     }
     if (!(await eligibleNow())) return;
+    let unsubscribeUrl: string | undefined;
+    try {
+      if (job.kind === "campaign")
+        unsubscribeUrl = openMail(
+          job.payload.unsubscribe,
+          env.BETTER_AUTH_SECRET,
+        );
+    } catch {
+      throw new EmailProviderError(
+        false,
+        !!job.first_attempt_at,
+        "payload_unavailable",
+      );
+    }
     const body =
       job.kind === "campaign"
-        ? campaignEmail(job.payload.body, job.payload.unsubscribe)
+        ? campaignEmail(job.payload.body, unsubscribeUrl!)
         : { text: job.payload.body };
     const parent = messageId(job.payload.parent);
-    const unsubscribe = new URL(
-      job.payload.unsubscribe ?? env.BETTER_AUTH_URL!,
-    );
+    const unsubscribe = new URL(unsubscribeUrl ?? env.BETTER_AUTH_URL!);
     const token = new URLSearchParams(unsubscribe.hash.slice(1)).get("token");
-    const request = job.provider_request ?? {
+    let savedRequest;
+    try {
+      if (job.provider_request)
+        savedRequest = openMail(job.provider_request, env.BETTER_AUTH_SECRET);
+    } catch {
+      throw new EmailProviderError(false, true, "payload_unavailable");
+    }
+    const request = savedRequest ?? {
       from: job.kind === "campaign" ? campaignAddress : inboxAddress,
       to: [job.recipient],
       reply_to: inboxAddress,
@@ -257,7 +277,7 @@ export async function processEmailJob(
     };
     await pool.query(
       "UPDATE tpa.email_jobs SET provider_request=coalesce(provider_request,$3),first_attempt_at=coalesce(first_attempt_at,now()),attempts=attempts+1 WHERE id=$1 AND status='leased' AND lease_owner=$2",
-      [id, owner, request],
+      [id, owner, sealMail(request, env.BETTER_AUTH_SECRET)],
     );
     const result = await deps.request(
       "/emails",

@@ -8,7 +8,7 @@ Migration018 adds dispatch/job/event/suppression/inbox/reply/token/receipt/healt
 
 The single existing Railway container supervises Next.js and one PostgreSQL-leased email worker. The worker holds a database advisory leader lock, prioritises transactional onboarding/inbound/replies before campaigns, and reports fresh health/provider quota. Onboarding processing remains disabled until its own batch acceptance. Both domains share one verified signed webhook; handlers persist before acknowledgment and tolerate retries.
 
-Accepted, delivered, delayed, failed, bounced and complained remain distinct. Stable per-job idempotency retries stop at 23 hours for uncertain sends and require reconciliation. Campaign snapshots never acquire later recipients; eligibility, current addresses, consent, preferences, suppressions, cancellation and staff authority are rechecked before the provider call. Cancelled pending jobs are retained. Quota resets govern continuation; daily campaigns leave 20 sends available to recovery/replies and monthly exhaustion pauses all sends. Provider plan is never upgraded.
+Accepted, delivered, delayed, failed, bounced and complained remain distinct. Unsubscribe lookup stores hashes; queued unsubscribe URLs and immutable provider requests are authenticated-encrypted at rest with the managed auth secret. Stable per-job idempotency retries stop at 23 hours for uncertain sends and require reconciliation. Campaign snapshots never acquire later recipients; eligibility, current addresses, consent, preferences, suppressions, cancellation and staff authority are rechecked before the provider call. Cancelled pending jobs are retained. Quota resets govern continuation; daily campaigns leave 20 sends available to recovery/replies and monthly exhaustion pauses all sends. Provider plan is never upgraded.
 
 The inbox only retrieves addressed contact@updates.tpassociation.org mail after signature validation. Plain/converted text has no executable HTML/remote images. Attachment names/types are recorded; no files/URLs are fetched or sent. Threading uses known message references plus correspondent, never subject-only matching. Notes/links/assignment/draft changes are versioned and audited. Archives retain history.
 
@@ -25,6 +25,8 @@ The existing sending-only runtime key remains unchanged. A separate receiving/us
 ## Deployment and rollback
 
 Apply checksummed additive migration018 before starting this runtime. Build Next standalone plus the bundled worker; deploy clean committed source through the existing feature/draft PR workflow. Verify the signed endpoint, provider permissions/domain/quota and healthy worker before enabling EMAIL_OPERATIONS_ENABLED. Enable the one shared webhook and verify disposable provider recipients/incoming mail, then remove exact fixtures while recording provider-retained test messages.
+
+Auth-secret rotation must coordinate decrypt/reseal of queued encrypted payloads before replacing the old secret; never silently resend undecipherable uncertain jobs.
 
 Rollback: set EMAIL_OPERATIONS_ENABLED=false through managed stdin settings, pause the shared webhook only if its replacement cannot verify/persist events, and redeploy the last healthy application revision. Preserve PostgreSQL queues/events/history and authentication/storage configuration; do not revert applied checksums. Onboarding processing has its own flag and must be paused jointly when reverting the shared runtime. Recovery remains synchronous and independent of campaign eligibility and worker health.
 

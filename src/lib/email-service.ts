@@ -1,3 +1,4 @@
+import { sealMail } from "./onboarding-mail";
 import {
   randomUUID,
   randomBytes,
@@ -237,7 +238,9 @@ export async function dispatchCampaign(
         payload: {
           subject: campaign.subject,
           body: campaign.body,
-          unsubscribe: `${process.env.BETTER_AUTH_URL}/unsubscribe#token=${token}`,
+          unsubscribe: sealMail(
+            `${process.env.BETTER_AUTH_URL}/unsubscribe#token=${token}`,
+          ),
         },
       });
     }
