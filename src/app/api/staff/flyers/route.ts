@@ -12,9 +12,12 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   return operation(async () => {
     await authorized(request, "events:manage");
+    const value = new URL(request.url).searchParams.get("id");
+    const id = value ? uuid(value) : null;
     return (
       await getDatabase().query(
-        "SELECT e.id,e.title,e.location,e.starts_at,t.speakers,coalesce(t.version,0) AS template_version FROM tpa.events e LEFT JOIN tpa.flyer_templates t ON t.event_id=e.id WHERE e.status='published' ORDER BY e.starts_at DESC LIMIT 200",
+        "SELECT e.id,e.title,e.location,e.starts_at,t.speakers,coalesce(t.version,0) AS template_version FROM tpa.events e LEFT JOIN tpa.flyer_templates t ON t.event_id=e.id WHERE e.status='published' AND ($1::uuid IS NULL OR e.id=$1) ORDER BY e.starts_at DESC LIMIT 200",
+        [id],
       )
     ).rows;
   });

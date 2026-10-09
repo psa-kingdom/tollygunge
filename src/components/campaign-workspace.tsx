@@ -64,6 +64,8 @@ export function CampaignWorkspace({
       .then((data) => {
         if (active) {
           setCampaigns(data.campaigns);
+          const id = new URLSearchParams(location.search).get("campaign");
+          if (id) void open(id);
           setMessage("");
         }
       })
@@ -488,7 +490,8 @@ export function CampaignWorkspace({
               ))}
             </details>
           )}
-          <CampaignDispatch key={form.id??"new"}
+          <CampaignDispatch
+            key={form.id ?? "new"}
             id={form.id}
             version={form.version}
             dirty={dirty}

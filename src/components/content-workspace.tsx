@@ -1,9 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ContentEditor } from "./content-editor";
 import { NewsSources } from "./news-sources";
 export function ContentWorkspace() {
   const [tab, setTab] = useState("pages");
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (new URLSearchParams(location.search).has("source")) setTab("sources");
+    });
+  }, []);
   return (
     <>
       <div

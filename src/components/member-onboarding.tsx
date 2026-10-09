@@ -11,7 +11,11 @@ type Status = {
   missing: string[];
   reviews: { status: string; reason: string }[];
 };
-export function MemberOnboarding() {
+export function MemberOnboarding({
+  attentionCount = 0,
+}: {
+  attentionCount?: number;
+}) {
   const [s, setStatus] = useState<Status | null>(null),
     [error, setError] = useState("");
   useEffect(() => {
@@ -51,6 +55,12 @@ export function MemberOnboarding() {
           </span>
         )}
       </div>
+      {attentionCount > 0 && (
+        <p className="member-attention-count">
+          {attentionCount} account {attentionCount === 1 ? "action" : "actions"}{" "}
+          need your attention.
+        </p>
+      )}
       {s ? (
         <>
           <div className="member-verification-grid">

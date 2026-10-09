@@ -87,10 +87,12 @@ export function MembersWorkspace() {
   }
   useEffect(() => {
     let active = true;
-    api<Directory>("/api/staff/members")
+    api<Directory>("/api/staff/members" + (location.search || ""))
       .then((data) => {
         if (active) {
           setDirectory(data);
+          if (new URLSearchParams(location.search).has("id"))
+            setSelected(data.rows[0]);
           setMessage("");
         }
       })

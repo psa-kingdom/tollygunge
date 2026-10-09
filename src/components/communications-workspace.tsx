@@ -40,6 +40,15 @@ export function CommunicationsWorkspace() {
       "/api/staff/communications",
     )
       .then((data) => {
+        if (new URLSearchParams(location.search).has("campaign"))
+          setView("campaigns");
+        const templateId = new URLSearchParams(location.search).get("template");
+        const chosen = data.templates.find((t) => t.id === templateId);
+        if (chosen) {
+          setView("templates");
+          setForm(chosen);
+          setSavedTemplate(chosen);
+        }
         setTemplates(data.templates);
         setOptedIn(data.optedIn);
         setRecoveryEnabled(data.recoveryEnabled);

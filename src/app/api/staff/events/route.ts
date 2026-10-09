@@ -13,9 +13,12 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   return operation(async () => {
     await authorized(request, "events:manage");
+    const value = new URL(request.url).searchParams.get("id");
+    const id = value ? uuid(value) : null;
     return (
       await getDatabase().query(
-        "SELECT e.*, (SELECT count(*)::int FROM tpa.event_registrations r WHERE r.event_id=e.id AND r.status='registered') AS registrations FROM tpa.events e ORDER BY starts_at DESC LIMIT 200",
+        "SELECT e.*, (SELECT count(*)::int FROM tpa.event_registrations r WHERE r.event_id=e.id AND r.status='registered') AS registrations FROM tpa.events e WHERE ($1::uuid IS NULL OR e.id=$1) ORDER BY starts_at DESC LIMIT 200",
+        [id],
       )
     ).rows;
   });

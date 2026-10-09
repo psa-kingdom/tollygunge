@@ -81,10 +81,20 @@ export function CrmWorkspace() {
   );
   useEffect(() => {
     let active = true;
-    api<Data>(path())
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+    api<Data>(
+      id
+        ? "/api/staff/crm?id=" + encodeURIComponent(id)
+        : path() +
+            (params.get("focus")
+              ? "&focus=" + encodeURIComponent(params.get("focus")!)
+              : ""),
+    )
       .then((value) => {
         if (active) {
           setData(value);
+          if (id && value.records[0]) select(value.records[0]);
           setMessage("");
         }
       })

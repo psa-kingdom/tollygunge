@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentActor } from "@/lib/actor";
 import { staffNavigation } from "@/domain/staff-navigation";
 import { Brand } from "@/components/site-shell";
 import { StaffNavigation } from "@/components/staff-navigation";
-import { SignOut } from "@/components/auth-controls";
+import { AccountControls } from "@/components/account-controls";
+import { WorkspaceSearch } from "@/components/workspace-search";
 export const dynamic = "force-dynamic";
 export default async function StaffLayout({
   children,
@@ -20,21 +20,14 @@ export default async function StaffLayout({
         <Brand />
         <p className="staff-label">Association workspace</p>
         <StaffNavigation groups={staffNavigation(actor.roles)} />
-        <div className="staff-sidebar-footer">
-          <span className="staff-avatar" aria-hidden="true">
-            {actor.name.slice(0, 1).toUpperCase()}
-          </span>
-          <div>
-            <strong>{actor.name}</strong>
-            <small>Staff account</small>
-          </div>
-          <Link href="/account/profile">Your profile</Link>
-          <Link href="/member/security">Account security</Link>
-          <Link href="/">Public website ↗</Link>
-          <SignOut />
-        </div>
       </aside>
-      <div className="staff-content">{children}</div>
+      <div className="staff-content">
+        <header className="workspace-topbar">
+          <WorkspaceSearch />
+          <AccountControls actor={actor} />
+        </header>
+        {children}
+      </div>
     </div>
   );
 }

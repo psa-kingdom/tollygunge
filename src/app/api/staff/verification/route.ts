@@ -24,16 +24,27 @@ export async function GET(r: Request) {
       Math.min(10000, Number(new URL(r.url).searchParams.get("page")) || 1),
     );
     const offset = (Math.floor(page) - 1) * 100;
+    const params = new URL(r.url).searchParams;
+    const status = params.get("status") || "all";
+    const q =
+      "%" +
+      (params.get("q") || "").slice(0, 120).replace(/[\\%_]/g, "\\$&") +
+      "%";
+    const id = params.get("id") || "";
+    const verifiedPage = Math.max(
+      1,
+      Math.min(10000, Number(params.get("verifiedPage")) || 1),
+    );
     const reviews = (
       await db.query(
-        "SELECT s.*,v.fields AS requirement_fields,u.name,u.email,p.accepted_verified,p.verification_update_requested FROM tpa.verification_submissions s JOIN tpa.verification_policies v ON v.version=s.requirement_version JOIN public.\"user\" u ON u.id=s.user_id JOIN tpa.people p ON p.id=s.person_id ORDER BY (s.status='pending') DESC,s.created_at DESC LIMIT 101 OFFSET $1",
-        [offset],
+        "SELECT s.*,v.fields AS requirement_fields,u.name,u.email,p.accepted_verified,p.verification_update_requested FROM tpa.verification_submissions s JOIN tpa.verification_policies v ON v.version=s.requirement_version JOIN public.\"user\" u ON u.id=s.user_id JOIN tpa.people p ON p.id=s.person_id WHERE ($2='all' OR s.status=$2) AND concat_ws(' ',u.name,u.email) ILIKE $3 AND ($4='' OR s.id::text=$4) ORDER BY (s.status='pending') DESC,s.created_at DESC LIMIT 101 OFFSET $1",
+        [offset, status, q, id],
       )
     ).rows;
     const verified = (
       await db.query(
-        'SELECT p.id,p.version,u.name,u.email,p.verification_version,p.verification_update_requested FROM tpa.people p JOIN public."user" u ON u.id=p.user_id WHERE p.accepted_verified=true ORDER BY u.name LIMIT 101 OFFSET $1',
-        [offset],
+        `SELECT p.id,p.version,u.name,u.email,p.verification_version,p.verification_update_requested FROM tpa.people p JOIN public."user" u ON u.id=p.user_id WHERE p.accepted_verified=true AND concat_ws(' ',u.name,u.email) ILIKE $2 ORDER BY u.name LIMIT 101 OFFSET $1`,
+        [(Math.floor(verifiedPage) - 1) * 100, q],
       )
     ).rows;
     const draft = actor.roles.includes("administrator")
@@ -51,6 +62,9 @@ export async function GET(r: Request) {
       verified: verified.slice(0, 100),
       hasMore: reviews.length > 100 || verified.length > 100,
       page,
+      verifiedPage,
+      reviewsMore: reviews.length > 100,
+      verifiedMore: verified.length > 100,
       history: (
         await db.query(
           "SELECT action,entity_id,created_at FROM tpa.audit_events WHERE action LIKE 'verification.%' ORDER BY created_at DESC LIMIT 100",

@@ -87,6 +87,10 @@ export function EmailInbox({
     const timer = setTimeout(() => void load(), 250);
     return () => clearTimeout(timer);
   }, [load]);
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get("conversation");
+    if (id) void open(id);
+  }, []);
   async function open(id: string, p = 1) {
     setBusy(true);
     setMessage("");

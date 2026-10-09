@@ -487,6 +487,9 @@ test(
         fullPage: true,
       });
       await page
+        .getByRole("button", { name: "Account menu", exact: true })
+        .click();
+      await page
         .getByRole("button", { name: "Sign out", exact: true })
         .first()
         .click();

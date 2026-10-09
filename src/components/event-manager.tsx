@@ -40,8 +40,13 @@ export function EventManager() {
     setEvents(await api<EventRow[]>("/api/staff/events"));
   }
   useEffect(() => {
-    api<EventRow[]>("/api/staff/events")
-      .then(setEvents)
+    api<EventRow[]>("/api/staff/events" + (location.search || ""))
+      .then((rows) => {
+        setEvents(rows);
+        const id = new URLSearchParams(location.search).get("id");
+        const row = rows.find((r) => r.id === id);
+        if (row) void select(row);
+      })
       .then(() => setMessage(""))
       .catch((e) => setMessage(e.message));
   }, []);

@@ -75,6 +75,7 @@ try {
       "tsx",
       "--test",
       "tests/onboarding-http.integration.ts",
+      "tests/workspace-ux-http.integration.ts",
     ]);
   await run([
     "node_modules/@playwright/test/cli.js",

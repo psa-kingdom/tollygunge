@@ -104,16 +104,25 @@ export function OperationsReports() {
         setPresets(saved.presets);
         setAdmin(saved.administrator);
         if (catalog.available.length) {
-          const r = catalog.available[0];
+          const presetId = new URLSearchParams(location.search).get("preset");
+          const chosen = saved.presets.find((p) => p.id === presetId);
+          const r = chosen?.report ?? catalog.available[0];
+          const activeFilters = chosen?.filters ?? initial;
+          if (chosen) {
+            setSelected(chosen.id);
+            setName(chosen.name);
+            setVisibility(chosen.visibility);
+            setFilters(chosen.filters);
+          }
           setReport(r);
           const data = await api<Result>(
-            `/api/staff/reports?${params(r, initial)}`,
+            `/api/staff/reports?${params(r, activeFilters)}`,
           );
           if (active) {
             setResult(data);
             setApplied({
               report: r,
-              filters: { ...initial, period: "custom", ...data.range },
+              filters: { ...activeFilters, period: "custom", ...data.range },
             });
             setMessage("");
           }

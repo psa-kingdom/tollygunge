@@ -67,7 +67,13 @@ export async function operation(work: () => Promise<unknown>) {
     });
   } catch (error) {
     if (error instanceof OperationError)
-      return Response.json({ error: error.message }, { status: error.status });
+      return Response.json(
+        { error: error.message },
+        {
+          status: error.status,
+          headers: { "Cache-Control": "private, no-store" },
+        },
+      );
     // Validation messages are safe; database/provider diagnostics are never exposed.
     const code =
       typeof error === "object" && error && "code" in error

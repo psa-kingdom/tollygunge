@@ -21,8 +21,16 @@ export function FlyerBuilder() {
     [message, setMessage] = useState("Loading published events…"),
     [busy, setBusy] = useState(false);
   useEffect(() => {
-    api<Event[]>("/api/staff/flyers")
-      .then(setEvents)
+    api<Event[]>("/api/staff/flyers" + (location.search || ""))
+      .then((rows) => {
+        setEvents(rows);
+        const id = new URLSearchParams(location.search).get("id");
+        const chosen = rows.find((r) => r.id === id);
+        if (chosen) {
+          setEvent(chosen);
+          setSpeakers(chosen.speakers ?? [{ name: "", credentials: "" }]);
+        }
+      })
       .then(() => setMessage(""))
       .catch((e) => setMessage(e.message));
   }, []);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { currentActor } from "@/lib/actor";
-import { SignOut } from "./auth-controls";
+import { AccountControls } from "./account-controls";
 import { MemberNavigation } from "./member-navigation";
 export const navigation = [
   {
@@ -79,6 +79,7 @@ export async function Header() {
             Join TPA <span>→</span>
           </Link>
         )}
+        <AccountControls actor={actor} />
       </div>
       <details className="mobile-nav">
         <summary>Menu</summary>
@@ -133,7 +134,7 @@ export async function AccountShell({
         ) : (
           <MemberNavigation />
         )}
-        <SignOut />
+        <AccountControls actor={actor} />
       </header>
       {children}
     </div>

@@ -82,6 +82,26 @@ export function NewsSources() {
       .then((data) => {
         if (active) {
           setSources(data.sources);
+          const id = new URLSearchParams(location.search).get("source");
+          const chosen = data.sources.find((s) => s.id === id);
+          if (chosen) {
+            setEntry(chosen);
+            setForm({
+              name: chosen.name,
+              url: chosen.url,
+              type: chosen.type,
+              notes: chosen.notes,
+            });
+            void api<{ revisions: Revision[] }>(
+              "/api/staff/news-sources?id=" + encodeURIComponent(chosen.id),
+            )
+              .then((v) => {
+                if (active) setRevisions(v.revisions);
+              })
+              .catch((e) => {
+                if (active) setMessage(e.message);
+              });
+          }
           setAdmin(data.administrator);
           setMessage("");
         }

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "./operations-client";
 type Row = { name: string; email: string; error?: string };
 export function BulkOnboarding() {
@@ -26,12 +26,7 @@ export function BulkOnboarding() {
     [batches, setBatches] = useState<
       { id: string; created_at: string; committed_at: string | null }[]
     >([]);
-  useEffect(() => {
-    api<{ batches: typeof batches }>("/api/staff/onboarding-import")
-      .then((d) => setBatches(d.batches))
-      .catch(() => setMessage("Unable to load batch history."));
-  }, []);
-  async function restore(id: string) {
+  const restore = useCallback(async (id: string) => {
     setBusy(true);
     try {
       const batch = await api<{
@@ -52,7 +47,16 @@ export function BulkOnboarding() {
     } finally {
       setBusy(false);
     }
-  }
+  }, []);
+  useEffect(() => {
+    api<{ batches: typeof batches }>("/api/staff/onboarding-import")
+      .then((d) => {
+        setBatches(d.batches);
+        const id = new URLSearchParams(location.search).get("id");
+        if (id) void restore(id);
+      })
+      .catch(() => setMessage("Unable to load batch history."));
+  }, [restore]);
   async function read(mapped = false) {
     if (!file) return;
     setBusy(true);

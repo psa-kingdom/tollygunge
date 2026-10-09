@@ -31,9 +31,15 @@ export function MediaWorkspace() {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("Loading media…");
   useEffect(() => {
-    api<Library>("/api/staff/media")
+    api<Library>("/api/staff/media" + (location.search || ""))
       .then((data) => {
         setLibrary(data);
+        const id = new URLSearchParams(location.search).get("id");
+        const asset = data.assets.find((a) => a.id === id);
+        if (asset) {
+          setSelected(asset);
+          setForm(asset.draft);
+        }
         setMessage("");
       })
       .catch((e) => setMessage(e.message));

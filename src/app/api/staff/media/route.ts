@@ -22,10 +22,13 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   return operation(async () => {
     await authorized(request, "content:publish");
+    const value = new URL(request.url).searchParams.get("id");
+    const id = value ? uuid(value) : null;
     return {
       assets: (
         await getDatabase().query(
-          "SELECT id,draft,published,width,height,byte_size,version,created_at FROM tpa.public_media ORDER BY created_at DESC LIMIT 100",
+          "SELECT id,draft,published,width,height,byte_size,version,created_at FROM tpa.public_media WHERE ($1::uuid IS NULL OR id=$1) ORDER BY created_at DESC LIMIT 100",
+          [id],
         )
       ).rows,
       uploadEnabled: privateStorageConfigured(),

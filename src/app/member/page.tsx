@@ -1,3 +1,4 @@
+import { attentionFor } from "@/lib/attention";
 import { MemberOnboarding } from "@/components/member-onboarding";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -13,6 +14,7 @@ export default async function Member() {
   const actor = await currentActor();
   if (!actor) redirect("/login");
   if (actor.roles.length) redirect("/admin");
+  const attention = await attentionFor(actor);
   return (
     <SiteShell>
       <main id="main" className="page-content member-home">
@@ -27,7 +29,7 @@ export default async function Member() {
           </span>
         </header>
         {process.env.ONBOARDING_ENABLED === "true" ? (
-          <MemberOnboarding />
+          <MemberOnboarding attentionCount={attention.length} />
         ) : (
           <Link className="button" href="/member/application">
             Continue your application

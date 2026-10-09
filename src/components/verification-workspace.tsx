@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useEmailEditGuard } from "./email-edit-guard";
+import { VerificationReviews } from "./verification-reviews";
 import { api } from "./operations-client";
 import {
   verificationSteps,
   type VerificationField,
 } from "@/domain/verification";
-type Review = {
+export type Review = {
   id: string;
   person_id: string;
   version: number;
@@ -19,10 +20,13 @@ type Review = {
   accepted_verified: boolean;
   requirement_fields: VerificationField[];
 };
-type Data = {
+export type VerificationData = {
   admin: boolean;
   page: number;
   hasMore: boolean;
+  reviewsMore: boolean;
+  verifiedMore: boolean;
+  verifiedPage: number;
   policy: { version: number; fields: VerificationField[] };
   draft: { version: number; fields: VerificationField[] } | null;
   reviews: Review[];
@@ -37,18 +41,20 @@ type Data = {
   history: { action: string; entity_id: string; created_at: string }[];
 };
 export function VerificationWorkspace() {
-  const [data, setData] = useState<Data | null>(null),
+  const [data, setData] = useState<VerificationData | null>(null),
     [fields, setFields] = useState<VerificationField[]>([]),
     [version, setVersion] = useState(0),
     [tab, setTab] = useState("Review queue"),
     [message, setMessage] = useState(""),
-    [reason, setReason] = useState(""),
+    [historyQuery, setHistoryQuery] = useState(""),
     [busy, setBusy] = useState(false),
     [dirty, setDirty] = useState(false),
     [impact, setImpact] = useState<number | null>(null);
   const guard = useEmailEditGuard(dirty);
   async function load(page = 1) {
-    const d = await api<Data>("/api/staff/verification?page=" + page);
+    const d = await api<VerificationData>(
+      "/api/staff/verification?page=" + page,
+    );
     setData(d);
     setFields(d.draft?.fields ?? d.policy.fields);
     setVersion(d.draft?.version ?? 0);
@@ -66,8 +72,10 @@ export function VerificationWorkspace() {
       await api("/api/staff/verification", body);
       await load();
       setMessage("Saved.");
+      return true;
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Unable to save.");
+      return false;
     } finally {
       setBusy(false);
     }
@@ -80,7 +88,7 @@ export function VerificationWorkspace() {
   return (
     <>
       {guard.dialog}
-      <p className="notice">
+      <p className="verification-intro">
         A Verified profile is independent from email verification, paid
         membership and public publication. Publishing requirements preserves
         existing badges.
@@ -91,8 +99,43 @@ export function VerificationWorkspace() {
             role="tab"
             key={t}
             aria-selected={tab === t}
+            tabIndex={tab === t ? 0 : -1}
+            onKeyDown={(e) => {
+              const tabs = ["Review queue", "Requirements", "History"];
+              const n = tabs.indexOf(t);
+              if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) {
+                e.preventDefault();
+                const next =
+                  e.key === "Home"
+                    ? 0
+                    : e.key === "End"
+                      ? 2
+                      : (n + (e.key === "ArrowRight" ? 1 : 2)) % 3;
+                const container = e.currentTarget.parentElement;
+                guard.proceed(() => {
+                  setFields(
+                    data?.draft?.fields ?? data?.policy.fields ?? fields,
+                  );
+                  setDirty(false);
+                  setImpact(null);
+                  setTab(tabs[next]);
+                  (
+                    container?.querySelectorAll("button")[
+                      next
+                    ] as HTMLButtonElement
+                  )?.focus();
+                });
+              }
+            }}
             className="button secondary"
-            onClick={() => setTab(t)}
+            onClick={() =>
+              guard.proceed(() => {
+                setFields(data?.draft?.fields ?? data?.policy.fields ?? fields);
+                setDirty(false);
+                setImpact(null);
+                setTab(t);
+              })
+            }
           >
             {t}
           </button>
@@ -100,132 +143,12 @@ export function VerificationWorkspace() {
       </div>
       <p role="status">{message}</p>
       {tab === "Review queue" && (
-        <>
-          <label>
-            Decision reason
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              maxLength={2000}
-            />
-          </label>
-          {data?.reviews.map((r) => (
-            <article className="notice" key={r.id}>
-              <h2>{r.name}</h2>
-              <p>
-                {r.email} · {r.status} · Requirements v{r.requirement_version}
-                {r.accepted_verified ? " · Existing badge retained" : ""}
-              </p>
-              <details>
-                <summary>Submitted details and evidence</summary>
-                <dl>
-                  {Object.entries(r.snapshot.details).map(([id, value]) => (
-                    <div key={id}>
-                      <dt>
-                        {r.requirement_fields.find((f) => f.id === id)?.label ??
-                          id}
-                      </dt>
-                      <dd>
-                        {r.requirement_fields.find((f) => f.id === id)?.type ===
-                        "document" ? (
-                          <a
-                            href={"/api/documents/" + value}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            View private evidence
-                          </a>
-                        ) : (
-                          value
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </details>
-              <p>{r.reason}</p>
-              {r.status === "pending" && (
-                <div className="action-row">
-                  {(data.admin
-                    ? ["approve", "reject", "corrections"]
-                    : ["corrections"]
-                  ).map((a) => (
-                    <button
-                      disabled={busy || (a !== "approve" && !reason.trim())}
-                      key={a}
-                      className="button secondary"
-                      onClick={() =>
-                        void action({
-                          id: r.id,
-                          version: r.version,
-                          action: a,
-                          reason,
-                        })
-                      }
-                    >
-                      {a === "corrections"
-                        ? "Request corrections"
-                        : a === "approve"
-                          ? "Approve verification"
-                          : "Reject"}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </article>
-          ))}
-          <div className="action-row">
-            <button
-              className="button secondary"
-              disabled={busy || !data || data.page <= 1}
-              onClick={() => void load((data?.page ?? 1) - 1)}
-            >
-              Previous review page
-            </button>
-            <span>Page {data?.page ?? 1}</span>
-            <button
-              className="button secondary"
-              disabled={busy || !data?.hasMore}
-              onClick={() => void load((data?.page ?? 1) + 1)}
-            >
-              Next review page
-            </button>
-          </div>
-          <h2>Verified accounts</h2>
-          {data?.verified.map((p) => (
-            <article key={p.id} className="notice">
-              <strong>{p.name}</strong>
-              <p>
-                {p.email} ·{" "}
-                {p.verification_version
-                  ? `Approved v${p.verification_version}`
-                  : "Legacy approval"}
-                {p.verification_update_requested ? " · Update requested" : ""}
-              </p>
-              {data.admin && (
-                <button
-                  className="button secondary"
-                  disabled={busy || !reason.trim()}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Revoke this profile badge and withdraw its public profile?",
-                      )
-                    )
-                      void action({
-                        action: "revoke",
-                        personId: p.id,
-                        version: p.version,
-                        reason,
-                      });
-                  }}
-                >
-                  Revoke verification
-                </button>
-              )}
-            </article>
-          ))}
-        </>
+        <VerificationReviews
+          data={data}
+          busy={busy}
+          action={action}
+          load={load}
+        />
       )}
       {tab === "Requirements" && data?.admin && (
         <>
@@ -235,138 +158,172 @@ export function VerificationWorkspace() {
             member requirements. Archive fields by hiding them; their answers
             remain stored.
           </p>
-          {fields.map((f, i) => (
-            <fieldset key={f.id}>
-              <legend>
-                {f.id} · {f.type}
-              </legend>
-              <div className="form-grid">
-                <label>
-                  Label
-                  <input
-                    value={f.label}
-                    maxLength={200}
-                    onChange={(e) => edit(i, { label: e.target.value })}
-                  />
-                </label>
-                <label>
-                  Help text
-                  <input
-                    value={f.help ?? ""}
-                    maxLength={500}
-                    onChange={(e) => edit(i, { help: e.target.value })}
-                  />
-                </label>
-                <label>
-                  Step
-                  <select
-                    value={f.step}
-                    onChange={(e) => edit(i, { step: Number(e.target.value) })}
-                  >
-                    {verificationSteps.map((s, n) => (
-                      <option value={n} key={s}>
-                        {n + 1}. {s}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Character limit
-                  <input
-                    type="number"
-                    min={1}
-                    max={5000}
-                    value={f.maxLength ?? 1000}
-                    onChange={(e) =>
-                      edit(i, { maxLength: Number(e.target.value) })
-                    }
-                  />
-                </label>
-              </div>
-              <label className="consent">
-                <input
-                  type="checkbox"
-                  checked={f.visible}
-                  onChange={(e) =>
-                    edit(i, {
-                      visible: e.target.checked,
-                      ...(!e.target.checked ? { required: false } : {}),
-                    })
-                  }
-                />
-                {f.visible
-                  ? "Visible to members"
-                  : "Archived — answers preserved"}
-              </label>
-              <label className="consent">
-                <input
-                  type="checkbox"
-                  checked={f.required}
-                  disabled={!f.visible}
-                  onChange={(e) => edit(i, { required: e.target.checked })}
-                />
-                Required
-              </label>
-              {["Professional", "Student"].map((c) => (
-                <label className="consent" key={c}>
-                  <input
-                    type="checkbox"
-                    checked={f.categories.includes(c)}
-                    onChange={(e) =>
-                      edit(i, {
-                        categories: e.target.checked
-                          ? [...f.categories, c]
-                          : f.categories.filter((x) => x !== c),
-                      })
-                    }
-                  />
-                  {c}
-                </label>
-              ))}
-              {["select", "multiselect"].includes(f.type) && (
-                <label>
-                  Options (one per line)
-                  <textarea
-                    value={f.options?.join("\n") ?? ""}
-                    onChange={(e) =>
-                      edit(i, { options: e.target.value.split("\n") })
-                    }
-                  />
-                </label>
+          {verificationSteps.map((step, stepIndex) => (
+            <section className="requirements-step" key={step}>
+              <h3>
+                {stepIndex + 1}. {step}
+              </h3>
+              {fields.map(
+                (f, i) =>
+                  f.step === stepIndex && (
+                    <details key={f.id} className="requirement-settings">
+                      <summary>
+                        {f.label}{" "}
+                        <small>
+                          {f.visible
+                            ? f.required
+                              ? "Required"
+                              : "Optional"
+                            : "Archived"}
+                        </small>
+                      </summary>
+                      <fieldset>
+                        <legend>
+                          {f.id} · {f.type}
+                        </legend>
+                        <div className="form-grid">
+                          <label>
+                            Label
+                            <input
+                              value={f.label}
+                              maxLength={200}
+                              onChange={(e) =>
+                                edit(i, { label: e.target.value })
+                              }
+                            />
+                          </label>
+                          <label>
+                            Help text
+                            <input
+                              value={f.help ?? ""}
+                              maxLength={500}
+                              onChange={(e) =>
+                                edit(i, { help: e.target.value })
+                              }
+                            />
+                          </label>
+                          <label>
+                            Step
+                            <select
+                              value={f.step}
+                              onChange={(e) =>
+                                edit(i, { step: Number(e.target.value) })
+                              }
+                            >
+                              {verificationSteps.map((s, n) => (
+                                <option value={n} key={s}>
+                                  {n + 1}. {s}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            Character limit
+                            <input
+                              type="number"
+                              min={1}
+                              max={5000}
+                              value={f.maxLength ?? 1000}
+                              onChange={(e) =>
+                                edit(i, { maxLength: Number(e.target.value) })
+                              }
+                            />
+                          </label>
+                        </div>
+                        <label className="consent">
+                          <input
+                            type="checkbox"
+                            checked={f.visible}
+                            onChange={(e) =>
+                              edit(i, {
+                                visible: e.target.checked,
+                                ...(!e.target.checked
+                                  ? { required: false }
+                                  : {}),
+                              })
+                            }
+                          />
+                          {f.visible
+                            ? "Visible to members"
+                            : "Archived — answers preserved"}
+                        </label>
+                        <label className="consent">
+                          <input
+                            type="checkbox"
+                            checked={f.required}
+                            disabled={!f.visible}
+                            onChange={(e) =>
+                              edit(i, { required: e.target.checked })
+                            }
+                          />
+                          Required
+                        </label>
+                        {["Professional", "Student"].map((c) => (
+                          <label className="consent" key={c}>
+                            <input
+                              type="checkbox"
+                              checked={f.categories.includes(c)}
+                              onChange={(e) =>
+                                edit(i, {
+                                  categories: e.target.checked
+                                    ? [...f.categories, c]
+                                    : f.categories.filter((x) => x !== c),
+                                })
+                              }
+                            />
+                            {c}
+                          </label>
+                        ))}
+                        {["select", "multiselect"].includes(f.type) && (
+                          <label>
+                            Options (one per line)
+                            <textarea
+                              value={f.options?.join("\n") ?? ""}
+                              onChange={(e) =>
+                                edit(i, { options: e.target.value.split("\n") })
+                              }
+                            />
+                          </label>
+                        )}
+                        {f.type === "document" && (
+                          <label>
+                            Document purpose
+                            <select
+                              value={f.documentKind}
+                              onChange={(e) =>
+                                edit(i, { documentKind: e.target.value })
+                              }
+                            >
+                              {[
+                                "supporting",
+                                "photograph",
+                                "certificate",
+                                "student_evidence",
+                              ].map((x) => (
+                                <option key={x}>{x}</option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+                        <button
+                          type="button"
+                          className="button secondary"
+                          disabled={i === 0}
+                          onClick={() => {
+                            const next = [...fields];
+                            [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                            setFields(next);
+                            setDirty(true);
+                            setImpact(null);
+                          }}
+                        >
+                          Move up
+                        </button>
+                      </fieldset>
+                    </details>
+                  ),
               )}
-              {f.type === "document" && (
-                <label>
-                  Document purpose
-                  <select
-                    value={f.documentKind}
-                    onChange={(e) => edit(i, { documentKind: e.target.value })}
-                  >
-                    {[
-                      "supporting",
-                      "photograph",
-                      "certificate",
-                      "student_evidence",
-                    ].map((x) => (
-                      <option key={x}>{x}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              <button
-                type="button"
-                className="button secondary"
-                disabled={i === 0}
-                onClick={() => {
-                  const next = [...fields];
-                  [next[i - 1], next[i]] = [next[i], next[i - 1]];
-                  setFields(next);
-                  setDirty(true);
-                  setImpact(null);
-                }}
-              >
-                Move up
-              </button>
-            </fieldset>
+            </section>
           ))}
           <h3>Add custom field</h3>
           <form
@@ -508,14 +465,47 @@ export function VerificationWorkspace() {
         <p>Only administrators can configure requirements.</p>
       )}
       {tab === "History" && (
-        <ul>
-          {data?.history.map((h, i) => (
-            <li key={i}>
-              {new Date(h.created_at).toLocaleString("en-IN")} · {h.action} ·{" "}
-              {h.entity_id}
-            </li>
-          ))}
-        </ul>
+        <section className="verification-history">
+          <label>
+            Filter history
+            <input
+              value={historyQuery}
+              onChange={(e) => setHistoryQuery(e.target.value)}
+              placeholder="Action or identifier"
+            />
+          </label>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Action</th>
+                  <th>Record</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.history
+                  .filter((h) =>
+                    (h.action + " " + h.entity_id)
+                      .toLowerCase()
+                      .includes(historyQuery.toLowerCase()),
+                  )
+                  .map((h, i) => (
+                    <tr key={i}>
+                      <td>{new Date(h.created_at).toLocaleString("en-IN")}</td>
+                      <td>
+                        {h.action
+                          .replace("verification.", "")
+                          .replaceAll("_", " ")}
+                      </td>
+                      <td>{h.entity_id}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+          <p>Latest 100 verification audit entries.</p>
+        </section>
       )}
     </>
   );
