@@ -220,3 +220,14 @@ The receiving/usage runtime credential uses Resend **full_access**, because Rese
 - Desktop/tablet/phone at 1440/768/390: no page overflow, retained edits across tabs, disabled unsaved send, navigation discard prompt, Escape and arrow-key tabs. Hosted screenshots: preview-evidence/communications-hosted-desktop.png, communications-hosted-phone.png and communications-hosted-delivery.png (disposable records pictured are removed).
 - Secret scans: zero managed-secret matches in sampled private API responses, nine public JavaScript chunks and recent runtime logs. Exact application fixture identities/sessions, campaign/revisions/dispatch/jobs, messages/conversation/notes, events, tokens, consents and audits removed and absence verified. Resend retains three synthetic sent messages and one received record; provider deletion is not asserted.
 - Read-only public/protected-route release checks pass. Full backup restoration, broader accessibility, Google OAuth, WhatsApp and membership/payment/refund/learning/import/news policy gates remain open. Account-wide R2/runtime full-access receiving credentials retain documented future scoping/rotation hardening.
+
+
+## Member dashboard and verification refresh — 9 October 2026
+
+- [x] Segmented member overview, independent email/profile status, concise profile access and service tiles; full editor retained on its dedicated route.
+- [x] Responsive five-step form, optional sections, keyboard navigation and error expansion; existing persistence/upload/conflict paths preserved.
+- [x] Fax archived through live requirements publication version 2 after zero-impact preview; saved answers, pinned histories, badges and update flags preserved.
+- [x] 55 unit tests, lint/typecheck/build, isolated database/HTTP checks, and nine browser journeys across desktop/tablet/phone. Both CI jobs pass on runs 37937324352 and 37937318665.
+- [x] Runtime 7d8d968 healthy in deployment bb554135-550f-4f9e-baca-7eea468641a5; hosted member-route, archived-field and health checks pass. Temporary hosted synthetic session removed.
+
+Evidence, screenshot scope and rollback are in [MEMBER_UI_REFRESH.md](MEMBER_UI_REFRESH.md). This scoped refresh does not close the broader release or prior human mailbox/password-login gates.

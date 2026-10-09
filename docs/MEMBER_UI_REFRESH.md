@@ -8,7 +8,12 @@ Fax is archived with the same `fax` identifier and optional status. Live require
 
 ## Validation
 
-Unit, build, lint/type checks and isolated database/HTTP/browser acceptance results are recorded after execution. Browser fixtures cover five dashboard states at desktop/tablet/phone sizes; new signup journeys cover optional-section persistence and form recovery. Mail delivery acceptance from the prior onboarding work is separate from this visual refresh.
+- Runtime revision: `7d8d968c3b1d5f2036f5efaf119b7c39b4f65c82`.
+- Railway deployment: `bb554135-550f-4f9e-baca-7eea468641a5`, healthy on 9 October 2026.
+- CI runs [37937324352](https://github.com/psa-kingdom/tollygunge/actions/runs/37937324352) and [37937318665](https://github.com/psa-kingdom/tollygunge/actions/runs/37937318665) pass both verify and onboarding jobs: 55 unit tests, lint/typecheck/build, database/mail/HTTP baseline and 9 browser journeys (6 redundant viewport cases skipped).
+- Local isolated database/auth/worker checks, onboarding HTTP acceptance, and all 9 browser journeys also pass. Desktop/tablet/phone screenshots reviewed for segmentation, readable inputs and no overflow; keyboard navigation and five dashboard states are covered. Signup checks retain optional answers through refresh, report upload failure, and exercise email verification, recovery, returning sessions, offline recovery and conflicting tabs.
+- Hosted `/member` and `/member/application` return the refreshed member shell for an existing disposable ordinary member. `/api/member/verification` confirms archived Fax/version 2; health returns 200. The temporary synthetic session used for these HTTP checks was removed immediately. This is not a new claim of human password-login or mailbox acceptance. Chrome's existing administrator session still redirects `/member` to its staff workspace.
+- Actual mailbox/password-login acceptance from the earlier onboarding work remains a separate gate; retained live mail-link fixtures were not deleted by this refresh.
 
 ## Rollback
 
