@@ -1,6 +1,6 @@
 # Durable communications rollout — 9 October 2026
 
-Status: implementation and isolated acceptance complete; hosted acceptance in progress.
+Status: email scope implemented, CI passed and hosted acceptance complete. Full production acceptance remains open.
 
 ## Scope and proof
 
@@ -20,7 +20,7 @@ Browser checks at 1440/768/390 confirm inbox selection, saved reply draft withou
 
 ## Managed configuration
 
-The existing sending-only runtime key remains unchanged. A separate receiving/usage runtime key and webhook signing secret use managed settings only; processing is disabled until deployment acceptance. Resend exposes full_access/sending_access; the receiving/usage key is full_access, not a narrowly scoped receiving credential. The supervisor strips it from the web child, supplying only a presence flag. The original setup key remains in Credential.md; no credentials appear in source, docs, args or output.
+The existing sending-only runtime key remains unchanged. A separate receiving/usage runtime key and webhook signing secret use managed settings only; processing was enabled only after the paused deployment passed endpoint and worker checks. Resend exposes full_access/sending_access; the receiving/usage key is full_access, not a narrowly scoped receiving credential. The supervisor strips it from the web child, supplying only a presence flag. The original setup key remains in Credential.md; no credentials appear in source, docs, args or output.
 
 ## Deployment and rollback
 
@@ -31,3 +31,13 @@ Auth-secret rotation must coordinate decrypt/reseal of queued encrypted payloads
 Rollback: set EMAIL_OPERATIONS_ENABLED=false through managed stdin settings, pause the shared webhook only if its replacement cannot verify/persist events, and redeploy the last healthy application revision. Preserve PostgreSQL queues/events/history and authentication/storage configuration; do not revert applied checksums. Onboarding processing has its own flag and must be paused jointly when reverting the shared runtime. Recovery remains synchronous and independent of campaign eligibility and worker health.
 
 Full backup restoration remains unverified; no production restore exercise is performed here. Keep Google/WhatsApp/payment/membership/learning/import/news policy gates and broader release acceptance open. See [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md) as current status.
+
+## Hosted delivery evidence
+
+9 October: final runtime 8e0d36d is healthy in deployment 1d1fe552-55e2-41ba-9929-88e0cc69db2b. Both CI runs 37913418355/37913411951 pass. EMAIL_OPERATIONS_ENABLED is enabled; the single verified webhook is enabled; ONBOARDING_ENABLED remains off pending its separate acceptance.
+
+An exact synthetic city filter matched one disposable verified subscriber at the provider test address. Reviewed saved dispatch sent once; repeated confirmation returned the same dispatch/job. Signed sent/delivered events were persisted. One synthetic message sent to the shared inbox was ingested using the receiving API; safe body, validated Reply-To, private note, operator assignment and saved reply were verified. Explicit reply reached the test recipient with signed delivery evidence; repeating the stale reply was blocked. Received delivery projection was corrected and reverified. Unsubscribe GET remained harmless; one-click POST immediately withdrew consent. Hosted wrong-recipient and forged-signature requests were rejected/ignored without creating jobs.
+
+Three synthetic sent messages and one received provider record remain in Resend. All exact application fixtures were removed, including their events, audits and temporary sessions; absence verified. No files were downloaded from incoming mail, no real-audience campaign was dispatched and no new service/paid plan was added. Actual provider usage/reset values govern the queue; acceptance did not exhaust the production quota to simulate a reset. Quota/crash/retry/ordering/attachment cases instead passed in disposable PostgreSQL with controlled provider responses.
+
+Hosted desktop/tablet/phone and keyboard checks passed with retained drafts, discard protection and no page overflow. The original user session was preserved. Zero secret matches in sampled API responses, nine public chunks and recent runtime logs. Screenshots and full checklist evidence are linked from DELIVERY_CHECKLIST.md. Receiving credential is full_access; stripping it from the web child limits exposure but does not make the provider credential narrowly scoped.

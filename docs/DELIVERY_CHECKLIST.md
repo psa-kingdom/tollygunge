@@ -1,10 +1,10 @@
-# TPA delivery checklist — 8 October 2026
+# TPA delivery checklist — 9 October 2026
 
 Current source of truth. Historical implementation, comparison and showcase reports
 remain evidence. Statuses: Done (only the stated capability), Partial, Added,
 Blocked, Deferred. Dependencies determine order; feedback adds work without removing
 existing release gates. Resend transactional password recovery is enabled and hosted
-verified. Durable campaigns/shared inbox are in the current acceptance batch; WhatsApp remains a separate provider gate.
+verified. Durable campaigns/shared inbox and delivery logs are hosted verified; WhatsApp remains a separate provider gate.
 
 ## Resend activation batch — 8 October 2026
 
@@ -35,7 +35,7 @@ verified. Durable campaigns/shared inbox are in the current acceptance batch; Wh
 | 9 | Collection, reconciliation, receipts, refunds/payment history | Partial / Blocked | UPI details/manual policy or Razorpay setup | Versioned instruction management only |
 | 10 | Events, attendance, learning history | Partial | Paid events need payment; awards need learning policy | Free registrations/attendance HTTP checks |
 | 11 | Historical import commit | Partial / Blocked | Approved mapping/provenance | Preview validation only |
-| 12 | Communications/inbox/delivery logs | Partial | Campaign/inbox implementation passes isolated acceptance; hosted rollout in progress; WhatsApp remains gated | EMAIL_OPERATIONS_ROLLOUT.md; managed processing disabled until hosted acceptance |
+| 12 | Communications/inbox/delivery logs | Done for email scope / Partial overall | Durable campaigns, shared inbox and delivery logs verified; WhatsApp remains gated | EMAIL_OPERATIONS_ROLLOUT.md; hosted signed events, explicit test delivery, consent withdrawal, responsive checks and exact cleanup |
 | 13 | Google onboarding/emailed recovery | Partial | Recovery Done for test-recipient acceptance; Google OAuth client remains blocked | RESEND_ROLLOUT.md; hosted reset/revocation; real-mailbox acceptance remains |
 | 14 | Scheduled attributed news | Blocked | Approved feeds/schedule | Editorial drafts only |
 | 15 | Full production release | Partial | Staging, backup/restore, recovery, security/accessibility and integrations | First draft only; release acceptance pending |
@@ -190,7 +190,17 @@ acceptance remains open; layout building/global style controls/collaboration rem
 - [x] Shared inbox assignment/status/read/archive/search, private notes, optimistic saved reply drafts and explicit reply confirmation. Bodies are inert text; attachments are metadata only.
 - [x] Isolated PostgreSQL and HTTP acceptance; 44 unit tests; production build; desktop/tablet/phone draft retention and keyboard tabs without page overflow.
 - [x] One supervisor/webhook with gated onboarding handlers; no competing deployment/worker.
-- [ ] Hosted processing, provider-delivered incoming mail/reply and synthetic-only campaign acceptance.
-- [ ] CI, deployment evidence and exact hosted fixture cleanup.
+- [x] Hosted processing, provider-delivered incoming mail/reply and synthetic-only campaign acceptance.
+- [x] CI, deployment evidence and exact hosted fixture cleanup.
 
 The receiving/usage runtime credential uses Resend **full_access**, because Resend has no receiving-only permission. It is distinct from the sending-only key, stored only in managed secrets, and removed from the web child environment. Setup credentials remain in their original file. Worker/deployment/provider acceptance is documented in [EMAIL_OPERATIONS_ROLLOUT.md](EMAIL_OPERATIONS_ROLLOUT.md). Onboarding is a coordinated separate batch; its flag remains disabled pending its own acceptance. Retained gates: Google OAuth, WhatsApp, approved membership/payment/refund/learning/import/news policies, disposable backup restoration and full production/accessibility acceptance.
+
+## Email acceptance evidence — 9 October 2026
+
+- Runtime 8e0d36d, Railway deployment 1d1fe552-55e2-41ba-9929-88e0cc69db2b: SUCCESS. Paused first deployment proved signed endpoint and fresh disabled worker before activation. The enabled shared worker is healthy; onboarding remains off pending its separate batch.
+- CI [37913418355](https://github.com/psa-kingdom/tollygunge/actions/runs/37913418355) and [37913411951](https://github.com/psa-kingdom/tollygunge/actions/runs/37913411951) pass lint, typecheck, build, 44 unit tests, existing domain/PostgreSQL/HTTP acceptance, durable-email suites and standalone worker handover.
+- Hosted one-recipient synthetic campaign and confirmed reply accepted/delivered via actual signed provider events. Duplicate dispatch retained the same dispatch and one job; stale duplicate reply was blocked. Actual intended inbound mail fetched through the receiving API; assignment/status/note/draft checks pass. Received events appear as received, not awaiting an outbound event.
+- GET unsubscribe did not alter consent; explicit one-click POST withdrew it. Mock-provider acceptance covers withdrawal immediately before send, quota rollover/reserve, suppression, retries/crashes, leases and uncertain-send reconciliation. No real-audience campaign was sent.
+- Desktop/tablet/phone at 1440/768/390: no page overflow, retained edits across tabs, disabled unsaved send, navigation discard prompt, Escape and arrow-key tabs. Hosted screenshots: preview-evidence/communications-hosted-desktop.png, communications-hosted-phone.png and communications-hosted-delivery.png (disposable records pictured are removed).
+- Secret scans: zero managed-secret matches in sampled private API responses, nine public JavaScript chunks and recent runtime logs. Exact application fixture identities/sessions, campaign/revisions/dispatch/jobs, messages/conversation/notes, events, tokens, consents and audits removed and absence verified. Resend retains three synthetic sent messages and one received record; provider deletion is not asserted.
+- Read-only public/protected-route release checks pass. Full backup restoration, broader accessibility, Google OAuth, WhatsApp and membership/payment/refund/learning/import/news policy gates remain open. Account-wide R2/runtime full-access receiving credentials retain documented future scoping/rotation hardening.

@@ -117,3 +117,7 @@ release a70b29b3-7c4e-4731-b7fb-22cff8092bc5; CI 37727570318/37727574348 pass. H
 HTTP/smoke, actual parsed downloads, preset/source review and responsive/keyboard checks
 pass with exact fixture cleanup. See DELIVERY_CHECKLIST.md for evidence and automation
 limits. Scheduled collection and backup restoration remain unverified/gated.
+
+## Durable communications delivery — 9 October 2026
+
+Campaign dispatch, consent-safe queued sending, signed delivery/suppression events, explicit unsubscribe and shared inbox/replies are hosted verified. This closes the email inbox/delivery-log comparison gap for the approved scope; attachments remain metadata only and WhatsApp is still gated. See [EMAIL_OPERATIONS_ROLLOUT.md](EMAIL_OPERATIONS_ROLLOUT.md) and the authoritative [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md) for CI, browser/provider acceptance, exact cleanup and remaining dependencies. Earlier Resend-deferred statements describe their dated release state. Onboarding is a coordinated separate batch and remains disabled pending its own acceptance. Full release/restore/accessibility and other policy gates remain open.
