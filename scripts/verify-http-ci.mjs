@@ -10,7 +10,7 @@ const server = spawn(
     "--port",
     "3000",
   ],
-  { stdio: "inherit" },
+  { stdio: "inherit",env:{...process.env,RESEND_WEBHOOK_SECRET:"whsec_"+Buffer.from("synthetic-disposable-secret").toString("base64")} },
 );
 try {
   let ready = false;
@@ -41,11 +41,13 @@ try {
       "tests/portraits.integration.ts",
       "tests/campaigns.integration.ts",
       "tests/reports-news.integration.ts",
+      "tests/email-http.integration.ts",
     ],
     {
       stdio: "inherit",
       env: {
         ...process.env,
+        RESEND_WEBHOOK_SECRET:"whsec_"+Buffer.from("synthetic-disposable-secret").toString("base64"),
         TPA_TEST_URL: "http://127.0.0.1:3000",
         TPA_TEST_STORAGE: "false",
         TPA_TEST_EXPECT_STORAGE_DISABLED: "true",

@@ -1,3 +1,4 @@
+import {emailReadiness} from "@/lib/email-service";
 import { randomUUID } from "node:crypto";
 import { getDatabase } from "@/lib/database";
 import { recoveryConfigured } from "@/lib/auth-email";
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
         )
       ).rows[0].n,
       provider: "Resend",
-      deliveryEnabled: false,
+      deliveryEnabled: (await emailReadiness(getDatabase())).enabled,
       recoveryEnabled: recoveryConfigured(),
     };
   });
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
       input = record(await jsonBody(request, 10000));
     if (input.action !== "save")
       throw new OperationError(
-        "Campaign delivery awaits consent-safe jobs and delivery-event handling.",
+        "Use the campaign workspace to review and dispatch a saved campaign.",
         409,
       );
     const id = input.id ? uuid(input.id) : randomUUID(),

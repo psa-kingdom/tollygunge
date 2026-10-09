@@ -30,6 +30,8 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run test:db
+      - run: npm run test:email
       - run: npm run build
+      - run: node --import tsx scripts/verify-email-runtime.mjs
       - run: npm run typecheck
       - run: node scripts/verify-http-ci.mjs

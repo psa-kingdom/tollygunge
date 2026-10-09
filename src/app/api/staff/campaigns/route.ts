@@ -3,8 +3,14 @@ import { campaignAudience, campaignDetails } from "@/domain/campaigns";
 import { record, uuid, version } from "@/domain/operations";
 import { getDatabase } from "@/lib/database";
 import {
+  reviewCampaign,
+  dispatchCampaign,
+  cancelDispatch,
+  emailReadiness,
+} from "@/lib/email-service";
+import { emailOperation } from "@/lib/email-operation";
+import {
   authorized,
-  operation,
   jsonBody,
   transaction,
   audit,
@@ -12,7 +18,7 @@ import {
 } from "@/lib/operation-api";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
-  return operation(async () => {
+  return emailOperation(async () => {
     await authorized(request, "communications:manage");
     const params = new URL(request.url).searchParams;
     if (params.has("id")) {
@@ -30,7 +36,18 @@ export async function GET(request: Request) {
           [id],
         )
       ).rows;
-      return { entry, revisions, deliveryEnabled: false };
+      const dispatches = (
+        await getDatabase().query(
+          "SELECT d.id,d.version,d.created_at,d.cancelled_at,count(j.id)::int AS total,count(j.id) FILTER(WHERE j.status='queued')::int AS queued,count(j.id) FILTER(WHERE j.status='accepted')::int AS accepted FROM tpa.email_dispatches d LEFT JOIN tpa.email_jobs j ON j.dispatch_id=d.id WHERE d.campaign_id=$1 GROUP BY d.id ORDER BY d.created_at DESC LIMIT 30",
+          [id],
+        )
+      ).rows;
+      return {
+        entry,
+        revisions,
+        dispatches,
+        deliveryEnabled: (await emailReadiness(getDatabase())).enabled,
+      };
     }
     const status = params.get("status") || "all";
     if (!["all", "draft", "archived"].includes(status))
@@ -42,22 +59,50 @@ export async function GET(request: Request) {
           [status],
         )
       ).rows,
-      deliveryEnabled: false,
+      deliveryEnabled: (await emailReadiness(getDatabase())).enabled,
     };
   });
 }
 export async function POST(request: Request) {
-  return operation(async () => {
+  return emailOperation(async () => {
     const actor = await authorized(request, "communications:manage", true);
     const input = record(await jsonBody(request, 40000));
+    if (input.action === "review")
+      return reviewCampaign(
+        getDatabase(),
+        actor.id,
+        uuid(input.id),
+        version(input.version),
+      );
+    if (input.action === "dispatch") {
+      if (input.confirm !== true)
+        throw new OperationError(
+          "Confirm the reviewed campaign before sending.",
+        );
+      return dispatchCampaign(
+        getDatabase(),
+        actor.id,
+        uuid(input.id),
+        version(input.version),
+        input.reviewToken,
+      );
+    }
+    if (input.action === "cancel")
+      return cancelDispatch(
+        getDatabase(),
+        actor.id,
+        uuid(input.dispatchId),
+        version(input.version),
+      );
     if (input.action === "preview") {
       const audience = campaignAudience(input.audience);
       const values = [audience.city, audience.profession];
       const base =
-        "FROM public.\"user\" u LEFT JOIN tpa.member_profiles p ON p.user_id=u.id LEFT JOIN tpa.newsletter_consents n ON n.user_id=u.id WHERE ($1='' OR lower(coalesce(p.city,''))=lower($1)) AND ($2='' OR lower(coalesce(p.profession,''))=lower($2))";
+        "FROM public.\"user\" u LEFT JOIN tpa.member_profiles p ON p.user_id=u.id LEFT JOIN tpa.newsletter_consents n ON n.user_id=u.id LEFT JOIN tpa.email_suppressions s ON s.email=lower(u.email) WHERE ($1='' OR lower(coalesce(p.city,''))=lower($1)) AND ($2='' OR lower(coalesce(p.profession,''))=lower($2))";
       const subscribed = "coalesce(n.subscribed,false)";
       const email = 'u."emailVerified"';
-      const contact = "coalesce(p.preferences->>'contact','email')='email'";
+      const contact =
+        "coalesce(p.preferences->>'contact','email')='email' AND s.email IS NULL";
       const client = await getDatabase().connect();
       try {
         await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
@@ -84,7 +129,7 @@ export async function POST(request: Request) {
     }
     if (!["save", "archive", "restore"].includes(String(input.action)))
       throw new OperationError(
-        "Campaign sending awaits consent-safe jobs, unsubscribe and delivery events. No messages were sent.",
+        "Choose save, archive, restore, review, dispatch or cancel.",
         409,
       );
     const id = input.id ? uuid(input.id) : randomUUID();

@@ -64,6 +64,18 @@ export default async function Admin() {
         href: "/admin/workspaces/crm",
       });
   }
+  if (hasPermission(actor.roles, "communications:manage")) {
+    const db=getDatabase();
+    const inbox=(await db.query("SELECT count(*) FILTER(WHERE unread AND NOT archived)::int AS unread FROM tpa.email_conversations")).rows[0];
+    const jobs=(await db.query("SELECT count(*) FILTER(WHERE status IN ('failed','review'))::int AS failures,count(*) FILTER(WHERE status='queued' AND reason='quota_wait')::int AS waiting FROM tpa.email_jobs")).rows[0];
+    if(inbox.unread)attention.push({label:`${inbox.unread} unread inbox conversations`,href:"/admin/workspaces/communications"});
+    if(jobs.failures)attention.push({label:`${jobs.failures} email jobs need attention`,href:"/admin/workspaces/communications"});
+    if(jobs.waiting)attention.push({label:`${jobs.waiting} campaign/reply jobs waiting for quota`,href:"/admin/workspaces/communications"});
+    if(process.env.EMAIL_OPERATIONS_ENABLED==='true'){
+      const state=(await db.query("SELECT heartbeat_at>now()-interval '90 seconds' AS healthy FROM tpa.email_worker_state WHERE id='email'")).rows[0];
+      if(!state?.healthy)attention.push({label:"Email worker heartbeat requires attention",href:"/admin/workspaces/communications"});
+    }
+  }
   return (
     <main id="main" className="workspace-main">
       <span className="eyebrow">TPA / STAFF</span>

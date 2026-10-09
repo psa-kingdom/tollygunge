@@ -61,6 +61,7 @@ export async function sendRecoveryEmail(
       const result = (await response.json()) as { id?: unknown };
       if (typeof result.id !== "string" || !result.id)
         throw new Error("Invalid receipt");
+      return result.id;
     } catch {
       // Never expose response bodies, reset tokens, addresses or provider errors.
       throw new Error("Email recovery delivery failed");

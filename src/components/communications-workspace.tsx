@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { api } from "./operations-client";
 import { CampaignWorkspace } from "./campaign-workspace";
+import { EmailInbox } from "./email-inbox";
+import { EmailDeliveries } from "./email-deliveries";
+import { useEmailEditGuard } from "./email-edit-guard";
 type Template = {
   id?: string;
   version: number;
@@ -12,13 +15,26 @@ type Template = {
 };
 const empty: Template = { version: 0, name: "", subject: "", body: "" };
 export function CommunicationsWorkspace() {
-  const [view, setView] = useState<"campaigns" | "templates">("campaigns");
+  const tabs = ["inbox", "campaigns", "templates", "delivery"] as const;
+  const [view, setView] = useState<(typeof tabs)[number]>("inbox");
+  const [inboxDirty, setInboxDirty] = useState(false),
+    [campaignDirty, setCampaignDirty] = useState(false),
+    [savedTemplate, setSavedTemplate] = useState(empty);
   const [templates, setTemplates] = useState<Template[]>([]),
-    [recoveryEnabled, setRecoveryEnabled] = useState(false),
+    [recoveryEnabled, setRecoveryEnabled] = useState<boolean | null>(null),
     [form, setForm] = useState(empty),
     [optedIn, setOptedIn] = useState(0),
     [message, setMessage] = useState("Loading templates…"),
     [busy, setBusy] = useState(false);
+  const templateGuard = useEmailEditGuard(
+    JSON.stringify(form) !== JSON.stringify(savedTemplate),
+    false,
+  );
+  const guard = useEmailEditGuard(
+    inboxDirty ||
+      campaignDirty ||
+      JSON.stringify(form) !== JSON.stringify(savedTemplate),
+  );
   useEffect(() => {
     api<{ templates: Template[]; optedIn: number; recoveryEnabled: boolean }>(
       "/api/staff/communications",
@@ -34,12 +50,14 @@ export function CommunicationsWorkspace() {
   return (
     <>
       <div className="notice">
-        {recoveryEnabled
-          ? "Password recovery email is enabled. "
-          : "Password recovery email awaits sender setup. "}
-        Campaigns and templates remain saved drafts. Campaign sending needs
-        consent-safe delivery jobs, unsubscribe handling and delivery events.
-        Shared inbox and official WhatsApp await setup.
+        {recoveryEnabled === null
+          ? "Checking recovery configuration. "
+          : recoveryEnabled
+            ? "Password recovery email is enabled. "
+            : "Password recovery email awaits sender setup. "}
+        Review saved campaigns before dispatch. Delivery is tracked separately;
+        consent and preferences are rechecked before each send. Official
+        WhatsApp remains gated.
       </div>
       <p>
         {optedIn} accounts currently consent to the newsletter. Campaign
@@ -53,7 +71,7 @@ export function CommunicationsWorkspace() {
         role="tablist"
         aria-label="Communication tools"
       >
-        {(["campaigns", "templates"] as const).map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab}
             id={`communications-${tab}-tab`}
@@ -71,17 +89,27 @@ export function CommunicationsWorkspace() {
               event.preventDefault();
               const next =
                 event.key === "Home"
-                  ? "campaigns"
+                  ? tabs[0]
                   : event.key === "End"
-                    ? "templates"
-                    : view === "campaigns"
-                      ? "templates"
-                      : "campaigns";
+                    ? tabs.at(-1)!
+                    : tabs[
+                        (tabs.indexOf(view) +
+                          (event.key === "ArrowRight" ? 1 : -1) +
+                          tabs.length) %
+                          tabs.length
+                      ];
               setView(next);
               document.getElementById(`communications-${next}-tab`)?.focus();
             }}
           >
-            {tab === "campaigns" ? "Campaign drafts" : "Email templates"}
+            {
+              {
+                inbox: "Shared inbox",
+                campaigns: "Campaigns",
+                templates: "Email templates",
+                delivery: "Delivery logs",
+              }[tab]
+            }
           </button>
         ))}
       </div>
@@ -96,12 +124,26 @@ export function CommunicationsWorkspace() {
             <button
               className="button secondary"
               disabled={busy}
-              onClick={() => setForm(empty)}
+              onClick={() =>
+                templateGuard.proceed(() => {
+                  setForm(empty);
+                  setSavedTemplate(empty);
+                })
+              }
             >
               New template
             </button>
             {templates.map((t) => (
-              <button key={t.id} disabled={busy} onClick={() => setForm(t)}>
+              <button
+                key={t.id}
+                disabled={busy}
+                onClick={() =>
+                  templateGuard.proceed(() => {
+                    setForm(t);
+                    setSavedTemplate(t);
+                  })
+                }
+              >
                 <strong>{t.name}</strong>
                 <small>{t.subject}</small>
               </button>
@@ -124,6 +166,7 @@ export function CommunicationsWorkspace() {
                     },
                   );
                   setForm(saved);
+                  setSavedTemplate(saved);
                   setTemplates(
                     (
                       await api<{ templates: Template[] }>(
@@ -131,7 +174,9 @@ export function CommunicationsWorkspace() {
                       )
                     ).templates,
                   );
-                  setMessage("Template saved. Delivery remains disabled.");
+                  setMessage(
+                    "Template saved. Use it in a campaign draft before dispatch.",
+                  );
                 } catch (error) {
                   setMessage(
                     error instanceof Error ? error.message : "Save failed.",
@@ -195,8 +240,26 @@ export function CommunicationsWorkspace() {
         aria-labelledby="communications-campaigns-tab"
         hidden={view !== "campaigns"}
       >
-        <CampaignWorkspace />
+        <CampaignWorkspace onDirtyChange={setCampaignDirty} />
       </div>
+      <div
+        id="communications-inbox-panel"
+        role="tabpanel"
+        aria-labelledby="communications-inbox-tab"
+        hidden={view !== "inbox"}
+      >
+        <EmailInbox onDirtyChange={setInboxDirty} />
+      </div>
+      <div
+        id="communications-delivery-panel"
+        role="tabpanel"
+        aria-labelledby="communications-delivery-tab"
+        hidden={view !== "delivery"}
+      >
+        <EmailDeliveries />
+      </div>
+      {guard.dialog}
+      {templateGuard.dialog}
     </>
   );
 }

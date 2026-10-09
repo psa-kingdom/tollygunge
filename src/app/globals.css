@@ -2212,3 +2212,8 @@ button:disabled {
     padding: 20px;
   }
 }
+
+/* Shared communication workspaces keep private messages readable on all sizes. */
+.email-actions{display:flex;align-items:end;gap:.75rem;flex-wrap:wrap;margin-block:1rem}.email-actions label{flex:1;min-width:12rem}.email-message{border:1px solid var(--line,#d9dfe4);border-radius:12px;padding:1.1rem;margin-block:1rem;min-width:0}.email-message small{display:block;margin-top:.4rem}.email-message-body{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;margin-block:1rem;max-height:34rem;overflow:auto}.email-confirm{border:1px solid #b99c59;border-radius:12px;padding:1.3rem;margin-block:1rem;background:#faf8f1}.email-thread{min-width:0}.email-actions input,.email-actions select{width:100%}@media(max-width:640px){.email-actions{align-items:stretch}.email-actions label,.email-actions .button{width:100%}.email-message{padding:.85rem}.email-confirm{padding:1rem}}
+
+.email-dialog-backdrop{position:fixed;inset:0;background:#102a3c88;z-index:1000;display:grid;place-items:center;padding:1rem}.email-dialog{background:#fff;border-radius:16px;padding:2rem;width:min(100%,32rem);box-shadow:0 20px 80px #102a3c33}.email-dialog h2{font-size:1.5rem} [role=tabpanel][hidden]{display:none!important}

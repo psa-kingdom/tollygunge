@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
+import { CampaignDispatch } from "./campaign-dispatch";
+import { useEmailEditGuard } from "./email-edit-guard";
 type Audience = { city: string; profession: string };
 type Campaign = {
   id?: string;
@@ -36,7 +38,12 @@ const empty: Campaign = {
   audience: { city: "", profession: "" },
   status: "draft",
 };
-export function CampaignWorkspace() {
+export function CampaignWorkspace({
+  onDirtyChange,
+}: {
+  onDirtyChange?: (dirty: boolean) => void;
+}) {
+  const [savedForm, setSavedForm] = useState(empty);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]),
     [form, setForm] = useState(empty);
   const [revisions, setRevisions] = useState<Revision[]>([]),
@@ -46,6 +53,11 @@ export function CampaignWorkspace() {
   const [status, setStatus] = useState("all"),
     [busy, setBusy] = useState(true),
     [message, setMessage] = useState("Loading campaign drafts…");
+  const dirty = JSON.stringify(form) !== JSON.stringify(savedForm);
+  const guard = useEmailEditGuard(dirty, false);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
   useEffect(() => {
     let active = true;
     api<{ campaigns: Campaign[] }>("/api/staff/campaigns")
@@ -80,6 +92,7 @@ export function CampaignWorkspace() {
         `/api/staff/campaigns?id=${id}`,
       );
       setForm(data.entry);
+      setSavedForm(data.entry);
       setRevisions(data.revisions);
     } catch (error) {
       setMessage((error as Error).message);
@@ -97,6 +110,7 @@ export function CampaignWorkspace() {
         action,
       });
       setForm(saved);
+      setSavedForm(saved);
       const detail = await api<{ revisions: Revision[] }>(
         `/api/staff/campaigns?id=${saved.id}`,
       );
@@ -123,9 +137,8 @@ export function CampaignWorkspace() {
     <section className="content-section" aria-label="Campaign drafts">
       <h2>Campaign drafts</h2>
       <p>
-        Prepare a newsletter, review its audience and retain revisions. Sending
-        and scheduling await delivery jobs, unsubscribe and delivery-event
-        handling.
+        Prepare a newsletter, review its saved audience and retain revisions.
+        Dispatches run through consent-safe background jobs and delivery events.
       </p>
       <p>
         Eligible recipients must have newsletter consent, a verified email and
@@ -137,12 +150,15 @@ export function CampaignWorkspace() {
           <button
             className="button secondary"
             disabled={busy}
-            onClick={() => {
-              setForm(empty);
-              setRevisions([]);
-              setPreview(undefined);
-              setMessage("");
-            }}
+            onClick={() =>
+              guard.proceed(() => {
+                setForm(empty);
+                setSavedForm(empty);
+                setRevisions([]);
+                setPreview(undefined);
+                setMessage("");
+              })
+            }
           >
             New campaign
           </button>
@@ -182,7 +198,7 @@ export function CampaignWorkspace() {
               disabled={busy}
               key={entry.id}
               aria-pressed={form.id === entry.id}
-              onClick={() => void open(entry.id!)}
+              onClick={() => guard.proceed(() => void open(entry.id!))}
             >
               <strong>{entry.name}</strong>
               <small>
@@ -205,7 +221,7 @@ export function CampaignWorkspace() {
               <button
                 className="button secondary"
                 disabled={busy}
-                onClick={() => void open(form.id!)}
+                onClick={() => guard.proceed(() => void open(form.id!))}
               >
                 Reload saved draft
               </button>
@@ -472,11 +488,18 @@ export function CampaignWorkspace() {
               ))}
             </details>
           )}
+          <CampaignDispatch key={form.id??"new"}
+            id={form.id}
+            version={form.version}
+            dirty={dirty}
+            archived={form.status === "archived"}
+          />
           <p role="status" aria-live="polite">
             {message}
           </p>
         </div>
       </div>
+      {guard.dialog}
     </section>
   );
 }

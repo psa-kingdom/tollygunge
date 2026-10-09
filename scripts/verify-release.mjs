@@ -62,6 +62,8 @@ try {
     "/api/staff/reports/export?report=accounts&format=xlsx",
     "/api/staff/report-presets",
     "/api/staff/news-sources",
+    "/api/staff/inbox",
+    "/api/staff/deliveries",
     "/api/documents",
   ])
     await check(path, [401]);
@@ -122,6 +124,9 @@ try {
       "/api/staff/news-sources",
     ])
       await check(path, [200], true);
+    const deliveries=await check("/api/staff/deliveries",[200],true);
+    await check("/api/staff/inbox",[200],true);
+    if(deliveries){const data=await deliveries.json();console.log(`INFO Email worker ${data.readiness.healthy?'healthy':'unavailable'}; processing ${data.readiness.enabled?'enabled':'gated'}`);if(args.includes('--expect-email')&&!data.readiness.enabled)failures++;}
     const media = await check("/api/staff/media", [200], true);
     if (media) {
       const data = await media.json();

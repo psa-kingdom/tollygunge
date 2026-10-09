@@ -49,17 +49,23 @@ export function createAuth(
               url,
               token,
             }: {
-              user: { email: string };
+              user: { id: string; email: string };
               url: string;
               token: string;
             }) => {
               if (recoverySender) await recoverySender(user.email, url, token);
-              else
-                await sendRecoveryEmail(
+              else {
+                const receipt = await sendRecoveryEmail(
                   user.email,
                   `${env.BETTER_AUTH_URL}/reset-password#token=${encodeURIComponent(token)}`,
                   env,
                 );
+                if (receipt)
+                  await database.query(
+                    "INSERT INTO tpa.email_receipts(provider_id,user_id,kind) VALUES($1,$2,'recovery') ON CONFLICT DO NOTHING",
+                    [receipt, user.id],
+                  );
+              }
             },
           }
         : {}),

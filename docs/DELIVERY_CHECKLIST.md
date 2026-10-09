@@ -4,7 +4,7 @@ Current source of truth. Historical implementation, comparison and showcase repo
 remain evidence. Statuses: Done (only the stated capability), Partial, Added,
 Blocked, Deferred. Dependencies determine order; feedback adds work without removing
 existing release gates. Resend transactional password recovery is enabled and hosted
-verified. Campaign delivery, shared inbox and WhatsApp remain separate work.
+verified. Durable campaigns/shared inbox are in the current acceptance batch; WhatsApp remains a separate provider gate.
 
 ## Resend activation batch — 8 October 2026
 
@@ -35,7 +35,7 @@ verified. Campaign delivery, shared inbox and WhatsApp remain separate work.
 | 9 | Collection, reconciliation, receipts, refunds/payment history | Partial / Blocked | UPI details/manual policy or Razorpay setup | Versioned instruction management only |
 | 10 | Events, attendance, learning history | Partial | Paid events need payment; awards need learning policy | Free registrations/attendance HTTP checks |
 | 11 | Historical import commit | Partial / Blocked | Approved mapping/provenance | Preview validation only |
-| 12 | Communications/inbox/delivery logs | Partial | Resend recovery enabled; campaign outbox/consent/unsubscribe/webhooks and WhatsApp/shared inbox remain | RESEND_ROLLOUT.md; campaign sends disabled |
+| 12 | Communications/inbox/delivery logs | Partial | Campaign/inbox implementation passes isolated acceptance; hosted rollout in progress; WhatsApp remains gated | EMAIL_OPERATIONS_ROLLOUT.md; managed processing disabled until hosted acceptance |
 | 13 | Google onboarding/emailed recovery | Partial | Recovery Done for test-recipient acceptance; Google OAuth client remains blocked | RESEND_ROLLOUT.md; hosted reset/revocation; real-mailbox acceptance remains |
 | 14 | Scheduled attributed news | Blocked | Approved feeds/schedule | Editorial drafts only |
 | 15 | Full production release | Partial | Staging, backup/restore, recovery, security/accessibility and integrations | First draft only; release acceptance pending |
@@ -180,3 +180,17 @@ Retained gates: deferred Resend, Google client, approved membership terms, verif
 payment/refund rules, learning policy, import mappings and actual news sources/schedule.
 No new cloud resources/services were created. Full production/recovery/accessibility
 acceptance remains open; layout building/global style controls/collaboration remain future.
+
+## Durable campaigns and shared inbox — 9 October 2026
+
+- [x] Migration018, immutable saved campaign/recipient snapshots, 10,000-recipient cap and duplicate-dispatch protection.
+- [x] Current consent/email/contact/suppression and operator authority checked again immediately before sends.
+- [x] Leases, stable provider idempotency, bounded retries, expired-window reconciliation and daily/monthly quota pauses; 20 daily sends reserved from campaigns.
+- [x] Signed raw-body webhook, persistent deduplicated events, separate delivery outcomes, permanent-bounce/complaint suppressions and explicit unsubscribe POST.
+- [x] Shared inbox assignment/status/read/archive/search, private notes, optimistic saved reply drafts and explicit reply confirmation. Bodies are inert text; attachments are metadata only.
+- [x] Isolated PostgreSQL and HTTP acceptance; 44 unit tests; production build; desktop/tablet/phone draft retention and keyboard tabs without page overflow.
+- [x] One supervisor/webhook with gated onboarding handlers; no competing deployment/worker.
+- [ ] Hosted processing, provider-delivered incoming mail/reply and synthetic-only campaign acceptance.
+- [ ] CI, deployment evidence and exact hosted fixture cleanup.
+
+The receiving/usage runtime credential uses Resend **full_access**, because Resend has no receiving-only permission. It is distinct from the sending-only key, stored only in managed secrets, and removed from the web child environment. Setup credentials remain in their original file. Worker/deployment/provider acceptance is documented in [EMAIL_OPERATIONS_ROLLOUT.md](EMAIL_OPERATIONS_ROLLOUT.md). Onboarding is a coordinated separate batch; its flag remains disabled pending its own acceptance. Retained gates: Google OAuth, WhatsApp, approved membership/payment/refund/learning/import/news policies, disposable backup restoration and full production/accessibility acceptance.
