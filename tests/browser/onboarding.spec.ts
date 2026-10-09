@@ -3,11 +3,136 @@ import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import { databaseOptions } from "../../src/lib/database-options";
 import { openMail } from "../../src/lib/onboarding-mail";
+import { createEmailVerificationToken } from "better-auth/api";
 test.beforeEach(() => {
   test.skip(
     !process.env.TPA_DATABASE_NAME?.startsWith("tpa_onboarding_test_"),
     "Requires an isolated database and mail sink.",
   );
+});
+test("verification links show their own account for signed-out visitors and an unrelated staff session", async ({
+  browser,
+}, info) => {
+  test.skip(
+    info.project.name !== "desktop",
+    "Session boundaries are independent of viewport.",
+  );
+  const db = new Pool(databaseOptions());
+  const target = await browser.newContext(),
+    staff = await browser.newContext();
+  const origin = process.env.TPA_TEST_URL!;
+  const targetEmail = randomUUID() + "@example.invalid",
+    staffEmail = randomUUID() + "@example.invalid";
+  try {
+    for (const [context, email] of [
+      [target, targetEmail],
+      [staff, staffEmail],
+    ] as const) {
+      const response = await context.request.post(
+        origin + "/api/auth/sign-up/email",
+        {
+          headers: { origin },
+          data: {
+            name: "Verification link test",
+            email,
+            password: "Browser-test-password-123!",
+          },
+        },
+      );
+      expect(response.ok()).toBeTruthy();
+    }
+    const staffId = (
+      await db.query('SELECT id FROM public."user" WHERE email=$1', [
+        staffEmail,
+      ])
+    ).rows[0].id;
+    await db.query(
+      'UPDATE public."user" SET "emailVerified"=true WHERE id=$1',
+      [staffId],
+    );
+    await db.query(
+      "INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,'administrator')",
+      [staffId],
+    );
+    const payload = (
+      await db.query(
+        "SELECT payload FROM tpa.onboarding_mail WHERE recipient=$1 AND kind='verification' ORDER BY created_at DESC LIMIT 1",
+        [targetEmail],
+      )
+    ).rows[0].payload;
+    const link = openMail(payload)
+      .text.split("\n")
+      .find((line: string) => line.startsWith("http"))!;
+    await target.clearCookies();
+    const anonymousPage = await target.newPage();
+    await anonymousPage.goto(link);
+    await expect(
+      anonymousPage.getByRole("heading", {
+        name: "Email verified.",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      anonymousPage.getByRole("link", {
+        name: "Sign in to your verified account",
+        exact: true,
+      }),
+    ).toBeVisible();
+    const staffPage = await staff.newPage();
+    await staffPage.goto(link);
+    await expect(
+      staffPage.getByRole("heading", { name: "Email verified.", exact: true }),
+    ).toBeVisible();
+    await expect(
+      staffPage.getByText("You are currently signed in as", { exact: false }),
+    ).toContainText(staffEmail);
+    const session = await staff.request.get(origin + "/api/auth/get-session");
+    expect((await session.json()).user.id).toBe(staffId);
+    await staffPage
+      .getByRole("link", { name: "Continue current account", exact: true })
+      .click();
+    await expect(staffPage).toHaveURL(/\/admin$/);
+    const expired = await createEmailVerificationToken(
+      process.env.BETTER_AUTH_SECRET!,
+      targetEmail,
+      undefined,
+      -60,
+    );
+    await anonymousPage.goto(
+      origin +
+        "/api/auth/verify-email?token=" +
+        expired +
+        "&callbackURL=%2Fmember",
+    );
+    await expect(
+      anonymousPage.getByRole("heading", {
+        name: "Verification link expired.",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await anonymousPage.goto(
+      origin + "/api/auth/verify-email?token=invalid&callbackURL=%2Fmember",
+    );
+    await expect(
+      anonymousPage.getByRole("heading", {
+        name: "Check your verification link.",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await anonymousPage.goto(
+      origin + "/email-verification?status=verified&email=fake@example.invalid",
+    );
+    await expect(
+      anonymousPage.getByRole("heading", {
+        name: "Email verified.",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+  } finally {
+    await target.close();
+    await staff.close();
+    await db.end();
+  }
 });
 test(
   "new account resumes details, verifies email, recovers password and stays signed in",
@@ -116,6 +241,10 @@ test(
         .text.split("\n")
         .find((x: string) => x.startsWith("http"));
       await page.goto(link);
+      await expect(
+        page.getByRole("heading", { name: "Email verified.", exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText(email, { exact: true })).toBeVisible();
       await expect
         .poll(
           async () =>

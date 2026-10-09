@@ -24,7 +24,7 @@ Migrations 019 and 020 are additive, checksummed and preserve legacy form keys, 
 
 ## Recorded acceptance
 
-- 50 unit tests passed, including field identity/type stability, conditional requirements, legacy-update impact, CSV/XLSX parity, formulas/limits, encrypted templates and empty required multiselect rejection.
+- 54 unit tests passed, including field identity/type stability, conditional requirements, legacy-update impact, CSV/XLSX parity, formulas/limits, encrypted templates, empty required multiselect rejection and authenticated email-verification confirmations.
 - Seven isolated database/auth/worker tests passed across migrations 001–020, including signup roles, session duration, retries, worker restart leases, idempotency and signed-event ordering.
 - Expanded HTTP onboarding lifecycle passed: resumable drafts, stale-version isolation, email gating, pinned review, requirement updates, badge preservation, corrections, rejection, approval/revocation, import duplicates/idempotency/status and invitation expiry/reissue/replay.
 - Four browser journeys passed: signup/form/email verification/recovery/returning-session at desktop, tablet and phone, plus desktop failed saves/offline/local recovery/stale-tab isolation. Two redundant tablet/phone persistence runs were intentionally skipped. Screenshots and traces are generated under test-results and CI artifacts.
@@ -44,7 +44,15 @@ Final runtime d5b3d71 is healthy in deployment 960369cd-f060-4bd2-b0b8-c092d0ec0
 
 ## Remaining live gates
 
-- Actual welcome and invitation receipt in the designated inbox; user-followed email verification, password setup and recovery links. Provider accepted/delivered receipts alone do not establish mailbox acceptance.
+### Email-link investigation, 9 October
+
+Chrome inspection confirms that the welcome, verification and invitation messages reached the designated inbox. The original verification email used `callbackURL=/`, so a successful click returned to the homepage without a result; the existing staff session remained active. Database checks confirm both synthetic emails are verified and the invitation was redeemed. The invitation password setup therefore persisted even though the user did not save the password in Incognito's password manager.
+
+Browser verification links now pass through Better Auth and land on `/email-verification` with a short-lived, signed, HttpOnly result cookie. Success identifies the token's email independently of the active account; a different signed-in account is shown explicitly with private-window/sign-out instructions. Invalid/expired links show errors, and URL query parameters cannot forge a success. Previously sent links receive the same behavior. JSON API callers and Better Auth's distinct email-change flow retain their existing contract. No identity or migration is replaced.
+
+The dedicated isolated browser regression passes signed-out success, repeat verification under an unrelated staff session, unchanged staff identity, actual expired tokens and invalid links. The existing desktop signup/recovery/returning-session and persistence journeys also pass this change. Lint, typecheck, production build and 54 unit tests pass.
+
+- Password recovery/new sign-in using a user-chosen password remains pending. Welcome, verification and invitation mailbox receipt, email verification and invitation redemption are confirmed.
 - Exact cleanup of the identified live synthetic records and R2 objects after mailbox/link acceptance. Hosted private photo/evidence upload and reviewer downloads already pass.
 - Broader real-user UI/UX and assistive-technology testing before a polished release.
 
