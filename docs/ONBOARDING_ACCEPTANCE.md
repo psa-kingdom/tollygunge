@@ -40,6 +40,8 @@ Hosted signup, saved form text, successful photograph/certificate association, a
 
 The main app checkout is synchronized to the tested commit; earlier uncommitted implementation copies are preserved in a Git stash named `Preserve pre-integration onboarding and communications work 2026-10-09`.
 
+Final runtime d5b3d71 is healthy in deployment 960369cd-f060-4bd2-b0b8-c092d0ec0f31; CI 37917415433 and 37917407120 pass. Follow-up hosted checks confirm completed batches show results/delivery status without another commit button, and communication health labels/checkbox sizing pass at all three widths. Isolated databases and their servers were removed. The disposable reviewer's staff role/session is removed while mailbox confirmation is pending; the two ordinary mail-link accounts, their drafts and two synthetic R2 objects are retained only to finish those checks. Three synthetic sent provider messages are retained by Resend.
+
 ## Remaining live gates
 
 - Actual welcome and invitation receipt in the designated inbox; user-followed email verification, password setup and recovery links. Provider accepted/delivered receipts alone do not establish mailbox acceptance.
