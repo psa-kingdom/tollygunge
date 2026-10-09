@@ -46,9 +46,17 @@ export default async function EmailVerification() {
                   <p>
                     You are currently signed in as{" "}
                     <strong>{actor.email}</strong>. To use the verified account,
-                    open a private window and sign in with {result.email}, or
-                    sign out below and then sign in with that email.
+                    sign in with that email below or open a private window.
                   </p>
+                  <Link
+                    className="button"
+                    href={
+                      "/login?switch=1&email=" +
+                      encodeURIComponent(result.email ?? "")
+                    }
+                  >
+                    Sign in to the verified account
+                  </Link>
                   <SignOut />
                   <Link
                     className="button secondary"

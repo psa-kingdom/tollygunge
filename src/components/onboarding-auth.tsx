@@ -108,7 +108,11 @@ export function VerifyEmail({
     </section>
   );
 }
-export function OnboardingSignIn() {
+export function OnboardingSignIn({
+  initialEmail = "",
+}: {
+  initialEmail?: string;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
@@ -141,7 +145,13 @@ export function OnboardingSignIn() {
     >
       <label>
         Email
-        <input name="email" type="email" autoComplete="username" required />
+        <input
+          name="email"
+          type="email"
+          autoComplete="username"
+          defaultValue={initialEmail}
+          required
+        />
       </label>
       <label>
         Password

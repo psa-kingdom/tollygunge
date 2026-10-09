@@ -138,8 +138,22 @@ export function PasswordUpdate({
   signedIn?: boolean;
 }) {
   const [busy, setBusy] = useState(false),
-    [message, setMessage] = useState("");
-  const router = useRouter();
+    [message, setMessage] = useState(""),
+    [complete, setComplete] = useState(false);
+  if (complete)
+    return (
+      <div>
+        <h2>Password saved.</h2>
+        <p role="status">
+          Your password has been updated. Sign in using the email address that
+          received the recovery message. Recovery does not switch an account
+          already signed in on this browser.
+        </p>
+        <Link className="button" href="/login?switch=1">
+          Sign in with your new password
+        </Link>
+      </div>
+    );
   return (
     <form
       className="member-settings"
@@ -179,8 +193,7 @@ export function PasswordUpdate({
               "Password changed. Other sessions have been signed out.",
             );
           else {
-            router.replace("/login?reset=complete");
-            router.refresh();
+            setComplete(true);
           }
         } catch {
           setMessage("Unable to connect. Please try again.");

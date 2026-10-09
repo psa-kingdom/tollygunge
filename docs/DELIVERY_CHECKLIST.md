@@ -8,13 +8,14 @@ verified. Durable campaigns/shared inbox and delivery logs are hosted verified; 
 
 ## Signup and verification batch — 9 October 2026
 
-Implemented behind `ONBOARDING_ENABLED`: password signup, persistent five-step form, private evidence associations, versioned administrator requirements/review, retained badges with update requests, bulk CSV/XLSX invitations, and shared-worker transactional mail. See ONBOARDING_ACCEPTANCE.md and DTPA_FIELD_MAPPING.md. Runtime d5b3d71 / deployment 960369cd-f060-4bd2-b0b8-c092d0ec0f31 is healthy; CI 37917415433 and 37917407120 pass.
+Implemented behind `ONBOARDING_ENABLED`: password signup, persistent five-step form, private evidence associations, versioned administrator requirements/review, retained badges with update requests, bulk CSV/XLSX invitations, and shared-worker transactional mail. See ONBOARDING_ACCEPTANCE.md and DTPA_FIELD_MAPPING.md. Email links now show an account-specific result independently of existing sessions. Runtime 03621ef / deployment c94986f7-5f20-4fb5-b090-bad7d32b2ad3 is healthy; CI 37923029536 and 37923023957 pass.
 
 - [x] Isolated signup/auth/worker and HTTP lifecycle/import acceptance.
 - [x] Desktop/tablet/phone signup, verification, recovery and returning-session journeys; desktop failed-save/offline/local-recovery/stale-tab acceptance.
 - [x] Final integrated CI, additive migration and hosted runtime acceptance.
 - [x] Actual welcome/verification/invitation receipt in Chrome; user-followed email verification and invitation password setup persisted.
-- [ ] Final live recovery/new sign-in with a user-chosen password.
+- [x] Actual recovery email receipt and user-submitted password reset for the synthetic signup account.
+- [ ] Final live new sign-in with the user-chosen password.
 - [x] Hosted private evidence upload/review and other-member denial.
 - [ ] Exact live synthetic record/object cleanup after mailbox checks.
 - [ ] Teammate UI/UX and accessibility acceptance before polished release.

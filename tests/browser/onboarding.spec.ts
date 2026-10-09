@@ -13,6 +13,9 @@ test.beforeEach(async () => {
   // but do not share its synthetic loopback bucket between isolated test cases.
   const db = new Pool(databaseOptions());
   try {
+    const actual = (await db.query("SELECT current_database() AS name")).rows[0]
+      .name;
+    expect(actual).toBe(process.env.TPA_DATABASE_NAME);
     await db.query('DELETE FROM public."rateLimit"');
   } finally {
     await db.end();
@@ -100,6 +103,80 @@ test("verification links show their own account for signed-out visitors and an u
       .getByRole("link", { name: "Continue current account", exact: true })
       .click();
     await expect(staffPage).toHaveURL(/\/admin$/);
+    await staffPage.goto(
+      origin + "/login?switch=1&email=" + encodeURIComponent(targetEmail),
+    );
+    await expect(
+      staffPage.getByRole("heading", {
+        name: "Sign in to another account.",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(staffPage.getByLabel("Email", { exact: true })).toHaveValue(
+      targetEmail,
+    );
+    expect(
+      (await (await staff.request.get(origin + "/api/auth/get-session")).json())
+        .user.id,
+    ).toBe(staffId);
+    const recovery = await staff.request.post(
+      origin + "/api/auth/request-password-reset",
+      {
+        headers: { origin },
+        data: { email: targetEmail, redirectTo: origin + "/reset-password" },
+      },
+    );
+    expect(recovery.ok()).toBeTruthy();
+    const resetPayload = (
+      await db.query(
+        "SELECT payload FROM tpa.onboarding_mail WHERE recipient=$1 AND kind='recovery' ORDER BY created_at DESC LIMIT 1",
+        [targetEmail],
+      )
+    ).rows[0].payload;
+    const resetLink = openMail(resetPayload)
+      .text.split("\n")
+      .find((line: string) => line.startsWith("http"))!;
+    await staffPage.goto(resetLink);
+    await staffPage
+      .getByLabel("New password", { exact: true })
+      .fill("Cross-account-recovery-password-123!");
+    await staffPage
+      .getByLabel("Confirm new password", { exact: true })
+      .fill("Cross-account-recovery-password-123!");
+    await staffPage
+      .getByRole("button", { name: "Reset password", exact: true })
+      .click();
+    await expect(
+      staffPage.getByRole("heading", { name: "Password saved.", exact: true }),
+    ).toBeVisible();
+    expect(
+      (await (await staff.request.get(origin + "/api/auth/get-session")).json())
+        .user.id,
+    ).toBe(staffId);
+    await staffPage
+      .getByRole("link", {
+        name: "Sign in with your new password",
+        exact: true,
+      })
+      .click();
+    await expect(
+      staffPage.getByRole("heading", {
+        name: "Sign in to another account.",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await staffPage.getByLabel("Email", { exact: true }).fill(targetEmail);
+    await staffPage
+      .getByLabel("Password", { exact: true })
+      .fill("Cross-account-recovery-password-123!");
+    await staffPage
+      .getByRole("button", { name: "Sign in", exact: true })
+      .click();
+    await expect(staffPage).toHaveURL(/\/member$/);
+    expect(
+      (await (await staff.request.get(origin + "/api/auth/get-session")).json())
+        .user.email,
+    ).toBe(targetEmail);
     const expired = await createEmailVerificationToken(
       process.env.BETTER_AUTH_SECRET!,
       targetEmail,
@@ -139,6 +216,122 @@ test("verification links show their own account for signed-out visitors and an u
   } finally {
     await target.close();
     await staff.close();
+    await db.end();
+  }
+});
+test("invitation activation offers explicit sign-in when another staff account is active", async ({
+  browser,
+}, info) => {
+  test.skip(
+    info.project.name !== "desktop",
+    "Session boundaries are independent of viewport.",
+  );
+  const db = new Pool(databaseOptions()),
+    context = await browser.newContext();
+  const origin = process.env.TPA_TEST_URL!,
+    staffEmail = randomUUID() + "@example.invalid",
+    email = randomUUID() + "@example.invalid";
+  try {
+    expect(
+      (
+        await context.request.post(origin + "/api/auth/sign-up/email", {
+          headers: { origin },
+          data: {
+            name: "Invitation test staff",
+            email: staffEmail,
+            password: "Browser-test-password-123!",
+          },
+        })
+      ).ok(),
+    ).toBeTruthy();
+    const staffId = (
+      await db.query('SELECT id FROM public."user" WHERE email=$1', [
+        staffEmail,
+      ])
+    ).rows[0].id;
+    await db.query(
+      'UPDATE public."user" SET "emailVerified"=true WHERE id=$1',
+      [staffId],
+    );
+    await db.query(
+      "INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,'administrator')",
+      [staffId],
+    );
+    const preview = await context.request.post(
+      origin + "/api/staff/onboarding-import",
+      {
+        headers: { origin },
+        multipart: {
+          file: {
+            name: "invite.csv",
+            mimeType: "text/csv",
+            buffer: Buffer.from("name,email\nInvited browser member," + email),
+          },
+          mapping: JSON.stringify({ name: "name", email: "email" }),
+        },
+      },
+    );
+    expect(preview.ok()).toBeTruthy();
+    const id = (await preview.json()).id;
+    expect(
+      (
+        await context.request.post(origin + "/api/staff/onboarding-import", {
+          headers: { origin },
+          data: { action: "commit", id },
+        })
+      ).ok(),
+    ).toBeTruthy();
+    const payload = (
+      await db.query(
+        "SELECT payload FROM tpa.onboarding_mail WHERE recipient=$1 AND kind='invitation' ORDER BY created_at DESC LIMIT 1",
+        [email],
+      )
+    ).rows[0].payload;
+    const link = openMail(payload)
+      .text.split("\n")
+      .find((line: string) => line.startsWith("http"))!;
+    const page = await context.newPage();
+    await page.goto(link);
+    await page
+      .getByLabel("New password", { exact: true })
+      .fill("Invited-browser-password-123!");
+    await page
+      .getByRole("button", { name: "Set password", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Account activated.", exact: true }),
+    ).toBeVisible();
+    expect(
+      (
+        await (
+          await context.request.get(origin + "/api/auth/get-session")
+        ).json()
+      ).user.id,
+    ).toBe(staffId);
+    await page
+      .getByRole("link", { name: "Sign in to your account", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Sign in to another account.",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.getByLabel("Email", { exact: true }).fill(email);
+    await page
+      .getByLabel("Password", { exact: true })
+      .fill("Invited-browser-password-123!");
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL(/\/member$/);
+    expect(
+      (
+        await (
+          await context.request.get(origin + "/api/auth/get-session")
+        ).json()
+      ).user.email,
+    ).toBe(email);
+  } finally {
+    await context.close();
     await db.end();
   }
 });
@@ -343,6 +536,9 @@ test(
       await page
         .getByRole("button", { name: "Reset password", exact: true })
         .click();
+      await expect(
+        page.getByRole("heading", { name: "Password saved.", exact: true }),
+      ).toBeVisible();
       await expect
         .poll(
           async () =>
@@ -354,6 +550,18 @@ test(
             ).rows[0].n,
         )
         .toBe(0);
+      await page
+        .getByRole("link", {
+          name: "Sign in with your new password",
+          exact: true,
+        })
+        .click();
+      await page.getByLabel("Email", { exact: true }).fill(email);
+      await page
+        .getByLabel("Password", { exact: true })
+        .fill("Replacement-password-123!");
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await expect(page).toHaveURL(/\/member$/);
     } finally {
       await db.end();
     }
