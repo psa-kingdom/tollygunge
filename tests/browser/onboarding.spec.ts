@@ -4,11 +4,19 @@ import { Pool } from "pg";
 import { databaseOptions } from "../../src/lib/database-options";
 import { openMail } from "../../src/lib/onboarding-mail";
 import { createEmailVerificationToken } from "better-auth/api";
-test.beforeEach(() => {
+test.beforeEach(async () => {
   test.skip(
     !process.env.TPA_DATABASE_NAME?.startsWith("tpa_onboarding_test_"),
     "Requires an isolated database and mail sink.",
   );
+  // Each journey models a different visitor. Keep the production limiter active,
+  // but do not share its synthetic loopback bucket between isolated test cases.
+  const db = new Pool(databaseOptions());
+  try {
+    await db.query('DELETE FROM public."rateLimit"');
+  } finally {
+    await db.end();
+  }
 });
 test("verification links show their own account for signed-out visitors and an unrelated staff session", async ({
   browser,
