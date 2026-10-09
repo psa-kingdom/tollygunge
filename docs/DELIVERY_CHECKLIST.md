@@ -8,7 +8,7 @@ verified. Durable campaigns/shared inbox and delivery logs are hosted verified; 
 
 ## Signup and verification batch — 9 October 2026
 
-Implemented behind `ONBOARDING_ENABLED`: password signup, persistent five-step form, private evidence associations, versioned administrator requirements/review, retained badges with update requests, bulk CSV/XLSX invitations, and shared-worker transactional mail. See ONBOARDING_ACCEPTANCE.md and DTPA_FIELD_MAPPING.md. Email links now show an account-specific result independently of existing sessions. Runtime 03621ef / deployment c94986f7-5f20-4fb5-b090-bad7d32b2ad3 is healthy; CI 37923029536 and 37923023957 pass.
+Implemented behind `ONBOARDING_ENABLED`: password signup, persistent five-step form, private evidence associations, versioned administrator requirements/review, retained badges with update requests, bulk CSV/XLSX invitations, and shared-worker transactional mail. See ONBOARDING_ACCEPTANCE.md and DTPA_FIELD_MAPPING.md. Email links now show account-specific results and an explicit sign-in path for an account different from the current session. Runtime f45e053 / deployment 883d8d0d-74f0-445b-a7f0-7c3de961ef83 is healthy; CI 37924401087 and 37924394776 pass.
 
 - [x] Isolated signup/auth/worker and HTTP lifecycle/import acceptance.
 - [x] Desktop/tablet/phone signup, verification, recovery and returning-session journeys; desktop failed-save/offline/local-recovery/stale-tab acceptance.
