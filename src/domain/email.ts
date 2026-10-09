@@ -103,6 +103,7 @@ export function deliveryOutcome(types: string[]) {
     ["email.delivered", "delivered"],
     ["email.delivery_delayed", "delayed"],
     ["email.sent", "sent"],
+    ["email.received", "received"],
   ] as const)
     if (types.includes(type)) return status;
   return "awaiting_event";

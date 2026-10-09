@@ -62,6 +62,7 @@ test("event projection never replaces a complaint with an older delivered event"
     "complained",
   );
   assert.equal(deliveryOutcome([]), "awaiting_event");
+  assert.equal(deliveryOutcome(["email.received"]), "received");
   assert.equal(tokenHash("x").length, 64);
   assert.equal(emailConfigured({}), false);
 });

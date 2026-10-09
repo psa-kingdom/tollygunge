@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     const db = getDatabase(),
       rows = (
         await db.query(
-          "SELECT j.id,j.kind,j.status,j.reason,j.recipient,j.attempts,j.provider_id,j.dispatch_id,j.conversation_id,j.created_at,j.updated_at,j.available_at,coalesce((SELECT jsonb_agg(jsonb_build_object('type',e.type,'at',e.occurred_at) ORDER BY e.occurred_at) FROM tpa.email_events e WHERE e.provider_id=j.provider_id),'[]') AS events FROM tpa.email_jobs j WHERE ($1='all' OR j.status=$1) ORDER BY j.created_at DESC,j.id LIMIT 51 OFFSET $2",
+          "SELECT j.id,j.kind,j.status,j.reason,j.recipient,j.attempts,j.provider_id,j.dispatch_id,j.conversation_id,j.created_at,j.updated_at,j.available_at,coalesce((SELECT jsonb_agg(jsonb_build_object('type',e.type,'at',e.occurred_at) ORDER BY e.occurred_at) FROM tpa.email_events e WHERE e.provider_id=coalesce(j.provider_id,CASE WHEN j.kind='inbound' THEN j.payload->>'emailId' END)),'[]') AS events FROM tpa.email_jobs j WHERE ($1='all' OR j.status=$1) ORDER BY j.created_at DESC,j.id LIMIT 51 OFFSET $2",
           [status, (p - 1) * 50],
         )
       ).rows;
