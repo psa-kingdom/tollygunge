@@ -121,7 +121,14 @@ export function WorkspaceSearch() {
               {results
                 .filter((x) => x.group === group)
                 .map((x) => (
-                  <a key={x.id} href={x.href}>
+                  <a
+                    key={x.id}
+                    href={x.href}
+                    onClick={() => {
+                      dialog.current?.close();
+                      setOpen(false);
+                    }}
+                  >
                     <strong>{x.title}</strong>
                     <small>{x.summary}</small>
                   </a>

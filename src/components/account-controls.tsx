@@ -1,14 +1,43 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import Link from "next/link";
 import { SignOut } from "./auth-controls";
 
+function usePopoverPosition(
+  open: boolean,
+  root: RefObject<HTMLDivElement | null>,
+) {
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const box = root.current?.getBoundingClientRect();
+      if (box)
+        root.current?.style.setProperty(
+          "--popover-top",
+          Math.max(12, Math.min(innerHeight - 150, box.bottom + 10)) + "px",
+        );
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open, root]);
+}
+
 function ModeControl() {
-  const [mode, setMode] = useState("system");
+  const [mode, setMode] = useState(() =>
+    typeof document === "undefined"
+      ? "system"
+      : document.documentElement.dataset.mode || "system",
+  );
   useEffect(() => {
     const sync = () =>
       setMode(document.documentElement.dataset.mode || "system");
-    sync();
     window.addEventListener("storage", sync);
     window.addEventListener("tpa-appearance", sync);
     return () => {
@@ -24,6 +53,7 @@ function ModeControl() {
           <input
             type="radio"
             name="appearance-mode"
+            value={value}
             checked={mode === value}
             onChange={() => {
               try {
@@ -138,6 +168,7 @@ function AttentionBell() {
     [category, setCategory] = useState("All");
   const root = useRef<HTMLDivElement>(null),
     trigger = useRef<HTMLButtonElement>(null);
+  usePopoverPosition(open, root);
   const pinned = useRef(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {

@@ -76,3 +76,29 @@ test("search permissions exclude unrelated record sources for every staff role",
   }
   assert.equal(searchPattern("a%_\\b"), "%a\\%\\_\\\\b%");
 });
+test("semantic foregrounds meet readable contrast in both modes", () => {
+  function luminance(hex: string) {
+    const channels = hex
+      .match(/[a-f\d]{2}/gi)!
+      .map((x) => parseInt(x, 16) / 255)
+      .map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  }
+  for (const [foreground, background] of [
+    ["#192e3e", "#ffffff"],
+    ["#626d74", "#f0eee7"],
+    ["#e6edf3", "#192936"],
+    ["#b2bec9", "#223441"],
+    ["#91d8b7", "#183d31"],
+    ["#f1ce86", "#42391e"],
+    ["#a3cde9", "#1d374c"],
+    ["#c5dce9", "#192936"],
+  ]) {
+    const a = luminance(foreground),
+      b = luminance(background);
+    assert.ok(
+      (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 4.5,
+      `${foreground} on ${background}`,
+    );
+  }
+});

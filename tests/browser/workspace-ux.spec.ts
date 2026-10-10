@@ -144,7 +144,9 @@ test("staff header, command search, record links and all admin layouts remain us
     page.getByRole("button", { name: "Account menu", exact: true }),
   ).toBeFocused();
   await page.getByRole("button", { name: /Notifications:/ }).click();
-  await expect(page.getByLabel("Category", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("combobox", { name: "Category", exact: true }),
+  ).toBeVisible();
   await page.keyboard.press("Escape");
   await page.keyboard.press("Control+k");
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -167,9 +169,9 @@ test("staff header, command search, record links and all admin layouts remain us
     await noOverflow(page);
   }
   await page.goto("/admin/workspaces/verification");
-  await expect(page.getByLabel("Status", { exact: true })).toHaveValue(
-    "pending",
-  );
+  await expect(
+    page.getByRole("combobox", { name: "Status", exact: true }),
+  ).toHaveValue("pending");
   await expect(
     page.getByRole("textbox", { name: "Decision reason" }),
   ).toHaveCount(0);
@@ -186,6 +188,32 @@ test("staff header, command search, record links and all admin layouts remain us
   });
   await page.getByRole("tab", { name: "Requirements", exact: true }).click();
   await expect(page.locator(".requirements-step")).toHaveCount(5);
+  const firstSettings = page.locator(".requirement-settings").first();
+  await firstSettings.locator("summary").click();
+  const label = firstSettings.getByLabel("Label", { exact: true });
+  await label.fill((await label.inputValue()) + " draft edit");
+  await page.keyboard.press("Control+k");
+  await page
+    .getByLabel("Search your permitted workspaces and records")
+    .fill("Members");
+  await page
+    .locator('.command-results a[href="/admin/workspaces/members"]')
+    .click();
+  await expect(page.getByRole("dialog", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("alertdialog")).toBeVisible();
+  await page
+    .getByRole("button", { name: "Continue editing", exact: true })
+    .click();
+  await expect(page).toHaveURL(/verification/);
+  await page.keyboard.press("Control+k");
+  await page
+    .locator('.command-results a[href="/admin/workspaces/members"]')
+    .click();
+  await page
+    .getByRole("button", { name: "Discard changes", exact: true })
+    .click();
+  await expect(page).toHaveURL(/workspaces\/members/);
+
   await noOverflow(page);
   await page.goto("/admin");
   await page.screenshot({
