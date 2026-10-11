@@ -355,3 +355,24 @@ test("verification reasons belong to one record and corrections preserve an exis
     await db.end();
   }
 });
+
+test("empty payment roster is keyboard accessible at responsive widths", async ({ page, context }, info) => {
+  await staff(context);
+  await page.route("**/api/staff/registration-payments?*", route => route.fulfill({ json: [] }));
+  const widths = info.project.name === "desktop" ? [1440, 1280] : [info.project.name === "tablet" ? 768 : 390];
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/admin/workspaces/payments");
+    await expect(page.getByText("0 records shown (up to 250)")).toBeVisible();
+    const table = page.getByRole("table", { name: "Registration payments", exact: true });
+    await page.getByRole("combobox", { name: "Payment status", exact: true }).focus();
+    await page.keyboard.press("Tab");
+    await expect(table).toBeFocused();
+    if (await table.evaluate(el => el.scrollWidth > el.clientWidth)) {
+      await table.press("ArrowRight");
+      await expect.poll(() => table.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
+    }
+    await noOverflow(page);
+    await page.screenshot({ path: info.outputPath(`empty-payments-${width}.png`), fullPage: true });
+  }
+});
