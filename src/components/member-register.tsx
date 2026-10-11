@@ -1,11 +1,20 @@
 "use client";
+import { MemberEditor } from "./member-editor";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
 type Member = {
   person_id: string;
+  membership_version: number;
+  person_version: number;
+  invitation_status: string;
+  address_completion_required?: boolean;
+  delivery_status: string;
+  pending_payments: number;
   user_id: string | null;
   person: {
     name: string;
+    prefix?: string;
     firstName?: string;
     lastName?: string;
     organization?: string;
@@ -26,9 +35,13 @@ type Register = {
   offset: number;
   pageSize: number;
 };
-export function MemberRegister() {
+export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
   const [data, setData] = useState<Register>(),
     [q, setQ] = useState(""),
+    [status, setStatus] = useState("all"),
+    [busy, setBusy] = useState(false),
+    [chosen, setChosen] = useState<string[]>([]),
+    [progress, setProgress] = useState(0),
     [message, setMessage] = useState(""),
     [selected, setSelected] = useState<Member>();
   async function load(offset = 0) {
@@ -37,6 +50,8 @@ export function MemberRegister() {
         await api<Register>(
           "/api/staff/members?view=register&q=" +
             encodeURIComponent(q) +
+            "&status=" +
+            status +
             "&offset=" +
             offset,
         ),
@@ -67,22 +82,104 @@ export function MemberRegister() {
       >
         <label>
           Search members
-          <input value={q} onChange={(e) => setQ(e.target.value)} />
+          <input
+            placeholder="Name, membership number, email or mobile"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
         </label>
-        <button className="button">Search register</button>
+        <label>
+          Membership status
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            {[
+              "all",
+              "active",
+              "expired",
+              "suspended",
+              "resigned",
+              "unknown",
+            ].map((v) => (
+              <option key={v}>{v}</option>
+            ))}
+          </select>
+        </label>
+        <button className="button" disabled={busy}>
+          Search register
+        </button>
       </form>
       <p>{data?.total ?? 0} members</p>
+      <div className="action-row">
+        <Link className="button secondary" href="/admin/workspaces/onboarding">
+          Import / retry member records
+        </Link>
+        <button
+          className="button secondary"
+          disabled={!canManage || busy || !chosen.length}
+          onClick={async () => {
+            if (
+              !window.confirm(
+                `Queue invitations for exactly ${chosen.length} selected members?`,
+              )
+            )
+              return;
+            setBusy(true);
+            setProgress(0);
+            const outcomes: string[] = [];
+            for (const [index, personId] of chosen.entries()) {
+              try {
+                await api("/api/staff/member-actions", {
+                  action: "invite",
+                  personId,
+                });
+                outcomes.push("Invitation queued");
+              } catch (e) {
+                outcomes.push((e as Error).message);
+              }
+              setProgress(index + 1);
+            }
+            await load();
+            setChosen([]);
+            setMessage(outcomes.join(" · "));
+            setBusy(false);
+          }}
+        >
+          Invite {chosen.length} selected members
+        </button>
+      </div>
+      {busy && (
+        <p role="status">
+          Processed {progress} of {chosen.length}. You can keep this page open
+          while requests complete.
+        </p>
+      )}
       <div className="directory-list">
         {data?.rows.map((m) => (
-          <button
-            type="button"
-            className="button secondary"
-            key={m.person_id}
-            onClick={() => setSelected(m)}
-          >
-            {m.person.name} · {m.membership_number} ·{" "}
-            {m.user_id ? "Account linked" : "No account"}
-          </button>
+          <div key={m.person_id}>
+            <label>
+              <input
+                type="checkbox"
+                disabled={!canManage || busy || !!m.user_id}
+                checked={chosen.includes(m.person_id)}
+                onChange={(e) =>
+                  setChosen((old) =>
+                    e.target.checked
+                      ? [...old, m.person_id]
+                      : old.filter((id) => id !== m.person_id),
+                  )
+                }
+              />
+              Select {m.person.name}
+            </label>
+            <button
+              type="button"
+              className="button secondary"
+              key={m.person_id}
+              onClick={() => setSelected(m)}
+            >
+              {m.person.name} · {m.membership_number} ·{" "}
+              {m.user_id ? "Account linked" : "No account"}
+            </button>
+          </div>
         ))}
       </div>
       {data && (
@@ -119,23 +216,154 @@ export function MemberRegister() {
             <dd>{selected.type || "Not recorded"}</dd>
             <dt>Membership status</dt>
             <dd>{selected.status || "Not recorded"}</dd>
+            <dt>Invitation</dt>
+            <dd>
+              {selected.invitation_status} · delivery:{" "}
+              {selected.delivery_status || "not sent"}
+            </dd>
+            <dt>Address completion</dt>
+            <dd>
+              {selected.address_completion_required
+                ? "Required after activation"
+                : "See recorded addresses"}
+            </dd>
+            <dt>Account</dt>
+            <dd>{selected.user_id ? "Linked account" : "No login account"}</dd>
+            <dt>Pending event payments</dt>
+            <dd>
+              {selected.pending_payments}{" "}
+              <Link href="/admin/workspaces/payments">Inspect payments</Link>
+            </dd>
             <dt>Reviewed profile</dt>
             <dd>
               {selected.professional_verified ? "Verified" : "Unverified"}
             </dd>
           </dl>
+          <div className="action-row">
+            <button
+              className="button secondary"
+              disabled={
+                !canManage ||
+                busy ||
+                ["accepted", "active account"].includes(
+                  selected.invitation_status,
+                )
+              }
+              onClick={async () => {
+                if (
+                  !window.confirm(
+                    `Queue ${selected.invitation_status === "invitation held" ? "the held" : selected.user_id ? "a replacement" : "an"} invitation for ${selected.person.name}?`,
+                  )
+                )
+                  return;
+                setBusy(true);
+                try {
+                  await api("/api/staff/member-actions", {
+                    personId: selected.person_id,
+                    action:
+                      selected.invitation_status === "invitation held"
+                        ? "release"
+                        : selected.user_id
+                          ? "resend"
+                          : "invite",
+                  });
+                  setMessage("Invitation queued.");
+                  await load();
+                  setSelected(undefined);
+                } catch (e) {
+                  setMessage((e as Error).message);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {selected.invitation_status === "invitation held"
+                ? "Release invitation"
+                : selected.user_id
+                  ? "Resend invitation"
+                  : "Invite member"}
+            </button>
+            <label>
+              Membership status
+              <select
+                value={selected.status || "unknown"}
+                disabled={!canManage || busy}
+                onChange={async (e) => {
+                  const next = e.target.value;
+                  if (
+                    !window.confirm(
+                      `Change ${selected.person.name}'s membership to ${next}?`,
+                    )
+                  )
+                    return;
+                  setBusy(true);
+                  try {
+                    await api("/api/staff/member-actions", {
+                      action: "membership",
+                      personId: selected.person_id,
+                      version: selected.membership_version,
+                      status: next,
+                    });
+                    await load();
+                    setSelected(undefined);
+                    setMessage("Membership status saved.");
+                  } catch (e) {
+                    setMessage((e as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                <option value="unknown" disabled>
+                  Not recorded
+                </option>
+                {["active", "expired", "suspended", "resigned"].map((v) => (
+                  <option key={v}>{v}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {canManage && (
+            <MemberEditor
+              key={selected.person_id + selected.person_version}
+              member={selected}
+              onSaved={() => {
+                void load();
+                setSelected(undefined);
+              }}
+            />
+          )}
           <details>
             <summary>Recorded addresses</summary>
-            <pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-              {JSON.stringify(selected.person.addresses ?? {}, null, 2)}
-            </pre>
+            {Object.entries(
+              (selected.person.addresses as Record<
+                string,
+                Record<string, string>
+              >) ?? {},
+            ).map(([kind, a]) => (
+              <p key={kind}>
+                <strong>{kind}</strong>
+                <br />
+                {[
+                  a.line1,
+                  a.line2,
+                  a.city,
+                  a.district,
+                  a.state,
+                  a.postalCode,
+                  a.country,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+            ))}
           </details>
-          <a
+          <Link
             className="button secondary"
             href={"/admin/workspaces/governance?id=" + selected.person_id}
           >
             Open profile
-          </a>
+          </Link>
         </section>
       )}
       <p role="status">{message}</p>

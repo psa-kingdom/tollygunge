@@ -17,7 +17,7 @@ export default async function Page({
   }
   const event = (
     await getDatabase().query(
-      "SELECT id,title,description,location,starts_at,ends_at FROM tpa.events WHERE id=$1 AND status='published'",
+      "SELECT id,title,description,location,starts_at,ends_at,fee_paise,registration_starts_at,registration_ends_at FROM tpa.events WHERE id=$1 AND status='published' AND visibility='public'",
       [id],
     )
   ).rows[0];
@@ -28,6 +28,12 @@ export default async function Page({
         <Link href="/events">← Events</Link>
         <h1>{event.title}</h1>
         <p>
+          {event.fee_paise > 0 && (
+            <p>
+              Payment is manually verified. Your registration is confirmed after
+              staff checks payment.
+            </p>
+          )}
           {new Date(event.starts_at).toLocaleString("en-IN", {
             timeZone: "Asia/Kolkata",
           })}{" "}
@@ -37,7 +43,9 @@ export default async function Page({
         <p className="prose-text">{event.description}</p>
         {new Date(event.starts_at) > new Date() ? (
           <Link className="button" href={`/member/events?eventId=${id}`}>
-            Sign in to register for free →
+            {event.fee_paise
+              ? `Sign in to register · ₹${(event.fee_paise / 100).toFixed(2)} →`
+              : "Sign in to register for free →"}
           </Link>
         ) : (
           <p>Registration has closed for this event.</p>

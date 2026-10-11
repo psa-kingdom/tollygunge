@@ -55,28 +55,38 @@ Existing synchronous recovery and verified updates-domain sender are preserved. 
 - [x] Configure managed secrets and verify hosted test-recipient delivery, one-use
       reset, old-session revocation, replacement sign-in and desktop/phone controls.
       See RESEND_ROLLOUT.md; production deployment 2c26ad17-0213-465e-81c1-eec81fa2008a.
-- [ ] Implement durable campaign jobs, consent rechecks, unsubscribe handling and
+- [x] Implement durable campaign jobs, consent rechecks, unsubscribe handling and
       verified delivery webhooks before enabling campaign sends.
-- [ ] Configure shared inbox and WhatsApp separately. All other policy/provider
+- [x] Configure shared email inbox; WhatsApp remains separately Blocked. All other policy/provider
       dependencies and historical evidence below remain in force.
 
-| Order | Capability                                                                              | Status                                 | Dependency / next action                                                           | Acceptance evidence                                                                                                                |
-| ----- | --------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Foundation, hosting, identity, permissions                                              | Done for first draft                   | Retain deployment/access checks                                                    | HOSTING.md; CI and hosted login/revocation                                                                                         |
-| 2     | Public responsive first draft                                                           | Done for first draft                   | Real content; broader devices/accessibility                                        | SHOWCASE_READINESS.md; desktop/tablet/phone screenshots                                                                            |
-| 3     | Content, governance, media publication                                                  | Partial                                | Rich editing and hosted uploads done; broader editorial/release acceptance remains | CONTENT_EDITOR.md; MEDIA_PUBLICATION.md; publication HTTP flows                                                                    |
-| 4     | CRM, directory/contact preview                                                          | Done for current scope                 | Production anti-abuse; fuller usability checks                                     | INQUIRIES.md; MEMBER_DIRECTORY.md; HTTP/browser checks                                                                             |
-| 5     | Rich editor/live preview                                                                | Done for this batch                    | Broader real-device/assistive-technology acceptance remains in release work        | CONTENT_EDITOR.md; local, CI and hosted evidence below                                                                             |
-| 6     | Report presets/XLSX, news preparation, release tooling                                  | Done for this batch                    | Actual news sources/schedule and full recovery remain gated                        | REPORTING_NEWS.md; RELEASE_RUNBOOK.md; CI 37727570318 and hosted/browser evidence below                                            |
-| 7     | Hosted document/editorial/QR/portrait uploads                                           | Done                                   | Future TPA-only credential rotation is hardening; full release remains open        | R2_UPLOAD_ROLLOUT.md; four configured hosted HTTP suites; 1440/768/390 controls/previews; exact object cleanup                     |
-| 8     | Membership decisions, activation, renewals, numbers/certificates, profile-change review | Partial / Blocked                      | Approved fees/eligibility/declaration/refund terms and verified transactions       | Membership drafts only; personal profile review implemented separately                                                             |
-| 9     | Collection, reconciliation, receipts, refunds/payment history                           | Partial / Blocked                      | UPI details/manual policy or Razorpay setup                                        | Versioned instruction management only                                                                                              |
-| 10    | Events, attendance, learning history                                                    | Partial                                | Paid events need payment; awards need learning policy                              | Free registrations/attendance HTTP checks                                                                                          |
-| 11    | Historical import commit                                                                | Partial / Blocked                      | Approved mapping/provenance                                                        | Preview validation only                                                                                                            |
-| 12    | Communications/inbox/delivery logs                                                      | Done for email scope / Partial overall | Durable campaigns, shared inbox and delivery logs verified; WhatsApp remains gated | EMAIL_OPERATIONS_ROLLOUT.md; hosted signed events, explicit test delivery, consent withdrawal, responsive checks and exact cleanup |
-| 13    | Google onboarding/emailed recovery                                                      | Partial                                | Recovery Done for test-recipient acceptance; Google OAuth client remains blocked   | RESEND_ROLLOUT.md; hosted reset/revocation; real-mailbox acceptance remains                                                        |
-| 14    | Scheduled attributed news                                                               | Blocked                                | Approved feeds/schedule                                                            | Editorial drafts only                                                                                                              |
-| 15    | Full production release                                                                 | Partial                                | Staging, backup/restore, recovery, security/accessibility and integrations         | First draft only; release acceptance pending                                                                                       |
+## Independent capability completion — 11 October 2026
+
+Done below means implemented and accepted within the stated scope. Hosted release, policy and human acceptance remain separate. Fresh source, checks and cleanup are recorded in [INDEPENDENT_QA_CLOSEOUT.md](INDEPENDENT_QA_CLOSEOUT.md).
+
+| Capability | Implementation / local acceptance | Remaining dependency |
+|---|---|---|
+| Foundation, identity and staff permissions | Done for tested workflows | Current hosted release acceptance |
+| Public responsive interface | Done for tested browser widths | Physical devices and human usability |
+| Content and governance publication | Done for tested HTTP workflows | Final editorial approval and hosted candidate acceptance |
+| Media publication and uploads | Done for existing hosted scope; disabled-storage regression checked locally | Current hosted candidate storage acceptance |
+| CRM, directory and account preview | Done for tested workflows | Hosted candidate acceptance |
+| Rich editor and preview | Done for existing scope | Assistive technology and human acceptance |
+| Reports and release tooling | Done for existing scope | Actual news source approval; full recovery rehearsal |
+| Private profile save/review | Done for tested workflows | Hosted candidate acceptance |
+| Membership records and independent display | Done for record handling | Eligibility, fees, renewals and certificate policy remain Blocked |
+| Manual event-payment recording | Done for synthetic pending/confirmed/refund-history workflows | Actual bank verification and approved operational policy |
+| Event publication, registration and attendance | Done for tested free/manual-payment workflows | Hosted candidate acceptance |
+| Learning awards | Blocked | Approved learning/award policy |
+| Strict member import and durable worker | Done for synthetic upload/restart/resume/replay workflows | Original 211-row source corrections remain Blocked |
+| Approved held-account exception | Done for isolated account/hold/security checks | Exact real-source batch reconciliation and separately authorized rollout |
+| Invitations and activation | Done for sink-only local workflows | Fresh candidate real-recipient acceptance |
+| Email campaigns, shared inbox and delivery logs | Done for previously documented email scope | Current hosted candidate acceptance |
+| WhatsApp | Blocked | Provider and policy setup |
+| Password authentication and emailed recovery | Done for local authentication/recovery; prior hosted recovery evidence retained | Fresh hosted sign-in and human recovery acceptance |
+| Google sign-in | Blocked | OAuth client configuration |
+| Scheduled attributed news | Blocked | Approved feeds and schedule |
+| Full production release | Partial | Isolated staging capacity, hosted journeys, recovery and human/device acceptance |
 
 ## Rich editing batch — dependency order
 

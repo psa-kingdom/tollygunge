@@ -97,7 +97,7 @@ const groups: {
     label: "Administration",
     items: [
       {
-        label: "Payment details",
+        label: "Payments",
         href: "/admin/workspaces/payments",
         icon: "wallet",
         permission: "payments:manage",

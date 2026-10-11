@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { queueEventUpdate } from "@/lib/event-mail";
 import { getDatabase } from "@/lib/database";
 import { eventInput, record, uuid, version } from "@/domain/operations";
 import {
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
         const id = uuid(raw.id),
           expected = version(raw.version);
         const result = await client.query(
-          "UPDATE tpa.events SET status=$3,version=version+1,updated_by=$4 WHERE id=$1 AND version=$2 AND status<> 'cancelled' AND ($3='cancelled' OR starts_at>now()) RETURNING *",
+          "UPDATE tpa.events SET status=$3,version=version+1,updated_by=$4 WHERE id=$1 AND version=$2 AND status<> 'cancelled' AND ($3='cancelled' OR (status='draft' AND starts_at>now())) RETURNING *",
           [
             id,
             expected,
@@ -59,21 +60,77 @@ export async function POST(request: Request) {
           input.endsAt,
           input.capacity,
           actor.id,
+          input.registrationStartsAt,
+          input.registrationEndsAt,
+          input.feePaise,
+          input.visibility,
+          input.deliveryMode,
         ];
-        // Published event details are immutable to avoid silently changing registrations.
+        if (input.id) {
+          const prior = (
+            await client.query(
+              "SELECT * FROM tpa.events WHERE id=$1 FOR UPDATE",
+              [id],
+            )
+          ).rows[0];
+          if (
+            !prior ||
+            prior.version !== input.version ||
+            prior.status === "cancelled"
+          )
+            throw new OperationError(
+              "Event changed or was cancelled. Reload.",
+              409,
+            );
+          const counts = (
+            await client.query(
+              "SELECT count(*)::int total,count(*) FILTER(WHERE status='registered')::int active FROM tpa.event_registrations WHERE event_id=$1",
+              [id],
+            )
+          ).rows[0];
+          if (
+            counts.total &&
+            (prior.fee_paise !== input.feePaise ||
+              prior.visibility !== input.visibility)
+          )
+            throw new OperationError(
+              "Fee and visibility cannot change after registrations exist.",
+              409,
+            );
+          if (input.capacity < counts.active)
+            throw new OperationError(
+              "Capacity cannot be below existing registrations.",
+              409,
+            );
+        }
         const result = input.id
           ? await client.query(
-              "UPDATE tpa.events SET title=$2,description=$3,location=$4,starts_at=$5,ends_at=$6,capacity=$7,updated_by=$8,version=version+1 WHERE id=$1 AND version=$9 AND status='draft' RETURNING *",
+              "UPDATE tpa.events SET title=$2,description=$3,location=$4,starts_at=$5,ends_at=$6,capacity=$7,updated_by=$8,registration_starts_at=$9,registration_ends_at=$10,fee_paise=$11,visibility=$12,delivery_mode=$13,version=version+1 WHERE id=$1 AND version=$14 AND status<>'cancelled' RETURNING *",
               [...values, input.version],
             )
           : await client.query(
-              "INSERT INTO tpa.events(id,title,description,location,starts_at,ends_at,capacity,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
+              "INSERT INTO tpa.events(id,title,description,location,starts_at,ends_at,capacity,updated_by,registration_starts_at,registration_ends_at,fee_paise,visibility,delivery_mode) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *",
               values,
             );
         if (!result.rowCount)
           throw new OperationError("Only the latest draft can be edited.", 409);
         row = result.rows[0];
       } else throw new OperationError("Invalid event action.");
+      if (
+        raw.action === "cancel" ||
+        (raw.action === "save" && row.status === "published")
+      )
+        await queueEventUpdate(client, row);
+      if (raw.action === "cancel") {
+        const changed = (
+          await client.query(
+            "UPDATE tpa.event_registrations SET status='cancelled',payment_status=CASE WHEN payment_status IN ('paid','refunded','not_required') THEN payment_status ELSE 'cancelled' END,version=version+1 WHERE event_id=$1 AND status='registered' RETURNING id",
+            [row.id],
+          )
+        ).rows;
+        for (const r of changed)
+          await audit(client, actor.id, "registration.event_cancelled", r.id);
+      }
       await audit(client, actor.id, `event.${String(raw.action)}`, row.id);
       return row;
     });

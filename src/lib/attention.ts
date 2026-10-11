@@ -32,6 +32,32 @@ export async function attentionFor(actor: Actor) {
         count,
       });
   }
+  if (hasPermission(actor.roles, "payments:manage"))
+    await add(
+      "pending-payments",
+      "SELECT count(*)::int n FROM tpa.event_registrations WHERE status='registered' AND payment_status='pending'",
+      "event payments awaiting manual verification",
+      "/admin/workspaces/payments",
+      "Payments",
+      "High",
+    );
+  if (hasPermission(actor.roles, "payments:manage"))
+    await add(
+      "refund-review",
+      "SELECT count(*)::int n FROM tpa.event_registrations WHERE status='cancelled' AND payment_status='paid'",
+      "cancelled paid registrations needing refund review",
+      "/admin/workspaces/payments",
+      "Payments",
+      "High",
+    );
+  if (hasPermission(actor.roles, "members:review"))
+    await add(
+      "membership-records",
+      "SELECT count(*)::int n FROM tpa.memberships WHERE status IS NULL OR (status='active' AND valid_until<current_date)",
+      "membership records need status review",
+      "/admin/workspaces/members",
+      "Memberships",
+    );
   if (hasPermission(actor.roles, "members:review"))
     await add(
       "verification",

@@ -223,7 +223,7 @@ export function applicationInput(value: unknown) {
       text(details[name] ?? "", name, name === "address" ? 1000 : 200),
     ]),
   );
-  if(result.phone) result.phone=mobile(result.phone);
+  if (result.phone) result.phone = mobile(result.phone);
   return {
     plan: String(input.plan),
     category: String(input.category),
@@ -249,11 +249,41 @@ export function eventInput(value: unknown) {
     Number(input.capacity) > 10000
   )
     throw new Error("Capacity must be between 1 and 10,000.");
-  // Paid events and learning-hour awards cannot be enabled through extra client fields.
+  // Use the explicit INR fee field. Legacy price and learning-hour fields are unsupported.
   if (input.price || input.learningHours)
     throw new Error(
-      "Payments and learning-hour awards await approved configuration.",
+      "Use the event fee field. Learning-hour awards are unavailable.",
     );
+  const registrationStartsAt = input.registrationStartsAt
+    ? instant(input.registrationStartsAt).toISOString()
+    : null;
+  const registrationEndsAt = input.registrationEndsAt
+    ? instant(input.registrationEndsAt).toISOString()
+    : null;
+  if (
+    (registrationEndsAt && new Date(registrationEndsAt) > starts) ||
+    (registrationStartsAt && new Date(registrationStartsAt) >= starts) ||
+    (registrationStartsAt &&
+      registrationEndsAt &&
+      registrationStartsAt >= registrationEndsAt)
+  )
+    throw new Error(
+      "Check the registration window; it must close by the event start.",
+    );
+  const feePaise = input.feePaise ?? 0;
+  if (
+    !Number.isSafeInteger(feePaise) ||
+    Number(feePaise) < 0 ||
+    Number(feePaise) > 100000000
+  )
+    throw new Error("Check the event fee.");
+  const visibility = input.visibility ?? "public",
+    deliveryMode = input.deliveryMode ?? "location";
+  if (
+    !["public", "members"].includes(String(visibility)) ||
+    !["location", "online"].includes(String(deliveryMode))
+  )
+    throw new Error("Choose event visibility and location type.");
   return {
     id: input.id ? uuid(input.id) : undefined,
     version: version(input.version),
@@ -263,5 +293,10 @@ export function eventInput(value: unknown) {
     startsAt: starts.toISOString(),
     endsAt: ends.toISOString(),
     capacity: Number(input.capacity),
+    registrationStartsAt,
+    registrationEndsAt,
+    feePaise,
+    visibility,
+    deliveryMode,
   };
 }

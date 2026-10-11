@@ -1,6 +1,6 @@
 import { passwordPolicy } from "@/domain/password-policy";
 import { betterAuth } from "better-auth";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { email as memberEmail } from "@/domain/member-foundation";
 import type { Pool } from "pg";
 import { queueOnboardingMail, hashToken } from "./onboarding-mail";
@@ -11,19 +11,62 @@ export function createAuth(
   env: Record<string, string | undefined> = process.env,
   recoverySender?: (email: string, url: string, token: string) => Promise<void>,
 ) {
+  const invitationHeld = async (userId: string) =>
+    Boolean(
+      (
+        await database.query(
+          "SELECT 1 FROM tpa.account_invitation_holds WHERE user_id=$1 AND released_at IS NULL",
+          [userId],
+        )
+      ).rowCount,
+    );
   return betterAuth({
     database,
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     trustedOrigins: env.BETTER_AUTH_URL ? [env.BETTER_AUTH_URL] : [],
+    hooks: {
+      before: createAuthMiddleware(async (context) => {
+        if (
+          !["/request-password-reset", "/send-verification-email"].includes(
+            context.path,
+          ) ||
+          typeof context.body?.email !== "string"
+        )
+          return;
+        const held = (
+          await database.query(
+            'SELECT 1 FROM public."user" u JOIN tpa.account_invitation_holds h ON h.user_id=u.id WHERE lower(btrim(u.email))=$1 AND h.released_at IS NULL',
+            [context.body.email.trim().toLowerCase()],
+          )
+        ).rowCount;
+        // A generic success prevents account enumeration, tokens and mail before release.
+        if (held)
+          return context.json({
+            status: true,
+            message:
+              "If this email exists in our system, check your email for the next step.",
+          });
+      }),
+    },
     databaseHooks: {
       user: {
         create: {
           before: async (user) => {
-            const normalized=memberEmail(user.email,true);
-            if ((await database.query("SELECT 1 FROM tpa.people WHERE lower(btrim(contact_email))=$1 AND user_id IS NULL",[normalized])).rowCount)
-              throw new APIError("CONFLICT",{message:"A member record already exists. Ask staff to link or invite your website account."});
-            return {data:{...user,email:normalized}};
+            const normalized = memberEmail(user.email, true);
+            if (
+              (
+                await database.query(
+                  "SELECT 1 FROM tpa.people WHERE lower(btrim(contact_email))=$1 AND user_id IS NULL",
+                  [normalized],
+                )
+              ).rowCount
+            )
+              throw new APIError("CONFLICT", {
+                message:
+                  "A member record already exists. Ask staff to link or invite your website account.",
+              });
+            return { data: { ...user, email: normalized } };
           },
           after: async (user) => {
             if (env.ONBOARDING_ENABLED === "true")
@@ -46,6 +89,11 @@ export function createAuth(
       session: {
         create: {
           before: async (session, context) => {
+            if (await invitationHeld(session.userId))
+              throw new APIError("FORBIDDEN", {
+                message:
+                  "Account access is awaiting invitation release by TPA.",
+              });
             const staff = (
               await database.query(
                 "SELECT 1 FROM tpa.staff_roles WHERE user_id=$1",
@@ -69,6 +117,16 @@ export function createAuth(
         },
       },
       account: {
+        create: {
+          before: async (account) => {
+            if (await invitationHeld(account.userId))
+              throw new APIError("FORBIDDEN", {
+                message:
+                  "Account access is awaiting invitation release by TPA.",
+              });
+            return { data: account };
+          },
+        },
         update: {
           after: async (account, context) => {
             if (
@@ -140,6 +198,7 @@ export function createAuth(
       sendOnSignIn: false,
       sendVerificationEmail: async ({ user, url, token }) => {
         if (env.ONBOARDING_ENABLED !== "true") return;
+        if (await invitationHeld(user.id)) return;
         await queueOnboardingMail(
           database,
           user.id,

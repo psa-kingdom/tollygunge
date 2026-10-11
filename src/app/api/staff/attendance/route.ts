@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const eventId = uuid(new URL(request.url).searchParams.get("eventId"));
     return (
       await getDatabase().query(
-        'SELECT r.id,r.status,u.name,u.email,a.checked_in_at FROM tpa.event_registrations r JOIN public."user" u ON u.id=r.user_id LEFT JOIN tpa.event_attendance a ON a.registration_id=r.id WHERE r.event_id=$1 ORDER BY u.name LIMIT 10000',
+        'SELECT r.id,r.status,r.version,r.payment_status,r.fee_paise,u.name,u.email,p.mobile_normalized AS mobile,m.membership_number,a.checked_in_at FROM tpa.event_registrations r JOIN public."user" u ON u.id=r.user_id LEFT JOIN tpa.people p ON p.user_id=u.id LEFT JOIN tpa.memberships m ON m.person_id=p.id LEFT JOIN tpa.event_attendance a ON a.registration_id=r.id WHERE r.event_id=$1 ORDER BY u.name LIMIT 10000',
         [eventId],
       )
     ).rows;
@@ -42,14 +42,14 @@ export async function POST(request: Request) {
       ).rows[0];
       const registration = (
         await client.query(
-          "SELECT status FROM tpa.event_registrations WHERE id=$1 FOR UPDATE",
+          "SELECT status,payment_status FROM tpa.event_registrations WHERE id=$1 FOR UPDATE",
           [id],
         )
       ).rows[0];
       if (
         event.status !== "published" ||
         new Date(event.starts_at) > new Date() ||
-        registration.status !== "registered"
+        registration.status !== "registered" || !["paid","not_required"].includes(registration.payment_status)
       )
         throw new OperationError(
           "Check-in requires an active registration at a started event.",

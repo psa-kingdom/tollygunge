@@ -25,7 +25,7 @@ test("member register transaction safety, previews, repeated imports, updates an
     await c.query("SAVEPOINT duplicate");await assert.rejects(saveMember(c,actor,{member:{...member(2),membershipNumber:member(1).membershipNumber}}));await c.query("ROLLBACK TO SAVEPOINT duplicate");
     const cells=[memberHeaders,...Array.from({length:250},(_,i)=>["CA","Member",`Person ${i}`,String(i+1000).padStart(6,"0"),`bulk-${i}@example.invalid`,"9876543210","Partner","Example & Co","","","","",""])];
     const preview=await createMemberPreview(c,actor,cells);assert.equal(preview.rows.length,250);assert.ok(preview.rows.every(r=>r.status==="created"));
-    const committed=await memberBatchAction(c,actor,{id:preview.id,action:"commit",version:1});assert.equal(committed.totals?.created,250);
+    let committed; let chunks=0; do {committed=await memberBatchAction(c,actor,{id:preview.id,action:"commit",version:1});chunks++;assert.ok((committed.processed ?? 0)<=chunks*25);} while(committed.complete===false);assert.equal(chunks,10);assert.equal(committed.totals?.created,250);
     const repeat=await memberBatchAction(c,actor,{id:preview.id,action:"commit",version:1});assert.equal(repeat.duplicate,true);
     const repeatedFile=await createMemberPreview(c,actor,cells);assert.ok(repeatedFile.rows.every(r=>r.status==="skipped"));
     const fileRepeat=await commitMembers(c,actor,repeatedFile);assert.ok(fileRepeat.every(r=>r.status==="skipped"));

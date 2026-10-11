@@ -115,7 +115,7 @@ test(
         if (i === 1)
           assert.ok(
             items.every(
-              (x: { category: string }) => x.category === "Verification",
+              (x: { category: string }) => ["Verification", "Memberships"].includes(x.category),
             ),
           );
         if (i === 2)

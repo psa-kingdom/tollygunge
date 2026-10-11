@@ -1,10 +1,15 @@
 "use client";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { api } from "./operations-client";
 import { useSearchParams } from "next/navigation";
 type Event = {
   id: string;
   title: string;
+  payment_status: string;
+  fee_paise: number;
+  registration_starts_at: string | null;
+  registration_ends_at: string | null;
   location: string;
   starts_at: string;
   status: string;
@@ -25,9 +30,10 @@ export function MemberEvents() {
   return (
     <>
       <p>
-        Register for published free events and view your attendance history.
-        Registration and attendance are separate. TPA learning-hour rules have
-        not yet been configured.
+        Register for events and view your payment and attendance status. Paid
+        registrations are confirmed after manual verification. Registration and
+        attendance are separate. TPA learning-hour rules have not yet been
+        configured.
       </p>
       {events.length === 0 && (
         <p>No published events or registration history yet.</p>
@@ -44,21 +50,55 @@ export function MemberEvents() {
               {new Date(event.starts_at).toLocaleString("en-IN")} ·{" "}
               {event.location}
             </p>
+            {event.registration_status === "registered" &&
+              event.payment_status === "pending" && (
+                <p>
+                  Payment pending.{" "}
+                  <Link href="/member/payments">
+                    View association payment instructions →
+                  </Link>{" "}
+                  Include your event and member details when contacting the
+                  association.
+                </p>
+              )}
+            {event.registration_starts_at && (
+              <p>
+                Registration opens{" "}
+                {new Date(event.registration_starts_at).toLocaleString("en-IN")}
+              </p>
+            )}
+            {event.registration_ends_at && (
+              <p>
+                Registration closes{" "}
+                {new Date(event.registration_ends_at).toLocaleString("en-IN")}
+              </p>
+            )}
             <p>
               {event.status === "cancelled"
                 ? "Event cancelled"
                 : event.registration_status === "registered"
-                  ? "You are registered"
+                  ? ["paid", "not_required"].includes(event.payment_status)
+                    ? "Registration confirmed"
+                    : "Place reserved · payment " + event.payment_status
                   : event.registration_status === "cancelled"
                     ? "Your registration is cancelled"
-                    : "Free registration"}
+                    : event.fee_paise
+                      ? `Fee ₹${(event.fee_paise / 100).toFixed(2)} · manual verification`
+                      : "Free registration"}
               {event.checked_in_at ? " · Attendance recorded" : ""}
             </p>
             {event.status === "published" &&
               new Date(event.starts_at) > new Date() && (
                 <button
                   className="button secondary"
-                  disabled={busy}
+                  disabled={
+                    busy ||
+                    (event.registration_status !== "registered" &&
+                      ((!!event.registration_starts_at &&
+                        new Date(event.registration_starts_at) > new Date()) ||
+                        (!!event.registration_ends_at &&
+                          new Date(event.registration_ends_at) <= new Date())))
+                  }
                   onClick={async () => {
                     setBusy(true);
                     try {
@@ -73,7 +113,9 @@ export function MemberEvents() {
                       setMessage(
                         event.registration_status === "registered"
                           ? "Registration cancelled."
-                          : "Registration confirmed.",
+                          : event.fee_paise
+                            ? "Place reserved pending manual payment verification."
+                            : "Registration confirmed.",
                       );
                     } catch (e) {
                       setMessage(
@@ -86,7 +128,9 @@ export function MemberEvents() {
                 >
                   {event.registration_status === "registered"
                     ? "Cancel my registration"
-                    : "Register for free"}
+                    : event.fee_paise
+                      ? "Reserve place · payment required"
+                      : "Register for free"}
                 </button>
               )}
           </article>

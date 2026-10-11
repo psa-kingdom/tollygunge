@@ -13,6 +13,11 @@ type EventRow = {
   capacity: number;
   status: string;
   registrations: number;
+  registration_starts_at: string | null;
+  registration_ends_at: string | null;
+  fee_paise: number;
+  visibility: string;
+  delivery_mode: string;
 };
 type Attendee = {
   id: string;
@@ -20,6 +25,11 @@ type Attendee = {
   email: string;
   status: string;
   checked_in_at: string | null;
+  version: number;
+  payment_status: string;
+  fee_paise: number;
+  mobile: string;
+  membership_number: string;
 };
 const empty = {
   title: "",
@@ -28,14 +38,25 @@ const empty = {
   startsAt: "",
   endsAt: "",
   capacity: 50,
+  registrationStartsAt: "",
+  registrationEndsAt: "",
+  feePaise: 0,
+  visibility: "public",
+  deliveryMode: "location",
 };
-export function EventManager() {
+export function EventManager({
+  canVerifyPayments = false,
+}: {
+  canVerifyPayments?: boolean;
+}) {
   const [events, setEvents] = useState<EventRow[]>([]),
     [selected, setSelected] = useState<EventRow | null>(null),
     [form, setForm] = useState(empty),
     [attendees, setAttendees] = useState<Attendee[]>([]),
     [message, setMessage] = useState("Loading events…"),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [attendeeFilter, setAttendeeFilter] = useState("all"),
+    [attendeeSearch, setAttendeeSearch] = useState("");
   async function load() {
     setEvents(await api<EventRow[]>("/api/staff/events"));
   }
@@ -61,6 +82,15 @@ export function EventManager() {
             startsAt: localDate(row.starts_at),
             endsAt: localDate(row.ends_at),
             capacity: row.capacity,
+            registrationStartsAt: row.registration_starts_at
+              ? localDate(row.registration_starts_at)
+              : "",
+            registrationEndsAt: row.registration_ends_at
+              ? localDate(row.registration_ends_at)
+              : "",
+            feePaise: row.fee_paise,
+            visibility: row.visibility,
+            deliveryMode: row.delivery_mode,
           }
         : empty,
     );
@@ -83,6 +113,12 @@ export function EventManager() {
         ...form,
         startsAt: new Date(form.startsAt).toISOString(),
         endsAt: new Date(form.endsAt).toISOString(),
+        registrationStartsAt: form.registrationStartsAt
+          ? new Date(form.registrationStartsAt).toISOString()
+          : null,
+        registrationEndsAt: form.registrationEndsAt
+          ? new Date(form.registrationEndsAt).toISOString()
+          : null,
         id: selected?.id,
         version: selected?.version ?? 0,
       });
@@ -90,10 +126,12 @@ export function EventManager() {
       await load();
       setMessage(
         action === "publish"
-          ? "Published. Account holders can register without payment."
+          ? "Published. Eligible members can register within the booking window."
           : action === "cancel"
             ? "Event cancelled. Existing registrations remain in the history."
-            : "Event draft saved.",
+            : row.status === "published"
+              ? "Event changes saved; registrant updates queued."
+              : "Event draft saved.",
       );
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Request failed.");
@@ -111,6 +149,15 @@ export function EventManager() {
         startsAt: localDate(selected.starts_at),
         endsAt: localDate(selected.ends_at),
         capacity: selected.capacity,
+        registrationStartsAt: selected.registration_starts_at
+          ? localDate(selected.registration_starts_at)
+          : "",
+        registrationEndsAt: selected.registration_ends_at
+          ? localDate(selected.registration_ends_at)
+          : "",
+        feePaise: selected.fee_paise,
+        visibility: selected.visibility,
+        deliveryMode: selected.delivery_mode,
       });
   return (
     <div className="operations-layout">
@@ -136,18 +183,18 @@ export function EventManager() {
         <h2>{selected ? selected.title : "Create event"}</h2>
         {selected?.status === "published" && (
           <p>
-            <Link className="text-link" href={`/events/${selected.id}`}>
+            {selected.visibility==='public' && <><Link className="text-link" href={`/events/${selected.id}`}>
               View published event →
             </Link>{" "}
-            ·{" "}
+            ·{" "}</>}
             <Link className="text-link" href="/admin/workspaces/flyers">
               Create event flyer →
             </Link>
           </p>
         )}
         <p>
-          Free registration is available. Paid events and learning-hour awards
-          await approved configuration.
+          Save a draft, review the details, then publish. Paid registrations
+          require manual payment verification.
         </p>
         <form
           className="member-settings"
@@ -156,7 +203,7 @@ export function EventManager() {
             void action("save");
           }}
         >
-          <fieldset disabled={selected?.status !== "draft" && !!selected}>
+          <fieldset disabled={busy || selected?.status === "cancelled"}>
             <legend>Event details</legend>
             <label>
               Title
@@ -222,11 +269,78 @@ export function EventManager() {
                 }
               />
             </label>
+            <div className="form-grid">
+              <label>
+                Registration opens
+                <input
+                  type="datetime-local"
+                  value={form.registrationStartsAt}
+                  onChange={(e) =>
+                    setForm({ ...form, registrationStartsAt: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Registration closes
+                <input
+                  type="datetime-local"
+                  value={form.registrationEndsAt}
+                  onChange={(e) =>
+                    setForm({ ...form, registrationEndsAt: e.target.value })
+                  }
+                />
+              </label>
+            </div>
+            <label>
+              Location type
+              <select
+                value={form.deliveryMode}
+                onChange={(e) =>
+                  setForm({ ...form, deliveryMode: e.target.value })
+                }
+              >
+                <option value="location">In person</option>
+                <option value="online">Online</option>
+              </select>
+            </label>
+            <label>
+              Visibility
+              <select
+                value={form.visibility}
+                onChange={(e) =>
+                  setForm({ ...form, visibility: e.target.value })
+                }
+              >
+                <option value="public">
+                  Public · account required to register
+                </option>
+                <option value="members">Active members only</option>
+              </select>
+            </label>
+            <label>
+              Registration fee (₹; zero for free)
+              <input
+                type="number"
+                min="0"
+                max="1000000"
+                step="0.01"
+                required
+                value={form.feePaise / 100}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    feePaise: Math.round(Number(e.target.value) * 100),
+                  })
+                }
+              />
+            </label>
           </fieldset>
           <div className="action-row">
-            {(!selected || selected.status === "draft") && (
+            {(!selected || selected.status !== "cancelled") && (
               <button className="button" disabled={busy}>
-                Save draft
+                {selected?.status === "published"
+                  ? "Save changes & notify registrants"
+                  : "Save draft"}
               </button>
             )}
             {selected?.status === "draft" && (
@@ -266,6 +380,50 @@ export function EventManager() {
               registrations · {attendees.filter((a) => a.checked_in_at).length}{" "}
               checked in. Check-in opens at the event start time.
             </p>
+            <p>
+              {attendees.length} total ·{" "}
+              {
+                attendees.filter(
+                  (a) =>
+                    a.status === "registered" &&
+                    ["paid", "not_required"].includes(a.payment_status),
+                ).length
+              }{" "}
+              confirmed ·{" "}
+              {
+                attendees.filter(
+                  (a) =>
+                    a.status === "registered" && a.payment_status === "pending",
+                ).length
+              }{" "}
+              pending payment ·{" "}
+              {attendees.filter((a) => a.status === "cancelled").length}{" "}
+              cancelled
+            </p>
+            <div className="action-row">
+              <label>
+                Find attendee
+                <input
+                  value={attendeeSearch}
+                  onChange={(e) => setAttendeeSearch(e.target.value)}
+                  placeholder="Name, email, mobile or membership number"
+                />
+              </label>
+              <label>
+                Registration status
+                <select
+                  value={attendeeFilter}
+                  onChange={(e) => setAttendeeFilter(e.target.value)}
+                >
+                  {["all", "confirmed", "pending", "cancelled"].map((v) => (
+                    <option key={v}>{v}</option>
+                  ))}
+                </select>
+              </label>
+              {canVerifyPayments && (
+                <Link href="/admin/workspaces/payments">Verify payments →</Link>
+              )}
+            </div>
             {attendees.length === 0 ? (
               <p>No registrations yet.</p>
             ) : (
@@ -279,51 +437,118 @@ export function EventManager() {
                     </tr>
                   </thead>
                   <tbody>
-                    {attendees.map((a) => (
-                      <tr key={a.id}>
-                        <td>
-                          {a.name}
-                          <small>{a.email}</small>
-                        </td>
-                        <td>{a.status}</td>
-                        <td>
-                          {a.checked_in_at ? (
-                            "Checked in"
-                          ) : (
-                            <button
-                              disabled={
-                                busy ||
-                                a.status !== "registered" ||
-                                selected.status !== "published" ||
-                                new Date(selected.starts_at) > new Date()
-                              }
-                              onClick={async () => {
-                                setBusy(true);
-                                try {
-                                  await api("/api/staff/attendance", {
-                                    registrationId: a.id,
-                                  });
-                                  await select(selected);
-                                  setMessage(
-                                    "Attendance recorded once. No learning hours awarded.",
-                                  );
-                                } catch (e) {
-                                  setMessage(
-                                    e instanceof Error
-                                      ? e.message
-                                      : "Check-in failed.",
-                                  );
-                                } finally {
-                                  setBusy(false);
+                    {attendees
+                      .filter(
+                        (a) =>
+                          [a.name, a.email, a.mobile, a.membership_number]
+                            .join(" ")
+                            .toLowerCase()
+                            .includes(attendeeSearch.toLowerCase()) &&
+                          (attendeeFilter === "all" ||
+                            (attendeeFilter === "cancelled" &&
+                              a.status === "cancelled") ||
+                            (attendeeFilter === "pending" &&
+                              a.status === "registered" &&
+                              a.payment_status === "pending") ||
+                            (attendeeFilter === "confirmed" &&
+                              a.status === "registered" &&
+                              ["paid", "not_required"].includes(
+                                a.payment_status,
+                              ))),
+                      )
+                      .map((a) => (
+                        <tr key={a.id}>
+                          <td>
+                            {a.name}
+                            <small>
+                              {a.email} · {a.mobile} · {a.membership_number}
+                            </small>
+                          </td>
+                          <td>
+                            {a.status === "cancelled"
+                              ? "cancelled"
+                              : ["paid", "not_required"].includes(
+                                    a.payment_status,
+                                  )
+                                ? "confirmed"
+                                : "pending payment"}
+                            <small>
+                              Payment: {a.payment_status} · ₹
+                              {(a.fee_paise / 100).toFixed(2)}
+                            </small>
+                          </td>
+                          <td>
+                            {a.status === "registered" && (
+                              <button
+                                disabled={busy}
+                                onClick={async () => {
+                                  if (
+                                    !window.confirm(
+                                      `Cancel ${a.name}'s registration? Paid amounts remain recorded for refund review.`,
+                                    )
+                                  )
+                                    return;
+                                  setBusy(true);
+                                  try {
+                                    await api("/api/staff/registrations", {
+                                      action: "cancel",
+                                      id: a.id,
+                                      version: a.version,
+                                    });
+                                    await select(selected);
+                                    setMessage(
+                                      "Registration cancelled; member notification queued.",
+                                    );
+                                  } catch (e) {
+                                    setMessage((e as Error).message);
+                                  } finally {
+                                    setBusy(false);
+                                  }
+                                }}
+                              >
+                                Cancel registration
+                              </button>
+                            )}
+                            {a.checked_in_at ? (
+                              "Checked in"
+                            ) : (
+                              <button
+                                disabled={
+                                  busy ||
+                                  a.status !== "registered" ||
+                                  !["paid", "not_required"].includes(
+                                    a.payment_status,
+                                  ) ||
+                                  selected.status !== "published" ||
+                                  new Date(selected.starts_at) > new Date()
                                 }
-                              }}
-                            >
-                              Check in
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                                onClick={async () => {
+                                  setBusy(true);
+                                  try {
+                                    await api("/api/staff/attendance", {
+                                      registrationId: a.id,
+                                    });
+                                    await select(selected);
+                                    setMessage(
+                                      "Attendance recorded once. No learning hours awarded.",
+                                    );
+                                  } catch (e) {
+                                    setMessage(
+                                      e instanceof Error
+                                        ? e.message
+                                        : "Check-in failed.",
+                                    );
+                                  } finally {
+                                    setBusy(false);
+                                  }
+                                }}
+                              >
+                                Check in
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>

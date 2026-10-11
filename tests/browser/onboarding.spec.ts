@@ -220,14 +220,9 @@ test("verification links show their own account for signed-out visitors and an u
   }
 });
 test("invitation activation offers explicit sign-in when another staff account is active", async ({
-  browser,
+  context,
 }, info) => {
-  test.skip(
-    info.project.name !== "desktop",
-    "Session boundaries are independent of viewport.",
-  );
-  const db = new Pool(databaseOptions()),
-    context = await browser.newContext();
+  const db = new Pool(databaseOptions());
   const origin = process.env.TPA_TEST_URL!,
     staffEmail = randomUUID() + "@example.invalid",
     email = randomUUID() + "@example.invalid";
@@ -301,6 +296,10 @@ test("invitation activation offers explicit sign-in when another staff account i
     await expect(
       page.getByRole("heading", { name: "Account activated.", exact: true }),
     ).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
+    ).toBeTruthy();
+    await page.screenshot({ path: info.outputPath("invitation-activated.png"), fullPage: true });
     expect(
       (
         await (

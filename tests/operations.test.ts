@@ -53,7 +53,7 @@ test("CMS preserves sitemap anchors and rejects unsafe sources and unattributed 
     }),
   );
 });
-test("application drafts strip identity/status/payment fields and events cannot enable unapproved fees or hours", () => {
+test("application drafts strip identity/status/payment fields and events reject legacy price and learning-hour fields", () => {
   const input = applicationInput({
     plan: "Annual",
     category: "Professional",

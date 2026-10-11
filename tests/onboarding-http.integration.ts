@@ -361,6 +361,8 @@ test(
         [job.user_id],
       );
       assert.equal((await redeem()).status, 410);
+      assert.equal((await request("/api/staff/onboarding-import",0,{action:"reissue",id:job.id})).status,409);
+      await db.query("UPDATE tpa.onboarding_mail SET status='failed',reason='link_expired',created_at=now()-interval '49 hours' WHERE id=$1",[job.id]);
       assert.equal(
         (
           await request("/api/staff/onboarding-import", 0, {

@@ -25,7 +25,7 @@ export async function previewContext(
     page === "events"
       ? (
           await db.query(
-            "SELECT id,title,starts_at,ends_at,location FROM tpa.events WHERE status='published' ORDER BY starts_at DESC LIMIT 100",
+            "SELECT id,title,starts_at,ends_at,location FROM tpa.events WHERE status='published' AND visibility='public' ORDER BY starts_at DESC LIMIT 100",
           )
         ).rows
       : [];
