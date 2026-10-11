@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.env*
+!.env.example
+references/
+.postgres-ca.pem
+Credential.md
+.local/
+.vercel/
+
+playwright-report/
+test-results/

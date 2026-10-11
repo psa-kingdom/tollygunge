@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.env*
+!.env.example
+.local
+.vercel
+.railway
+.postgres-ca.pem
+Credential.md
+references
+tests
+docs
+*.tsbuildinfo

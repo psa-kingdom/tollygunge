@@ -1,0 +1,69 @@
+{
+  "name": "tpa-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build && node scripts/build-worker.mjs",
+    "start": "next start --hostname 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "tsx --test tests/*.test.ts",
+    "test:db": "node --env-file-if-exists=.env.local --import tsx --test tests/database.integration.ts tests/identity.integration.ts",
+    "test:http": "node --env-file-if-exists=.env.local --import tsx --test tests/http.integration.ts tests/operations.integration.ts tests/media.integration.ts tests/payment-details.integration.ts tests/inquiries.integration.ts tests/governance.integration.ts tests/portraits.integration.ts tests/campaigns.integration.ts tests/reports-news.integration.ts tests/email-http.integration.ts",
+    "test:storage": "node --env-file-if-exists=.env.local --import tsx scripts/verify-storage.mts",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
+    "release:check": "node scripts/verify-release.mjs",
+    "test:email": "node --env-file-if-exists=.env.local --import tsx --test tests/email.integration.ts",
+    "test:onboarding": "node --env-file-if-exists=.env.local --import tsx scripts/test-onboarding-local.mts",
+    "test:browser": "playwright test"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1146.0",
+    "@aws-sdk/s3-request-presigner": "^3.1146.0",
+    "@tiptap/extension-table": "3.31.4",
+    "@tiptap/extension-text-align": "3.31.4",
+    "@tiptap/extension-text-style": "3.31.4",
+    "@tiptap/pm": "3.31.4",
+    "@tiptap/react": "3.31.4",
+    "@tiptap/starter-kit": "3.31.4",
+    "better-auth": "1.7.7",
+    "exceljs": "4.4.0",
+    "html-to-text": "9.0.5",
+    "jspdf": "^4.2.1",
+    "next": "^16.3.8",
+    "nodemailer": "^10.0.14",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1",
+    "sharp": "^0.35.5",
+    "svix": "2.8.0"
+  },
+  "devDependencies": {
+    "@types/html-to-text": "9.0.4",
+    "@types/node": "^26.6.4",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "@types/pngjs": "^6.0.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "auth": "1.7.7",
+    "esbuild": "0.28.2",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.8",
+    "jsqr": "^1.4.0",
+    "pngjs": "^7.0.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "@playwright/test": "1.58.2"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
+  }
+}
