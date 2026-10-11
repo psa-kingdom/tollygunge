@@ -1,6 +1,6 @@
 # TPA real-data rollout evidence
 
-Completed 11 October 2026. Source snapshot `7cb9fee` is deployed in Railway release `4628fde7-7847-45b4-afa0-3d487c2dfde7`. Hosted health and scoped acceptance passed. This does not establish full production readiness.
+Initial rollout completed 11 October 2026 with source snapshot `7cb9fee` in Railway release `4628fde7-7847-45b4-afa0-3d487c2dfde7`. Hosted health and scoped acceptance passed. The subsequent accessibility/header fixes and current deployment are recorded in [TECHNICAL_RELEASE_CHECKS.md](TECHNICAL_RELEASE_CHECKS.md); member outcomes are unchanged. This does not establish full production readiness.
 
 ## Member outcomes
 

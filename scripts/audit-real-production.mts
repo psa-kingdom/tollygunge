@@ -122,7 +122,51 @@ try {
     conflict: 134,
     failed: 77,
   });
+  const persisted = (
+    await live.query(
+      "SELECT rows,results,mode,choices,committed_at,source_hash FROM tpa.onboarding_batches WHERE id=$1",
+      [members.batchId],
+    )
+  ).rows[0];
+  assert.ok(persisted?.committed_at, "Source batch is not committed");
+  assert.equal(persisted.mode, "members");
+  assert.equal(persisted.source_hash, members.sourceHash);
+  assert.equal(persisted.choices.preserveExisting, true);
+  assert.equal(persisted.choices.allowDistrictDerivation, false);
+  assert.notEqual(persisted.choices.provisionAccounts, true);
+  // The upload API adds a presentation-only error alias for held/failed rows.
+  const storedPreviewRows = members.preview.rows.map(
+    (row: Record<string, unknown>) => {
+      const { error, ...stored } = row;
+      if (error !== undefined)
+        assert.equal(
+          error,
+          row.reason,
+          "Preview error alias differs from reason",
+        );
+      return stored;
+    },
+  );
+  assert.ok(
+    isDeepStrictEqual(persisted.rows, storedPreviewRows),
+    "Persisted source rows differ",
+  );
+  assert.ok(
+    isDeepStrictEqual(persisted.results, members.results),
+    "Persisted outcomes differ",
+  );
+  const counts = (
+    await live.query(
+      'SELECT (SELECT count(*)::int FROM public."user") accounts,(SELECT count(*)::int FROM tpa.people) people,(SELECT count(*)::int FROM tpa.memberships) memberships,(SELECT count(*)::int FROM tpa.onboarding_mail) mail,(SELECT count(*)::int FROM tpa.onboarding_invitations) invitations',
+    )
+  ).rows[0];
+  assert.ok(
+    isDeepStrictEqual(counts, members.after),
+    "Production counts changed since rollout; investigate before acceptance",
+  );
   const report = {
+    persistedBatchAndOutcomesVerified: true,
+    productionCounts: counts,
     originalPeoplePreserved: original.length,
     originalAccountsAndCredentialsPreserved: true,
     newEditorialPeople: created.length,

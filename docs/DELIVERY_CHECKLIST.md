@@ -1,10 +1,20 @@
-# TPA delivery checklist — 10 October 2026
+# TPA delivery checklist — 11 October 2026
 
 Current source of truth. Historical implementation, comparison and showcase reports
 remain evidence. Statuses: Done (only the stated capability), Partial, Added,
 Blocked, Deferred. Dependencies determine order; feedback adds work without removing
 existing release gates. Resend transactional password recovery is enabled and hosted
 verified. Durable campaigns/shared inbox and delivery logs are hosted verified; WhatsApp remains a separate provider gate.
+
+## Resumed technical release checks — 11 October 2026
+
+- [x] Source 8409aec / Railway deployment e09ffa3b-34c8-4961-a7ff-a8d87ecacdc0 succeeds on the existing production service; no capacity or schema changes.
+- [x] Accessible names, complementary landmarks and group/image semantics corrected; 66 isolated and 66 hosted rendered states pass automated accessibility rules. Manual-review entries remain visible.
+- [x] Lint/typecheck/build, isolated application-step regression, hosted runtime smoke, three response headers, anonymous private-route rejection and browser-secret exclusion pass.
+- [x] Eight committee portraits/details and exact bank instructions rechecked at desktop/tablet/phone widths; all 211 persisted source outcomes and unchanged production counts reconcile. No source members created or invited.
+- [ ] Five high development-tool advisory entries through unpatched braces remain; production dependency audit reports zero. No incompatible lint-framework downgrade applied.
+
+Evidence and limits: [TECHNICAL_RELEASE_CHECKS.md](TECHNICAL_RELEASE_CHECKS.md). Physical-device/usability/manual accessibility, human recovery, exact legacy synthetic cleanup, large-import transport and provider/policy gates below remain open. No new full backend-suite or remote-CI run is claimed.
 
 ## Navigation, appearance and workspace UX — 10 October 2026
 
