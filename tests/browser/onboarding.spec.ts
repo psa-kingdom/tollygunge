@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import { databaseOptions } from "../../src/lib/database-options";
 import { openMail } from "../../src/lib/onboarding-mail";
+import { invitationDefaults } from "../../src/domain/invitation-template";
 import { createEmailVerificationToken } from "better-auth/api";
 test.beforeEach(async () => {
   test.skip(
@@ -65,6 +66,27 @@ test("verification links show their own account for signed-out visitors and an u
       "INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,'administrator')",
       [staffId],
     );
+    // Imports remain held. Release this synthetic fixture through the supported
+    // template approval, recipient review and explicit confirmation workflow.
+    const currentTemplate = await (await context.request.get(origin + "/api/staff/invitation-templates")).json();
+    const savedTemplate = await context.request.post(origin + "/api/staff/invitation-templates", {
+      headers: { origin }, data: { action: "save", revision: currentTemplate.revision, ...invitationDefaults },
+    });
+    expect(savedTemplate.ok()).toBeTruthy();
+    const template = await savedTemplate.json();
+    expect((await context.request.post(origin + "/api/staff/invitation-templates", {
+      headers: { origin }, data: { action: "approve", id: template.latest_id, revision: template.revision },
+    })).ok()).toBeTruthy();
+    const personId = (await db.query("SELECT id FROM tpa.people WHERE contact_email=$1", [email])).rows[0].id;
+    const reviewed = await context.request.post(origin + "/api/staff/invitation-releases", {
+      headers: { origin }, data: { action: "review", personIds: [personId] },
+    });
+    expect(reviewed.ok()).toBeTruthy();
+    const review = await reviewed.json();
+    expect(review.recipients).toHaveLength(1);
+    expect((await context.request.post(origin + "/api/staff/invitation-releases", {
+      headers: { origin }, data: { action: "confirm", id: review.id, idempotencyKey: review.idempotency_key },
+    })).ok()).toBeTruthy();
     const payload = (
       await db.query(
         "SELECT payload FROM tpa.onboarding_mail WHERE recipient=$1 AND kind='verification' ORDER BY created_at DESC LIMIT 1",
