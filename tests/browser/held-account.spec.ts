@@ -158,10 +158,27 @@ test("held account is visible, activates only after release, and retains private
       path: info.outputPath("held-account-staff.png"),
       fullPage: true,
     });
-    page.once("dialog", (dialog) => dialog.accept());
-    await details
-      .getByRole("button", { name: "Release invitation", exact: true })
-      .click();
+    await page.goto('/admin/workspaces/communications?invitationTemplate=1');
+    await page.getByLabel('Invitation subject',{exact:true}).fill('Reviewed member invitation '+info.project.name);
+    await page.getByLabel('Invitation body',{exact:true}).fill('Hello {{member_name}},\n\n{{setup_link}}\n\nThis link expires in {{expiry}}.\n{{association_name}}');
+    await page.getByRole('button',{name:'Save invitation draft',exact:true}).click();
+    await expect(page.getByText('New draft saved. Invitation sending is blocked until approval.',{exact:false})).toBeVisible();
+    await page.getByRole('button',{name:'Preview invitation email',exact:true}).click();
+    await expect(page.getByText('Preview only. No email sent.',{exact:false})).toBeVisible();
+    await page.getByRole('button',{name:'Approve invitation template',exact:true}).click();
+    await expect(page.getByText('Template approved. No invitations were sent.',{exact:false})).toBeVisible();
+    expect((await db.query('SELECT count(*)::int n FROM tpa.onboarding_mail WHERE user_id=$1',[user])).rows[0].n).toBe(0);
+    await page.goto('/admin');
+    await page.getByRole('link',{name:/Invitations held/}).click();
+    await expect(page.getByRole('combobox',{name:'Invitations',exact:true})).toHaveValue('held');
+    await page.getByRole('button',{name:`Held browser member · ${user} · Account linked`,exact:true}).click();
+    await page.getByRole('button',{name:'Review this member invitation',exact:true}).click();
+    await page.getByRole('button',{name:'Review invitations for 1 selected members',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Invitation recipient review',exact:true})).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole('heading',{name:'Invitation recipient review',exact:true})).toBeVisible();
+    await page.getByLabel('I verified the listed recipients and the approved email',{exact:true}).check();
+    await page.getByRole('button',{name:'Confirm and send invitations',exact:true}).click();
     await expect
       .poll(
         async () =>
@@ -173,6 +190,9 @@ test("held account is visible, activates only after release, and retains private
           ).rows[0].n,
       )
       .toBe(1);
+    await page.reload();
+    await expect(page.getByText('1 invitations queued. Reopening this review does not send again.',{exact:true})).toBeVisible();
+    expect((await db.query('SELECT count(*)::int n FROM tpa.onboarding_mail WHERE user_id=$1',[user])).rows[0].n).toBe(1);
     const payload = (
       await db.query(
         "SELECT payload FROM tpa.onboarding_mail WHERE user_id=$1 AND kind='invitation'",

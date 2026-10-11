@@ -86,7 +86,7 @@ export default async function Workspace({
       ) : workspace === "imports" ? (
         <HistoryImport />
       ) : workspace === "communications" ? (
-        <CommunicationsWorkspace />
+        <CommunicationsWorkspace canManageInvitations={hasPermission(actor.roles,'staff:manage')} />
       ) : workspace === "flyers" ? (
         <FlyerBuilder />
       ) : workspace === "content" ? (

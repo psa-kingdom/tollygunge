@@ -6,6 +6,7 @@ import { CampaignWorkspace } from "./campaign-workspace";
 import { EmailInbox } from "./email-inbox";
 import { EmailDeliveries } from "./email-deliveries";
 import { useEmailEditGuard } from "./email-edit-guard";
+import {InvitationTemplateEditor} from './invitation-template-editor';
 type Template = {
   id?: string;
   version: number;
@@ -14,11 +15,12 @@ type Template = {
   body: string;
 };
 const empty: Template = { version: 0, name: "", subject: "", body: "" };
-export function CommunicationsWorkspace() {
-  const tabs = ["inbox", "campaigns", "templates", "delivery"] as const;
+export function CommunicationsWorkspace({canManageInvitations=false}:{canManageInvitations?:boolean}) {
+  const tabs = ["inbox", "campaigns", "templates", "invitations", "delivery"] as const;
   const [view, setView] = useState<(typeof tabs)[number]>("inbox");
   const [inboxDirty, setInboxDirty] = useState(false),
     [campaignDirty, setCampaignDirty] = useState(false),
+    [invitationDirty,setInvitationDirty]=useState(false),
     [savedTemplate, setSavedTemplate] = useState(empty);
   const [templates, setTemplates] = useState<Template[]>([]),
     [recoveryEnabled, setRecoveryEnabled] = useState<boolean | null>(null),
@@ -31,7 +33,7 @@ export function CommunicationsWorkspace() {
     false,
   );
   const guard = useEmailEditGuard(
-    inboxDirty ||
+    inboxDirty || invitationDirty ||
       campaignDirty ||
       JSON.stringify(form) !== JSON.stringify(savedTemplate),
   );
@@ -40,6 +42,7 @@ export function CommunicationsWorkspace() {
       "/api/staff/communications",
     )
       .then((data) => {
+        if(new URLSearchParams(location.search).has('invitationTemplate'))setView('invitations');
         if (new URLSearchParams(location.search).has("campaign"))
           setView("campaigns");
         const templateId = new URLSearchParams(location.search).get("template");
@@ -116,6 +119,7 @@ export function CommunicationsWorkspace() {
                 inbox: "Shared inbox",
                 campaigns: "Campaigns",
                 templates: "Email templates",
+                invitations: "Member invitations",
                 delivery: "Delivery logs",
               }[tab]
             }
@@ -267,6 +271,7 @@ export function CommunicationsWorkspace() {
       >
         <EmailDeliveries />
       </div>
+      <div id="communications-invitations-panel" role="tabpanel" aria-labelledby="communications-invitations-tab" hidden={view!=='invitations'}>{canManageInvitations?<InvitationTemplateEditor onDirtyChange={setInvitationDirty} />:<p>Only administrators can configure and approve member invitations.</p>}</div>
       {guard.dialog}
       {templateGuard.dialog}
     </>

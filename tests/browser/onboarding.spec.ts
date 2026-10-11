@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import { databaseOptions } from "../../src/lib/database-options";
 import { openMail } from "../../src/lib/onboarding-mail";
+import { invitationDefaults } from "../../src/domain/invitation-template";
 import { createEmailVerificationToken } from "better-auth/api";
 test.beforeEach(async () => {
   test.skip(
@@ -276,6 +277,32 @@ test("invitation activation offers explicit sign-in when another staff account i
         })
       ).ok(),
     ).toBeTruthy();
+    // Imports remain held. Release this synthetic fixture through the supported
+    // template approval, recipient review and explicit confirmation workflow.
+    const currentTemplate = await (await context.request.get(origin + "/api/staff/invitation-templates")).json();
+    const savedTemplate = await context.request.post(origin + "/api/staff/invitation-templates", {
+      headers: { origin }, data: { action: "save", revision: currentTemplate.revision, ...invitationDefaults },
+    });
+    expect(savedTemplate.ok()).toBeTruthy();
+    const template = await savedTemplate.json();
+    expect((await context.request.post(origin + "/api/staff/invitation-templates", {
+      headers: { origin }, data: { action: "approve", id: template.latest_id, revision: template.revision },
+    })).ok()).toBeTruthy();
+    const invitedUser = (await db.query('SELECT id FROM public."user" WHERE email=$1', [email])).rows[0].id;
+    const personId = randomUUID();
+    // Account-only import intentionally does not invent a member relationship.
+    // Seed that separately in this disposable activation fixture.
+    await db.query("INSERT INTO tpa.people(id,user_id,accepted,draft,contact_email) VALUES($1,$2,'{\"name\":\"Invited browser member\"}','{\"name\":\"Invited browser member\"}',$3)", [personId, invitedUser, email]);
+    await db.query("INSERT INTO tpa.memberships(id,person_id,membership_number,source) VALUES($1,$2,$3,'staff')", [randomUUID(), personId, randomUUID()]);
+    const reviewed = await context.request.post(origin + "/api/staff/invitation-releases", {
+      headers: { origin }, data: { action: "review", personIds: [personId] },
+    });
+    expect(reviewed.ok()).toBeTruthy();
+    const review = await reviewed.json();
+    expect(review.recipients).toHaveLength(1);
+    expect((await context.request.post(origin + "/api/staff/invitation-releases", {
+      headers: { origin }, data: { action: "confirm", id: review.id, idempotencyKey: review.idempotency_key },
+    })).ok()).toBeTruthy();
     const payload = (
       await db.query(
         "SELECT payload FROM tpa.onboarding_mail WHERE recipient=$1 AND kind='invitation' ORDER BY created_at DESC LIMIT 1",
@@ -756,3 +783,4 @@ test("member dashboard separates verification states and keeps the editor off th
     await page.unroute("**/api/member/verification");
   }
 });
+

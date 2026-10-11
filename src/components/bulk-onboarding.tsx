@@ -196,7 +196,7 @@ export function BulkOnboarding() {
               Approved account batch � invitations held
             </option>
           )}
-          <option value="invitation">New accounts with invitations</option>
+          <option value="invitation">New accounts — invitations held</option>
           <option value="existing-members">
             Existing members — no invitations
           </option>
@@ -205,7 +205,7 @@ export function BulkOnboarding() {
       <p>
         {mode === "existing-members"
           ? "Use the supplied 13-column member workbook. All ambiguous duplicate groups are held. No emails, passwords, paid status or verification are created."
-          : "Create ordinary unverified accounts and send password-setup invitations."}
+          : "Create ordinary unverified accounts with invitations held. Review recipients and an approved template separately before sending."}
         Existing accounts are skipped. No passwords or verification badges can
         be imported.
       </p>
@@ -374,7 +374,7 @@ export function BulkOnboarding() {
                       ? "Create eligible accounts from this approved batch with invitations held, retaining incomplete addresses and holding conflicts?"
                       : preview.mode === "members"
                         ? "Import eligible members without emails, holding conflicts and preserving existing records?"
-                        : `Create accounts and queue invitations for exactly ${preview.rows.filter((r) => !r.error).length} eligible records? Existing accounts will be skipped.`,
+                        : `Create accounts with invitations held for exactly ${preview.rows.filter((r) => !r.error).length} eligible records? Existing accounts will be skipped.`,
                   )
                 )
                   return;
@@ -411,7 +411,7 @@ export function BulkOnboarding() {
                       ? "Accounts created with invitation delivery held. Review every row outcome."
                       : preview.mode === "members"
                         ? "Member import committed without invitations. Review every row outcome."
-                        : "Import committed. Check Email settings for delivery status.",
+                        : "Accounts created with invitations held. Configure the template and review recipients in the member register.",
                   );
                 } catch (e) {
                   setMessage(e instanceof Error ? e.message : "Commit failed.");

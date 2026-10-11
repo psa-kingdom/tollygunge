@@ -73,6 +73,8 @@ jobs:
         env:
           TPA_JOB_BROWSER: "true"
           TPA_BROWSER_CHANNEL: ""
+      - run: node --import tsx scripts/test-invitation-release.mts
+      - run: node --import tsx scripts/test-invitation-release.mts --http
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -80,3 +82,4 @@ jobs:
           path: |
             playwright-report/
             test-results/
+

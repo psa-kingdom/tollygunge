@@ -65,7 +65,7 @@ export function RegistrationPayments() {
       </label>
       <p>{rows.length} records shown (up to 250)</p>
       <div className="table-scroll">
-        <table className="operations-table">
+        <table className="operations-table" tabIndex={0} aria-label="Registration payments">
           <thead>
             <tr>
               <th>Member</th>

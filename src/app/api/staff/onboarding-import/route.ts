@@ -259,6 +259,7 @@ export async function POST(r: Request) {
       return transaction((c) => memberBatchAction(c, actor.id, i));
     if (process.env.ONBOARDING_ENABLED !== "true")
       throw new OperationError("Onboarding is disabled.", 503);
+    if (i.action === "reissue") throw new OperationError('Review the recipient and approved invitation template before issuing a replacement link.',409,'invitation_review_required');
     if (i.action === "retry" || i.action === "reissue") {
       return transaction(async (c) => {
         const job = (
@@ -387,7 +388,7 @@ export async function POST(r: Request) {
               p.version,
             ],
           );
-          results.push({ email: row.email, status: "created" });
+          results.push({ email: row.email, status: "created",accountId:inserted.accountId,invitationStatus:inserted.invitationStatus,invitationQueued:false });
         } catch {
           await c.query("ROLLBACK TO SAVEPOINT onboarding_row");
           results.push({

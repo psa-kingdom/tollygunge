@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { DM_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 import { appearanceBootstrap } from "@/domain/appearance";
+const dmSans = DM_Sans({ subsets: ["latin"], display: "swap", variable: "--font-dm-sans" });
+const manrope = Manrope({ subsets: ["latin"], display: "swap", variable: "--font-manrope" });
 export const metadata: Metadata = {
   title: {
     default: "TPA — A community for what comes next",
@@ -17,7 +20,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: appearanceBootstrap }} />
       </head>
-      <body>
+      <body className={`${dmSans.variable} ${manrope.variable}`}>
         <a className="skip-link" href="#main">
           Skip to content
         </a>
