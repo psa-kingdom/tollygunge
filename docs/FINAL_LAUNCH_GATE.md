@@ -1,6 +1,31 @@
 # Final launch gate — 11 October 2026
 
-**Decision: NOT READY.** Local synthetic population and operational journeys pass, but the tested candidate is not the deployed release, hosted concurrency is untested, and real-source account eligibility/rollout remains unresolved in this gate. Do not send a real member invitation batch on the strength of these results.
+## Main publication and launch acceptance — 11 October 2026
+
+Validated baseline published through PR #1 to main `797e92d9af07a352fa7b9fa161d76bcf8c6756c5`, with successful push, PR and main CI. Deployment `6c1e7505-c9b1-4d03-af17-9c62b46294f6` succeeded. Controlled-invitation deployment `3d21483a-44f7-43ec-afff-ebf0954374e9` subsequently added only its 16 runtime files; migration 029 is applied. Combined source `822a048` preserves those controls and adds named keyboard focus/scrolling to the payment table and self-hosted existing fonts. PR #2 records combined CI and publication. Exact final commit/archive/deployment identities and sanitized outputs are retained in ignored `.local/main-publish`.
+
+Fresh combined local checks: lint, typecheck, build, 81 unit tests; three invitation database cases; controlled-release HTTP checks plus two HTTP regressions; six held-account/payment-table browser cases across desktop/tablet/phone. Invitation tests use synthetic recipients and mail sinks, including 10/50/202 batches, replay, stale review, concurrent confirmation and rollback. No real email was sent. Original failed probes and successful retests are preserved: incomplete-build startup, stale queued-invitation expectation and omitted local synthetic session key were fixture/setup issues.
+
+Hosted baseline acceptance: 40 public states without overflow/runtime/response/accessibility failures; authenticated dashboards/account previews; private-route denial and frontend-secret exclusion (430 source files, seven configured secret values, zero leaks); full runtime smoke retest passed after one transient document-request timeout. The 66-state authenticated accessibility audit found a reproducible empty mobile payment-table keyboard defect, repaired and locally retested. Baseline 12 performance samples included one LCP of 3068 ms; three cold homepage traces measured 2788/2536/2240 ms and implicated the external font chain. Fresh deployed retests must govern performance/accessibility; earlier failures are retained, not counted as passes. No field INP or physical-device result is claimed.
+
+Read-only production reconciliation at 05:57 UTC: 208 accounts, 213 people, 202 memberships; 202 imported accounts linked to memberships and unreleased holds; zero batch activation tokens, credentials or mail jobs. The approved 211-row exception independently reconciles 202 created and nine held source rows. Existing identities/credential hashes match the preserved baseline. Strict 211-row source-resolution remains a separate open gate; synthetic success and the exception do not clear it.
+
+Fresh backup with migration 029 restored to an isolated local database, counts/202 holds reconciled, source stable, no workers started, restoration database removed. Backup SHA-256 `49414d816ed216462e954c7241ef01fb8022dd1575fc9fa23ab7c079820f8464`. This establishes a local rehearsal; infrastructure recovery approval/RTO remains open.
+
+| Work | Completion | Exact next action |
+|---|---|---|
+| Independent product implementation and local acceptance | Complete for evidenced scope | Retain CI/regression evidence; repair only demonstrated defects. |
+| Main publication / existing-service deployment | Baseline complete; combined release tracked in PR #2 | Record final main SHA and deployment identity; repeat hosted read-only checks. |
+| Imported-account safety | Complete read-only reconciliation | Keep all 202 holds; no direct release, source overwrite or automatic linking. |
+| Hosted profile/event/payment writes and capacity | BLOCKED | Provide an existing verified isolated staging deployment and mail sink; then run writes, 500-member reconciliation and bounded ramp. Do not provision paid resources or load production. |
+| Invitation delivery / mailbox activation and recovery acceptance | Pending explicit sending command | Approve template/recipients and explicitly authorize mail before delivery checks. Existing recovery/transactional mail may continue. |
+| Source correction and membership/payment policy | Open | Obtain authoritative corrections for held rows and approved terms/verification policy. |
+| OAuth/WhatsApp and human/device/assistive-technology acceptance | Open where required | Supply provider configuration and perform named human/device checks. |
+
+**Full launch decision: NOT READY.** Required untested journeys and capacity remain blockers. No funds movement, member-batch mail, production import, resource increase or new provider was performed.
+
+
+**Decision: NOT READY.** Main baseline is deployed; the current publication evidence above supersedes historical source/deployment snapshots below. Hosted write journeys, capacity, mail acceptance, policy and human/device gates remain open.
 
 Completed evidence: **73 unit tests, 27 backend/HTTP checks, 46 browser cases (11 explicit skips), three additional desktop/tablet/phone activation cases, 40 hosted public/accessibility states and 12 hosted performance samples pass.** Two demonstrated frontend defects were repaired. All QA databases were removed. No hosted load was run.
 
@@ -24,11 +49,11 @@ Statuses apply to launch evidence, combining deployed and candidate checks. A lo
 
 | Area | Status | Evidence |
 |---|---|---|
-| Member import | PARTIAL | Candidate: two 250-row imports, 25-row resumable commits, 500 distinct records, replay idempotency; six member-foundation checks cover duplicates, preservation, address validation, concurrency and enqueue rollback. Recorded original 211-row production batch created zero members/accounts; this run did not change or recensus it. |
+| Member import | PARTIAL | Local 500-record reconciliation and worker replay/resume/conflicts pass; production exception reconciles 202 created/nine held. Strict source-resolution remains open. |
 | Member accounts | PARTIAL | Candidate reconciles 500 linked member accounts plus one synthetic administrator; representative invitation activation is single-use. All 500 accounts were not activated or logged in. Hosted candidate rollout is untested. |
-| Invitations | PARTIAL | Exactly 500 candidate invitation jobs, zero automatic mail jobs before explicit invitations; selected duplicate/recent resend rejected. Test sink only; current candidate inbox delivery is untested. |
+| Invitations | PARTIAL | Controlled template/review/idempotent confirmation and synthetic activation pass locally; hosted read-only hold controls pass. All 202 production holds unreleased, zero batch mail/tokens/credentials; real delivery pending explicit command. |
 | Login | PARTIAL | Real auth/database recovery, signup, session revocation and limits pass locally; hosted login/recovery pages return 200. No fresh authenticated hosted member sign-in in this gate. |
-| Dashboard | PARTIAL | Candidate administrator metrics/activity rendered at 1440/768/390; 200 imported records reconcile with dashboard. Full deployed authenticated dashboard journey untested. |
+| Dashboard | PARTIAL | Local connected operations pass; hosted authenticated dashboard/202 holds/register previews pass. Hosted member write journeys remain blocked. |
 | Profile | PARTIAL | Local persistence/privacy/address and verification lifecycle tests pass; broader browser result recorded below. Hosted candidate profile writes untested. |
 | Membership | PARTIAL | 500 local membership records reconcile and remain independent from account activation/verification/payment. Real eligibility/approved membership status and end-to-end hosted membership operation remain open. |
 | Payments | PARTIAL | Candidate supports manual event-payment verification: pending, reference/note-required paid confirmation, stale write rejection, member-visible update, cancellation history and manual refund recording. No gateway, actual funds movement or bank verification tested. This candidate is not deployed. |
@@ -37,11 +62,11 @@ Statuses apply to launch evidence, combining deployed and candidate checks. A lo
 | Admin | PARTIAL | Candidate import, invitations, roster, payment review and activity are connected; permission/search checks cover staff roles. Full deployed candidate operation remains untested. |
 | UI/UX | PARTIAL | 40 hosted public/auth states at four widths: zero overflow, response failures or runtime errors. Candidate dashboard/roster/payment/member screenshots reviewed. Human usability and all interactive controls are not exhaustively accepted. |
 | Mobile | PARTIAL | Hosted 390px public/auth pages, candidate profile/admin layouts, and actual project-viewport activation/password sign-in pass on tablet/phone. Physical devices and hosted candidate activation remain untested. |
-| Accessibility | PARTIAL | 40 hosted states: zero automated WCAG A/AA violations; manual-review entries retained. Keyboard, screen-reader and authenticated candidate coverage are incomplete. |
+| Accessibility | PARTIAL | Public 40 states pass; 66 authenticated states exposed empty mobile payment-table focus defect, repaired and responsive keyboard retest passes locally. Fresh hosted retest and human/AT acceptance required. |
 | Security | PARTIAL | Hosted anonymous private-route/API denial and three response headers pass. Browser bundle scan: 38 files, four configured secret values checked, zero leaks. Local permission/ownership, signed webhook and session checks pass; full deployed candidate security acceptance is untested. |
-| Performance | PARTIAL | Hosted LCP samples 480–2208ms; local paginated member reads p95 47ms, explicit invitation writes p95 28ms, import commits p95 134ms. These are serial synthetic samples, not concurrent deployment evidence. |
+| Performance | PARTIAL | Initial hosted homepage LCP failure retained (3068 ms); traced external font chain repaired through self-hosting. Fresh deployed measurements determine acceptance; no concurrency/field INP claim. |
 | Load | BLOCKED | No existing isolated staging deployment. No production load substitute. Sustainable concurrent capacity, request rate, error rate and database/CPU/memory behavior under load are unknown. |
-| Regression | PARTIAL | Fresh independent frozen source: build/lint/typecheck, 79 unit tests, 27 final backend/HTTP outcomes, eight import/hold integration cases, 49 main browser cases, three worker browser cases and three held-account viewport cases pass. Fourteen main-suite skips are reconciled in INDEPENDENT_QA_CLOSEOUT.md. Hosted candidate regression remains open. |
+| Regression | PARTIAL | Combined build/lint/typecheck/81 units, invitation database/HTTP and six responsive held-account/payment cases pass. Main/PR CI and hosted smoke retained; critical hosted writes/mail/human gates remain open. |
 
 ## Measured evidence
 
