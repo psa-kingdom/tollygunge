@@ -1,6 +1,6 @@
 # Member foundation delivery
 
-Status: implementation and database/API/browser acceptance passed. Production migrations, source imports and deployment are separate operational work. Large synchronous import transport remains an operational limitation.
+Status: implementation and database/API/browser acceptance passed. The separately authorized real-data chat completed its scoped hosted rollout on 11 October 2026; its execution evidence is recorded in [REAL_DATA_READINESS.md](REAL_DATA_READINESS.md). Large synchronous import transport remains an operational limitation.
 
 ## Changed
 
@@ -53,6 +53,6 @@ Bulk commits are synchronous and slow against remote PostgreSQL: the test with 2
 
 The postal snapshot is a pinned republish of Department of Posts data because direct government acquisition was unavailable; provenance/checksums and refresh instructions are documented. City aliases currently cover only reviewed Kolkata/Calcutta and Howrah/Haora contexts. Unsupported/ambiguous source addresses remain held for correction or reviewed reference updates. Other international countries receive ISO/character-format checks; country-specific shapes are additionally provided for US/Canada/GB.
 
-Production backup/preflight, postal provisioning, migration execution, reviewed real imports and deployment remain operational steps. See `MEMBER_FOUNDATION.md` for API contracts, migration preflight and rollback instructions.
+The separately authorized operational chat reports successful production backup/restore, preflight, migrations 023–025, postal provisioning and deployment of source snapshot `7cb9fee` in Railway release `4628fde7-7847-45b4-afa0-3d487c2dfde7`. Its exact production source batch reconciled to 211 persisted outcomes: 0 created/updated/skipped, 134 held conflicts and 77 validation failures. A repeated commit returned identical outcomes. These are inspected evidence from that chat's [rollout report](REAL_DATA_READINESS.md), not production commands executed by this backend workstream. Authoritative district/address corrections and identity-conflict resolution remain required before those source members become eligible. See `MEMBER_FOUNDATION.md` for API contracts, migration preflight and rollback instructions.
 
 Final matrix command (PowerShell): $env:TPA_UI_TEST_PROJECT='desktop'; $env:TPA_UI_TEST_GREP='responsive visual evidence|password requirements'; node --env-file=.env.local --import tsx scripts/verify-member-ui.mts. Result: 2 passed, 0 skipped, 42.4 seconds. Final combined build log: .local/real-data/final-release-build.log (exit 0).
