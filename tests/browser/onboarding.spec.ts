@@ -288,7 +288,12 @@ test("invitation activation offers explicit sign-in when another staff account i
     expect((await context.request.post(origin + "/api/staff/invitation-templates", {
       headers: { origin }, data: { action: "approve", id: template.latest_id, revision: template.revision },
     })).ok()).toBeTruthy();
-    const personId = (await db.query("SELECT id FROM tpa.people WHERE contact_email=$1", [email])).rows[0].id;
+    const invitedUser = (await db.query('SELECT id FROM public."user" WHERE email=$1', [email])).rows[0].id;
+    const personId = randomUUID();
+    // Account-only import intentionally does not invent a member relationship.
+    // Seed that separately in this disposable activation fixture.
+    await db.query("INSERT INTO tpa.people(id,user_id,accepted,draft,contact_email) VALUES($1,$2,'{\"name\":\"Invited browser member\"}','{\"name\":\"Invited browser member\"}',$3)", [personId, invitedUser, email]);
+    await db.query("INSERT INTO tpa.memberships(id,person_id,membership_number,source) VALUES($1,$2,$3,'staff')", [randomUUID(), personId, randomUUID()]);
     const reviewed = await context.request.post(origin + "/api/staff/invitation-releases", {
       headers: { origin }, data: { action: "review", personIds: [personId] },
     });
