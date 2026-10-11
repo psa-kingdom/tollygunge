@@ -1,8 +1,7 @@
 import "server-only";
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { clean, email as normalizeEmail } from "@/domain/member-foundation";
-import { hashToken, queueOnboardingMail } from "./onboarding-mail";
 import { OperationError } from "./operation-error";
 /** Caller owns the transaction/savepoint; existing accounts are never altered. */
 export async function createInvitedAccount(
@@ -26,10 +25,10 @@ export async function createInvitedAccount(
     )
   ).rows[0];
   if (!created) return null;
-  if (hold) {
+  {
     await c.query(
       "INSERT INTO tpa.account_invitation_holds(user_id,source_batch_id) VALUES($1,$2)",
-      [accountId, hold.batchId],
+      [accountId, hold?.batchId ?? null],
     );
     return {
       accountId,
@@ -37,18 +36,4 @@ export async function createInvitedAccount(
       invitationStatus: "held" as const,
     };
   }
-  const token = randomBytes(32).toString("base64url");
-  await c.query(
-    "INSERT INTO tpa.onboarding_invitations(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '48 hours')",
-    [hashToken(token), accountId],
-  );
-  await queueOnboardingMail(
-    c,
-    accountId,
-    email,
-    "invitation",
-    `${process.env.BETTER_AUTH_URL}/invitation#token=${token}`,
-    "invite-" + accountId,
-  );
-  return { accountId, invitationQueued: true };
 }

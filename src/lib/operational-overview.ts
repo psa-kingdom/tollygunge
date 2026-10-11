@@ -38,9 +38,9 @@ export async function operationalOverview(roles: string[]) {
   }
   if (hasPermission(roles, "staff:manage"))
     await metric(
-      "Pending invitations",
-      "SELECT count(DISTINCT user_id)::int n FROM tpa.onboarding_invitations WHERE redeemed_at IS NULL",
-      "/admin/workspaces/members",
+      "Invitations held",
+      "SELECT count(*)::int n FROM tpa.memberships m JOIN tpa.people p ON p.id=m.person_id JOIN tpa.account_invitation_holds h ON h.user_id=p.user_id WHERE h.released_at IS NULL",
+      "/admin/workspaces/members?invitation=held",
     );
   if (hasPermission(roles, "payments:manage"))
     await metric(

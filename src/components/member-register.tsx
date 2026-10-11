@@ -3,6 +3,7 @@ import { MemberEditor } from "./member-editor";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
+import {InvitationReleaseReview} from "./invitation-release-review";
 type Member = {
   person_id: string;
   membership_version: number;
@@ -41,7 +42,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
     [status, setStatus] = useState("all"),
     [busy, setBusy] = useState(false),
     [chosen, setChosen] = useState<string[]>([]),
-    [progress, setProgress] = useState(0),
+    [invitation, setInvitation] = useState("all"),
     [message, setMessage] = useState(""),
     [selected, setSelected] = useState<Member>();
   async function load(offset = 0) {
@@ -53,7 +54,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
             "&status=" +
             status +
             "&offset=" +
-            offset,
+            offset+"&invitation="+invitation,
         ),
       );
       setMessage("");
@@ -62,8 +63,9 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
     }
   }
   useEffect(() => {
-    void api<Register>("/api/staff/members?view=register")
-      .then(setData)
+    const held=new URLSearchParams(location.search).get("invitation")==="held";
+    void api<Register>("/api/staff/members?view=register&invitation="+(held?"held":"all"))
+      .then(result=>{setInvitation(held?'held':'all');setData(result);})
       .catch((e) => setMessage(e.message));
   }, []);
   return (
@@ -103,6 +105,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
             ))}
           </select>
         </label>
+        <label>Invitations<select value={invitation} onChange={e=>setInvitation(e.target.value)}><option value="all">All accounts</option><option value="held">Invitations held</option></select></label>
         <button className="button" disabled={busy}>
           Search register
         </button>
@@ -112,53 +115,16 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
         <Link className="button secondary" href="/admin/workspaces/onboarding">
           Import / retry member records
         </Link>
-        <button
-          className="button secondary"
-          disabled={!canManage || busy || !chosen.length}
-          onClick={async () => {
-            if (
-              !window.confirm(
-                `Queue invitations for exactly ${chosen.length} selected members?`,
-              )
-            )
-              return;
-            setBusy(true);
-            setProgress(0);
-            const outcomes: string[] = [];
-            for (const [index, personId] of chosen.entries()) {
-              try {
-                await api("/api/staff/member-actions", {
-                  action: "invite",
-                  personId,
-                });
-                outcomes.push("Invitation queued");
-              } catch (e) {
-                outcomes.push((e as Error).message);
-              }
-              setProgress(index + 1);
-            }
-            await load();
-            setChosen([]);
-            setMessage(outcomes.join(" · "));
-            setBusy(false);
-          }}
-        >
-          Invite {chosen.length} selected members
-        </button>
       </div>
-      {busy && (
-        <p role="status">
-          Processed {progress} of {chosen.length}. You can keep this page open
-          while requests complete.
-        </p>
-      )}
+      <InvitationReleaseReview personIds={chosen} canManage={canManage} onComplete={()=>{void load();setChosen([]);}} />
+      <button className="button secondary" disabled={!canManage || busy} onClick={()=>setChosen(old=>[...new Set([...old,...(data?.rows??[]).filter(m=>m.user_id && !['accepted','active account'].includes(m.invitation_status)).map(m=>m.person_id)])])}>Select eligible accounts on this page</button>
       <div className="directory-list">
         {data?.rows.map((m) => (
           <div key={m.person_id}>
             <label>
               <input
                 type="checkbox"
-                disabled={!canManage || busy || !!m.user_id}
+                disabled={!canManage || busy || !m.user_id || ["accepted","active account"].includes(m.invitation_status)}
                 checked={chosen.includes(m.person_id)}
                 onChange={(e) =>
                   setChosen((old) =>
@@ -240,49 +206,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
             </dd>
           </dl>
           <div className="action-row">
-            <button
-              className="button secondary"
-              disabled={
-                !canManage ||
-                busy ||
-                ["accepted", "active account"].includes(
-                  selected.invitation_status,
-                )
-              }
-              onClick={async () => {
-                if (
-                  !window.confirm(
-                    `Queue ${selected.invitation_status === "invitation held" ? "the held" : selected.user_id ? "a replacement" : "an"} invitation for ${selected.person.name}?`,
-                  )
-                )
-                  return;
-                setBusy(true);
-                try {
-                  await api("/api/staff/member-actions", {
-                    personId: selected.person_id,
-                    action:
-                      selected.invitation_status === "invitation held"
-                        ? "release"
-                        : selected.user_id
-                          ? "resend"
-                          : "invite",
-                  });
-                  setMessage("Invitation queued.");
-                  await load();
-                  setSelected(undefined);
-                } catch (e) {
-                  setMessage((e as Error).message);
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              {selected.invitation_status === "invitation held"
-                ? "Release invitation"
-                : selected.user_id
-                  ? "Resend invitation"
-                  : "Invite member"}
-            </button>
+            <button className="button secondary" disabled={!canManage || busy || !selected.user_id || ["accepted","active account"].includes(selected.invitation_status)} onClick={()=>{setChosen([selected.person_id]);setSelected(undefined);}}>Review this member invitation</button>
             <label>
               Membership status
               <select

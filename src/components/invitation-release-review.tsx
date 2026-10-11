@@ -1,0 +1,19 @@
+"use client";
+import {useEffect,useState} from 'react';
+import Link from 'next/link';
+import {api} from './operations-client';
+type Review={id:string;idempotency_key:string;confirmed_at:string|null;expires_at:string;recipients:{person_id:string;user_id:string;name:string;email:string;held:boolean}[];exclusions:{person_id:string;name?:string;email?:string;reason:string}[];rendered:{subject:string;html:string};results:{email:string;status:string}[]|null;delivery:{user_id:string;status:string;reason:string|null}[]};
+export function InvitationReleaseReview({personIds,canManage,onComplete}:{personIds:string[];canManage:boolean;onComplete:()=>void}){
+ const [review,setReview]=useState<Review>(),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[acknowledged,setAcknowledged]=useState(false);
+ useEffect(()=>{const id=new URLSearchParams(location.search).get('invitationReview');if(id)api<Review>('/api/staff/invitation-releases?id='+encodeURIComponent(id)).then(setReview).catch(e=>setMessage(e.message));},[]);
+ useEffect(()=>{if(!review?.confirmed_at)return;const id=review.id;const timer=setInterval(()=>{api<Review>('/api/staff/invitation-releases?id='+id).then(setReview).catch(e=>setMessage(e.message));},5000);return()=>clearInterval(timer);},[review?.confirmed_at,review?.id]);
+ async function create(){setBusy(true);try{const data=await api<Review>('/api/staff/invitation-releases',{action:'review',personIds});setReview(data);setAcknowledged(false);const url=new URL(location.href);url.searchParams.set('invitationReview',data.id);history.replaceState(null,'',url);setMessage('Review every recipient and the email before confirming.');}catch(e){setMessage((e as Error).message);}finally{setBusy(false);}}
+ return <section><div className="action-row"><button className="button secondary" disabled={!canManage || busy || !personIds.length} onClick={()=>void create()}>Review invitations for {personIds.length} selected members</button><Link href="/admin/workspaces/communications?invitationTemplate=1">Configure invitation template</Link></div><p role="status">{message}</p>
+ {review&&<div><h3>Invitation recipient review</h3><p>{review.recipients.length} eligible recipients · {review.exclusions.length} excluded. Template and recipients are rechecked at confirmation. Review expires {new Date(review.expires_at).toLocaleString()}.</p>
+ <ul>{review.recipients.map(r=><li key={r.person_id}>{r.name} · {r.email} · {r.held?'Invitation held':'Replacement invitation'}</li>)}</ul>
+ {!!review.exclusions.length&&<details><summary>Excluded recipients</summary><ul>{review.exclusions.map(r=><li key={r.person_id}>{r.name??r.person_id} · {r.email} · {r.reason}</li>)}</ul></details>}
+ <h4>{review.rendered.subject}</h4><p>This preview uses the first recipient’s name and a nonfunctional example link. Every recipient receives their own secure single-use link.</p><iframe title="Reviewed invitation email" sandbox="" srcDoc={review.rendered.html} style={{width:'100%',height:420,border:'1px solid #ddd'}} />
+ {!review.confirmed_at?<div><label><input type="checkbox" checked={acknowledged} disabled={busy} onChange={e=>setAcknowledged(e.target.checked)} />I verified the listed recipients and the approved email</label><button className="button" disabled={!canManage || busy || !acknowledged} onClick={async()=>{setBusy(true);try{setReview(await api<Review>('/api/staff/invitation-releases',{action:'confirm',id:review.id,idempotencyKey:review.idempotency_key}));setMessage('Invitations queued. Delivery is tracked separately.');onComplete();}catch(e){setMessage((e as Error).message);}finally{setBusy(false);}}}>Confirm and send invitations</button></div>:<div><p>{review.results?.length??0} invitations queued. Reopening this review does not send again.</p><ul>{review.recipients.map(r=><li key={r.person_id}>{r.email} · {review.delivery.find(d=>d.user_id===r.user_id)?.status??'queued'}</li>)}</ul></div>}
+ </div>}</section>;
+}
+
