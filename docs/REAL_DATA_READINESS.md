@@ -1,43 +1,60 @@
 # TPA real-data rollout evidence
 
-Working report, 11 October 2026. Production rollout is beginning after final acceptance.
+Completed 11 October 2026. Source snapshot `7cb9fee` is deployed in Railway release `4628fde7-7847-45b4-afa0-3d487c2dfde7`. Hosted health and scoped acceptance passed. This does not establish full production readiness.
 
-## Source and safeguards
+## Member outcomes
 
-The original 211-row member workbook is unchanged. The source hash, original cells, normalized values, field errors, duplicate groups and row outcomes are stored in the restricted, ignored .local/real-data directory. No member contact information belongs in this report or the deployed bundle.
+| Outcome | Production rows |
+| --- | ---: |
+| Created | 0 |
+| Updated | 0 |
+| Skipped | 0 |
+| Held conflict | 134 |
+| Failed validation | 77 |
+| Total | 211 |
 
-The source contains seven duplicate-email pairs. Every occurrence is held. Membership numbers are independent of email identity and retain text formatting. Updates and account provisioning default to off. The operational workflow explicitly requests no updates, accounts, invitations, passwords, verification, consent, membership plan or paid status.
+No source member was imported. The user explicitly required missing districts to stay blank and affected rows to be held. The workbook has no District column. Held conflicts comprise 118 missing-district rows, fourteen occurrences in seven duplicate-email pairs and two differing existing identities. The 77 validation failures comprise fifteen incomplete addresses, eleven ambiguous postal results and fifty-one unsupported/ambiguous cities.
 
-The preliminary isolated candidate batch reconciled all 211 rows: 118 created, zero updated, zero skipped, 16 identity/duplicate conflicts and 77 validation failures. Field checks, uniqueness and repeated commit passed; accounts, mail jobs and invitations stayed unchanged. This candidate evidence is superseded: the user explicitly confirmed that missing districts must stay blank and affected rows must be held. The 118 identified isolated import fixtures were removed while preserving unrelated records and the prior restricted report. The final policy rehearsal below supersedes that candidate. The original workbook has no District column; verified postal lookup must not silently fill that missing source information in preservation imports.
+Every source row has a persisted outcome. Names, organizations, membership-number text and leading zeros are preserved; every normalization and source-field error is recorded in the restricted row-level report. Production normalized fields and row outcomes independently match the exact isolated rehearsal for all 211 rows, including physical source rows 2, 107 and 212. Original workbook SHA256 remains `0031124b1557fcd3bce3a03201733aabda212ff95494adcd66ace3df607f1ecd`.
 
-Final policy rehearsal committed and independently reconciled all 211 rows on the corrected fixed build: zero created/updated/skipped, 134 held conflicts and 77 validation failures. Held conflicts comprise 118 missing-district rows, fourteen duplicate-email occurrences and two existing-identity conflicts. Every retained member address keeps its district blank. The persisted batch policy prevents updates, account provisioning and district derivation; the stored source hash matches the unchanged workbook. Accounts six, people eleven, memberships zero, mail jobs eight and invitations one remained unchanged. Repeated commit returned identical outcomes without changes. No source member has been imported into production.
+Preservation imports prohibit updates, account provisioning and district derivation. Cached previews with missing/incompatible policies return 409 and require a new preview. Conflicts are rechecked at commit; uniqueness and persisted results prevent duplicate identities or retries. The repeated production commit returned identical results. Accounts six, people eleven, memberships zero, mail jobs eight and invitations one stayed unchanged during the import. No invitations, passwords, automatic verification, consent, paid status or membership plan were created for source rows.
 
-The 77 validation failures comprise fifteen incomplete addresses, eleven ambiguous postal results and fifty-one unsupported/ambiguous cities. These rows need corrected authoritative information; the original workbook is preserved.
+The earlier candidate rehearsal that created 118 isolated members is superseded. Those exact fixtures were removed before the final no-derivation rehearsal; its private historical report remains archived.
 
-## Governance and payments
+## People, photographs and payments
 
-Eight supplied biographies, roles and confirmed photo associations are published in the isolated site. Originals are preserved; crops use only supplied pixels. An idempotent content rerun reused all eight records and portraits without creating duplicates. Photograph bytes match reviewed prepared-image hashes. Desktop, tablet and phone browser checks passed for images, full biography expansion, fallback avatars, responsive layout and sticky header.
+All eight supplied committee profiles, roles, complete biographies and confirmed photographs are published. `P S.jpeg` maps to CA Prem Suman. Seven editorial people were created and one existing person reused. All four original people, private accepted/draft fields, account links and historical verification values were independently compared against the restored pre-rollout snapshot and preserved. Original account identities and credential hashes are unchanged. Editorial approval conferred no professional verification.
 
-Editorial approval preserves private member data and remains separate from professional verification. Its isolated HTTP test passed anonymous denial, stale review rejection, unchanged accepted private data and rejection of member changes through editorial approval.
+Original files are preserved. Responsive crops use only supplied pixels; every published photograph matches its reviewed prepared-image hash. Hosted desktop, tablet and phone checks passed image loading, expandable biographies, sticky headers and overflow checks; photo associations/crops were visually checked. Isolated acceptance also passed fallback avatars and photograph access before publication, replacement and withdrawal. Unsupported new organization/term fields remain empty.
 
-Database/identity regression passed five checks, including repeatable migrations, wrong-target rejection, legacy profile preservation, private-document constraints, recovery and immediate session revocation. Baseline direct-profile governance tests require onboarding disabled; enabled-mode attempts to change authoritative application fields correctly returned conflicts. The backend workstream verifies the baseline disabled-mode suite separately.
+Bank-transfer instructions are active and match `Payments.txt` exactly. Account numbers remain text; bank, branch, account holder and IFSC are supported. Existing UPI support passed regression and no UPI value was invented. Hosted member display passed at desktop, tablet and phone widths; anonymous access returns 401. Collection remains disabled. Display acceptance does not establish payment collection, settlement, reconciliation or refunds.
 
-Portrait HTTP regression passed owner/other-member isolation, private-before-publication access, explicit editorial approval/publication without professional verification, replacement privacy and withdrawal/object cleanup.
+## Verification
 
-Bank-transfer support preserves account numbers as text and validates IFSC, bank and branch. Supplied bank instructions match exactly in the isolated member API. No invented UPI value is needed. Anonymous access is denied. Bank and existing UPI activation/privacy regression passed. Collection, settlement, reconciliation and refunds are not verified by displaying instructions.
+| Area | Actual evidence |
+| --- | --- |
+| Unit/static/build | 72 unit tests; lint, typecheck and final frontend/worker build passed. |
+| Database/backend | Earlier 250-record synthetic transaction suite; latest seventeen database/API checks; invitation-enqueue failure rollback; two stale-policy rejections and two current-policy commits/replays passed. Fresh, legacy and repeated migrations passed. |
+| Onboarding/integration | Enabled and legacy-mode HTTP suites passed; editorial/private-field and portrait regressions passed. Authorization, recovery/session revocation, independent email/membership identity and concurrent duplicate rejection were exercised. |
+| Frontend | Broad 34-pass run with eight intentional project skips; focused 22-pass run with two intentional matrix skips; final two visual/header cases passed. Five widths, 140-pixel mobile-header cap, at least 4.5:1 tested text/link contrast, light/dark modes and zoom were checked. |
+| Real content | Final six governance/bank browser cases passed on the corrected fixed build; hosted governance and bank display passed all three widths. |
+| Data | Exact isolated and hosted 211-row batches independently reconciled; all source normalized fields matched; original people/accounts/credentials preserved; repeated production commit was safe. |
+| Protection | Thirty-eight local browser files had no configured secret matches. Eleven hosted JavaScript files and sampled pages had no matches for seven hosted secret values. Anonymous private staff/member endpoints returned 401. |
 
-## Recovery and pending verification
+Individual member creation/edit/view and duplicate membership-number/email rejection passed in the isolated rehearsal; no synthetic production member was created for that check. Existing verified badges and historical Student evidence/policy remain preserved while new Professional flows use the current foundation. See the coordinated [backend delivery](MEMBER_FOUNDATION_DELIVERY.md) for detailed contracts and test scope.
 
-A restricted pre-import PostgreSQL backup was restored successfully into the isolated rehearsal database. Production backup freshness, database identity, migrations, deployment acceptance and independent production reconciliation remain required before completion.
+## Recovery and cleanup
 
-The refreshed production snapshot restored successfully with six accounts, four people and one member profile, matching the unchanged source database. Its checksum and restore-database identifier are retained in the restricted backup evidence.
+Production database/project identity and normalized-email preflight passed. A fresh pre-rollout PostgreSQL backup restored successfully with six accounts, four people and one member profile before migrations 023–025. Postal provisioning installed 156,940 tuples and four reviewed aliases. Backup checksum, restore database, source batch ID, seven created editorial identifiers, portrait/payment identifiers and the reused person's prior snapshots are retained in restricted ignored `.local/real-data` reports; no member was created by this batch.
 
-Bank browser acceptance passed on desktop, tablet and phone. Final no-district-inference reconciliation passed all counts, uniqueness, safe repeated commit and isolated single-member creation/edit/view/duplicate rejection. The final six-case bank/governance browser run passed on the corrected fixed build. The broader browser run passed thirty-four cases with eight intentional project skips; the focused follow-up passed twenty-two cases with two intentional matrix skips. Latest backend acceptance passed seventeen database/API checks plus one invitation enqueue failure-injection rollback check. The final visual matrix and header tests passed: five widths without overflow, header within 140 pixels and preview text contrast at least 4.5:1. The final six bank/governance cases also passed on that exact build (1.9 minutes). A scan of thirty-eight browser files found no configured secret values.
+Only identified workstream artifacts were removed: the 118 superseded isolated import fixtures, exact synthetic test fixtures, eight rehearsal portrait objects proven absent from production references, and four explicitly identified rehearsal/older-backup databases. The latest restored recovery database and backup SQL remain. Zero production records were removed; unrelated production records remain intact.
 
-The first member commit request exceeded the client's five-minute header timeout while its server transaction continued. Recovery uses the same persisted batch ID, never a new batch. The operational client permits a bounded twenty-minute response. Slow import/proxy behavior remains a rollout consideration. Six identifiable payment-browser fixture accounts left by timed-out test teardown were removed only from the isolated database; the quiet restored account baseline is six. This test contamination must not be mistaken for import account creation.
+## Remaining work and release gates
 
-[Railway request limits](https://docs.railway.com/networking/public-networking/specs-and-limits) close HTTP requests after five minutes of silence. A longer client timeout alone does not resolve that hosted edge limit. General hosted bulk-import responsiveness remains a release gate; an operational import can use the identical authenticated API on a loopback-only fixed-build executor connected to the explicitly verified hosted database, followed by independent database and hosted UI reconciliation.
+Authoritative districts, address corrections and identity-conflict resolution are needed before source members can become eligible. Preserve the original workbook and revalidate a corrected authoritative batch; do not infer districts or overwrite conflicts.
 
-The existing DELIVERY_CHECKLIST.md remains authoritative. Physical-device, broader accessibility/usability, outstanding recovery sign-in and exact legacy synthetic cleanup gates are retained. No full production-readiness claim is made.
+Large synchronous imports remain a general transport gate: an earlier 250-record remote-PostgreSQL test took approximately 21 minutes. The zero-eligible hosted source batch completed and safely replayed, which does not prove large creation batches survive hosted timeouts. [Railway request limits](https://docs.railway.com/networking/public-networking/specs-and-limits) include a five-minute silent-request limit; a longer client timeout alone does not resolve it.
 
-Final narrow acceptance after the cached-policy and validation-link contrast fixes passed: two UI cases on the fixed build; two stale-policy rejections and two current-policy commits with identical replays. Isolated fixture cleanup passed. Production preflight still reports the expected database, four people and no normalized account-email collisions.
+The pinned postal snapshot is a republish of Department of Posts data; direct government acquisition was unavailable. Provenance/checksums are retained and aliases are limited to reviewed contexts.
+
+All outstanding gates in [DELIVERY_CHECKLIST.md](DELIVERY_CHECKLIST.md) remain: physical devices, broader accessibility/usability, outstanding human recovery sign-in and exact legacy synthetic cleanup; provider, consent, Google/WhatsApp and membership/payment/refund/learning/news policy gates. No blanket production-readiness claim is made.

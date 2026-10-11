@@ -47,3 +47,5 @@ Before production migration/import, take and restore-test a database backup, run
 `--http-only` reruns the concurrency and database/auth/mail/API suites without repeating the long 250-record transaction suite. `scripts/test-member-migration.mts` separately rehearses all migrations on a fresh empty database and repeats them. HTTP acceptance runs onboarding-enabled suites first, then restarts with onboarding disabled for legacy account/profile contracts. `--wait-build` is a local coordination option that waits for a freshly written `.local/member-http-build-ready` marker before starting HTTP tests.
 
 Real workbook parsing/preview reports must stay in ignored private local directories; never check member fixtures, tokens, database URLs or backup contents into Git.
+
+Old uncommitted member previews without current district-policy metadata return HTTP 409 with code stale_batch_policy. Create a fresh preview; committed batches retain stored-result replay behavior.

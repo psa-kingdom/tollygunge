@@ -6,7 +6,7 @@ const base = "https://tpassociation.org";
 const manifest = JSON.parse(
   await readFile(".local/real-data/content-manifest.json", "utf8"),
 );
-const browser = await chromium.launch();
+const browser = await chromium.launch({ channel: "chrome" });
 try {
   for (const [label, width] of [
     ["desktop", 1440],
