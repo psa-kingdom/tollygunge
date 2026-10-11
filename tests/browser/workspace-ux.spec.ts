@@ -357,6 +357,10 @@ test("verification reasons belong to one record and corrections preserve an exis
 });
 
 test("empty payment roster is keyboard accessible at responsive widths", async ({ page, context }, info) => {
+  const externalFonts: string[] = [];
+  page.on("request", request => {
+    if (/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(request.url())) externalFonts.push(request.url());
+  });
   await staff(context);
   await page.route("**/api/staff/registration-payments?*", route => route.fulfill({ json: [] }));
   const widths = info.project.name === "desktop" ? [1440, 1280] : [info.project.name === "tablet" ? 768 : 390];
@@ -375,4 +379,5 @@ test("empty payment roster is keyboard accessible at responsive widths", async (
     await noOverflow(page);
     await page.screenshot({ path: info.outputPath(`empty-payments-${width}.png`), fullPage: true });
   }
+  expect(externalFonts).toEqual([]);
 });
