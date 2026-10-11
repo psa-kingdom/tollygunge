@@ -32,7 +32,7 @@ export const navigation = [
 ];
 export function Brand() {
   return (
-    <Link href="/" className="brand" aria-label="TPA home">
+    <Link href="/" className="brand">
       <span className="brand-mark">
         tpa<span>·</span>
       </span>

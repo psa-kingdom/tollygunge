@@ -118,7 +118,9 @@ export function AccountControls({
           aria-expanded={open}
           onClick={() => setOpen(!open)}
         >
-          {actor ? actor.name.slice(0, 1).toUpperCase() : "◐"}
+          <span aria-hidden="true">
+            {actor ? actor.name.slice(0, 1).toUpperCase() : "◐"}
+          </span>
         </button>
         {open && (
           <div

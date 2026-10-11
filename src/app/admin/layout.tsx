@@ -16,7 +16,10 @@ export default async function StaffLayout({
   if (!actor.roles.length) redirect("/member");
   return (
     <div className="workspace staff-shell">
-      <aside className="sidebar staff-sidebar">
+      <aside
+        className="sidebar staff-sidebar"
+        aria-label="Staff workspace sidebar"
+      >
         <Brand />
         <p className="staff-label">Association workspace</p>
         <StaffNavigation groups={staffNavigation(actor.roles)} />

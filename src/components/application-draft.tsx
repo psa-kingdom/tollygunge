@@ -574,7 +574,6 @@ export function ApplicationDraft({
         {verificationSteps.map((s, i) => (
           <button
             key={s}
-            aria-label={`${i + 1}. ${s}`}
             className="button secondary"
             aria-current={draft.step === i ? "step" : undefined}
             disabled={!ready || busy}
@@ -585,9 +584,7 @@ export function ApplicationDraft({
               }
             }}
           >
-            <span className="member-step-number" aria-hidden="true">
-              {i + 1}
-            </span>
+            <span className="member-step-number">{i + 1}.</span>
             <span>{s}</span>
           </button>
         ))}

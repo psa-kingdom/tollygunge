@@ -174,7 +174,11 @@ export function VerificationReviews({
       </div>
       {error && <p role="alert">{error}</p>}
       <div className={"review-layout" + (selected ? " has-selection" : "")}>
-        <div className="review-list" aria-label="Verification records">
+        <div
+          className="review-list"
+          role="group"
+          aria-label="Verification records"
+        >
           {(view === "reviews" ? records?.reviews : records?.verified)?.map(
             (r) => (
               <button

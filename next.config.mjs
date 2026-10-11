@@ -1,7 +1,23 @@
 /** @type {import('next').NextConfig} */
 const config = {
   output: "standalone",
-  outputFileTracingIncludes: { "/api/locations": ["./data/postal/*.gz"], "/api/member/*": ["./data/postal/*.gz"], "/api/staff/*": ["./data/postal/*.gz"] },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
+  outputFileTracingIncludes: {
+    "/api/locations": ["./data/postal/*.gz"],
+    "/api/member/*": ["./data/postal/*.gz"],
+    "/api/staff/*": ["./data/postal/*.gz"],
+  },
   async redirects() {
     return [
       {

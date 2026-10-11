@@ -15,6 +15,7 @@ export function GovernancePortrait({
     return (
       <span
         className="person-avatar"
+        role="img"
         aria-label={`Photograph unavailable for ${name}`}
       >
         {name

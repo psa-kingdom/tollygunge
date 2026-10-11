@@ -25,7 +25,7 @@ export function MemberProfilePreview({
             : "Currently published · visible on the public website"}
         </p>
       </div>
-      <div className="preview-switch" aria-label="Preview version">
+      <div className="preview-switch" role="group" aria-label="Preview version">
         <button
           type="button"
           aria-pressed={view === "draft"}
