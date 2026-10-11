@@ -38,6 +38,29 @@ test("editorial keys cannot refer to private document objects", () => {
     mediaDetails({ title: "Title", altText: "", category: "Event" }),
   );
 });
+test("portrait crop uses only supplied pixels and rejects out-of-bounds rectangles", async () => {
+  const source = await sharp({
+    create: { width: 100, height: 80, channels: 3, background: "navy" },
+  })
+    .png()
+    .toBuffer();
+  const image = await normalizeMedia(source, "image/png", {
+    left: 20,
+    top: 10,
+    width: 60,
+    height: 60,
+  });
+  assert.equal(image.width, 60);
+  assert.equal(image.height, 60);
+  await assert.rejects(
+    normalizeMedia(source, "image/png", {
+      left: 70,
+      top: 10,
+      width: 60,
+      height: 60,
+    }),
+  );
+});
 test("homepage media placement is explicit and cannot be enabled by a string", () => {
   const details = {
     title: "Community image",

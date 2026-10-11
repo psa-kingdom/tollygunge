@@ -258,7 +258,7 @@ export function VerificationWorkspace() {
                           />
                           Required
                         </label>
-                        {["Professional", "Student"].map((c) => (
+                        {["Professional"].map((c) => (
                           <label className="consent" key={c}>
                             <input
                               type="checkbox"
@@ -298,7 +298,6 @@ export function VerificationWorkspace() {
                                 "supporting",
                                 "photograph",
                                 "certificate",
-                                "student_evidence",
                               ].map((x) => (
                                 <option key={x}>{x}</option>
                               ))}
@@ -351,7 +350,7 @@ export function VerificationWorkspace() {
                   step: Number(form.get("step")),
                   required: false,
                   visible: true,
-                  categories: ["Professional", "Student"],
+                  categories: ["Professional"],
                   maxLength: 1000,
                   ...(["select", "multiselect"].includes(type)
                     ? { options: ["Option 1"] }

@@ -1,5 +1,6 @@
 import "server-only";
 import { getDatabase } from "./database";
+import { publicPerson } from "@/domain/people";
 export async function publishedPeople() {
   const db = getDatabase();
   const groups = (
@@ -35,7 +36,8 @@ export async function publishedPeople() {
               id: `${p.id}:${group.id}`,
               portrait_alt: p.published.name,
               published: {
-                ...p.published,
+                ...publicPerson(p.published),
+                ...(p.published.verified === true ? {verified:true} : {}),
                 role: a.role,
                 assignmentLabel: a.label,
                 term: a.term,

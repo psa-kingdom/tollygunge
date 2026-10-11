@@ -39,8 +39,11 @@ try {
   await client.query(
     "CREATE TABLE IF NOT EXISTS public.tpa_migrations (name TEXT PRIMARY KEY, checksum TEXT NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
   );
+  const throughIndex=process.argv.indexOf("--through"),through=throughIndex<0?null:process.argv[throughIndex+1];
+  if(through!==null && !/^\d{3}$/.test(through)) throw new Error("--through requires a three-digit migration number.");
   for (const name of (await readdir(new URL("../migrations/", import.meta.url)))
     .filter((n) => n.endsWith(".sql"))
+    .filter((n) => through===null || n.slice(0,3)<=through)
     .sort()) {
     const sql = await readFile(
       new URL(`../migrations/${name}`, import.meta.url),

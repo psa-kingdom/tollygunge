@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createAuthClient } from "better-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { NewPasswordField } from "./new-password-field";
 const client = createAuthClient();
 export function Signup() {
   const router = useRouter();
@@ -46,17 +47,7 @@ export function Signup() {
         Email
         <input name="email" type="email" required autoComplete="email" />
       </label>
-      <label>
-        Password (12–128 characters)
-        <input
-          name="password"
-          type="password"
-          minLength={12}
-          maxLength={128}
-          autoComplete="new-password"
-          required
-        />
-      </label>
+      <NewPasswordField label="Password" />
       <p>
         Your account lets you save details. A Verified profile requires separate
         review; membership and payment remain separate.

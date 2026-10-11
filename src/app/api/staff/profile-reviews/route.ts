@@ -12,8 +12,8 @@ export async function POST(request: Request) {
     if (!admin(actor))
       throw new OperationError("Administrator review required.", 403);
     const input = await jsonBody(request);
-    if (!["approve", "reject"].includes(input.action))
-      throw new OperationError("Choose approve or reject.");
+    if (!["approve", "approve_editorial", "reject"].includes(input.action))
+      throw new OperationError("Choose approve, editorial approval or reject.");
     return transaction((client) => changePerson(client, actor, input));
   });
 }

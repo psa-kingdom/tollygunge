@@ -1,9 +1,24 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { api } from "./operations-client";
-type Row = { name: string; email: string; error?: string };
+type Row = {
+  name: string;
+  email: string;
+  error?: string;
+  reason?: string;
+  status?: string;
+  fieldErrors?: Record<string, string>;
+  normalizations?: unknown[];
+  member?: unknown;
+  match?: unknown;
+  proposedChanges?: unknown;
+  warnings?: string[];
+  sourceRow?: number;
+  membershipNumber?: string;
+};
 export function BulkOnboarding() {
   const [file, setFile] = useState<File | null>(null),
+    [mode, setMode] = useState("invitation"),
     [headers, setHeaders] = useState<string[]>([]),
     [fields, setFields] = useState<string[]>([]),
     [mapping, setMapping] = useState<Record<string, string>>({}),
@@ -11,6 +26,8 @@ export function BulkOnboarding() {
       id: string;
       rows: Row[];
       committed_at?: string | null;
+      mode?: string;
+      version?: number;
     } | null>(null),
     [results, setResults] = useState<
       {
@@ -34,8 +51,18 @@ export function BulkOnboarding() {
         rows: Row[];
         results: typeof results;
         committed_at: string | null;
+        mode?: string;
+        version?: number;
       }>("/api/staff/onboarding-import?id=" + id);
-      setPreview(batch);
+      setPreview({
+        ...batch,
+        mode: batch.mode === "existing-members" ? "members" : batch.mode,
+      });
+      setMode(
+        ["members", "existing-members"].includes(batch.mode ?? "")
+          ? "existing-members"
+          : "invitation",
+      );
       setResults(batch.results);
       setMessage(
         batch.committed_at
@@ -63,6 +90,7 @@ export function BulkOnboarding() {
     try {
       const form = new FormData();
       form.set("file", file);
+      form.set("mode", mode);
       if (mapped) form.set("mapping", JSON.stringify(mapping));
       const r = await fetch("/api/staff/onboarding-import", {
         method: "POST",
@@ -70,7 +98,11 @@ export function BulkOnboarding() {
       });
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
-      if (mapped) setPreview(d);
+      if (mapped || mode === "existing-members")
+        setPreview({
+          ...d,
+          mode: d.mode === "existing-members" ? "members" : d.mode,
+        });
       else {
         setHeaders(d.headers);
         setFields(d.fields);
@@ -90,17 +122,42 @@ export function BulkOnboarding() {
   }
   return (
     <section>
-      <h2>Import accounts</h2>
+      <h2>Import members or accounts</h2>
+      <label>
+        Import mode
+        <select
+          value={mode}
+          onChange={(e) => {
+            setMode(e.target.value);
+            setPreview(null);
+            setHeaders([]);
+            setResults([]);
+          }}
+        >
+          <option value="invitation">New accounts with invitations</option>
+          <option value="existing-members">
+            Existing members — no invitations
+          </option>
+        </select>
+      </label>
       <p>
-        Create ordinary unverified accounts and send password-setup invitations.
+        {mode === "existing-members"
+          ? "Use the supplied 13-column member workbook. All ambiguous duplicate groups are held. No emails, passwords, paid status or verification are created."
+          : "Create ordinary unverified accounts and send password-setup invitations."}
         Existing accounts are skipped. No passwords or verification badges can
         be imported.
       </p>
       <div className="action-row">
-        <a href="/api/staff/onboarding-import?template=csv" download>
+        <a
+          href={`/api/staff/onboarding-import?template=csv&mode=${mode}`}
+          download
+        >
           CSV template
         </a>
-        <a href="/api/staff/onboarding-import?template=xlsx" download>
+        <a
+          href={`/api/staff/onboarding-import?template=xlsx&mode=${mode}`}
+          download
+        >
           XLSX template
         </a>
       </div>
@@ -122,7 +179,9 @@ export function BulkOnboarding() {
         disabled={busy || !file}
         onClick={() => void read()}
       >
-        Read columns
+        {mode === "existing-members"
+          ? "Validate member workbook"
+          : "Read columns"}
       </button>
       {headers.length > 0 && (
         <>
@@ -163,7 +222,49 @@ export function BulkOnboarding() {
           <ul>
             {preview.rows.map((r, i) => (
               <li key={i}>
-                {r.name} · {r.email} · {r.error ?? "Ready to create"}
+                {r.sourceRow ? `Row ${r.sourceRow} · ` : ""}
+                {r.name} · {r.email} · {r.membershipNumber} ·{" "}
+                {r.status ?? "Preview"} ·{" "}
+                {r.error ?? r.reason ?? "Ready to check at commit"}
+                {r.warnings?.length ? " · " + r.warnings.join(" ") : ""}
+                {r.fieldErrors && (
+                  <ul>
+                    {Object.entries(r.fieldErrors).map(([field, error]) => (
+                      <li key={field}>
+                        {field}: {error}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {!!r.normalizations?.length && (
+                  <details>
+                    <summary>Recorded normalizations</summary>
+                    <pre>{JSON.stringify(r.normalizations, null, 2)}</pre>
+                  </details>
+                )}
+                {Boolean(r.member || r.match || r.proposedChanges) && (
+                  <details>
+                    <summary>
+                      Validated fields and existing-record comparison
+                    </summary>
+                    <pre
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {JSON.stringify(
+                        {
+                          member: r.member,
+                          match: r.match,
+                          proposedChanges: r.proposedChanges,
+                        },
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  </details>
+                )}
               </li>
             ))}
           </ul>
@@ -173,7 +274,9 @@ export function BulkOnboarding() {
             onClick={async () => {
               if (
                 !confirm(
-                  "Create the valid new accounts and queue their invitation emails?",
+                  preview.mode === "members"
+                    ? "Import eligible members without emails, holding conflicts and preserving existing records?"
+                    : "Create the valid new accounts and queue their invitation emails?",
                 )
               )
                 return;
@@ -181,7 +284,11 @@ export function BulkOnboarding() {
               try {
                 const d = await api<{ results: typeof results }>(
                   "/api/staff/onboarding-import",
-                  { action: "commit", id: preview.id },
+                  {
+                    action: "commit",
+                    id: preview.id,
+                    version: preview.version,
+                  },
                 );
                 setResults(d.results);
                 setPreview({
@@ -189,7 +296,9 @@ export function BulkOnboarding() {
                   committed_at: new Date().toISOString(),
                 });
                 setMessage(
-                  "Import committed. Check Email settings for delivery status.",
+                  preview.mode === "members"
+                    ? "Member import committed without invitations. Review every row outcome."
+                    : "Import committed. Check Email settings for delivery status.",
                 );
               } catch (e) {
                 setMessage(e instanceof Error ? e.message : "Commit failed.");

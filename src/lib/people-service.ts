@@ -1,5 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
+import { editorialProfile } from "@/domain/editorial-approval";
 import type { PoolClient } from "pg";
 import { hasPermission } from "@/domain/access";
 import {
@@ -11,6 +13,8 @@ import {
 } from "@/domain/people";
 import { record, uuid, version } from "@/domain/operations";
 import { audit, OperationError } from "./operation-api";
+import { memberInput, mobile } from "@/domain/member-foundation";
+import { validateAddresses } from "./member-address";
 type Actor = { id: string; name: string; roles: string[] };
 export function admin(actor: Actor) {
   return actor.roles.includes("administrator");
@@ -46,7 +50,7 @@ export async function ownPerson(client: PoolClient, actor: Actor) {
     });
     row = (
       await client.query(
-        "INSERT INTO tpa.people(id,user_id,accepted,draft) VALUES($1,$2,$3,$3) ON CONFLICT(user_id) DO UPDATE SET user_id=EXCLUDED.user_id RETURNING *",
+        'INSERT INTO tpa.people(id,user_id,accepted,draft,contact_email) SELECT $1,$2,$3,$3,lower(btrim(email)) FROM public."user" WHERE id=$2 ON CONFLICT(user_id) DO UPDATE SET user_id=EXCLUDED.user_id RETURNING *',
         [randomUUID(), actor.id, body],
       )
     ).rows[0];
@@ -84,8 +88,21 @@ export async function enriched(
           baseline: redactPerson(r.baseline),
         },
   );
+  const visibleRow = full
+    ? row
+    : Object.fromEntries(
+        Object.entries(row).filter(
+          ([key]) =>
+            ![
+              "contact_email",
+              "mobile_normalized",
+              "editorial_approved_snapshot",
+            ].includes(key),
+        ),
+      );
   return {
-    ...row,
+    ...visibleRow,
+    published: row.published ? publicPerson(row.published) : null,
     draft: full ? row.draft : redactPerson(row.draft),
     accepted: full ? row.accepted : redactPerson(row.accepted),
     history,
@@ -150,6 +167,7 @@ export async function changePerson(
       "save",
       "submit",
       "approve",
+      "approve_editorial",
       "reject",
       "publish",
       "unpublish",
@@ -198,6 +216,45 @@ export async function changePerson(
   let draft: PersonBody = row?.draft;
   if (action === "save") {
     const submitted = record(input.body);
+    const privateKeys = [
+      "email",
+      "mobile",
+      "addresses",
+      "prefix",
+      "firstName",
+      "lastName",
+    ];
+    if (
+      !ownerOnly &&
+      !privatePeople(actor) &&
+      privateKeys.some((k) => Object.hasOwn(submitted, k))
+    )
+      throw new OperationError(
+        "Private member details require member-review access.",
+        403,
+      );
+    if (submitted.phone !== undefined && submitted.phone !== row?.draft.phone)
+      submitted.phone = mobile(submitted.phone);
+    if (privateKeys.some((k) => Object.hasOwn(submitted, k))) {
+      const changedPrivate=Object.fromEntries(privateKeys.filter(k=>Object.hasOwn(submitted,k) && !isDeepStrictEqual(submitted[k],row?.draft[k as keyof PersonBody])).map(k=>[k,submitted[k]]));
+      const normalized = memberInput(
+        {
+          ...changedPrivate,
+          membershipNumber: "",
+        },
+        false,
+      );
+      for (const key of privateKeys.filter((k) => k !== "addresses"))
+        if (Object.hasOwn(changedPrivate, key))
+          submitted[key] = normalized[key as keyof typeof normalized];
+      if (Object.hasOwn(changedPrivate, "addresses"))
+        submitted.addresses = await validateAddresses(
+          client,
+          normalized.addresses,
+          row?.draft.addresses,
+          true,
+        );
+    }
     if (
       ownerOnly &&
       ["assignments", "userId", "status", "verified"].some((k) =>
@@ -257,6 +314,48 @@ export async function changePerson(
       "UPDATE tpa.people SET status='pending',version=version+1,updated_at=now() WHERE id=$1",
       [id],
     );
+  } else if (action === "approve_editorial") {
+    if (!admin(actor))
+      throw new OperationError("Administrator editorial review required.", 403);
+    const review = (
+      await client.query(
+        "SELECT * FROM tpa.profile_reviews WHERE id=$1 AND person_id=$2 AND status='pending' FOR UPDATE",
+        [uuid(input.reviewId), id],
+      )
+    ).rows[0];
+    if (
+      !review ||
+      !isDeepStrictEqual(review.body, row.draft) ||
+      !isDeepStrictEqual(personBody(review.baseline), personBody(row.accepted))
+    )
+      throw new OperationError(
+        "This editorial review changed. Submit the saved draft again.",
+        409,
+      );
+    const reason = typeof input.reason === "string" ? input.reason.trim() : "";
+    if (!reason || reason.length > 2000)
+      throw new OperationError(
+        "Provide an editorial review reason, up to 2,000 characters.",
+      );
+    draft = editorialProfile(review.body, row.accepted);
+    await validateReferences(client, id, draft);
+    await client.query(
+      "UPDATE tpa.profile_reviews SET status='approved',reviewed_by=$2,reason=$3,reviewed_at=now() WHERE id=$1",
+      [review.id, actor.id, reason],
+    );
+    await client.query(
+      "UPDATE tpa.people SET accepted=$2,draft=$2,editorial_approved_snapshot=$3,status=CASE WHEN accepted_verified THEN 'verified' ELSE 'unverified' END,version=version+1,updated_at=now() WHERE id=$1",
+      [id, draft, publicPerson(draft)],
+    );
+    await client.query(
+      "DELETE FROM tpa.person_assignments WHERE person_id=$1",
+      [id],
+    );
+    for (const a of draft.assignments)
+      await client.query(
+        "INSERT INTO tpa.person_assignments(person_id,group_id,role,term,display_order) VALUES($1,$2,$3,$4,$5)",
+        [id, a.groupId, a.role, a.term, a.order],
+      );
   } else if (action === "approve" || action === "reject") {
     if (!admin(actor))
       throw new OperationError("Only administrators can verify profiles.", 403);
@@ -294,6 +393,10 @@ export async function changePerson(
     );
     if (action === "approve") {
       await client.query(
+        "UPDATE tpa.people SET contact_email=coalesce(nullif($2,''),contact_email),mobile_normalized=nullif($3,'') WHERE id=$1",
+        [id, draft.email ?? "", draft.mobile ?? draft.phone],
+      );
+      await client.query(
         "UPDATE tpa.people SET accepted=$2,draft=$2,status='verified',accepted_verified=true,version=version+1,updated_at=now() WHERE id=$1",
         [id, draft],
       );
@@ -326,13 +429,19 @@ export async function changePerson(
   } else if (action === "publish") {
     if (!hasPermission(actor.roles, "content:publish"))
       throw new OperationError("Access denied.", 403);
+    const editorialSnapshot = (
+      row as PersonEntry & { editorial_approved_snapshot?: PersonBody }
+    ).editorial_approved_snapshot;
     if (
-      !row.accepted_verified ||
-      row.status !== "verified" ||
+      (!(row.accepted_verified && row.status === "verified") &&
+        !isDeepStrictEqual(
+          editorialSnapshot,
+          publicPerson(personBody(row.accepted)),
+        )) ||
       JSON.stringify(row.draft) !== JSON.stringify(row.accepted)
     )
       throw new OperationError(
-        "Only the verified, unchanged profile can be published.",
+        "Only the verified, unchanged profile can be published, or its unchanged editorial snapshot must be approved.",
       );
     if (!row.accepted.assignments?.length)
       throw new OperationError(
@@ -345,7 +454,14 @@ export async function changePerson(
     await validateReferences(client, id, row.accepted, true);
     await client.query(
       "UPDATE tpa.people SET published=$2,version=version+1,updated_at=now() WHERE id=$1",
-      [id, { ...publicPerson(row.accepted), verified: true }],
+      [
+        id,
+        {
+          ...publicPerson(row.accepted),
+          verified: row.accepted_verified,
+          editorialReviewed: !!editorialSnapshot,
+        },
+      ],
     );
   } else if (action === "unpublish") {
     if (!hasPermission(actor.roles, "content:publish"))
@@ -374,6 +490,12 @@ export async function changePerson(
       if (other) {
         if (
           other.published ||
+          (
+            await client.query(
+              "SELECT 1 FROM tpa.memberships WHERE person_id=$1",
+              [other.id],
+            )
+          ).rowCount ||
           other.accepted_verified ||
           (other.draft.assignments ?? []).length ||
           JSON.stringify(other.draft) !== JSON.stringify(other.accepted) ||

@@ -1,3 +1,4 @@
+import { mobile } from "./member-foundation";
 export function validateProfile(value: unknown) {
   if (!value || typeof value !== "object")
     throw new Error("Provide your profile details.");
@@ -9,7 +10,7 @@ export function validateProfile(value: unknown) {
     !["email", "none"].includes(String(input.contactPreference))
   )
     throw new Error("Check your profile details.");
-  const phone = input.phone.trim(),
+  const phone = mobile(input.phone),
     organization = input.organization.trim();
   const optional = (key: string) => {
     if (input[key] === undefined) return "";

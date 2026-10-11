@@ -1,4 +1,6 @@
 import ExcelJS from "exceljs";
+import { email as memberEmail, mobile, professionalOnly } from "./member-foundation";
+export type ImportCells = string[][] & { sourceRows?: number[]; cellErrors?: Record<number,string> };
 export type ImportRow = {
   name: string;
   email: string;
@@ -8,7 +10,8 @@ export type ImportRow = {
   error?: string;
 };
 export function parseCsv(text: string) {
-  const rows: string[][] = [];
+  const rows: ImportCells = [], sourceRows: number[] = [];
+  let physicalRow=1, startRow=1;
   let row: string[] = [],
     cell = "",
     quoted = false;
@@ -27,18 +30,20 @@ export function parseCsv(text: string) {
     } else if ((c === "\n" || c === "\r") && !quoted) {
       if (c === "\r" && text[i + 1] === "\n") i++;
       row.push(cell);
-      if (row.some((x) => x.trim())) rows.push(row);
+      if (row.some((x) => x.trim())) {rows.push(row);sourceRows.push(startRow);}
       if (rows.length > 1001) throw Error("Maximum 1,000 rows.");
       row = [];
       cell = "";
-    } else cell += c;
+      physicalRow++; startRow=physicalRow;
+    } else {cell += c; if(c==="\n") physicalRow++;}
   }
   if (quoted) throw Error("Unclosed CSV quote.");
   row.push(cell);
-  if (row.some((x) => x.trim())) rows.push(row);
+  if (row.some((x) => x.trim())) {rows.push(row);sourceRows.push(startRow);}
+  Object.defineProperty(rows,"sourceRows",{value:sourceRows});
   return rows;
 }
-export async function importCells(bytes: Uint8Array, filename: string) {
+export async function importCells(bytes: Uint8Array, filename: string, options: {rowErrors?:boolean} = {}) {
   if (bytes.length > 5 * 1024 * 1024) throw Error("Maximum file size is 5 MB.");
   if (filename.toLowerCase().endsWith(".csv"))
     return parseCsv(new TextDecoder().decode(bytes).replace(/^\uFEFF/, ""));
@@ -75,22 +80,32 @@ export async function importCells(bytes: Uint8Array, filename: string) {
     Buffer.from(bytes) as unknown as Parameters<typeof workbook.xlsx.load>[0],
   );
   if (workbook.worksheets.length !== 1) throw Error("Use one worksheet.");
-  const rows: string[][] = [];
+  const rows: ImportCells = [], sourceRows:number[] = [], cellErrors:Record<number,string>={};
   const sheet = workbook.worksheets[0];
   if (sheet.rowCount > 1001 || sheet.columnCount > 100)
     throw Error("Maximum 1,000 rows and 100 columns.");
-  sheet.eachRow((row) => {
+  sheet.eachRow((row,rowNumber) => {
     const values: string[] = [];
     row.eachCell({ includeEmpty: true }, (c, index) => {
       if (
         c.type === ExcelJS.ValueType.Formula ||
         (c.value && typeof c.value === "object" && "formula" in c.value)
       )
-        throw Error("Formula cells are not accepted.");
-      values[index - 1] = c.value instanceof Date ? c.value.toISOString().slice(0,10) : c.text;
+        {if(!options.rowErrors) throw Error("Formula cells are not accepted.");cellErrors[rowNumber]="Formula cells are not accepted.";}
+      if(c.value instanceof Date || c.type===ExcelJS.ValueType.Error || c.type===ExcelJS.ValueType.Boolean) {
+        if(options.rowErrors) cellErrors[rowNumber]="Date, boolean or Excel error cells cannot represent member identifiers or text.";
+      }
+      if(typeof c.value==="number") {
+        if(!Number.isSafeInteger(c.value) || c.value<0) cellErrors[rowNumber]="Non-integer, negative or unsafe numeric cell; store identifiers as text.";
+        const format=c.numFmt || "";
+        if(options.rowErrors && format && format!=="General" && !/^0+$/.test(format)) cellErrors[rowNumber]="Unsupported numeric display format; store identifiers as text.";
+        values[index-1]= /^0+$/.test(format) ? String(c.value).padStart(format.length,"0") : String(c.value);
+      } else values[index - 1] = c.value instanceof Date ? c.value.toISOString().slice(0,10) : c.text;
     });
-    rows.push(values);
+    if(values.some(x=>x?.trim()) || cellErrors[rowNumber]) {rows.push(values);sourceRows.push(rowNumber);}
   });
+  if(cellErrors[sourceRows[0]]) throw Error("Malformed template header.");
+  Object.defineProperties(rows,{sourceRows:{value:sourceRows},cellErrors:{value:cellErrors}});
   return rows;
 }
 export function mapImport(
@@ -127,7 +142,7 @@ export function mapImport(
     const category = value("category") || "Professional",
       plan = value("plan") || "Annual";
     let error =
-      ["Professional", "Student"].includes(category) &&
+      category === "Professional" &&
       ["Annual", "Life", "Patron"].includes(plan)
         ? ""
         : "Check category or plan.";
@@ -150,6 +165,7 @@ export function mapImport(
     if (seen.has(email)) error = "Duplicate email in file.";
     seen.add(email);
     for (const key of allowed) if (mapping[key]) details[key] = value(key);
+    try {professionalOnly(category);memberEmail(email,true);if(details.phone) details.phone=mobile(details.phone);} catch {error="Check member email, mobile or Professional category.";}
     if (Object.values(details).some((x) => x.length > 5000))
       error = "An answer is too long.";
     return {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { currentActor } from "@/lib/actor";
 import { AccountControls } from "./account-controls";
 import { MemberNavigation } from "./member-navigation";
+import { StickyHeaderState } from "./sticky-header-state";
 export const navigation = [
   {
     title: "About",
@@ -47,6 +48,7 @@ export async function Header() {
   const actor = await currentActor();
   return (
     <header className="site-header">
+      <StickyHeaderState />
       <Brand />
       <nav className="desktop-nav" aria-label="Primary">
         {navigation.map((n) => (
@@ -113,6 +115,7 @@ export async function AccountShell({
   return (
     <div className={staff ? "staff-account-shell" : "member-shell"}>
       <header className="site-header account-header">
+        <StickyHeaderState />
         <Brand />
         {staff ? (
           <nav aria-label="Account navigation">

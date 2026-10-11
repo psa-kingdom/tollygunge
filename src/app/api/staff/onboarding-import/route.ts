@@ -1,4 +1,6 @@
-import { randomUUID, randomBytes } from "node:crypto";
+import { randomUUID, randomBytes, createHash } from "node:crypto";
+import { memberHeaders } from "@/domain/member-import";
+import { createMemberPreview, memberBatchAction, isMemberBatch } from "@/lib/member-import";
 import ExcelJS from "exceljs";
 import {
   operation,
@@ -17,13 +19,15 @@ import {
   type ImportRow,
 } from "@/domain/onboarding-import";
 import { validateAnswers } from "@/domain/verification";
+import { validatePostalAddresses } from "@/lib/postal-directory";
 import { hashToken, queueOnboardingMail } from "@/lib/onboarding-mail";
+import { createInvitedAccount } from "@/lib/account-provisioning";
 export async function GET(r: Request) {
   try {
     const actor = await authorized(r, "staff:manage");
     const url = new URL(r.url);
     if (url.searchParams.has("template")) {
-      const fields = [
+      const fields = ["members","existing-members"].includes(url.searchParams.get("mode") ?? "") ? memberHeaders : [
         "name",
         "email",
         "category",
@@ -101,8 +105,6 @@ export async function GET(r: Request) {
 export async function POST(r: Request) {
   return operation(async () => {
     const actor = await authorized(r, "staff:manage", true);
-    if (process.env.ONBOARDING_ENABLED !== "true")
-      throw new OperationError("Onboarding is disabled.", 503);
     const db = getDatabase();
     if (r.headers.get("content-type")?.includes("multipart/form-data")) {
       const bytes = await boundedBody(r, 5 * 1024 * 1024 + 65536),
@@ -112,11 +114,24 @@ export async function POST(r: Request) {
         file = form.get("file");
       if (!(file instanceof File) || file.size > 5 * 1024 * 1024)
         throw new OperationError("Choose a file up to 5 MB.");
-      const cells = await importCells(
+      const parsed = await importCells(
         new Uint8Array(await file.arrayBuffer()),
         file.name,
+        { rowErrors: true },
       );
+      const cells = parsed;
       const p = await policy();
+      const mode = String(form.get("mode") ?? "invitation");
+      if (!["invitation", "existing-members","members","accounts"].includes(mode)) throw new OperationError("Choose an import mode.");
+      if (mode === "existing-members" || mode === "members") {
+        return transaction(async c=>{
+          const preview=await createMemberPreview(c,actor.id,cells,cells.sourceRows,cells.cellErrors,mode==="existing-members");
+          await c.query("UPDATE tpa.onboarding_batches SET source_hash=$2,filename=$3 WHERE id=$1",[preview.id,createHash("sha256").update(new Uint8Array(await file.arrayBuffer())).digest("hex"),file.name]);
+          return {...preview,mode,rows:preview.rows.map(row=>({...row,...(row.status==="failed" || row.status==="conflict" ? {error:row.reason} : {})}))};
+        });
+      }
+      if (Object.keys(cells.cellErrors ?? {}).length) throw new OperationError("Formula or malformed Excel cells are not accepted in account imports.");
+      if(process.env.ONBOARDING_ENABLED!=="true") throw new OperationError("Onboarding is disabled.",503);
       if (!form.get("mapping"))
         return {
           headers: cells[0],
@@ -138,7 +153,10 @@ export async function POST(r: Request) {
       for (const row of rows) {
         if (!row.error) {
           try {
-            row.details = validateAnswers(row.details, p.fields);
+            if (row.category && row.category !== "Professional")
+            throw new OperationError("Only professional applications may be imported.");
+          row.details = validateAnswers(row.details, p.fields);
+          await validatePostalAddresses(row.details,{},db,true);
           } catch {
             row.error = "Mapped values do not match field rules.";
           }
@@ -161,6 +179,8 @@ export async function POST(r: Request) {
       return { id, rows };
     }
     const i = await jsonBody(r);
+    if(await isMemberBatch(i.id,actor.id)) return transaction(c=>memberBatchAction(c,actor.id,i));
+    if(process.env.ONBOARDING_ENABLED!=="true") throw new OperationError("Onboarding is disabled.",503);
     if (i.action === "retry" || i.action === "reissue") {
       return transaction(async (c) => {
         const job = (
@@ -241,14 +261,11 @@ export async function POST(r: Request) {
         }
         await c.query("SAVEPOINT onboarding_row");
         try {
+          if (row.category && row.category !== "Professional")
+            throw new OperationError("Only professional applications may be imported.");
           row.details = validateAnswers(row.details, p.fields);
-          const user = randomUUID();
-          const inserted = (
-            await c.query(
-              'INSERT INTO public."user"(id,name,email,"emailVerified","createdAt","updatedAt") VALUES($1,$2,$3,false,now(),now()) ON CONFLICT(email) DO NOTHING RETURNING id',
-              [user, row.name, row.email],
-            )
-          ).rows[0];
+          await validatePostalAddresses(row.details,{},c,true);
+          const inserted = await createInvitedAccount(c,{name:row.name,email:row.email});
           if (!inserted) {
             results.push({
               email: row.email,
@@ -257,6 +274,7 @@ export async function POST(r: Request) {
             });
             continue;
           }
+          const user=inserted.accountId;
           await c.query(
             "INSERT INTO tpa.application_drafts(id,user_id,plan,category,details,requirement_version) VALUES($1,$2,$3,$4,$5,$6)",
             [
@@ -267,19 +285,6 @@ export async function POST(r: Request) {
               row.details,
               p.version,
             ],
-          );
-          const token = randomBytes(32).toString("base64url");
-          await c.query(
-            "INSERT INTO tpa.onboarding_invitations(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '48 hours')",
-            [hashToken(token), user],
-          );
-          await queueOnboardingMail(
-            c,
-            user,
-            row.email,
-            "invitation",
-            `${process.env.BETTER_AUTH_URL}/invitation#token=${token}`,
-            "invite-" + user,
           );
           results.push({ email: row.email, status: "created" });
         } catch {

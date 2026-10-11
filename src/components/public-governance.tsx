@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { GovernancePortrait } from "./governance-portrait";
 import { RichContent } from "./rich-content";
 import type { PersonBody } from "@/domain/people";
 export type PublicGovernanceEntry = {
@@ -29,27 +29,17 @@ export function PublicGovernance({
       {entries.map(({ id, published: p, portrait_available, portrait_alt }) => (
         <article className="person-card" key={id}>
           <div className="person-card-identity">
-            {p.portraitId && portrait_available ? (
-              <Image
-                unoptimized
-                src={
-                  p.portraitKind === "profile"
+            <GovernancePortrait
+              name={p.name}
+              alt={portrait_alt ?? p.name}
+              src={
+                p.portraitId && portrait_available
+                  ? p.portraitKind === "profile"
                     ? `/api/profile-portraits/${p.portraitId}`
                     : `/media/${p.portraitId}`
-                }
-                width={160}
-                height={160}
-                alt={portrait_alt ?? p.name}
-              />
-            ) : (
-              <span className="person-avatar" aria-hidden="true">
-                {p.name
-                  .split(/\s+/)
-                  .slice(0, 2)
-                  .map((n) => n[0])
-                  .join("")}
-              </span>
-            )}
+                  : undefined
+              }
+            />
             <div>
               <span className="eyebrow">
                 {[p.parentName, p.groupName].filter(Boolean).join(" / ")}
@@ -71,11 +61,16 @@ export function PublicGovernance({
               )}
             </div>
           </div>
-          {(p.profession || p.organization || p.city) && (
+          {(p.profession || p.jobTitle || p.organization || p.city) && (
             <p className="person-profession">
-              {[p.profession, p.organization, p.city]
+              {[p.profession, p.jobTitle, p.organization, p.city]
                 .filter(Boolean)
                 .join(" · ")}
+            </p>
+          )}
+          {p.biography && (
+            <p>
+              {p.biography.match(/^.{60,}?[.!?](?=\s|$)/)?.[0] ?? p.biography}
             </p>
           )}
           {p.biography && (

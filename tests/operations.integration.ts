@@ -300,7 +300,7 @@ test(
       const application = {
         version: 0,
         plan: "Annual",
-        category: "Student",
+        category: "Professional",
         details: {
           fullName: "Synthetic applicant",
           institution: "Synthetic college",

@@ -1,16 +1,20 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PersonEditor } from "./person-editor";
 import { api } from "./operations-client";
 import type { PersonEntry } from "@/domain/people";
-export function PersonalProfile() {
+export function PersonalProfile({ email }: { email: string }) {
   const [entry, setEntry] = useState<PersonEntry>(),
     [message, setMessage] = useState("Loading your profile…"),
     [newsletter, setNewsletter] = useState(false),
     [contact, setContact] = useState("email"),
     [onboardingDetails, setOnboardingDetails] = useState(false),
     [verificationRequired, setVerificationRequired] = useState(false),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [addresses, setAddresses] = useState<Record<string, string>>({}),
+    [addressError, setAddressError] = useState(false),
+    [loadError, setLoadError] = useState(false);
   useEffect(() => {
     let active = true;
     api<{
@@ -31,32 +35,52 @@ export function PersonalProfile() {
         }
       })
       .catch((e) => {
-        if (active) setMessage(e.message);
+        if (active) {
+          setMessage(e.message);
+          setLoadError(true);
+        }
+      });
+    api<{ details?: Record<string, string> } | null>("/api/member/application")
+      .then((d) => {
+        if (active) setAddresses(d?.details || {});
+      })
+      .catch(() => {
+        if (active) setAddressError(true);
       });
     return () => {
       active = false;
     };
   }, []);
+  if (!entry)
+    return (
+      <section className="member-card" aria-label="Profile loading">
+        <p role={loadError ? "alert" : "status"}>{message}</p>
+        {loadError && (
+          <button
+            className="button secondary"
+            onClick={() => window.location.reload()}
+          >
+            Retry loading profile
+          </button>
+        )}
+      </section>
+    );
   return (
-    <section>
-      <h2>Your personal profile</h2>
-      <p>
-        Save and submit changes for administrator review. Public details remain
-        unchanged until verified and explicitly published. Your phone is
-        private.
-      </p>
+    <section className="personal-profile">
+      {!entry && <p role="status">{message}</p>}
       {entry && (
         <PersonEditor
           entry={entry}
           verificationRequired={verificationRequired}
           onboardingDetails={onboardingDetails}
           owner
+          accountEmail={email}
           canEditPrivate
           onSaved={setEntry}
         />
       )}
       <form
-        className="member-settings"
+        className="member-settings member-card profile-support-card"
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
@@ -98,6 +122,36 @@ export function PersonalProfile() {
           Save communication preferences
         </button>
       </form>
+      <section className="member-card profile-support-card">
+        <div className="form-section-heading">
+          <h3>Address & verification</h3>
+          <p>
+            Office and residential addresses are private and reviewed with your
+            verification details.
+          </p>
+        </div>
+        {addressError ? (
+          <p role="alert">
+            Address summary is unavailable. Open verification to retry.
+          </p>
+        ) : (
+          <dl className="private-address-summary">
+            <div>
+              <dt>Office</dt>
+              <dd>{addresses.officeAddress || "No office address saved"}</dd>
+            </div>
+            <div>
+              <dt>Residence</dt>
+              <dd>
+                {addresses.residenceAddress || "No residential address saved"}
+              </dd>
+            </div>
+          </dl>
+        )}
+        <Link href="/member/application" className="button secondary">
+          Manage verification & addresses
+        </Link>
+      </section>
       <p role="status">{message}</p>
     </section>
   );

@@ -196,6 +196,69 @@ test(
       );
       const uri = "upi://pay?pa=synthetic%40invalid&pn=Synthetic%20test",
         bytes = await qrcode.toBuffer(uri, { width: 512, margin: 4 });
+      const bankDetails = {
+        method: "bank",
+        label: "Synthetic bank transfer",
+        payee: "Synthetic association",
+        accountNumber: "00123456789",
+        ifsc: "ABCD0123456",
+        bank: "Synthetic bank",
+        branch: "Synthetic branch",
+      };
+      const bankSave = await request("/api/staff/payment-details", 0, {
+        action: "save",
+        version: 0,
+        details: { ...bankDetails, apiSecret: "must not appear" },
+      });
+      assert.equal(bankSave.status, 200);
+      const bankRecord = await bankSave.json();
+      ids.push(bankRecord.id);
+      assert.equal(
+        (
+          await request("/api/staff/payment-details", 0, {
+            action: "active",
+            id: bankRecord.id,
+            version: 1,
+            confirmPayee: true,
+          })
+        ).status,
+        200,
+      );
+      const bankActive = (
+        await (await request("/api/member/payment-details", 1)).json()
+      ).records.find((r: { id: string }) => r.id === bankRecord.id).details;
+      assert.equal(bankActive.accountNumber, bankDetails.accountNumber);
+      assert.equal(bankActive.upiId, "");
+      assert.equal(bankActive.apiSecret, undefined);
+      assert.equal(
+        (
+          await request("/api/staff/payment-details", 1, {
+            action: "save",
+            id: bankRecord.id,
+            version: 2,
+            details: bankDetails,
+          })
+        ).status,
+        403,
+      );
+      assert.equal(
+        (
+          await request("/api/staff/payment-details", 0, {
+            action: "save",
+            id: bankRecord.id,
+            version: 2,
+            details: { ...bankDetails, branch: "Changed branch" },
+          })
+        ).status,
+        200,
+      );
+      assert.equal(
+        (
+          await (await request("/api/member/payment-details", 1)).json()
+        ).records.find((r: { id: string }) => r.id === bankRecord.id).details
+          .branch,
+        "Synthetic branch",
+      );
       const upload = async (bytes: Uint8Array) => {
         const form = new FormData();
         form.set(

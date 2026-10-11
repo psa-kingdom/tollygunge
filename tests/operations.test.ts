@@ -56,7 +56,7 @@ test("CMS preserves sitemap anchors and rejects unsafe sources and unattributed 
 test("application drafts strip identity/status/payment fields and events cannot enable unapproved fees or hours", () => {
   const input = applicationInput({
     plan: "Annual",
-    category: "Student",
+    category: "Professional",
     version: 0,
     documentIds: [],
     details: {

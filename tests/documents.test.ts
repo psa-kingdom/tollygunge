@@ -14,7 +14,7 @@ test("rejects unsafe upload categories, formats and sizes", () => {
   );
   assert.throws(() => validateDocument("certificate", "application/pdf", 0));
   assert.throws(() => validateDocument("other", "application/pdf", 100));
-  assert.doesNotThrow(() =>
+  assert.throws(() =>
     validateDocument("student_evidence", "application/pdf", 100),
   );
 });

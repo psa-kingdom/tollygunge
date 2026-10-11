@@ -7,7 +7,13 @@ type DocumentRecord = {
   byte_size: number;
   created_at: string;
 };
-export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
+export function MemberProfile({
+  storageEnabled,
+  email,
+}: {
+  storageEnabled: boolean;
+  email: string;
+}) {
   const [loading, setLoading] = useState(true),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
@@ -17,11 +23,8 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
     let active = true;
     (async () => {
       try {
-        const [p, d] = await Promise.all([
-          fetch("/api/member/profile"),
-          fetch("/api/documents"),
-        ]);
-        if (!p.ok || !d.ok) throw new Error();
+        const d = await fetch("/api/documents");
+        if (!d.ok) throw new Error();
         const docs = await d.json();
         if (active) {
           setDocuments(docs);
@@ -38,16 +41,23 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
       active = false;
     };
   }, []);
-  if (loading) return <p role="status">Loading your profile…</p>;
-  if (loadError)
-    return (
-      <p role="alert">Unable to load your records. Refresh to try again.</p>
-    );
   return (
-    <div className="member-settings">
-      <PersonalProfile />
-      <section>
+    <div className="member-profile-content">
+      <PersonalProfile email={email} />
+      <section className="member-card profile-support-card">
         <h2>Private documents</h2>
+        {loading && <p role="status">Loading your documents…</p>}
+        {loadError && (
+          <p role="alert">
+            Unable to load your documents.{" "}
+            <button
+              className="text-button"
+              onClick={() => window.location.reload()}
+            >
+              Reload documents
+            </button>
+          </p>
+        )}
         {!storageEnabled && (
           <p className="notice">
             Private uploads and downloads are being configured. Existing records
@@ -59,6 +69,7 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
           reviewers can access these files.
         </p>
         <form
+          className="form-grid document-upload-form"
           onSubmit={async (e) => {
             e.preventDefault();
             const form = e.currentTarget;
@@ -91,9 +102,6 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
             <select name="kind">
               <option value="certificate">Professional certificate</option>
               <option value="photograph">Photograph</option>
-              <option value="student_evidence">
-                Student eligibility evidence
-              </option>
             </select>
           </label>
           <label>
@@ -109,23 +117,25 @@ export function MemberProfile({ storageEnabled }: { storageEnabled: boolean }) {
             className="button secondary"
             disabled={busy || !storageEnabled}
           >
-            Upload document
+            {busy ? "Uploading…" : "Upload document"}
           </button>
         </form>
-        {documents.length === 0 ? (
-          <p>No documents uploaded yet.</p>
-        ) : (
-          <ul>
-            {documents.map((d) => (
-              <li key={d.id}>
-                <a href={`/api/documents/${d.id}`}>
-                  {d.kind.replaceAll("_", " ")} ·{" "}
-                  {Math.ceil(d.byte_size / 1024)} KB
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
+        {!loading &&
+          !loadError &&
+          (documents.length === 0 ? (
+            <p>No documents uploaded yet.</p>
+          ) : (
+            <ul>
+              {documents.map((d) => (
+                <li key={d.id}>
+                  <a href={`/api/documents/${d.id}`}>
+                    {d.kind.replaceAll("_", " ")} ·{" "}
+                    {Math.ceil(d.byte_size / 1024)} KB
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ))}
       </section>
       <p role="status">{message}</p>
     </div>

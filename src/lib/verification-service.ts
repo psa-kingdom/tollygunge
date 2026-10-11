@@ -1,3 +1,4 @@
+import { validatePostalAddresses } from "./postal-directory";
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
@@ -95,6 +96,8 @@ export async function submitVerification(
   ).rows[0];
   if (!draft || draft.version !== expected)
     throw new OperationError("Save the latest form before submitting.", 409);
+  if (draft.category !== "Professional")
+    throw new OperationError("Save your draft as a professional application before submitting.");
   const p = await policy(client);
   const answers = validateAnswers(draft.details, p.fields),
     missing = missingFields(
@@ -103,6 +106,7 @@ export async function submitVerification(
       draft.category,
       !!user.emailVerified,
     );
+  await validatePostalAddresses(answers,{},client,false);
   if (missing.length)
     throw new OperationError("Complete: " + missing.join(", "));
   for (const f of p.fields.filter(
@@ -126,6 +130,7 @@ export async function submitVerification(
     ...person.draft,
     name: answers.fullName,
     phone: answers.phone,
+    mobile: answers.phone,
     organization: answers.organization ?? person.draft.organization,
   });
   await client.query(
@@ -230,8 +235,8 @@ export async function reviewVerification(
         true,
       ).length > 0;
     await client.query(
-      "UPDATE tpa.people SET accepted=$2,draft=$2,accepted_verified=true,verification_version=$3,verification_update_requested=$4,version=version+1,status='verified',updated_at=now() WHERE id=$1",
-      [r.person_id, r.person_snapshot, r.requirement_version, updateRequested],
+      "UPDATE tpa.people SET accepted=$2,draft=$2,accepted_verified=true,verification_version=$3,verification_update_requested=$4,version=version+1,status='verified',mobile_normalized=$5,updated_at=now() WHERE id=$1",
+      [r.person_id, r.person_snapshot, r.requirement_version, updateRequested, r.person_snapshot.mobile ?? r.person_snapshot.phone ?? null],
     );
     if (updateRequested) {
       const account = (

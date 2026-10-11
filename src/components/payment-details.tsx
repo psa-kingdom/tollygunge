@@ -3,6 +3,11 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { api } from "./operations-client";
 type Details = {
+  method?: "upi" | "bank";
+  accountNumber?: string;
+  ifsc?: string;
+  bank?: string;
+  branch?: string;
   label: string;
   payee: string;
   upiId: string;
@@ -119,7 +124,8 @@ export function PaymentDetailsManager() {
             >
               <strong>{r.draft.label}</strong>
               <small>
-                {r.status} · {r.draft.upiId}
+                {r.status} ·{" "}
+                {r.draft.method === "bank" ? r.draft.bank : r.draft.upiId}
               </small>
             </button>
           ))}
@@ -155,6 +161,23 @@ export function PaymentDetailsManager() {
             }}
           >
             <label>
+              Payment method
+              <select
+                value={form.method ?? "upi"}
+                onChange={(e) => {
+                  setForm({
+                    ...form,
+                    method: e.target.value as "upi" | "bank",
+                    qrId: null,
+                  });
+                  setConfirmed(false);
+                }}
+              >
+                <option value="upi">UPI</option>
+                <option value="bank">Bank transfer</option>
+              </select>
+            </label>
+            <label>
               Label
               <input
                 required
@@ -183,7 +206,8 @@ export function PaymentDetailsManager() {
             <label>
               UPI ID
               <input
-                required
+                required={(form.method ?? "upi") === "upi"}
+                disabled={form.method === "bank"}
                 maxLength={120}
                 value={form.upiId}
                 onChange={(e) => {
@@ -192,6 +216,28 @@ export function PaymentDetailsManager() {
                 }}
               />
             </label>
+            {form.method === "bank" &&
+              (
+                [
+                  ["accountNumber", "Account number", 34],
+                  ["ifsc", "IFSC", 11],
+                  ["bank", "Bank", 160],
+                  ["branch", "Branch", 160],
+                ] as const
+              ).map(([key, label, maxLength]) => (
+                <label key={key}>
+                  {label}
+                  <input
+                    required
+                    maxLength={maxLength}
+                    value={form[key] ?? ""}
+                    onChange={(e) => {
+                      setForm({ ...form, [key]: e.target.value });
+                      setConfirmed(false);
+                    }}
+                  />
+                </label>
+              ))}
             <label>
               Payment contact number (optional)
               <input
@@ -205,74 +251,76 @@ export function PaymentDetailsManager() {
               Save draft details
             </button>
           </form>
-          <form
-            className="member-settings"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!file) return;
-              setBusy(true);
-              try {
-                const body = new FormData();
-                body.set("file", file);
-                const response = await fetch("/api/staff/payment-qr", {
-                  method: "POST",
-                  body,
-                });
-                const data = await response.json();
-                if (!response.ok)
-                  throw new Error(data.error ?? "Upload failed.");
-                setForm({ ...form, qrId: data.id });
-                setConfirmed(false);
-                setFile(undefined);
-                setMessage(
-                  "QR uploaded privately. Save draft details to attach it, then verify before activation.",
-                );
-              } catch (e) {
-                setMessage(e instanceof Error ? e.message : "Upload failed.");
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            <label>
-              Upload or replace QR photo (JPEG/PNG, up to 5 MB)
-              <input
-                type="file"
-                accept="image/jpeg,image/png"
-                onChange={(e) => setFile(e.target.files?.[0])}
-              />
-            </label>
-            <button className="button secondary" disabled={busy || !file}>
-              Upload QR photo
-            </button>
-            {form.qrId && (
-              <>
-                <Image
-                  unoptimized
-                  src={`/api/payment-qr/${form.qrId}`}
-                  width={300}
-                  height={300}
-                  alt="Draft payment QR; verify payee before activating"
-                  style={{
-                    maxWidth: "100%",
-                    height: "auto",
-                    objectFit: "contain",
-                  }}
+          {form.method !== "bank" && (
+            <form
+              className="member-settings"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!file) return;
+                setBusy(true);
+                try {
+                  const body = new FormData();
+                  body.set("file", file);
+                  const response = await fetch("/api/staff/payment-qr", {
+                    method: "POST",
+                    body,
+                  });
+                  const data = await response.json();
+                  if (!response.ok)
+                    throw new Error(data.error ?? "Upload failed.");
+                  setForm({ ...form, qrId: data.id });
+                  setConfirmed(false);
+                  setFile(undefined);
+                  setMessage(
+                    "QR uploaded privately. Save draft details to attach it, then verify before activation.",
+                  );
+                } catch (e) {
+                  setMessage(e instanceof Error ? e.message : "Upload failed.");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <label>
+                Upload or replace QR photo (JPEG/PNG, up to 5 MB)
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={(e) => setFile(e.target.files?.[0])}
                 />
-                <button
-                  className="button secondary"
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setForm({ ...form, qrId: null });
-                    setConfirmed(false);
-                  }}
-                >
-                  Remove QR from draft
-                </button>
-              </>
-            )}
-          </form>
+              </label>
+              <button className="button secondary" disabled={busy || !file}>
+                Upload QR photo
+              </button>
+              {form.qrId && (
+                <>
+                  <Image
+                    unoptimized
+                    src={`/api/payment-qr/${form.qrId}`}
+                    width={300}
+                    height={300}
+                    alt="Draft payment QR; verify payee before activating"
+                    style={{
+                      maxWidth: "100%",
+                      height: "auto",
+                      objectFit: "contain",
+                    }}
+                  />
+                  <button
+                    className="button secondary"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      setForm({ ...form, qrId: null });
+                      setConfirmed(false);
+                    }}
+                  >
+                    Remove QR from draft
+                  </button>
+                </>
+              )}
+            </form>
+          )}
           {selected && (
             <>
               <p>
@@ -283,8 +331,11 @@ export function PaymentDetailsManager() {
               {selected.active_snapshot && selected.status === "active" && (
                 <p>
                   Currently active: {selected.active_snapshot.payee} ·{" "}
-                  {selected.active_snapshot.upiId}. Saving edits keeps these
-                  instructions until explicit activation.
+                  {selected.active_snapshot.method === "bank"
+                    ? selected.active_snapshot.bank
+                    : selected.active_snapshot.upiId}
+                  . Saving edits keeps these instructions until explicit
+                  activation.
                 </p>
               )}
               <label className="payment-confirm">
@@ -293,7 +344,8 @@ export function PaymentDetailsManager() {
                   checked={confirmed}
                   onChange={(e) => setConfirmed(e.target.checked)}
                 />
-                I verified that the saved UPI ID, payee and QR belong to TPA.
+                I verified that the saved payment instructions and payee belong
+                to TPA.
               </label>
               <div className="action-row">
                 <button
@@ -328,8 +380,10 @@ export function PaymentDetailsManager() {
                 .map((r) => (
                   <p key={r.version}>
                     Revision {r.version} · {r.status} · {r.details.payee} ·{" "}
-                    {r.details.upiId} ·{" "}
-                    {new Date(r.created_at).toLocaleString()}
+                    {r.details.method === "bank"
+                      ? r.details.bank
+                      : r.details.upiId}{" "}
+                    · {new Date(r.created_at).toLocaleString()}
                   </p>
                 ))}
             </>
@@ -367,9 +421,22 @@ export function MemberPaymentDetails() {
         <section className="content-section" key={r.id}>
           <h2>{r.details.label}</h2>
           <p>Payee: {r.details.payee}</p>
-          <p>
-            UPI ID: <strong>{r.details.upiId}</strong>
-          </p>
+          {r.details.method === "bank" ? (
+            <dl>
+              <dt>Account number</dt>
+              <dd>{r.details.accountNumber}</dd>
+              <dt>IFSC</dt>
+              <dd>{r.details.ifsc}</dd>
+              <dt>Bank</dt>
+              <dd>{r.details.bank}</dd>
+              <dt>Branch</dt>
+              <dd>{r.details.branch}</dd>
+            </dl>
+          ) : (
+            <p>
+              UPI ID: <strong>{r.details.upiId}</strong>
+            </p>
+          )}
           {r.details.phone && <p>Payment contact: {r.details.phone}</p>}
           {r.details.qrId && (
             <Image

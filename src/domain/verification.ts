@@ -1,3 +1,5 @@
+import { addressKeys, addressComplete, parseAddress, normalizeAddresses } from "./address";
+import { mobile, prefix, clean } from "./member-foundation";
 export type VerificationField = {
   id: string;
   label: string;
@@ -41,7 +43,7 @@ const field = (
   required,
   type,
   visible: true,
-  categories: ["Professional", "Student"],
+  categories: ["Professional"],
   options,
   maxLength:
     id === "fullName"
@@ -53,14 +55,14 @@ const field = (
           : 1000,
 });
 export const initialFields: VerificationField[] = [
-  field("qualification", "Qualification / course", 0, true),
+  field("qualification", "Qualification", 0, true),
   field("professionalStatus", "Professional status", 0, true, "select", [
     "In Practice",
     "In Service",
     "In Business",
     "Other",
   ]),
-  field("organization", "Organisation / institution", 0),
+  field("organization", "Organisation", 0),
   field("professionalBody", "Professional body", 0, false, "select", [
     "None",
     "CA",
@@ -79,6 +81,7 @@ export const initialFields: VerificationField[] = [
     "Miss",
     "Ms",
     "Dr",
+    "Prof", "CA", "CS", "CMA", "Adv",
     "Other",
   ]),
   field("fullName", "Full name", 1, true),
@@ -135,11 +138,6 @@ export const initialFields: VerificationField[] = [
     ...field("certificate", "Professional certificate", 3, true, "document"),
     categories: ["Professional"],
     documentKind: "certificate",
-  },
-  {
-    ...field("studentEvidence", "Student evidence", 3, true, "document"),
-    categories: ["Student"],
-    documentKind: "student_evidence",
   },
   field("proposerName", "Proposer name", 3),
   field("proposerNumber", "Proposer membership number", 3),
@@ -198,7 +196,8 @@ export function validateFields(
       typeof f.visible !== "boolean" ||
       typeof f.required !== "boolean" ||
       !Array.isArray(f.categories) ||
-      f.categories.some((c) => !["Professional", "Student"].includes(c)) ||
+      f.categories.some((c) => c !== "Professional") ||
+      !f.categories.length ||
       (f.required && !f.visible)
     )
       throw Error("Check field configuration.");
@@ -222,7 +221,7 @@ export function validateFields(
       throw Error("Use a character limit from 1 to 5,000.");
     if (
       f.type === "document" &&
-      !["certificate", "photograph", "student_evidence", "supporting"].includes(
+      !["certificate", "photograph", "supporting"].includes(
         f.documentKind ?? "",
       )
     )
@@ -237,6 +236,7 @@ export function validateFields(
 export function validateAnswers(
   input: unknown,
   fields: VerificationField[],
+  previous:Record<string,string>={},
 ): Record<string, string> {
   if (!input || typeof input !== "object" || Array.isArray(input))
     throw Error("Check form answers.");
@@ -249,6 +249,7 @@ export function validateAnswers(
       result[id] = v;
       continue;
     }
+    if(previous[id]===v) {result[id]=v;continue;}
     if (v.length > (f.maxLength ?? 1000))
       throw Error(`${f.label} is too long.`);
     if (
@@ -271,9 +272,9 @@ export function validateAnswers(
       result[id] = JSON.stringify(a);
       continue;
     }
-    result[id] = v;
+    result[id] = id === "phone" && v ? mobile(v) : id === "title" && v ? prefix(v) : ["fullName","organization"].includes(id) ? clean(v,id,id==="fullName"?120:200) : v;
   }
-  return result;
+  return normalizeAddresses(result);
 }
 export function missingFields(
   fields: VerificationField[],
@@ -295,6 +296,7 @@ export function missingFields(
           (f.type === "multiselect" && answers[f.id] === "[]")),
     )
     .map((f) => f.label);
+  if(category!=="Professional") missing.push("Professional category required");
   if (!emailVerified) missing.push("Verify your account email");
   if (
     (answers.correspondenceAddress === "Office" &&
@@ -303,6 +305,12 @@ export function missingFields(
       !answers.residenceAddress?.trim())
   )
     missing.push("Selected correspondence address");
+  for (const key of addressKeys) {
+    if (answers[`${key}Structured`] && (answers.correspondenceAddress === (key === "officeAddress" ? "Office" : "Residence"))) {
+      try { if (!addressComplete(parseAddress(answers[`${key}Structured`]))) missing.push("Complete selected correspondence address"); }
+      catch { missing.push("Check selected correspondence address"); }
+    }
+  }
   return missing;
 }
 
@@ -323,5 +331,5 @@ export function requirementUpdateNeeded(
         !old.categories.includes(category))
     );
   });
-  return missingFields(newlyRequired, answers, category, true).length > 0;
+  return newlyRequired.some(f=>applicable(f,category)) && missingFields(newlyRequired, answers, category, true).length > 0;
 }

@@ -5,10 +5,13 @@ import { boundedBody } from "@/domain/request-body";
 import { isSameOrigin } from "./request-policy";
 import { getDatabase } from "./database";
 import type { PoolClient } from "pg";
+import { MemberValidationError } from "@/domain/member-foundation";
 export class OperationError extends Error {
   constructor(
     message: string,
     public status = 400,
+    public code?: string,
+    public fieldErrors?: Record<string, string>,
   ) {
     super(message);
   }
@@ -66,9 +69,11 @@ export async function operation(work: () => Promise<unknown>) {
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch (error) {
+    if (error instanceof MemberValidationError)
+      return Response.json({ error: error.message, code: error.code, fieldErrors: error.fieldErrors }, { status: 400, headers: { "Cache-Control": "private, no-store" } });
     if (error instanceof OperationError)
       return Response.json(
-        { error: error.message },
+        { error: error.message, ...(error.code ? { code: error.code } : {}), ...(error.fieldErrors ? { fieldErrors: error.fieldErrors } : {}) },
         {
           status: error.status,
           headers: { "Cache-Control": "private, no-store" },
@@ -81,7 +86,7 @@ export async function operation(work: () => Promise<unknown>) {
         : undefined;
     if (code === "23505")
       return Response.json(
-        { error: "This record already exists." },
+        { error: "This record already exists.", code: "duplicate_conflict" },
         { status: 409 },
       );
     return Response.json(

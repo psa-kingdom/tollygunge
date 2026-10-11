@@ -1,0 +1,14 @@
+{
+  "version": "india-post-2026-10-10",
+  "publisher": "Department of Posts, Government of India",
+  "source": "https://www.data.gov.in/resource/all-india-pincode-directory-till-last-month",
+  "mirror": "https://raw.githubusercontent.com/dropdevrahul/pincodes-india/d26206918dd2fb9f155bfba18de0421bd5fa0ca8/pincode.csv",
+  "retrieved": "2026-10-10",
+  "sourceSha256": "84af12fa29adddedfa9addcf46546000d89d2e2899b2993dc88050fafc8861e2",
+  "license": "Government Open Data License - India",
+  "records": 156940,
+  "states": 36,
+  "districts": 737,
+  "pins": 19300,
+  "limitations": "Postal office names are postal localities, not city boundaries. Snapshot may retain older administrative names. No coordinates are retained. Not affiliated with or endorsed by the Government of India."
+}

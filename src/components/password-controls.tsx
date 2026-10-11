@@ -3,6 +3,8 @@ import { createAuthClient } from "better-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { NewPasswordField } from "./new-password-field";
+import { passwordPolicy, passwordError } from "@/domain/password-policy";
 const client = createAuthClient();
 
 export function PasswordResetLanding() {
@@ -140,6 +142,8 @@ export function PasswordUpdate({
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
     [complete, setComplete] = useState(false);
+  const [passwordValue, setPasswordValue] = useState(""),
+    [confirmation, setConfirmation] = useState("");
   if (complete)
     return (
       <div>
@@ -162,6 +166,10 @@ export function PasswordUpdate({
         const form = event.currentTarget,
           data = new FormData(form);
         const password = String(data.get("password"));
+        if (passwordError(password)) {
+          setMessage(passwordError(password));
+          return;
+        }
         if (password !== data.get("confirm")) {
           setMessage("Passwords must match.");
           return;
@@ -188,6 +196,7 @@ export function PasswordUpdate({
             return;
           }
           form.reset();
+          setConfirmation("");
           if (signedIn)
             setMessage(
               "Password changed. Other sessions have been signed out.",
@@ -210,33 +219,40 @@ export function PasswordUpdate({
             name="current"
             autoComplete="current-password"
             required
-            maxLength={128}
+            maxLength={passwordPolicy.maximum}
           />
         </label>
       )}
-      <label>
-        New password
-        <input
-          type="password"
-          name="password"
-          autoComplete="new-password"
-          required
-          minLength={12}
-          maxLength={128}
-        />
-      </label>
+      <NewPasswordField onChange={setPasswordValue} />
       <label>
         Confirm new password
         <input
           type="password"
           name="confirm"
+          onChange={(e) => setConfirmation(e.target.value)}
+          aria-describedby="password-match"
+          aria-invalid={!!confirmation && confirmation !== passwordValue}
           autoComplete="new-password"
           required
-          minLength={12}
-          maxLength={128}
+          minLength={passwordPolicy.minimum}
+          maxLength={passwordPolicy.maximum}
         />
       </label>
-      <p>Use at least 12 characters.</p>
+      <small
+        id="password-match"
+        className={
+          confirmation && confirmation !== passwordValue
+            ? "field-error"
+            : "field-help"
+        }
+        aria-live="polite"
+      >
+        {confirmation
+          ? confirmation === passwordValue
+            ? "Passwords match."
+            : "Passwords must match."
+          : "Enter the same password again."}
+      </small>
       <button className="button" disabled={busy || (!signedIn && !token)}>
         {busy ? "Saving…" : signedIn ? "Change password" : "Reset password"}
       </button>

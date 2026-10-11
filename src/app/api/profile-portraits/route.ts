@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     const image = await normalizeMedia(
       new Uint8Array(await file.arrayBuffer()),
       file.type,
+      form.get("crop") ? JSON.parse(String(form.get("crop"))) : undefined,
     );
     const alt = text(form.get("altText"), "Portrait description", 200, 2);
     if (!privateStorageConfigured())

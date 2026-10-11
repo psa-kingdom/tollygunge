@@ -1,4 +1,5 @@
 import { record, text, uuid } from "./operations";
+import { type Addresses, clean } from "./member-foundation";
 import {
   validateRich,
   richText,
@@ -25,6 +26,12 @@ export type Assignment = {
   order: number;
 };
 export type PersonBody = {
+  prefix?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  mobile?: string;
+  addresses?: Addresses;
   name: string;
   phone: string;
   organization: string;
@@ -142,6 +149,12 @@ export function personBody(value: unknown): PersonBody {
   )
     throw Error("Invalid portrait category.");
   return {
+    ...(p.prefix === undefined ? {} : { prefix: clean(p.prefix, "prefix", 30) }),
+    ...(p.firstName === undefined ? {} : { firstName: clean(p.firstName, "firstName", 120) }),
+    ...(p.lastName === undefined ? {} : { lastName: clean(p.lastName, "lastName", 120) }),
+    ...(p.email === undefined ? {} : { email: clean(p.email, "email", 254) }),
+    ...(p.mobile === undefined ? {} : { mobile: clean(p.mobile, "mobile", 32) }),
+    ...(p.addresses === undefined ? {} : { addresses: p.addresses as Addresses }),
     name: text(p.name, "Display name", 120, 2),
     phone,
     organization: text(p.organization ?? "", "Organization", 200),
@@ -162,14 +175,23 @@ export function personBody(value: unknown): PersonBody {
   };
 }
 export function publicPerson(body: PersonBody) {
+  const safe = redactPerson(body);
   return {
-    ...body,
+    ...safe,
     phone: "",
     links: body.links?.filter((l) => l.public) ?? [],
   };
 }
 export function redactPerson(body: PersonBody) {
-  return { ...body, phone: "" };
+  // Allow-list serialization protects historical and future private keys too.
+  return {
+    name: body.name, organization: body.organization, profession: body.profession,
+    jobTitle: body.jobTitle, city: body.city, biography: body.biography,
+    ...(body.biographyRich ? { biographyRich: body.biographyRich } : {}),
+    ...(body.nameSize ? { nameSize: body.nameSize } : {}),
+    portraitId: body.portraitId, portraitKind: body.portraitKind,
+    assignments: body.assignments, links: body.links, phone: "",
+  };
 }
 export function groupBody(value: unknown) {
   const p = record(value);

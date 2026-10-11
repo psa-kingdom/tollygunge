@@ -18,7 +18,11 @@ export function mediaDetails(value: unknown) {
 export function mediaObjectKey(id: string) {
   return `tpa/editorial/media/${uuid(id)}`;
 }
-export async function normalizeMedia(bytes: Uint8Array, contentType: string) {
+export async function normalizeMedia(
+  bytes: Uint8Array,
+  contentType: string,
+  crop?: { left: number; top: number; width: number; height: number },
+) {
   if (
     !bytes.length ||
     bytes.length > MAX_DOCUMENT_BYTES ||
@@ -34,8 +38,26 @@ export async function normalizeMedia(bytes: Uint8Array, contentType: string) {
   )
     throw new Error("Use a static JPEG or PNG.");
   // Re-encoding drops EXIF/GPS, comments and appended data; never retain the original.
-  const output = await image
-    .rotate()
+  const oriented = image.rotate();
+  if (crop) {
+    const swapped = (metadata.orientation ?? 1) >= 5;
+    const width = (swapped ? metadata.height : metadata.width) ?? 0,
+      height = (swapped ? metadata.width : metadata.height) ?? 0;
+    if (
+      [crop.left, crop.top, crop.width, crop.height].some(
+        (v) => !Number.isSafeInteger(v),
+      ) ||
+      crop.left < 0 ||
+      crop.top < 0 ||
+      crop.width < 1 ||
+      crop.height < 1 ||
+      crop.left + crop.width > width ||
+      crop.top + crop.height > height
+    )
+      throw new Error("Choose a crop inside the original photograph.");
+    oriented.extract(crop);
+  }
+  const output = await oriented
     .resize({
       width: 2400,
       height: 2400,

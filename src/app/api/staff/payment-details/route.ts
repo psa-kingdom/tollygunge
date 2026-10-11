@@ -55,7 +55,7 @@ export async function POST(request: Request) {
         );
       if (action === "active" && body.confirmPayee !== true)
         throw new OperationError(
-          "Confirm that the payee, UPI ID and QR belong to TPA before activation.",
+          "Confirm that the payment instructions and payee belong to TPA before activation.",
         );
       const draft = details ?? existing?.draft;
       if (

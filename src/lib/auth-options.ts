@@ -1,4 +1,7 @@
+import { passwordPolicy } from "@/domain/password-policy";
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
+import { email as memberEmail } from "@/domain/member-foundation";
 import type { Pool } from "pg";
 import { queueOnboardingMail, hashToken } from "./onboarding-mail";
 import { recoveryConfigured, sendRecoveryEmail } from "./auth-email";
@@ -16,6 +19,12 @@ export function createAuth(
     databaseHooks: {
       user: {
         create: {
+          before: async (user) => {
+            const normalized=memberEmail(user.email,true);
+            if ((await database.query("SELECT 1 FROM tpa.people WHERE lower(btrim(contact_email))=$1 AND user_id IS NULL",[normalized])).rowCount)
+              throw new APIError("CONFLICT",{message:"A member record already exists. Ask staff to link or invite your website account."});
+            return {data:{...user,email:normalized}};
+          },
           after: async (user) => {
             if (env.ONBOARDING_ENABLED === "true")
               await database.query(
@@ -78,8 +87,8 @@ export function createAuth(
     emailAndPassword: {
       enabled: true,
       disableSignUp: env.ONBOARDING_ENABLED !== "true",
-      minPasswordLength: 12,
-      maxPasswordLength: 128,
+      minPasswordLength: passwordPolicy.minimum,
+      maxPasswordLength: passwordPolicy.maximum,
       resetPasswordTokenExpiresIn: 15 * 60,
       revokeSessionsOnPasswordReset: true,
       onPasswordReset: async ({ user }) => {

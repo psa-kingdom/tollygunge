@@ -1,3 +1,5 @@
+import { normalizeAddresses, addressKeys } from "@/domain/address";
+import { validatePostalAddresses } from "@/lib/postal-directory";
 import { applicationInput } from "@/domain/operations";
 import { randomUUID } from "node:crypto";
 import { getDatabase } from "@/lib/database";
@@ -24,6 +26,7 @@ export async function GET(r: Request) {
     if (!row) return null;
     return {
       ...row,
+      ...(row.category === "Student" ? { legacyCategory: "Student", convertedFromStudent: true } : {}),
       documentIds: (
         await db.query(
           "SELECT document_id FROM tpa.application_documents WHERE application_id=$1",
@@ -43,7 +46,7 @@ export async function POST(r: Request) {
       !Number.isInteger(i.version) ||
       i.version < 0 ||
       !["Annual", "Life", "Patron"].includes(i.plan) ||
-      !["Professional", "Student"].includes(i.category) ||
+      i.category !== "Professional" ||
       !Array.isArray(i.documentIds) ||
       i.documentIds.length > 100 ||
       (i.step !== undefined &&
@@ -67,13 +70,15 @@ export async function POST(r: Request) {
         );
       const p = await policy(c);
       const legacy = process.env.ONBOARDING_ENABLED !== "true";
-      const details = legacy
+      const details = normalizeAddresses(legacy
         ? applicationInput(i).details
-        : validateAnswers(i.details, p.fields);
+        : validateAnswers(i.details, p.fields,existing?.details ?? {}));
+      await validatePostalAddresses(details,existing?.details ?? {},c,true);
       for (const [id, value] of Object.entries(details)) {
         if (
           !legacy &&
           !p.fields.some((f) => f.id === id) &&
+          !addressKeys.some(key => `${key}Structured` === id && p.fields.some(f => f.id === key && f.visible)) &&
           value !== existing?.details?.[id]
         )
           throw new OperationError("Use fields from the published form.");

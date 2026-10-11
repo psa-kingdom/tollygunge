@@ -70,7 +70,7 @@ test(
         documentIds: [] as string[],
         details: {
           fullName: "Test professional",
-          phone: "1234567890",
+          phone: "9876543210",
           qualification: "CA",
           professionalStatus: "In Practice",
           professionalBody: "CA",
@@ -146,7 +146,7 @@ test(
           step: 1,
           required: true,
           visible: true,
-          categories: ["Professional", "Student"],
+          categories: ["Professional"],
         },
       ];
       r = await request("/api/staff/verification", 0, {

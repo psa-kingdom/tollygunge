@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "./operations-client";
+import { MemberRegister } from "./member-register";
 type Person = {
   id: string;
   person_id: string | null;
@@ -15,6 +16,9 @@ type Person = {
   city: string;
   staff_account: boolean;
   created_at: string;
+  membership_number?: string;
+  source_details?: Record<string, string>;
+  category?: string;
 };
 type Filters = {
   q: string;
@@ -35,6 +39,30 @@ const empty: Filters = {
   review: "all",
 };
 export function MembersWorkspace() {
+  const [view, setView] = useState("accounts");
+  return (
+    <>
+      <div className="action-row">
+        <button
+          className="button secondary"
+          onClick={() => setView("register")}
+          aria-pressed={view === "register"}
+        >
+          Member register
+        </button>
+        <button
+          className="button secondary"
+          onClick={() => setView("accounts")}
+          aria-pressed={view === "accounts"}
+        >
+          Account directory
+        </button>
+      </div>
+      {view === "register" ? <MemberRegister /> : <AccountDirectory />}
+    </>
+  );
+}
+function AccountDirectory() {
   const [filters, setFilters] = useState(empty),
     [applied, setApplied] = useState(empty);
   const [directory, setDirectory] = useState<Directory>(),
@@ -381,6 +409,12 @@ export function MembersWorkspace() {
                   ["Profession", selected.profession],
                   ["Job title", selected.job_title],
                   ["City", selected.city],
+                  ["Membership number", selected.membership_number],
+                  ["Category", selected.category],
+                  ["Address", selected.source_details?.address],
+                  ["Country", selected.source_details?.country],
+                  ["State", selected.source_details?.state],
+                  ["PIN", selected.source_details?.pin],
                 ].map(([label, value]) => (
                   <div key={label}>
                     <dt>{label}</dt>

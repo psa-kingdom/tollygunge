@@ -131,7 +131,7 @@ test(
       );
       const body = {
         name: label,
-        phone: "+91 1234567890",
+        phone: "+919876543210",
         organization: "Synthetic company",
         profession: "Professional",
         jobTitle: "Partner",

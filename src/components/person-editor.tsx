@@ -26,6 +26,8 @@ import {
   type PersonEntry,
   type ProfileGroup,
 } from "@/domain/people";
+import { ProfileSection } from "./profile-section";
+import { MemberProfilePreview } from "./member-profile-preview";
 import { useUnsavedProfile } from "./use-unsaved-profile";
 function normalized(p: PersonBody) {
   try {
@@ -39,6 +41,7 @@ export function PersonEditor({
   groups = [],
   editorial = [],
   owner = false,
+  accountEmail,
   verificationRequired = false,
   onboardingDetails = false,
   canReview = false,
@@ -51,6 +54,7 @@ export function PersonEditor({
   groups?: ProfileGroup[];
   editorial?: { id: string; title: string }[];
   owner?: boolean;
+  accountEmail?: string;
   verificationRequired?: boolean;
   onboardingDetails?: boolean;
   canReview?: boolean;
@@ -61,6 +65,7 @@ export function PersonEditor({
 }) {
   const [body, setBody] = useState<PersonBody>(entry?.draft ?? emptyPerson),
     [busy, setBusy] = useState(false),
+    [activeAction, setActiveAction] = useState(""),
     [message, setMessage] = useState(""),
     [panel, setPanel] = useState("edit"),
     [reason, setReason] = useState(""),
@@ -136,6 +141,7 @@ export function PersonEditor({
     setConfirm(false);
   }
   async function act(action: string, accountLink = userId || null) {
+    setActiveAction(action);
     setBusy(true);
     setMessage("");
     try {
@@ -185,7 +191,14 @@ export function PersonEditor({
   const previewEntries: PublicGovernanceEntry[] = (
     body.assignments.length
       ? body.assignments
-      : [{ groupId: "", role: "Personal profile preview", term: "", order: 0 }]
+      : [
+          {
+            groupId: "",
+            role: owner ? "" : "Personal profile preview",
+            term: "",
+            order: 0,
+          },
+        ]
   ).map((a) => ({
     id: `${entry?.id ?? "new"}:${a.groupId}`,
     published: {
@@ -194,7 +207,8 @@ export function PersonEditor({
       term: a.term,
       order: a.order,
       groupName:
-        groups.find((g) => g.id === a.groupId)?.draft.name ?? "Your profile",
+        groups.find((g) => g.id === a.groupId)?.draft.name ??
+        (owner ? "" : "Your profile"),
       page,
       section,
     },
@@ -241,13 +255,16 @@ export function PersonEditor({
     );
   const pending = entry?.reviews?.find((r) => r.status === "pending");
   return (
-    <>
+    <div className={owner ? "member-profile-editor" : "person-editor"}>
       <div className="content-editor-heading">
         <div>
-          <h2>{entry ? "Edit person" : "New person"}</h2>
+          <h2>
+            {owner ? "Your profile" : entry ? "Edit person" : "New person"}
+          </h2>
           <p>
-            Personal details, association assignments and public publication
-            have separate approval steps.
+            {owner
+              ? "Shape your professional presence. Save privately, then submit your changes for review."
+              : "Personal details, association assignments and public publication have separate approval steps."}
           </p>
         </div>
         <span className="content-save-state">
@@ -278,8 +295,11 @@ export function PersonEditor({
         {["edit", "preview"].map((v, i) => (
           <button
             key={v}
+            type="button"
             role="tab"
+            tabIndex={panel === v ? 0 : -1}
             aria-selected={panel === v}
+            id={`person-tab-${v}`}
             aria-controls={`person-panel-${v}`}
             onClick={() => setPanel(v)}
             onKeyDown={(e) => {
@@ -309,6 +329,8 @@ export function PersonEditor({
       <div className="content-editor-columns">
         <section
           id="person-panel-edit"
+          role={owner ? "tabpanel" : undefined}
+          aria-labelledby={owner ? "person-tab-edit" : undefined}
           className={`content-editor-panel ${panel === "edit" ? "mobile-active" : ""}`}
         >
           <form
@@ -325,269 +347,357 @@ export function PersonEditor({
                   <Link href="/member/application">verification form</Link>.
                 </p>
               )}
-              <div className="form-grid">
-                {(
-                  [
-                    ["name", "Display name", 120],
-                    ["profession", "Professional title", 160],
-                    ["organization", "Organization", 200],
-                    ["jobTitle", "Job title", 120],
-                    ["city", "City", 120],
-                    ...(owner || canEditPrivate
-                      ? [["phone", "Phone (private)", 32]]
-                      : []),
-                  ] as [keyof PersonBody, string, number][]
-                ).map(([key, label, limit]) => (
-                  <label key={key}>
-                    {label}
-                    <input
-                      value={String(body[key] ?? "")}
-                      readOnly={
-                        owner &&
-                        onboardingDetails &&
-                        ["name", "organization", "phone"].includes(key)
-                      }
-                      required={key === "name"}
-                      maxLength={limit}
-                      onChange={(e) => field(key, e.target.value as never)}
-                    />
-                    <TextCounter
-                      label={label}
-                      value={String(body[key] ?? "")}
-                      limit={limit}
-                    />
-                  </label>
-                ))}
-              </div>
-              <label>
-                Name size
-                <select
-                  value={body.nameSize ?? "body"}
-                  onChange={(e) =>
-                    field("nameSize", e.target.value as PersonBody["nameSize"])
-                  }
+              {(
+                [
+                  {
+                    title: "Who am I?",
+                    description: "Your name and public location.",
+                    fields: [
+                      ["name", "Display name", 120],
+                      ["city", "Public city", 120],
+                    ],
+                  },
+                  {
+                    title: "Professional identity",
+                    description:
+                      "Help other members understand your expertise.",
+                    fields: [
+                      ["jobTitle", "Designation / job title", 120],
+                      ["profession", "Professional title", 160],
+                      ["organization", "Organization", 200],
+                    ],
+                  },
+                  ...(owner || canEditPrivate
+                    ? [
+                        {
+                          title: "Contact",
+                          description:
+                            "Your phone is private and never appears in the public preview.",
+                          fields: [["phone", "Mobile number (private)", 32]],
+                        },
+                      ]
+                    : []),
+                ] as {
+                  title: string;
+                  description: string;
+                  fields: [keyof PersonBody, string, number][];
+                }[]
+              ).map((group) => (
+                <ProfileSection
+                  key={group.title}
+                  title={group.title}
+                  description={group.description}
                 >
-                  {["small", "body", "large", "display"].map((s) => (
-                    <option key={s} value={s}>
-                      {s[0].toUpperCase() + s.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <h3>Biography</h3>
-              <RichEditor
-                label="Biography"
-                document={body.biographyRich}
-                text={body.biography}
-                limit={20000}
-                disabled={busy}
-                onChange={(rich, text) =>
-                  setBody((p) => ({
-                    ...p,
-                    biography: text,
-                    biographyRich: rich,
-                  }))
-                }
-              />
-              <h3>Portrait</h3>
-              <label>
-                Portrait selection
-                <select
-                  value={
-                    body.portraitId
-                      ? `${body.portraitKind ?? "editorial"}:${body.portraitId}`
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const [kind, id] = e.target.value.split(":");
+                  <div className="form-grid">
+                    {group.fields.map(([key, label, limit]) => (
+                      <label
+                        key={key}
+                        className={
+                          key === "organization" ? "form-span" : undefined
+                        }
+                      >
+                        {label}
+                        <input
+                          value={String(body[key] ?? "")}
+                          type={key === "phone" ? "tel" : "text"}
+                          autoComplete={
+                            key === "name"
+                              ? "name"
+                              : key === "organization"
+                                ? "organization"
+                                : key === "phone"
+                                  ? "tel"
+                                  : "off"
+                          }
+                          readOnly={
+                            owner &&
+                            onboardingDetails &&
+                            ["name", "organization", "phone"].includes(key)
+                          }
+                          required={key === "name"}
+                          maxLength={limit}
+                          onChange={(e) => field(key, e.target.value as never)}
+                        />
+                        {owner &&
+                        onboardingDetails &&
+                        ["name", "organization", "phone"].includes(key) ? (
+                          <small>
+                            Managed in your{" "}
+                            <Link href="/member/application">
+                              verification details
+                            </Link>
+                            .
+                          </small>
+                        ) : (
+                          <TextCounter
+                            label={label}
+                            value={String(body[key] ?? "")}
+                            limit={limit}
+                          />
+                        )}
+                      </label>
+                    ))}
+                    {group.title === "Contact" && accountEmail && (
+                      <label>
+                        Email (private)
+                        <input type="email" value={accountEmail} readOnly />
+                        <small>
+                          Your sign-in email. Email verification is separate
+                          from profile review.
+                        </small>
+                      </label>
+                    )}
+                  </div>
+                </ProfileSection>
+              ))}
+              <details className="profile-display-options">
+                <summary>Profile display options</summary>
+                <label>
+                  Name size
+                  <select
+                    value={body.nameSize ?? "body"}
+                    onChange={(e) =>
+                      field(
+                        "nameSize",
+                        e.target.value as PersonBody["nameSize"],
+                      )
+                    }
+                  >
+                    {["small", "body", "large", "display"].map((s) => (
+                      <option key={s} value={s}>
+                        {s[0].toUpperCase() + s.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </details>
+              <ProfileSection
+                title="About you"
+                description="A short introduction to your work, interests and experience."
+              >
+                <RichEditor
+                  label="Biography"
+                  document={body.biographyRich}
+                  text={body.biography}
+                  limit={20000}
+                  disabled={busy}
+                  onChange={(rich, text) =>
                     setBody((p) => ({
                       ...p,
-                      portraitId: id || null,
-                      portraitKind: (kind ||
-                        "editorial") as PersonBody["portraitKind"],
-                    }));
-                  }}
-                >
-                  <option value="">Use initials</option>
-                  {editorial.map((p) => (
-                    <option key={p.id} value={`editorial:${p.id}`}>
-                      {p.title}
-                    </option>
-                  ))}
-                  {portraitData.portraits.map((p) => (
-                    <option key={p.id} value={`profile:${p.id}`}>
-                      {p.alt_text}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {!portraitData.uploadEnabled && (
-                <p className="notice">
-                  Portrait upload awaits managed private storage. Available
-                  portraits can still be selected.
-                </p>
-              )}
-              <label>
-                Upload / replace portrait
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  disabled={!entry || !portraitData.uploadEnabled || busy}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file || !entry) return;
-                    setBusy(true);
-                    try {
-                      const form = new FormData();
-                      form.set("personId", entry.id);
-                      form.set("altText", `Portrait of ${body.name}`);
-                      form.set("file", file);
-                      const res = await fetch("/api/profile-portraits", {
-                        method: "POST",
-                        body: form,
-                      });
-                      const value = await res.json();
-                      if (!res.ok) throw Error(value.error);
-                      setPortraitData(
-                        await api(
-                          `/api/profile-portraits?personId=${entry.id}`,
-                        ),
-                      );
+                      biography: text,
+                      biographyRich: rich,
+                    }))
+                  }
+                />
+              </ProfileSection>
+              <ProfileSection
+                title="Portrait"
+                description="Choose a clear, professional photo for your public profile."
+              >
+                <label>
+                  Portrait selection
+                  <select
+                    value={
+                      body.portraitId
+                        ? `${body.portraitKind ?? "editorial"}:${body.portraitId}`
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const [kind, id] = e.target.value.split(":");
                       setBody((p) => ({
                         ...p,
-                        portraitId: value.id,
-                        portraitKind: "profile",
+                        portraitId: id || null,
+                        portraitKind: (kind ||
+                          "editorial") as PersonBody["portraitKind"],
                       }));
-                      setMessage(
-                        "Portrait uploaded privately. Save and submit your profile for review.",
-                      );
-                    } catch (err) {
-                      setMessage((err as Error).message);
-                    } finally {
-                      setBusy(false);
-                      e.target.value = "";
-                    }
-                  }}
-                />
-                <small>
-                  Static JPEG/PNG up to 5 MB. Metadata is removed. Save a new
-                  person before uploading.
-                </small>
-              </label>
-              <h3>Social & portfolio links</h3>
-              <p className="content-restrictions">
-                Optional HTTPS URLs. Only links you select for public display
-                appear after review and publication. Phone and email remain
-                private.
-              </p>
-              {body.links.map((link, i) => (
-                <fieldset key={i}>
-                  <legend>Link {i + 1}</legend>
-                  <label>
-                    Platform
-                    <select
-                      value={link.platform}
-                      onChange={(e) =>
-                        field(
-                          "links",
-                          body.links.map((l, n) =>
-                            n === i ? { ...l, platform: e.target.value } : l,
+                    }}
+                  >
+                    <option value="">Use initials</option>
+                    {editorial.map((p) => (
+                      <option key={p.id} value={`editorial:${p.id}`}>
+                        {p.title}
+                      </option>
+                    ))}
+                    {portraitData.portraits.map((p) => (
+                      <option key={p.id} value={`profile:${p.id}`}>
+                        {p.alt_text}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {!portraitData.uploadEnabled && (
+                  <p className="notice">
+                    Portrait uploads are temporarily unavailable. You can still
+                    choose an existing portrait.
+                  </p>
+                )}
+                <label>
+                  Upload / replace portrait
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    disabled={!entry || !portraitData.uploadEnabled || busy}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !entry) return;
+                      setBusy(true);
+                      try {
+                        const form = new FormData();
+                        form.set("personId", entry.id);
+                        form.set("altText", `Portrait of ${body.name}`);
+                        form.set("file", file);
+                        const res = await fetch("/api/profile-portraits", {
+                          method: "POST",
+                          body: form,
+                        });
+                        const value = await res.json();
+                        if (!res.ok) throw Error(value.error);
+                        setPortraitData(
+                          await api(
+                            `/api/profile-portraits?personId=${entry.id}`,
                           ),
-                        )
+                        );
+                        setBody((p) => ({
+                          ...p,
+                          portraitId: value.id,
+                          portraitKind: "profile",
+                        }));
+                        setMessage(
+                          "Portrait uploaded privately. Save and submit your profile for review.",
+                        );
+                      } catch (err) {
+                        setMessage((err as Error).message);
+                      } finally {
+                        setBusy(false);
+                        e.target.value = "";
                       }
-                    >
-                      {linkPlatforms.map((p) => (
-                        <option key={p}>{p}</option>
-                      ))}
-                    </select>
-                  </label>
-                  {(["label", "url"] as const).map((k) => (
-                    <label key={k}>
-                      {k === "url" ? "HTTPS URL" : "Link label"}
-                      <input
-                        value={link[k]}
-                        maxLength={k === "url" ? 1000 : 60}
+                    }}
+                  />
+                  <small>
+                    {owner
+                      ? "JPEG or PNG up to 5 MB. Your photo remains private until reviewed and published."
+                      : "Static JPEG/PNG up to 5 MB. Metadata is removed. Save a new person before uploading."}
+                  </small>
+                </label>
+              </ProfileSection>
+              <ProfileSection
+                title="Social & portfolio links"
+                description="Choose the links you want to share publicly."
+              >
+                <p className="content-restrictions">
+                  Optional HTTPS URLs. Only links you select for public display
+                  appear after review and publication. Phone and email remain
+                  private.
+                </p>
+                {body.links.map((link, i) => (
+                  <fieldset key={i}>
+                    <legend>Link {i + 1}</legend>
+                    <label>
+                      Platform
+                      <select
+                        value={link.platform}
                         onChange={(e) =>
                           field(
                             "links",
                             body.links.map((l, n) =>
-                              n === i ? { ...l, [k]: e.target.value } : l,
+                              n === i ? { ...l, platform: e.target.value } : l,
+                            ),
+                          )
+                        }
+                      >
+                        {linkPlatforms.map((p) => (
+                          <option key={p}>{p}</option>
+                        ))}
+                      </select>
+                    </label>
+                    {(["label", "url"] as const).map((k) => (
+                      <label key={k}>
+                        {k === "url" ? "HTTPS URL" : "Link label"}
+                        <input
+                          value={link[k]}
+                          maxLength={k === "url" ? 1000 : 60}
+                          onChange={(e) =>
+                            field(
+                              "links",
+                              body.links.map((l, n) =>
+                                n === i ? { ...l, [k]: e.target.value } : l,
+                              ),
+                            )
+                          }
+                        />
+                      </label>
+                    ))}
+                    <label className="consent-row">
+                      <input
+                        type="checkbox"
+                        checked={link.public}
+                        onChange={(e) =>
+                          field(
+                            "links",
+                            body.links.map((l, n) =>
+                              n === i ? { ...l, public: e.target.checked } : l,
                             ),
                           )
                         }
                       />
+                      Include on public profile
                     </label>
-                  ))}
-                  <label className="consent-row">
-                    <input
-                      type="checkbox"
-                      checked={link.public}
-                      onChange={(e) =>
-                        field(
-                          "links",
-                          body.links.map((l, n) =>
-                            n === i ? { ...l, public: e.target.checked } : l,
-                          ),
-                        )
-                      }
-                    />
-                    Include on public profile
-                  </label>
-                  <div className="action-row">
-                    <button
-                      type="button"
-                      disabled={i === 0}
-                      onClick={() => {
-                        const links = [...body.links];
-                        [links[i - 1], links[i]] = [links[i], links[i - 1]];
-                        field("links", links);
-                      }}
-                    >
-                      Move up
-                    </button>
-                    <button
-                      type="button"
-                      disabled={i === body.links.length - 1}
-                      onClick={() => {
-                        const links = [...body.links];
-                        [links[i + 1], links[i]] = [links[i], links[i + 1]];
-                        field("links", links);
-                      }}
-                    >
-                      Move down
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        field(
-                          "links",
-                          body.links.filter((_, n) => n !== i),
-                        )
-                      }
-                    >
-                      Remove link {i + 1}
-                    </button>
-                  </div>
-                </fieldset>
-              ))}
-              <button
-                type="button"
-                className="button secondary small"
-                disabled={body.links.length >= 12}
-                onClick={() =>
-                  field("links", [
-                    ...body.links,
-                    {
-                      platform: "Website",
-                      label: "Website",
-                      url: "",
-                      public: false,
-                    },
-                  ])
-                }
-              >
-                Add link ({body.links.length}/12)
-              </button>
+                    <div className="action-row">
+                      <button
+                        type="button"
+                        disabled={i === 0}
+                        onClick={() => {
+                          const links = [...body.links];
+                          [links[i - 1], links[i]] = [links[i], links[i - 1]];
+                          field("links", links);
+                        }}
+                      >
+                        Move up
+                      </button>
+                      <button
+                        type="button"
+                        disabled={i === body.links.length - 1}
+                        onClick={() => {
+                          const links = [...body.links];
+                          [links[i + 1], links[i]] = [links[i], links[i + 1]];
+                          field("links", links);
+                        }}
+                      >
+                        Move down
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          field(
+                            "links",
+                            body.links.filter((_, n) => n !== i),
+                          )
+                        }
+                      >
+                        Remove link {i + 1}
+                      </button>
+                    </div>
+                  </fieldset>
+                ))}
+                <button
+                  type="button"
+                  className="button secondary small"
+                  disabled={body.links.length >= 12}
+                  onClick={() =>
+                    field("links", [
+                      ...body.links,
+                      {
+                        platform: "Website",
+                        label: "Website",
+                        url: "",
+                        public: false,
+                      },
+                    ])
+                  }
+                >
+                  Add link ({body.links.length}/12)
+                </button>
+              </ProfileSection>
               {!owner && canPublish && (
                 <>
                   <h3>Association assignments</h3>
@@ -695,7 +805,9 @@ export function PersonEditor({
               {error && <p role="status">{error}</p>}
               <div className="action-row">
                 <button className="button" disabled={busy || !!error}>
-                  Save private draft
+                  {busy && activeAction === "save"
+                    ? "Saving…"
+                    : "Save private draft"}
                 </button>
                 <button
                   type="button"
@@ -707,7 +819,9 @@ export function PersonEditor({
                 >
                   {verificationRequired
                     ? "Complete verification form first"
-                    : "Submit for review"}
+                    : busy && activeAction === "submit"
+                      ? "Submitting…"
+                      : "Submit for review"}
                 </button>
               </div>
             </fieldset>
@@ -962,6 +1076,8 @@ export function PersonEditor({
         </section>
         <div
           id="person-panel-preview"
+          role={owner ? "tabpanel" : undefined}
+          aria-labelledby={owner ? "person-tab-preview" : undefined}
           className={`content-preview-panel ${panel === "preview" ? "mobile-active" : ""}`}
         >
           {!owner && (
@@ -991,24 +1107,55 @@ export function PersonEditor({
               )}
             </div>
           )}
-          <ContentPreview
-            body={pageBody}
-            kind="page"
-            slug={page}
-            context={context}
-            dirty={dirty}
-            isNew={!entry}
-            contextLoading={false}
-            contextError={contextError}
-            onRetry={() => {
-              setMode("card");
-              setContextError("");
-            }}
-            rendered={rendered}
-          />
+          {owner ? (
+            <MemberProfilePreview
+              draft={previewEntries}
+              dirty={dirty}
+              published={
+                entry?.published
+                  ? (entry.published.assignments.length
+                      ? entry.published.assignments
+                      : [{ groupId: "", role: "", term: "", order: 0 }]
+                    ).map((a) => ({
+                      id: `published:${a.groupId}`,
+                      published: {
+                        ...entry.published!,
+                        role: a.role,
+                        term: a.term,
+                        order: a.order,
+                        page,
+                        section,
+                        groupName:
+                          groups.find((g) => g.id === a.groupId)?.draft.name ??
+                          "TPA member",
+                        verified: entry.accepted_verified,
+                      },
+                      portrait_available: !!entry.published!.portraitId,
+                      portrait_alt: entry.published!.name,
+                    }))
+                  : []
+              }
+            />
+          ) : (
+            <ContentPreview
+              body={pageBody}
+              kind="page"
+              slug={page}
+              context={context}
+              dirty={dirty}
+              isNew={!entry}
+              contextLoading={false}
+              contextError={contextError}
+              onRetry={() => {
+                setMode("card");
+                setContextError("");
+              }}
+              rendered={rendered}
+            />
+          )}
         </div>
       </div>
       {dialog}
-    </>
+    </div>
   );
 }

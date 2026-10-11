@@ -3,7 +3,6 @@ export type DocumentKind = "certificate" | "photograph" | "student_evidence" | "
 export const documentKinds: readonly DocumentKind[] = [
   "certificate",
   "photograph",
-  "student_evidence",
   "supporting",
 ];
 export function validateDocument(

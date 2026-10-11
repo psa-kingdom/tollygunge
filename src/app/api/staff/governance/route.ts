@@ -36,7 +36,20 @@ export async function GET(request: Request) {
           id
             ? await enriched(client, row, actor)
             : {
-                ...row,
+                ...Object.fromEntries(
+                  Object.entries(row).filter(
+                    ([key]) =>
+                      privatePeople(actor) ||
+                      ![
+                        "contact_email",
+                        "mobile_normalized",
+                        "editorial_approved_snapshot",
+                      ].includes(key),
+                  ),
+                ),
+                published: row.published
+                  ? redactPerson(personBody(row.published))
+                  : null,
                 draft: privatePeople(actor)
                   ? personBody(row.draft)
                   : redactPerson(personBody(row.draft)),
@@ -73,7 +86,7 @@ export async function POST(request: Request) {
     const actor = await authorized(request, undefined, true);
     if (!staffPeople(actor)) throw new OperationError("Access denied.", 403);
     const input = await jsonBody(request, 1048576);
-    if (["approve", "reject"].includes(input.action))
+    if (["approve", "approve_editorial", "reject"].includes(input.action))
       throw new OperationError("Use the administrator review endpoint.");
     return transaction((client) => changePerson(client, actor, input));
   });

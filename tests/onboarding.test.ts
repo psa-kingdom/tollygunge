@@ -53,7 +53,7 @@ test("incomplete drafts save; required evidence and category are enforced only o
   });
   const values = {
     fullName: "Test",
-    phone: "1234567890",
+    phone: "9876543210",
     qualification: "Course",
     professionalStatus: "Other",
     correspondenceAddress: "Residence",
@@ -63,7 +63,7 @@ test("incomplete drafts save; required evidence and category are enforced only o
     declaration: "true",
     signature: "Test",
   };
-  assert.deepEqual(missingFields(initialFields, values, "Student", true), []);
+  assert.deepEqual(missingFields(initialFields, values, "Student", true), ["Professional category required"]);
   assert.ok(
     missingFields(initialFields, values, "Professional", true).includes(
       "Professional certificate",

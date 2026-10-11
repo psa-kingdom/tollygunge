@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { NewPasswordField } from "./new-password-field";
 import Link from "next/link";
 export function Invitation() {
   const [token, setToken] = useState(""),
@@ -59,17 +60,7 @@ export function Invitation() {
         }
       }}
     >
-      <label>
-        New password
-        <input
-          name="password"
-          type="password"
-          minLength={12}
-          maxLength={128}
-          autoComplete="new-password"
-          required
-        />
-      </label>
+      <NewPasswordField />
       <button className="button" disabled={!token || busy}>
         Set password
       </button>

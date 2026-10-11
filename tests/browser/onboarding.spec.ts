@@ -339,6 +339,7 @@ test(
   "new account resumes details, verifies email, recovers password and stays signed in",
   { tag: "@onboarding" },
   async ({ page, context }, info) => {
+    test.setTimeout(360000); // Full remote-database auth and recovery journey.
     const db = new Pool(databaseOptions()),
       email = randomUUID() + "@example.invalid",
       password = "Browser-test-password-123!";
@@ -346,7 +347,7 @@ test(
       await page.goto("/signup");
       await page.getByLabel("Full name", { exact: true }).fill("Browser test");
       await page.getByLabel("Email", { exact: true }).fill(email);
-      await page.getByLabel("Password (12–128 characters)").fill(password);
+      await page.getByLabel("Password", { exact: true }).fill(password);
       await page
         .getByRole("button", { name: "Create account", exact: true })
         .click();
@@ -367,12 +368,10 @@ test(
       await page
         .getByRole("link", { name: "Continue your details", exact: true })
         .click();
-      await page
-        .getByLabel("Qualification / course *")
-        .fill("Test qualification");
+      await page.getByLabel("Qualification *").fill("Test qualification");
       await expect(page.getByRole("status").last()).toHaveText("Saved");
       await page.reload();
-      await expect(page.getByLabel("Qualification / course *")).toHaveValue(
+      await expect(page.getByLabel("Qualification *")).toHaveValue(
         "Test qualification",
       );
       await page
@@ -388,17 +387,33 @@ test(
       await page
         .getByRole("button", { name: "3. Contact & preferences", exact: true })
         .click();
-      await page.getByLabel("Mobile number *").fill("1234567890");
+      await page.getByLabel("Mobile number *").fill("+919876543210");
       await page
         .getByLabel("Correspondence address *")
         .selectOption("Residence");
-      await page
-        .getByLabel("Residence address (optional)")
+      const residence = page.getByRole("region", {
+        name: "Residential address",
+        exact: true,
+      });
+      await residence
+        .getByRole("combobox", { name: "Country", exact: true })
+        .selectOption("GB");
+      await residence
+        .getByLabel("State / region", { exact: true })
+        .fill("England");
+      await residence
+        .getByLabel("City / locality", { exact: true })
+        .fill("London");
+      await residence
+        .getByLabel("Postal code", { exact: true })
+        .fill("SW1A 1AA");
+      await residence
+        .getByLabel("Address Line 1", { exact: true })
         .fill("Test correspondence address");
       await expect(page.getByRole("status").last()).toHaveText("Saved");
       await page.reload();
       await expect(page.getByLabel("Mobile number *")).toHaveValue(
-        "1234567890",
+        "+919876543210",
       );
       await page
         .getByRole("button", { name: "4. Evidence & referrals", exact: true })
@@ -598,7 +613,7 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
     .getByLabel("Email", { exact: true })
     .fill(randomUUID() + "@example.invalid");
   await page
-    .getByLabel("Password (12–128 characters)")
+    .getByLabel("Password", { exact: true })
     .fill("Persistence-password-123!");
   await page
     .getByRole("button", { name: "Create account", exact: true })
@@ -607,7 +622,7 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
   await page
     .getByRole("link", { name: "Continue your details", exact: true })
     .click();
-  const qualification = page.getByLabel("Qualification / course *");
+  const qualification = page.getByLabel("Qualification *");
   await qualification.fill("Server baseline");
   await expect(page.getByRole("status").last()).toHaveText("Saved");
   await page.route("**/api/member/application", async (route) => {
@@ -637,12 +652,12 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
   await expect(page.getByRole("status").last()).toHaveText("Saved");
   const stale = await context.newPage();
   await stale.goto("/member/application");
-  await expect(stale.getByLabel("Qualification / course *")).toHaveValue(
+  await expect(stale.getByLabel("Qualification *")).toHaveValue(
     "Offline change",
   );
   await qualification.fill("Winning tab");
   await expect(page.getByRole("status").last()).toHaveText("Saved");
-  await stale.getByLabel("Qualification / course *").fill("Stale tab");
+  await stale.getByLabel("Qualification *").fill("Stale tab");
   await expect(stale.getByRole("status").last()).toContainText("another tab");
   await expect(
     stale.getByRole("button", {

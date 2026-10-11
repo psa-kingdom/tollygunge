@@ -1,3 +1,4 @@
+import { mobile } from "./member-foundation";
 import {
   contentLimits,
   validateRich,
@@ -203,7 +204,7 @@ export function applicationInput(value: unknown) {
     details = record(input.details);
   if (
     !["Annual", "Life", "Patron"].includes(String(input.plan)) ||
-    !["Professional", "Student"].includes(String(input.category))
+    String(input.category) !== "Professional"
   )
     throw new Error("Choose your plan and category.");
   if (!Array.isArray(input.documentIds) || input.documentIds.length > 10)
@@ -222,6 +223,7 @@ export function applicationInput(value: unknown) {
       text(details[name] ?? "", name, name === "address" ? 1000 : 200),
     ]),
   );
+  if(result.phone) result.phone=mobile(result.phone);
   return {
     plan: String(input.plan),
     category: String(input.category),

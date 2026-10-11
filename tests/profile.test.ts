@@ -4,7 +4,7 @@ import { validateProfile } from "../src/domain/profile";
 import { boundedBody } from "../src/domain/request-body";
 test("profile fields exclude identities and privileges; consent requires explicit boolean", () => {
   const profile = validateProfile({
-    phone: " +91 1234567890 ",
+    phone: " +91 9876543210 ",
     organization: " TPA ",
     newsletter: false,
     contactPreference: "email",

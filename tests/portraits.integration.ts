@@ -51,7 +51,7 @@ test(
       });
     const ok = async (path: string, body?: object) => {
       const r = await req(path, body);
-      assert.equal(r.status, 200);
+      assert.equal(r.status, 200, `${path}: ${await r.clone().text()}`);
       return r.json();
     };
     const upload = async (
@@ -220,11 +220,14 @@ test(
           version: row.version,
         });
         row = await ok("/api/staff/profile-reviews", {
-          action: "approve",
+          action: "approve_editorial",
           id: personId,
           version: row.version,
           reviewId: row.reviews[0].id,
+          reason:
+            "Synthetic review of the supplied portrait and public assignments.",
         });
+        assert.equal(row.accepted_verified, false);
         assert.equal(
           (await fetch(base + "/api/profile-portraits/" + image.id)).status,
           404,

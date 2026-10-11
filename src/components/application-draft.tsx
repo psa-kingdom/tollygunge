@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api } from "./operations-client";
+import { api, ApiError } from "./operations-client";
 import {
   applicable,
   missingFields,
@@ -10,6 +10,12 @@ import {
   type VerificationField,
 } from "@/domain/verification";
 import { recovery } from "./draft-recovery";
+import { AddressForm } from "./address-form";
+import {
+  emptyAddress,
+  formatAddress,
+  type StructuredAddress,
+} from "@/domain/address";
 import { VerifyEmail } from "./onboarding-auth";
 type Draft = {
   version: number;
@@ -51,7 +57,9 @@ export function ApplicationDraft({
     [local, setLocal] = useState<Draft | null>(null),
     [ready, setReady] = useState(false),
     [busy, setBusy] = useState(false),
-    [conflict, setConflict] = useState(false);
+    [conflict, setConflict] = useState(false),
+    [converted, setConverted] = useState(false),
+    [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const current = useRef(draft),
     dirty = useRef(false),
     saving = useRef<Promise<boolean> | null>(null),
@@ -73,7 +81,16 @@ export function ApplicationDraft({
       .then(([saved, st, buffer, profile]) => {
         if (!active) return;
         if (saved) {
-          current.current = { ...saved, step: saved.step ?? 0 };
+          current.current = {
+            ...saved,
+            category: "Professional",
+            step: saved.step ?? 0,
+          };
+          if (saved.category !== "Professional") {
+            dirty.current = true;
+            change.current++;
+            setConverted(true);
+          }
           setDraft(current.current);
         } else if (profile) {
           current.current = {
@@ -140,6 +157,7 @@ export function ApplicationDraft({
         return true;
       } catch (e) {
         const text = e instanceof Error ? e.message : "Save failed.";
+        setFieldErrors(e instanceof ApiError ? e.fieldErrors : {});
         if (text.includes("another tab")) setConflict(true);
         setMessage(
           navigator.onLine
@@ -157,6 +175,8 @@ export function ApplicationDraft({
     return result;
   }
   function edit(next: Draft) {
+    setFieldErrors({});
+    next = { ...next, category: "Professional" };
     current.current = next;
     dirty.current = true;
     change.current++;
@@ -263,6 +283,49 @@ export function ApplicationDraft({
     }
   }
   function renderField(f: VerificationField) {
+    if (["officeAddress", "residenceAddress"].includes(f.id)) {
+      let value;
+      try {
+        value = draft.details[`${f.id}Structured`]
+          ? ({
+              ...emptyAddress,
+              ...JSON.parse(draft.details[`${f.id}Structured`]),
+            } as StructuredAddress)
+          : undefined;
+      } catch {
+        value = undefined;
+      }
+      return (
+        <AddressForm
+          key={f.id}
+          title={
+            f.id === "officeAddress" ? "Office address" : "Residential address"
+          }
+          value={value}
+          legacy={draft.details[f.id]}
+          focusId={`verification-${f.id}`}
+          errors={Object.fromEntries(
+            Object.entries(fieldErrors)
+              .filter(([key]) =>
+                key.startsWith(
+                  `addresses.${f.id === "officeAddress" ? "office" : "residence"}.`,
+                ),
+              )
+              .map(([key, message]) => [key.split(".").at(-1)!, message]),
+          )}
+          onChange={(address) =>
+            edit({
+              ...current.current,
+              details: {
+                ...current.current.details,
+                [`${f.id}Structured`]: JSON.stringify(address),
+                [f.id]: formatAddress(address),
+              },
+            })
+          }
+        />
+      );
+    }
     const value = draft.details[f.id] ?? "",
       required =
         f.required ||
@@ -270,17 +333,33 @@ export function ApplicationDraft({
           ["CA", "CS", "ICMAI", "Bar Council"].includes(
             draft.details.professionalBody,
           ));
+    const error = fieldErrors[f.id] || fieldErrors[`details.${f.id}`];
+    const accessibility = {
+      "aria-invalid": !!error,
+      "aria-required": required,
+      "aria-describedby": error
+        ? `verification-${f.id}-error`
+        : f.help
+          ? `verification-${f.id}-help`
+          : undefined,
+    };
     return (
       <label
         key={f.id}
-        className={f.type === "checkbox" ? "member-check-field" : undefined}
+        className={
+          f.type === "checkbox"
+            ? "member-check-field"
+            : f.type === "multiline"
+              ? "form-span"
+              : undefined
+        }
       >
         {f.label}
         {required ? " *" : " (optional)"}
-        {f.help && <small>{f.help}</small>}
         {f.type === "multiline" ? (
           <textarea
             id={"verification-" + f.id}
+            {...accessibility}
             value={value}
             maxLength={f.maxLength ?? 1000}
             onChange={(e) => answer(f.id, e.target.value)}
@@ -288,6 +367,7 @@ export function ApplicationDraft({
         ) : f.type === "select" ? (
           <select
             id={"verification-" + f.id}
+            {...accessibility}
             value={value}
             onChange={(e) => answer(f.id, e.target.value)}
           >
@@ -299,6 +379,7 @@ export function ApplicationDraft({
         ) : f.type === "multiselect" ? (
           <select
             id={"verification-" + f.id}
+            {...accessibility}
             multiple
             value={value ? JSON.parse(value) : []}
             onChange={(e) =>
@@ -317,6 +398,7 @@ export function ApplicationDraft({
         ) : f.type === "checkbox" ? (
           <input
             id={"verification-" + f.id}
+            {...accessibility}
             type="checkbox"
             checked={value === "true"}
             onChange={(e) => answer(f.id, String(e.target.checked))}
@@ -325,6 +407,7 @@ export function ApplicationDraft({
           <>
             <input
               id={"verification-" + f.id}
+              {...accessibility}
               type="file"
               accept={
                 f.documentKind === "photograph"
@@ -351,6 +434,7 @@ export function ApplicationDraft({
         ) : (
           <input
             id={"verification-" + f.id}
+            {...accessibility}
             type={
               ["date", "number"].includes(f.type)
                 ? f.type
@@ -362,6 +446,12 @@ export function ApplicationDraft({
             maxLength={f.maxLength ?? 1000}
             onChange={(e) => answer(f.id, e.target.value)}
           />
+        )}
+        {f.help && <small id={`verification-${f.id}-help`}>{f.help}</small>}
+        {error && (
+          <small className="field-error" id={`verification-${f.id}-error`}>
+            {error}
+          </small>
         )}
       </label>
     );
@@ -502,6 +592,13 @@ export function ApplicationDraft({
           </button>
         ))}
       </nav>
+      {converted && (
+        <p className="notice" role="status">
+          Your previous Student draft is now a professional application. Saved
+          answers and documents are retained. Add professional details and a
+          certificate before submitting.
+        </p>
+      )}
       <form
         className="member-settings member-form-card"
         onBlur={() => {
@@ -524,18 +621,6 @@ export function ApplicationDraft({
           <div className="form-grid">
             {draft.step === 0 && (
               <>
-                <label>
-                  Applicant category
-                  <select
-                    value={draft.category}
-                    onChange={(e) =>
-                      edit({ ...current.current, category: e.target.value })
-                    }
-                  >
-                    <option>Professional</option>
-                    <option>Student</option>
-                  </select>
-                </label>
                 <label>
                   Membership plan preference
                   <select
@@ -666,6 +751,7 @@ export function ApplicationDraft({
                   setStatus(await api<Status>("/api/member/verification"));
                   setMessage("Submitted for administrator review.");
                 } catch (e) {
+                  setFieldErrors(e instanceof ApiError ? e.fieldErrors : {});
                   setMessage(
                     e instanceof Error ? e.message : "Submission failed.",
                   );
@@ -717,6 +803,46 @@ export function ApplicationDraft({
           )}
         </div>
       </form>
+      {Object.keys(fieldErrors).length > 0 && (
+        <div className="member-validation-summary" role="alert">
+          <strong>Check these details</strong>
+          <ul>
+            {Object.entries(fieldErrors).map(([key, error]) => (
+              <li key={key}>
+                <button
+                  className="text-button"
+                  onClick={() => {
+                    const fieldId = key.startsWith("addresses.office.")
+                      ? "officeAddress"
+                      : key.startsWith("addresses.residence.")
+                        ? "residenceAddress"
+                        : key.split(".").at(-1);
+                    const field = status?.policy.fields.find(
+                      (f) => f.id === fieldId,
+                    );
+                    if (!field) return;
+                    current.current = { ...current.current, step: field.step };
+                    setDraft(current.current);
+                    requestAnimationFrame(() => {
+                      const input = document.getElementById(
+                        `verification-${field.id}`,
+                      );
+                      const details = input?.closest("details");
+                      if (details) details.open = true;
+                      const invalid = input
+                        ?.closest(".address-section")
+                        ?.querySelector<HTMLElement>('[aria-invalid="true"]');
+                      (invalid || input)?.focus();
+                    });
+                  }}
+                >
+                  {error}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className="member-save-status" role="status" aria-live="polite">
         {message}
       </p>

@@ -55,7 +55,7 @@ export const sitePages: Record<
       },
       {
         title: "Membership Plans",
-        text: "Patron, Annual and Life plans share a single application workflow. Professional and student applicants have distinct eligibility requirements. Plan fees, benefits and eligibility are awaiting approval.",
+        text: "Patron, Annual and Life plans share a single application workflow. Professional applicants complete a shared eligibility and verification process. Plan fees, benefits and eligibility are awaiting approval.",
       },
       {
         title: "Renew Membership",

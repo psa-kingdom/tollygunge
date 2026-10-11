@@ -1,4 +1,5 @@
 import { hashPassword } from "better-auth/crypto";
+import { passwordPolicy, passwordError } from "@/domain/password-policy";
 import { randomUUID } from "node:crypto";
 import {
   operation,
@@ -17,11 +18,10 @@ export async function POST(r: Request) {
       typeof i.token !== "string" ||
       !/^[\w-]{43}$/.test(i.token) ||
       typeof i.password !== "string" ||
-      i.password.length < 12 ||
-      i.password.length > 128
+      passwordError(i.password)
     )
       throw new OperationError(
-        "Use a valid invitation and password of 12–128 characters.",
+        `Use a valid invitation and password of ${passwordPolicy.minimum}–${passwordPolicy.maximum} characters.`,
       );
 
     return transaction(async (c) => {
