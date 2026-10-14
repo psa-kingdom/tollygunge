@@ -132,7 +132,7 @@ export function ReviewWorkspace() {
           </div>
         )}
         {filtered.length ? (
-          <div className="table-wrap">
+          <div className="table-wrap" role="region" aria-label="Preview membership applications" tabIndex={0}>
             <table>
               <thead>
                 <tr>

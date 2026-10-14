@@ -80,7 +80,7 @@ try {
     const code = await run("browser", ["node_modules/@playwright/test/cli.js", "test", ...(grepIndex < 0 ? [] : ["--grep", process.argv[grepIndex + 1]])]);
     if (code !== 0) await run("browser-failure-retest", ["node_modules/@playwright/test/cli.js", "test", "--last-failed"]);
   }
-  if (process.argv.includes("--design-audit")) await run("design-audit", ["--import", "tsx", "scripts/verify-phase3-design.mts"]);
+  if (process.argv.includes("--design-audit")) await run("design-audit", ["--import", "tsx", "scripts/verify-phase3-design.mts", ...(process.argv.includes("--phase4") ? ["--phase4"] : []), ...(process.argv.includes("--scout") ? ["--scout"] : []), ...(process.argv.includes("--table-refinement") ? ["--table-refinement"] : []), ...(process.argv.includes("--resume-from") ? ["--resume-from", process.argv[process.argv.indexOf("--resume-from") + 1]] : [])]);
   if (!browserOnly) {
   server.kill();
   if (server.exitCode === null) await new Promise(r => server.once("exit", r));

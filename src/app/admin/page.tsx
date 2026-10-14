@@ -26,10 +26,12 @@ export default async function Admin() {
         What needs your attention today? Review a record, take action, and
         confirm the outcome.
       </p>
-      <div className="service-shortcuts">
+      <div className="service-shortcuts service-metrics">
         {overview.metrics.map((m) => (
           <Link key={m.label} href={m.href}>
-            <strong>{m.count}</strong> {m.label} →
+            <strong>{m.count}</strong>
+            <span className="metric-label">{m.label}</span>
+            <span aria-hidden="true">→</span>
           </Link>
         ))}
       </div>
