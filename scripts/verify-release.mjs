@@ -1,5 +1,7 @@
 // No business writes. Optional authentication creates and revokes only its own session.
 import { readFile } from "node:fs/promises";
+import assert from "node:assert/strict";
+import { assertPageRedirect } from "../tests/helpers/page-boundaries.ts";
 const args = process.argv.slice(2),
   option = (name) => {
     const i = args.indexOf(name);
@@ -53,9 +55,21 @@ try {
   ])
     await check(path, [200]);
   for (const path of ["/member", "/admin"]) {
-    const response = await check(path, [302, 303, 307, 308]);
-    if (response && !response.headers.get("location")?.includes("/login"))
+    try {
+      const response = await fetch(new URL(path, base), {
+        redirect: "manual",
+        signal: AbortSignal.timeout(20000),
+      });
+      const location = response.headers.get("location");
+      if (location) assert.equal(new URL(location, response.url).origin, base.origin);
+      // Loading boundaries may commit HTTP 200 before Next emits its exact
+      // same-origin redirect metadata. An arbitrary 200 must never pass.
+      await assertPageRedirect(response, "/login");
+      console.log(`PASS ${path} (${response.status}; verified login redirect)`);
+    } catch {
       failures++;
+      console.log(`FAIL ${path} (login redirect not verified)`);
+    }
   }
   for (const path of [
     "/api/staff/reports",

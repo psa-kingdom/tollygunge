@@ -16,7 +16,7 @@ const env = { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot,
   DATABASE_URL: url.href, DATABASE_SSL: "false", TPA_DATABASE_NAME: name,
   BETTER_AUTH_URL: `http://127.0.0.1:${port}`, BETTER_AUTH_SECRET: "synthetic-launch-isolated-secret-32-characters",
   ONBOARDING_ENABLED: "true", TPA_MAIL_SINK: "true", TPA_BROWSER_CHANNEL: "chrome",
-  TPA_TEST_URL: `http://127.0.0.1:${port}`, TPA_TEST_STORAGE: "false", TPA_TEST_EXPECT_STORAGE_DISABLED: "true",
+  TPA_TEST_URL: `http://127.0.0.1:${port}`, TPA_DESIGN_QA_OUTPUT: process.env.TPA_DESIGN_QA_OUTPUT, TPA_TEST_STORAGE: "false", TPA_TEST_EXPECT_STORAGE_DISABLED: "true",
   RESEND_WEBHOOK_SECRET: "whsec_" + Buffer.from("synthetic-disposable-secret").toString("base64") };
 const results = [];
 // Next also reads local dotenv files. Explicitly blank keys not deliberately

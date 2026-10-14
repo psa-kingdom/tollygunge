@@ -14,7 +14,7 @@ const base=process.env.TPA_TEST_URL!;assert.match(base,/^http:\/\/127\.0\.0\.1:\
 const db=new Pool({connectionString:url.href,ssl:false});
 const phase4=process.argv.includes('--phase4'),scout=process.argv.includes('--scout'),tableRefinement=process.argv.includes('--table-refinement');
 const widths=phase4?(scout?[1920,1024,320]:[1920,1440,1280,1024,768,430,390,360,320]):[1440,1024,768,390,320];
-const output=resolve(`.local/${phase4?'phase4':'phase3'}/routes-`+new URL(base).port);await mkdir(output,{recursive:true});
+const output=resolve(process.env.TPA_DESIGN_QA_OUTPUT??(`.local/${phase4?'phase4':'phase3'}/routes-`+new URL(base).port));await mkdir(output,{recursive:true});
 const resumeIndex=process.argv.indexOf('--resume-from');
 const resumeDirectory=resumeIndex<0?null:process.argv[resumeIndex+1];
 assert.ok(resumeIndex<0||(phase4&&resumeDirectory),'Resume is Phase 4 only and requires an evidence directory');
