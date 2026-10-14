@@ -396,7 +396,7 @@ export function OperationsReports() {
               Save preset
             </button>
             <button
-              className="button secondary"
+              className="button danger"
               disabled={busy || !manageable}
               onClick={() => {
                 if (confirm("Delete this preset?")) void save(true);
@@ -437,7 +437,7 @@ export function OperationsReports() {
           {!result.rows.length ? (
             <p>No matching records. Empty exports include column headers.</p>
           ) : (
-            <div className="table-scroll">
+            <div className="table-scroll" role="region" aria-label="Report results" tabIndex={0}>
               <table className="operations-table">
                 <thead>
                   <tr>

@@ -66,7 +66,7 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
         </select>
       </label>
       <p>{rows.length} records shown (up to 250)</p>
-      <div className="table-scroll">
+      <div className="table-scroll" role="region" aria-label="Registration payments">
         <table className="operations-table" tabIndex={0} aria-label="Registration payments">
           <thead>
             <tr>

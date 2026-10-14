@@ -64,6 +64,11 @@ test("bank editor, saved activation and member display remain responsive", async
     await page.goto("/admin/workspaces/payments", {
       waitUntil: "domcontentloaded",
     });
+    // Initial data loading confirms that this streamed client form is hydrated.
+    // Interacting with the server-rendered select earlier can lose its value.
+    await expect(
+      page.getByRole("status").filter({ hasText: "Loading payment details…" }),
+    ).toHaveCount(0);
     await page
       .getByRole("combobox", { name: "Payment method", exact: true })
       .selectOption("bank");

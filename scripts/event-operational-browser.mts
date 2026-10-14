@@ -64,6 +64,9 @@ export async function operationalBrowserJourney({browser,base,cookies,db,dir,req
  // Time progression is the only database fixture operation in this UI lifecycle.
  await db.query("UPDATE tpa.events SET starts_at=now()-interval '2 hours',ends_at=now()-interval '1 hour',version=version+1 WHERE id=$1",[event.id]);
  await staff.goto(base+'/admin/workspaces/events?id='+event.id);
+ // Wait for the initial overview response to commit before selecting attendees.
+ // That response intentionally resets selections for the newly loaded version.
+ await check(staff.getByRole('region',{name:'Event command center'}).getByText(/^Received /)).toBeVisible();
  const attendance=staff.locator('#event-attendance');await attendance.locator('summary').first().click();await attendance.getByRole('checkbox',{name:/^member 2/}).check();await attendance.getByLabel('Correction note').fill('Workshop attendance desk record');
  await attendance.getByRole('button',{name:'Mark selected attended',exact:true}).click();await check(staff.getByRole('region',{name:'Event command center'}).locator('[data-operation-message]').first()).toContainText('Saved');
  await attendance.getByRole('button',{name:'Finalize attendance and mark remaining confirmed registrants absent'}).click();

@@ -473,7 +473,7 @@ export function VerificationWorkspace() {
               placeholder="Action or identifier"
             />
           </label>
-          <div className="table-wrap">
+          <div className="table-wrap" role="region" aria-label="Verification history" tabIndex={0}>
             <table>
               <thead>
                 <tr>

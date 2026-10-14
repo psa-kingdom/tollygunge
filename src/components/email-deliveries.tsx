@@ -125,7 +125,7 @@ export function EmailDeliveries() {
       {data && !data.entries.length && (
         <p>No email jobs match these filters.</p>
       )}
-      <div className="table-scroll">
+      <div className="table-scroll" role="region" aria-label="Email delivery records" tabIndex={0}>
         <table>
           <thead>
             <tr>

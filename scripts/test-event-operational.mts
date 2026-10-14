@@ -20,7 +20,9 @@ const name='tpa_event_test_'+randomUUID().replaceAll('-','');
 const root=new Pool({connectionString:rootUrl.href,ssl:false});
 const dbUrl=new URL(rootUrl);dbUrl.pathname='/'+name;
 const db=new Pool({connectionString:dbUrl.href,ssl:false});
-const base='http://127.0.0.1:3146';
+const port=Number(process.env.TPA_EVENT_QA_PORT || 3146);
+assert.ok(Number.isInteger(port) && port>=3145 && port<=3199);
+const base=`http://127.0.0.1:${port}`;
 const dir=resolve('.local/event-operational/'+new Date().toISOString().replaceAll(':','-'));
 const env:NodeJS.ProcessEnv={PATH:process.env.PATH,SystemRoot:process.env.SystemRoot,TEMP:process.env.TEMP,TMP:process.env.TMP,USERPROFILE:process.env.USERPROFILE};
 // Define every dotenv key before Next starts so local production secrets cannot be loaded.
@@ -70,7 +72,7 @@ try {
  await writeFile(shim,`const https=require('node:https'),http=require('node:http');https.request=function(options,callback){if((options.hostname??options.host)?.endsWith('.r2.cloudflarestorage.com'))return http.request({...options,hostname:'127.0.0.1',host:undefined,port:${storagePort},protocol:'http:',agent:undefined},callback);throw Error('External HTTPS is disabled during isolated operational acceptance');};`);
  env.NODE_OPTIONS='';
  const fs=await import('node:fs');const log=fs.openSync(dir+'/server.log','w');
- server=spawn(process.execPath,['--require',shim,'node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3146'],{env,stdio:['ignore',log,log]});fs.closeSync(log);
+ server=spawn(process.execPath,['--require',shim,'node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port',String(port)],{env,stdio:['ignore',log,log]});fs.closeSync(log);
  let ready=false;for(let n=0;n<60;n++){if(server.exitCode!==null)throw Error('Acceptance server exited');try{if((await fetch(base+'/api/health')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready);
  const account=await request('/api/staff/payment-details',{action:'save',version:0,details:{label:'Workshop UPI',payee:'TPA Test Association',upiId:'tpa-test@example',phone:'',qrId:null}});
  await request('/api/staff/payment-details',{action:'active',id:account.id,version:account.version,confirmPayee:true});

@@ -210,7 +210,7 @@ export function StaffAccess() {
           credentials are excluded.
         </p>
         {history?.entries.length ? (
-          <div className="table-scroll">
+          <div className="table-scroll" role="region" aria-label="Administrative activity" tabIndex={0}>
             <table className="operations-table">
               <thead>
                 <tr>

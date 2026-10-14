@@ -427,7 +427,7 @@ export function EventManager({
             {selected && selected.status !== "cancelled" && (
               <button
                 type="button"
-                className="button secondary"
+                className="button danger"
                 disabled={busy || !!selected?.completed_at || !!selected?.archived_at}
                 onClick={() => {
                   if (
@@ -619,7 +619,7 @@ export function EventManager({
           <p>Provider acceptance and delivery are separate states. Showing the latest 100 messages and reminders.</p>
           <button type="button" className="button secondary" disabled={busy || !!selected?.completed_at || !!selected?.archived_at} onClick={async () => {try {await loadDelivery(selected.id);} catch(e) {setMessage(e instanceof Error ? e.message : "Refresh failed.");}}}>Refresh delivery</button>
           {[{label:"Emails",rows:delivery.mail},{label:"Reminders",rows:delivery.reminders}].map(({label,rows}) => <details key={label}><summary>{label} ({rows.length})</summary>
-            {!rows.length ? <p>No {label.toLowerCase()} yet.</p> : <div className="table-scroll"><table><thead><tr><th>Registration</th><th>Type</th><th>Time (IST)</th><th>Status / reason</th></tr></thead><tbody>{rows.map((r) => <tr key={r.id}><td>{r.registration_id}</td><td>{r.audience ?? r.kind}</td><td>{eventTime(r.due_at ?? r.created_at!)}</td><td>{r.status}{r.reason ? " · "+r.reason.replaceAll("_"," ") : ""}</td></tr>)}</tbody></table></div>}
+            {!rows.length ? <p>No {label.toLowerCase()} yet.</p> : <div className="table-scroll" role="region" aria-label={label} tabIndex={0}><table><thead><tr><th>Registration</th><th>Type</th><th>Time (IST)</th><th>Status / reason</th></tr></thead><tbody>{rows.map((r) => <tr key={r.id}><td>{r.registration_id}</td><td>{r.audience ?? r.kind}</td><td>{eventTime(r.due_at ?? r.created_at!)}</td><td>{r.status}{r.reason ? " · "+r.reason.replaceAll("_"," ") : ""}</td></tr>)}</tbody></table></div>}
           </details>)}
         </section>}
         <p role="status">{message}</p>

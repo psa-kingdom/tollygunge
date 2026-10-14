@@ -84,7 +84,7 @@ export function HistoryImport() {
             {preview.filename} · {preview.valid} valid of {preview.total} rows
           </p>
           <p>{preview.mapping}</p>
-          <div className="table-scroll">
+          <div className="table-scroll" role="region" aria-label="Historical import preview" tabIndex={0}>
             <table className="operations-table">
               <thead>
                 <tr>

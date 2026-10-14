@@ -409,7 +409,7 @@ function SettingsEditor({
             </button>
             <button
               type="button"
-              className="button secondary"
+              className="button danger"
               disabled={dirty || !row?.published}
               onClick={() => void act("withdraw")}
             >
@@ -683,7 +683,7 @@ function ResourceEditor({
                 </button>
                 <button
                   type="button"
-                  className="button secondary"
+                  className="button danger"
                   disabled={dirty || !selected.published}
                   onClick={() => void act("withdraw")}
                 >
@@ -691,7 +691,7 @@ function ResourceEditor({
                 </button>
                 <button
                   type="button"
-                  className="button secondary"
+                  className="button danger"
                   disabled={dirty}
                   onClick={() => void act("archive")}
                 >

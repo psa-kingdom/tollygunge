@@ -263,7 +263,7 @@ export function VerificationReviews({
                     : ["corrections"]
                   ).map((a) => (
                     <button
-                      className="button secondary"
+                      className={a === "reject" ? "button danger" : "button secondary"}
                       key={a}
                       onClick={() => {
                         setDecision(a);
@@ -296,7 +296,7 @@ export function VerificationReviews({
               )}
               {data?.admin && (
                 <button
-                  className="button secondary"
+                  className="button danger"
                   onClick={() => {
                     setDecision("revoke");
                     setReason("");
