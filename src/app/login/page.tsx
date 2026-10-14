@@ -1,3 +1,4 @@
+import { eventReturnPath } from "@/domain/event-flow";
 import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { GoogleSignIn } from "@/components/auth-controls";
@@ -17,13 +18,14 @@ export default async function Login({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const query = await searchParams;
+  const returnTo = eventReturnPath(query.returnTo);
   const switching = query.switch === "1";
   const requestedEmail =
     typeof query.email === "string" && query.email.length <= 254
       ? query.email
       : "";
   const actor = await currentActor();
-  if (actor && !switching) redirect(actor.roles.length ? "/admin" : "/member");
+  if (actor && !switching) redirect(returnTo ?? (actor.roles.length ? "/admin" : "/member"));
   const enabled =
     authConfigured() &&
     Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
@@ -55,14 +57,14 @@ export default async function Login({
             automatically confer approved membership.
           </p>
           {process.env.ONBOARDING_ENABLED === "true" ? (
-            <OnboardingSignIn initialEmail={requestedEmail} />
+            <OnboardingSignIn initialEmail={requestedEmail} returnTo={returnTo} />
           ) : (
-            <PasswordSignIn enabled={authConfigured()} />
+            <PasswordSignIn enabled={authConfigured()} returnTo={returnTo} />
           )}
           {process.env.ONBOARDING_ENABLED === "true" && (
-            <Link href="/signup">Create an account</Link>
+            <Link href={returnTo ? "/signup?returnTo="+encodeURIComponent(returnTo) : "/signup"}>Create an account</Link>
           )}
-          <GoogleSignIn enabled={enabled} />
+          <GoogleSignIn enabled={enabled} returnTo={returnTo} />
           {!enabled && (
             <p className="notice">
               Google sign-in is not available yet. Use your assigned account to

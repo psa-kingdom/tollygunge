@@ -1,5 +1,41 @@
 # TPA delivery checklist — 11 October 2026
 
+## Final hosted acceptance — 11 October 2026, 06:23 UTC
+
+**Published main commit:** `6532f3a9d8a58ae462a9902fce95fe01bce4d8a4`. **Railway deployment:** `7359d379-a8f7-468e-a9d7-a8568560cf21`, SUCCESS. Combined push/PR and main CI pass. All 29 applied migrations match archived source, allowing Git line-ending normalization. Existing CPU/memory/replica limits are unchanged.
+
+Fresh hosted retests: 40 public states without overflow/errors, 66 light/dark rendered accessibility states with zero automated violations, protected-route and frontend-secret checks pass, and full authenticated runtime smoke passes. All 12 LCP samples meet 2500 ms (356–2004 ms); three cold-cache desktop homepage checks measure 1716/1632/1808 ms. This is browser/network scope, not field INP, mobile-device or concurrency acceptance. The original table-focus and homepage loading failures remain recorded with successful retests.
+
+Final read-only reconciliation: 202 created / nine held source rows; 202 unreleased invitation holds; zero batch activation tokens, credentials and mail jobs. Existing identities and credential hashes remain preserved. No test/member-batch email or production import was executed. The import worker remains disabled; existing recovery/transactional email may continue.
+
+Independent publication, deployment, automated hosted acceptance and local cleanup are **complete for their evidenced scope**. Required staging/write/capacity, explicitly authorized mailbox acceptance, source/policy/provider and human/device gates remain open. **Full launch remains NOT READY.** Detailed closeout and sanitized evidence: [FINAL_RELEASE_CLOSEOUT.md](../.local/main-publish/FINAL_RELEASE_CLOSEOUT.md).
+
+
+## Main publication and launch acceptance — 11 October 2026
+
+Validated baseline published through PR #1 to main `797e92d9af07a352fa7b9fa161d76bcf8c6756c5`, with successful push, PR and main CI. Deployment `6c1e7505-c9b1-4d03-af17-9c62b46294f6` succeeded. Controlled-invitation deployment `3d21483a-44f7-43ec-afff-ebf0954374e9` subsequently added only its 16 runtime files; migration 029 is applied. Combined source `822a048` preserves those controls and adds named keyboard focus/scrolling to the payment table and self-hosted existing fonts. PR #2 records combined CI and publication. Exact final commit/archive/deployment identities and sanitized outputs are retained in ignored `.local/main-publish`.
+
+Fresh combined local checks: lint, typecheck, build, 81 unit tests; three invitation database cases; controlled-release HTTP checks plus two HTTP regressions; six held-account/payment-table browser cases across desktop/tablet/phone. Invitation tests use synthetic recipients and mail sinks, including 10/50/202 batches, replay, stale review, concurrent confirmation and rollback. No real email was sent. Original failed probes and successful retests are preserved: incomplete-build startup, stale queued-invitation expectation and omitted local synthetic session key were fixture/setup issues.
+
+Hosted baseline acceptance: 40 public states without overflow/runtime/response/accessibility failures; authenticated dashboards/account previews; private-route denial and frontend-secret exclusion (430 source files, seven configured secret values, zero leaks); full runtime smoke retest passed after one transient document-request timeout. The 66-state authenticated accessibility audit found a reproducible empty mobile payment-table keyboard defect, repaired and locally retested. Baseline 12 performance samples included one LCP of 3068 ms; three cold homepage traces measured 2788/2536/2240 ms and implicated the external font chain. Fresh deployed retests must govern performance/accessibility; earlier failures are retained, not counted as passes. No field INP or physical-device result is claimed.
+
+Read-only production reconciliation at 05:57 UTC: 208 accounts, 213 people, 202 memberships; 202 imported accounts linked to memberships and unreleased holds; zero batch activation tokens, credentials or mail jobs. The approved 211-row exception independently reconciles 202 created and nine held source rows. Existing identities/credential hashes match the preserved baseline. Strict 211-row source-resolution remains a separate open gate; synthetic success and the exception do not clear it.
+
+Fresh backup with migration 029 restored to an isolated local database, counts/202 holds reconciled, source stable, no workers started, restoration database removed. Backup SHA-256 `49414d816ed216462e954c7241ef01fb8022dd1575fc9fa23ab7c079820f8464`. This establishes a local rehearsal; infrastructure recovery approval/RTO remains open.
+
+| Work | Completion | Exact next action |
+|---|---|---|
+| Independent product implementation and local acceptance | Complete for evidenced scope | Retain CI/regression evidence; repair only demonstrated defects. |
+| Main publication / existing-service deployment | Baseline complete; combined release tracked in PR #2 | Record final main SHA and deployment identity; repeat hosted read-only checks. |
+| Imported-account safety | Complete read-only reconciliation | Keep all 202 holds; no direct release, source overwrite or automatic linking. |
+| Hosted profile/event/payment writes and capacity | BLOCKED | Provide an existing verified isolated staging deployment and mail sink; then run writes, 500-member reconciliation and bounded ramp. Do not provision paid resources or load production. |
+| Invitation delivery / mailbox activation and recovery acceptance | Pending explicit sending command | Approve template/recipients and explicitly authorize mail before delivery checks. Existing recovery/transactional mail may continue. |
+| Source correction and membership/payment policy | Open | Obtain authoritative corrections for held rows and approved terms/verification policy. |
+| OAuth/WhatsApp and human/device/assistive-technology acceptance | Open where required | Supply provider configuration and perform named human/device checks. |
+
+**Full launch decision: NOT READY.** Required untested journeys and capacity remain blockers. No funds movement, member-batch mail, production import, resource increase or new provider was performed.
+
+
 Current source of truth. Historical implementation, comparison and showcase reports
 remain evidence. Statuses: Done (only the stated capability), Partial, Added,
 Blocked, Deferred. Dependencies determine order; feedback adds work without removing
@@ -55,28 +91,38 @@ Existing synchronous recovery and verified updates-domain sender are preserved. 
 - [x] Configure managed secrets and verify hosted test-recipient delivery, one-use
       reset, old-session revocation, replacement sign-in and desktop/phone controls.
       See RESEND_ROLLOUT.md; production deployment 2c26ad17-0213-465e-81c1-eec81fa2008a.
-- [ ] Implement durable campaign jobs, consent rechecks, unsubscribe handling and
+- [x] Implement durable campaign jobs, consent rechecks, unsubscribe handling and
       verified delivery webhooks before enabling campaign sends.
-- [ ] Configure shared inbox and WhatsApp separately. All other policy/provider
+- [x] Configure shared email inbox; WhatsApp remains separately Blocked. All other policy/provider
       dependencies and historical evidence below remain in force.
 
-| Order | Capability                                                                              | Status                                 | Dependency / next action                                                           | Acceptance evidence                                                                                                                |
-| ----- | --------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Foundation, hosting, identity, permissions                                              | Done for first draft                   | Retain deployment/access checks                                                    | HOSTING.md; CI and hosted login/revocation                                                                                         |
-| 2     | Public responsive first draft                                                           | Done for first draft                   | Real content; broader devices/accessibility                                        | SHOWCASE_READINESS.md; desktop/tablet/phone screenshots                                                                            |
-| 3     | Content, governance, media publication                                                  | Partial                                | Rich editing and hosted uploads done; broader editorial/release acceptance remains | CONTENT_EDITOR.md; MEDIA_PUBLICATION.md; publication HTTP flows                                                                    |
-| 4     | CRM, directory/contact preview                                                          | Done for current scope                 | Production anti-abuse; fuller usability checks                                     | INQUIRIES.md; MEMBER_DIRECTORY.md; HTTP/browser checks                                                                             |
-| 5     | Rich editor/live preview                                                                | Done for this batch                    | Broader real-device/assistive-technology acceptance remains in release work        | CONTENT_EDITOR.md; local, CI and hosted evidence below                                                                             |
-| 6     | Report presets/XLSX, news preparation, release tooling                                  | Done for this batch                    | Actual news sources/schedule and full recovery remain gated                        | REPORTING_NEWS.md; RELEASE_RUNBOOK.md; CI 37727570318 and hosted/browser evidence below                                            |
-| 7     | Hosted document/editorial/QR/portrait uploads                                           | Done                                   | Future TPA-only credential rotation is hardening; full release remains open        | R2_UPLOAD_ROLLOUT.md; four configured hosted HTTP suites; 1440/768/390 controls/previews; exact object cleanup                     |
-| 8     | Membership decisions, activation, renewals, numbers/certificates, profile-change review | Partial / Blocked                      | Approved fees/eligibility/declaration/refund terms and verified transactions       | Membership drafts only; personal profile review implemented separately                                                             |
-| 9     | Collection, reconciliation, receipts, refunds/payment history                           | Partial / Blocked                      | UPI details/manual policy or Razorpay setup                                        | Versioned instruction management only                                                                                              |
-| 10    | Events, attendance, learning history                                                    | Partial                                | Paid events need payment; awards need learning policy                              | Free registrations/attendance HTTP checks                                                                                          |
-| 11    | Historical import commit                                                                | Partial / Blocked                      | Approved mapping/provenance                                                        | Preview validation only                                                                                                            |
-| 12    | Communications/inbox/delivery logs                                                      | Done for email scope / Partial overall | Durable campaigns, shared inbox and delivery logs verified; WhatsApp remains gated | EMAIL_OPERATIONS_ROLLOUT.md; hosted signed events, explicit test delivery, consent withdrawal, responsive checks and exact cleanup |
-| 13    | Google onboarding/emailed recovery                                                      | Partial                                | Recovery Done for test-recipient acceptance; Google OAuth client remains blocked   | RESEND_ROLLOUT.md; hosted reset/revocation; real-mailbox acceptance remains                                                        |
-| 14    | Scheduled attributed news                                                               | Blocked                                | Approved feeds/schedule                                                            | Editorial drafts only                                                                                                              |
-| 15    | Full production release                                                                 | Partial                                | Staging, backup/restore, recovery, security/accessibility and integrations         | First draft only; release acceptance pending                                                                                       |
+## Independent capability completion — 11 October 2026
+
+Done below means implemented and accepted within the stated scope. Hosted release, policy and human acceptance remain separate. Fresh source, checks and cleanup are recorded in [INDEPENDENT_QA_CLOSEOUT.md](INDEPENDENT_QA_CLOSEOUT.md).
+
+| Capability | Implementation / local acceptance | Remaining dependency |
+|---|---|---|
+| Foundation, identity and staff permissions | Done for tested workflows | Current hosted release acceptance |
+| Public responsive interface | Done for tested browser widths | Physical devices and human usability |
+| Content and governance publication | Done for tested HTTP workflows | Final editorial approval and hosted candidate acceptance |
+| Media publication and uploads | Done for existing hosted scope; disabled-storage regression checked locally | Current hosted candidate storage acceptance |
+| CRM, directory and account preview | Done for tested workflows | Hosted candidate acceptance |
+| Rich editor and preview | Done for existing scope | Assistive technology and human acceptance |
+| Reports and release tooling | Done for existing scope | Actual news source approval; full recovery rehearsal |
+| Private profile save/review | Done for tested workflows | Hosted candidate acceptance |
+| Membership records and independent display | Done for record handling | Eligibility, fees, renewals and certificate policy remain Blocked |
+| Manual event-payment recording | Done for synthetic pending/confirmed/refund-history workflows | Actual bank verification and approved operational policy |
+| Event publication, registration and attendance | Done for tested free/manual-payment workflows | Hosted candidate acceptance |
+| Learning awards | Blocked | Approved learning/award policy |
+| Strict member import and durable worker | Done for synthetic upload/restart/resume/replay workflows | Original 211-row source corrections remain Blocked |
+| Approved held-account exception | Done for isolated account/hold/security checks | Exact real-source batch reconciliation and separately authorized rollout |
+| Invitations and activation | Done for sink-only local workflows | Fresh candidate real-recipient acceptance |
+| Email campaigns, shared inbox and delivery logs | Done for previously documented email scope | Current hosted candidate acceptance |
+| WhatsApp | Blocked | Provider and policy setup |
+| Password authentication and emailed recovery | Done for local authentication/recovery; prior hosted recovery evidence retained | Fresh hosted sign-in and human recovery acceptance |
+| Google sign-in | Blocked | OAuth client configuration |
+| Scheduled attributed news | Blocked | Approved feeds and schedule |
+| Full production release | Partial | Isolated staging capacity, hosted journeys, recovery and human/device acceptance |
 
 ## Rich editing batch — dependency order
 

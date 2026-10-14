@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "./operations-client";
 import { PersonEditor } from "./person-editor";
 import { useUnsavedProfile } from "./use-unsaved-profile";
@@ -11,6 +11,8 @@ type Data = {
   canReview: boolean;
   canEditPrivate: boolean;
   canPublish: boolean;
+  total: number; page:number; pageSize:number;
+  biographyTemplate:string;
 };
 const emptyGroup = { name: "", page: "governance", section: 0, order: 0 };
 export function GovernanceWorkspace() {
@@ -19,9 +21,13 @@ export function GovernanceWorkspace() {
     [tab, setTab] = useState("people"),
     [dirty, setDirty] = useState(false),
     [q, setQ] = useState(""),
-    [filter, setFilter] = useState("association"),
+    [filter, setFilter] = useState("all"),
     [message, setMessage] = useState("Loading people…");
   const { guard, dialog } = useUnsavedProfile(dirty, false);
+  const [page,setPage]=useState(1),[search,setSearch]=useState("");
+  const initialized=useRef(false);
+  const directoryUrl=`/api/staff/governance?page=${page}&filter=${filter}&q=${encodeURIComponent(search)}`;
+  useEffect(()=>{const timer=setTimeout(()=>{setSearch(q);setPage(1);},300);return()=>clearTimeout(timer);},[q]);
   const [group, setGroup] = useState<ProfileGroup | null>(null),
     [body, setBody] = useState(emptyGroup),
     [parent, setParent] = useState(""),
@@ -32,18 +38,20 @@ export function GovernanceWorkspace() {
   const { guard: groupGuard, dialog: groupDialog } =
     useUnsavedProfile(groupDirty);
   async function load() {
-    const d = await api<Data>("/api/staff/governance");
+    const d = await api<Data>(directoryUrl);
     setData(d);
     setMessage("");
     return d;
   }
   useEffect(() => {
     let active = true;
-    api<Data>("/api/staff/governance")
+    api<Data>(directoryUrl)
       .then((d) => {
         if (active) {
           setData(d);
           setMessage("");
+          if (initialized.current) return;
+          initialized.current=true;
           const params = new URLSearchParams(window.location.search);
           if (params.get("review") === "pending") setFilter("pending");
           const id = params.get("id");
@@ -65,7 +73,7 @@ export function GovernanceWorkspace() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [directoryUrl]);
   async function openPerson(p: PersonEntry) {
     try {
       const details = await api<Data>(`/api/staff/governance?id=${p.id}`);
@@ -146,10 +154,12 @@ export function GovernanceWorkspace() {
               Show
               <select
                 value={filter}
-                onChange={(e) => setFilter(e.target.value)}
+                onChange={(e) => {setFilter(e.target.value);setPage(1);}}
               >
-                <option value="association">Association profiles</option>
-                <option value="all">All account profiles</option>
+                <option value="all">All people</option>
+                <option value="association">Committee profiles</option>
+                <option value="published">Published profiles</option>
+                <option value="archived">Archived profiles</option>
                 <option value="pending">Pending admin review</option>
                 <option value="unverified">Unverified</option>
                 <option value="verified">Verified</option>
@@ -157,6 +167,8 @@ export function GovernanceWorkspace() {
               </select>
             </label>
           </div>
+          <p role="status">{data.total} people · Page {page} of {Math.max(1,Math.ceil(data.total/50))}</p>
+          <div className="action-row"><button className="button secondary" disabled={page<=1} onClick={()=>setPage(page-1)}>Previous people</button><button className="button secondary" disabled={page*50>=data.total} onClick={()=>setPage(page+1)}>Next people</button></div>
           <div className="content-workspace">
             <aside className="record-list">
               <button
@@ -165,22 +177,7 @@ export function GovernanceWorkspace() {
               >
                 New person
               </button>
-              {data.records
-                .filter(
-                  (p) =>
-                    (filter === "all" ||
-                      (filter === "association" &&
-                        p.draft.assignments?.length) ||
-                      p.status === filter) &&
-                    JSON.stringify([
-                      p.draft.name,
-                      p.draft.organization,
-                      p.draft.assignments,
-                    ])
-                      .toLowerCase()
-                      .includes(q.toLowerCase()),
-                )
-                .map((p) => (
+              {data.records.map((p) => (
                   <button
                     key={p.id}
                     className={selected?.id === p.id ? "selected" : ""}
@@ -192,19 +189,21 @@ export function GovernanceWorkspace() {
                   >
                     <strong>{p.draft.name}</strong>
                     <small>
-                      {p.status === "pending" ? "Pending review" : p.status} ·{" "}
+                      {p.archived_at ? "Archived" : p.status === "pending" ? "Pending review" : p.status} ·{" "}
                       {p.published ? "Published" : "Private"}
                     </small>
                   </button>
                 ))}
             </aside>
             <div className="content-editing-area">
-              <PersonEditor
+              {selected && <div className="action-row">{data.canEditPrivate && (selected.membership_id ? <a className="text-link" href={`/admin/workspaces/members?personId=${selected.id}`}>View member record →</a> : selected.user_id ? <a className="text-link" href={`/admin/workspaces/members?id=${selected.user_id}`}>View account record →</a> : <span>No linked membership or account</span>)}{data.canPublish && <button className="button secondary" disabled={dirty} onClick={()=>guard(()=>{void api<PersonEntry>("/api/staff/governance",{action:selected.archived_at?"restore":"archive",id:selected.id,version:selected.version}).then(row=>{setSelected(row);return load();}).catch(e=>setMessage(e.message));})}>{selected.archived_at?"Restore profile":"Archive profile"}</button>}</div>}
+              {selected?.archived_at ? <p className="notice">This profile is archived and private. Restore it before editing; its membership and account remain intact.</p> : <PersonEditor
                 key={selected?.id ?? "new"}
                 entry={selected}
                 groups={data.groups}
                 editorial={data.portraits}
                 canReview={data.canReview}
+                biographyTemplate={data.biographyTemplate}
                 canPublish={data.canPublish}
                 canEditPrivate={data.canEditPrivate}
                 onDirty={setDirty}
@@ -212,7 +211,7 @@ export function GovernanceWorkspace() {
                   setSelected(row);
                   void load().catch((e) => setMessage(e.message));
                 }}
-              />
+              />}
             </div>
           </div>
         </>

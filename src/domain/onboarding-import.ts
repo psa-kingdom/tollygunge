@@ -43,7 +43,7 @@ export function parseCsv(text: string) {
   Object.defineProperty(rows,"sourceRows",{value:sourceRows});
   return rows;
 }
-export async function importCells(bytes: Uint8Array, filename: string, options: {rowErrors?:boolean} = {}) {
+export async function importCells(bytes: Uint8Array, filename: string, options: {rowErrors?:boolean;correctionWorkbook?:boolean} = {}) {
   if (bytes.length > 5 * 1024 * 1024) throw Error("Maximum file size is 5 MB.");
   if (filename.toLowerCase().endsWith(".csv"))
     return parseCsv(new TextDecoder().decode(bytes).replace(/^\uFEFF/, ""));
@@ -79,9 +79,11 @@ export async function importCells(bytes: Uint8Array, filename: string, options: 
   await workbook.xlsx.load(
     Buffer.from(bytes) as unknown as Parameters<typeof workbook.xlsx.load>[0],
   );
-  if (workbook.worksheets.length !== 1) throw Error("Use one worksheet.");
+  const correctionSheets=['Corrections','Summary','Issues','Originals'];
+  const correctionWorkbook=options.correctionWorkbook && workbook.worksheets.length===4 && correctionSheets.every(name=>!!workbook.getWorksheet(name));
+  if (workbook.worksheets.length !== 1 && !correctionWorkbook) throw Error("Use one worksheet.");
   const rows: ImportCells = [], sourceRows:number[] = [], cellErrors:Record<number,string>={};
-  const sheet = workbook.worksheets[0];
+  const sheet = correctionWorkbook ? workbook.getWorksheet('Corrections')! : workbook.worksheets[0];
   if (sheet.rowCount > 1001 || sheet.columnCount > 100)
     throw Error("Maximum 1,000 rows and 100 columns.");
   sheet.eachRow((row,rowNumber) => {

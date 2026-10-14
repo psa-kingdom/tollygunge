@@ -1,3 +1,4 @@
+import { speakersInput, remindersInput, defaultReminders } from "./event-flow";
 import { mobile } from "./member-foundation";
 import {
   contentLimits,
@@ -94,6 +95,8 @@ export function instant(value: unknown) {
   return result;
 }
 export type ContentBody = {
+  label?: string;
+  displayOrder?: number;
   title: string;
   intro: string;
   formatVersion?: 1;
@@ -158,6 +161,8 @@ export function content(value: unknown, kind: string): ContentBody {
   return {
     title,
     intro,
+    ...(input.label===undefined?{}:{label:text(input.label,"Page label",160)}),
+    ...(input.displayOrder===undefined?{}:{displayOrder:(()=>{const n=Number(input.displayOrder);if(!Number.isSafeInteger(n)||n<0||n>9999)throw Error("Use an order between 0 and 9999.");return n;})()}),
     ...(input.formatVersion === 1 ? { formatVersion: 1 as const } : {}),
     ...(introRich ? { introRich } : {}),
     ...(input.titleSize !== undefined
@@ -187,8 +192,7 @@ export function contentInput(value: unknown) {
   const body = content(input.body, kind);
   if (
     kind === "page" &&
-    (body.sections.length !== pageSections[slug].length ||
-      body.sections.some((s, i) => s.title !== pageSections[slug][i]))
+    body.sections.length !== pageSections[slug].length
   )
     throw new Error("Preserve the website submenu sections and order.");
   return {
@@ -223,7 +227,7 @@ export function applicationInput(value: unknown) {
       text(details[name] ?? "", name, name === "address" ? 1000 : 200),
     ]),
   );
-  if(result.phone) result.phone=mobile(result.phone);
+  if (result.phone) result.phone = mobile(result.phone);
   return {
     plan: String(input.plan),
     category: String(input.category),
@@ -249,11 +253,41 @@ export function eventInput(value: unknown) {
     Number(input.capacity) > 10000
   )
     throw new Error("Capacity must be between 1 and 10,000.");
-  // Paid events and learning-hour awards cannot be enabled through extra client fields.
+  // Use the explicit INR fee field. Legacy price and learning-hour fields are unsupported.
   if (input.price || input.learningHours)
     throw new Error(
-      "Payments and learning-hour awards await approved configuration.",
+      "Use the event fee field. Learning-hour awards are unavailable.",
     );
+  const registrationStartsAt = input.registrationStartsAt
+    ? instant(input.registrationStartsAt).toISOString()
+    : null;
+  const registrationEndsAt = input.registrationEndsAt
+    ? instant(input.registrationEndsAt).toISOString()
+    : null;
+  if (
+    (registrationEndsAt && new Date(registrationEndsAt) > starts) ||
+    (registrationStartsAt && new Date(registrationStartsAt) >= starts) ||
+    (registrationStartsAt &&
+      registrationEndsAt &&
+      registrationStartsAt >= registrationEndsAt)
+  )
+    throw new Error(
+      "Check the registration window; it must close by the event start.",
+    );
+  const feePaise = input.feePaise ?? 0;
+  if (
+    !Number.isSafeInteger(feePaise) ||
+    Number(feePaise) < 0 ||
+    Number(feePaise) > 100000000
+  )
+    throw new Error("Check the event fee.");
+  const visibility = input.visibility ?? "public",
+    deliveryMode = input.deliveryMode ?? "location";
+  if (
+    !["public", "members"].includes(String(visibility)) ||
+    !["location", "online"].includes(String(deliveryMode))
+  )
+    throw new Error("Choose event visibility and location type.");
   return {
     id: input.id ? uuid(input.id) : undefined,
     version: version(input.version),
@@ -263,5 +297,12 @@ export function eventInput(value: unknown) {
     startsAt: starts.toISOString(),
     endsAt: ends.toISOString(),
     capacity: Number(input.capacity),
+    registrationStartsAt,
+    registrationEndsAt,
+    feePaise,
+    visibility,
+    deliveryMode,
+    speakers: input.speakers === undefined ? undefined : speakersInput(input.speakers),
+    reminders: input.reminders === undefined ? (input.id ? undefined : defaultReminders) : remindersInput(input.reminders),
   };
 }

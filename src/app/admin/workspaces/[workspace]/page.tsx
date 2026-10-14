@@ -1,5 +1,9 @@
+import { RegistrationPayments } from "@/components/registration-payments";
 import { VerificationWorkspace } from "@/components/verification-workspace";
-import { BulkOnboarding, OnboardingEmailSettings } from "@/components/bulk-onboarding";
+import {
+  BulkOnboarding,
+  OnboardingEmailSettings,
+} from "@/components/bulk-onboarding";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { currentActor } from "@/lib/actor";
@@ -17,10 +21,11 @@ import { PaymentDetailsManager } from "@/components/payment-details";
 import { GovernanceWorkspace } from "@/components/governance-workspace";
 import { staffWorkspaceLabel } from "@/domain/staff-navigation";
 import { MembersWorkspace } from "@/components/members-workspace";
+import {WebsiteControl} from '@/components/website-control';
 const permissions: Record<string, Permission> = {
-  verification:"members:review",
-  onboarding:"staff:manage",
-  "onboarding-email":"staff:manage",
+  verification: "members:review",
+  onboarding: "staff:manage",
+  "onboarding-email": "staff:manage",
   members: "members:review",
   events: "events:manage",
   content: "content:publish",
@@ -32,6 +37,7 @@ const permissions: Record<string, Permission> = {
   access: "staff:manage",
   media: "content:publish",
   governance: "content:publish",
+  website:'content:publish',
 };
 export const dynamic = "force-dynamic";
 export async function generateMetadata({
@@ -67,7 +73,13 @@ export default async function Workspace({
     <main id="main" className="workspace-main">
       <Link href="/admin">← Staff workspace</Link>
       <h1>{staffWorkspaceLabel(workspace)}</h1>
-      {workspace === "verification" ? <VerificationWorkspace/> : workspace === "onboarding" ? <BulkOnboarding/> : workspace === "onboarding-email" ? <OnboardingEmailSettings/> : workspace === "governance" ? (
+      {workspace==='website'?<WebsiteControl/>:workspace === "verification" ? (
+        <VerificationWorkspace />
+      ) : workspace === "onboarding" ? (
+        <BulkOnboarding />
+      ) : workspace === "onboarding-email" ? (
+        <OnboardingEmailSettings />
+      ) : workspace === "governance" ? (
         <GovernanceWorkspace />
       ) : workspace === "media" ? (
         <MediaWorkspace />
@@ -76,26 +88,35 @@ export default async function Workspace({
       ) : workspace === "imports" ? (
         <HistoryImport />
       ) : workspace === "communications" ? (
-        <CommunicationsWorkspace />
+        <CommunicationsWorkspace canManageInvitations={hasPermission(actor.roles,'staff:manage')} />
       ) : workspace === "flyers" ? (
         <FlyerBuilder />
       ) : workspace === "content" ? (
         <ContentWorkspace />
       ) : workspace === "events" ? (
-        <EventManager />
+        <EventManager
+          canPromote={hasPermission(actor.roles, "communications:manage")}
+          canVerifyPayments={hasPermission(actor.roles, "payments:manage")}
+        />
       ) : workspace === "crm" ? (
         <CrmWorkspace />
       ) : workspace === "reports" ? (
         <OperationsReports />
       ) : workspace === "members" ? (
-        <MembersWorkspace />
+        <MembersWorkspace
+          canManage={hasPermission(actor.roles, "staff:manage")}
+        />
       ) : workspace === "payments" ? (
-        <PaymentDetailsManager />
+        <>
+          <RegistrationPayments />
+          <PaymentDetailsManager />
+        </>
       ) : (
         <>
           <p className="notice">
-            Transactional email and campaign delivery have separate readiness checks.
-            Shared inbox and official WhatsApp also await provider setup.
+            Transactional email and campaign delivery have separate readiness
+            checks. Shared inbox and official WhatsApp also await provider
+            setup.
           </p>
           <Link href="/admin/workspaces/crm">
             Open inquiry assignment and follow-ups →

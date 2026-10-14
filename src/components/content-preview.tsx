@@ -75,7 +75,7 @@ export function ContentPreview({
         (kind === "page" ? (
           <PublicContentView
             page={slug}
-            data={{ ...body, label: sitePages[slug]?.label }}
+            data={{ ...body, label: body.label??sitePages[slug]?.label }}
             readOnly
             context={context}
           />

@@ -16,6 +16,7 @@
     "release:check": "node scripts/verify-release.mjs",
     "test:email": "node --env-file-if-exists=.env.local --import tsx --test tests/email.integration.ts",
     "test:onboarding": "node --env-file-if-exists=.env.local --import tsx scripts/test-onboarding-local.mts",
+    "test:events": "node --env-file-if-exists=.env.local --import tsx scripts/test-event-flow.mts",
     "test:browser": "playwright test"
   },
   "dependencies": {

@@ -8,6 +8,10 @@ import {
 import { RichContent } from "./rich-content";
 import type { ContentBody } from "@/domain/operations";
 export type PublicContentContext = {
+  defaultPage?:ContentBody;
+  biographyTemplate?:string;
+  importantLinks?: {id:string;published:{title:string;url:string;description:string}}[];
+  downloads?: {id:string;published:{title:string;url:string;description:string;fileId:string|null}}[];
   people: PublicGovernanceEntry[];
   media: {
     id: string;
@@ -60,7 +64,7 @@ export function PublicContentView({
           <section
             id={`section-${i}`}
             className="content-section"
-            key={section.title}
+            key={i}
           >
             <h2
               className={
@@ -74,6 +78,7 @@ export function PublicContentView({
             <RichContent document={section.rich} text={section.text} />
             {["about", "governance"].includes(page) && (
               <PublicGovernance
+                biographyTemplate={context.biographyTemplate}
                 entries={people.filter(
                   (person) =>
                     person.published.page === page &&
@@ -100,6 +105,7 @@ export function PublicContentView({
                 ))}
               </div>
             )}
+            {page==='resources'&&i===2&&<div className="resource-row">{context.downloads?.map(resource=><article key={resource.id}><h3><a href={resource.published.fileId?`/downloads/${resource.id}`:resource.published.url}>{resource.published.title} ↓</a></h3><p>{resource.published.description}</p></article>)}</div>}
             {page === "events" &&
               i < 2 &&
               events
@@ -179,24 +185,12 @@ export function PublicContentView({
             {page === "resources" && i === 3 && (
               <div className="resource-row">
                 <div>
-                  {[
-                    ["Income Tax", "https://www.incometax.gov.in/"],
-                    ["GST", "https://www.gst.gov.in/"],
-                    ["MCA / ROC", "https://www.mca.gov.in/"],
-                    ["ICAI", "https://www.icai.org/"],
-                    ["ICSI", "https://www.icsi.edu/"],
-                    ["RBI", "https://www.rbi.org.in/"],
-                    ["SEBI", "https://www.sebi.gov.in/"],
-                    ["EPFO", "https://www.epfindia.gov.in/"],
-                    ["ESIC", "https://www.esic.gov.in/"],
-                    ["DGFT", "https://www.dgft.gov.in/"],
-                    ["Government Portals", "https://www.india.gov.in/"],
-                    ["West Bengal Government", "https://wb.gov.in/"],
-                  ].map(([label, url]) => (
-                    <p key={label}>
-                      <a href={url} target="_blank" rel="noopener noreferrer">
-                        {label} ↗
+                  {(context.importantLinks??[]).map(({id,published:link}) => (
+                    <p key={id}>
+                      <a href={link.url} target="_blank" rel="noopener noreferrer">
+                        {link.title} ↗
                       </a>
+                      {link.description&&<small>{link.description}</small>}
                     </p>
                   ))}
                 </div>

@@ -99,7 +99,7 @@ searchSources.push(
   {
     group: "Flyers",
     permission: "events:manage",
-    sql: `SELECT e.id::text id,e.title,'Saved event flyer'::text summary FROM tpa.flyer_templates f JOIN tpa.events e ON e.id=f.event_id WHERE e.status='published' AND concat_ws(' ',e.title,f.speakers::text,e.id) ILIKE $1 ORDER BY f.updated_at DESC LIMIT 4`,
+    sql: `SELECT e.id::text id,e.title,'Event flyers'::text summary FROM tpa.events e WHERE e.status='published' AND (jsonb_array_length(e.speakers)>0 OR EXISTS(SELECT 1 FROM tpa.flyer_variants f WHERE f.event_id=e.id)) AND concat_ws(' ',e.title,e.speakers::text,e.id) ILIKE $1 ORDER BY e.starts_at DESC LIMIT 4`,
     path: "/admin/workspaces/flyers",
   },
 );

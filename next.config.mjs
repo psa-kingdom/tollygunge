@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const config = {
   output: "standalone",
+  outputFileTracingRoot: process.cwd(),
+  turbopack: { root: process.cwd() },
+  experimental: { globalNotFound: true },
   async headers() {
     return [
       {

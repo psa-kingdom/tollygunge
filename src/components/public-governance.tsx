@@ -1,6 +1,7 @@
 import { GovernancePortrait } from "./governance-portrait";
 import { RichContent } from "./rich-content";
 import type { PersonBody } from "@/domain/people";
+import {biographyHeading} from '@/domain/website-settings';
 export type PublicGovernanceEntry = {
   id: string;
   published: PersonBody & {
@@ -21,8 +22,10 @@ export type PublicGovernanceEntry = {
 };
 export function PublicGovernance({
   entries,
+  biographyTemplate='About {name}',
 }: {
   entries: PublicGovernanceEntry[];
+  biographyTemplate?:string;
 }) {
   return (
     <div className="people-roster">
@@ -75,7 +78,7 @@ export function PublicGovernance({
           )}
           {p.biography && (
             <details className="person-biography">
-              <summary>About {p.name.split(" ")[0]}</summary>
+              <summary>{biographyHeading(p.name,p.biographyTitle,biographyTemplate)}</summary>
               <RichContent document={p.biographyRich} text={p.biography} />
             </details>
           )}

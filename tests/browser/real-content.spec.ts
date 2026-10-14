@@ -84,7 +84,9 @@ test("bank editor, saved activation and member display remain responsive", async
     await page
       .getByRole("button", { name: "Save draft details", exact: true })
       .click();
-    await expect(page.getByRole("status")).toContainText("Draft saved");
+    await expect(
+      page.getByRole("status").filter({ hasText: "Draft saved" }),
+    ).toBeVisible();
     paymentId = (
       await db.query(
         "SELECT id FROM tpa.payment_details WHERE draft->>'label'=$1",
@@ -100,7 +102,9 @@ test("bank editor, saved activation and member display remain responsive", async
       )
       .check();
     await page.getByRole("button", { name: "Activate saved revision" }).click();
-    await expect(page.getByRole("status")).toContainText("set to active");
+    await expect(
+      page.getByRole("status").filter({ hasText: "set to active" }),
+    ).toBeVisible();
     const memberPage = await memberContext.newPage();
     await memberPage.goto("/member/payments", {
       waitUntil: "domcontentloaded",

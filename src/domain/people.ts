@@ -39,6 +39,7 @@ export type PersonBody = {
   jobTitle: string;
   city: string;
   biography: string;
+  biographyTitle?: string;
   biographyRich?: RichNode;
   nameSize?: ContentSize;
   portraitId: string | null;
@@ -47,6 +48,8 @@ export type PersonBody = {
   assignments: Assignment[];
 };
 export type PersonEntry = {
+  archived_at?: string | null;
+  membership_id?: string | null;
   id: string;
   user_id: string | null;
   draft: PersonBody;
@@ -167,6 +170,7 @@ export function personBody(value: unknown): PersonBody {
       20000,
     ),
     ...(rich ? { biographyRich: rich } : {}),
+    ...(p.biographyTitle === undefined ? {} : { biographyTitle: text(p.biographyTitle, "Biography heading", 160) }),
     ...(p.nameSize === undefined ? {} : { nameSize: size(p.nameSize) }),
     portraitId: p.portraitId ? uuid(p.portraitId) : null,
     portraitKind: (p.portraitKind ?? "editorial") as PersonBody["portraitKind"],
@@ -188,6 +192,7 @@ export function redactPerson(body: PersonBody) {
     name: body.name, organization: body.organization, profession: body.profession,
     jobTitle: body.jobTitle, city: body.city, biography: body.biography,
     ...(body.biographyRich ? { biographyRich: body.biographyRich } : {}),
+    ...(body.biographyTitle ? { biographyTitle: body.biographyTitle } : {}),
     ...(body.nameSize ? { nameSize: body.nameSize } : {}),
     portraitId: body.portraitId, portraitKind: body.portraitKind,
     assignments: body.assignments, links: body.links, phone: "",

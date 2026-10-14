@@ -25,7 +25,7 @@ test("member register transaction safety, previews, repeated imports, updates an
     await c.query("SAVEPOINT duplicate");await assert.rejects(saveMember(c,actor,{member:{...member(2),membershipNumber:member(1).membershipNumber}}));await c.query("ROLLBACK TO SAVEPOINT duplicate");
     const cells=[memberHeaders,...Array.from({length:250},(_,i)=>["CA","Member",`Person ${i}`,String(i+1000).padStart(6,"0"),`bulk-${i}@example.invalid`,"9876543210","Partner","Example & Co","","","","",""])];
     const preview=await createMemberPreview(c,actor,cells);assert.equal(preview.rows.length,250);assert.ok(preview.rows.every(r=>r.status==="created"));
-    const committed=await memberBatchAction(c,actor,{id:preview.id,action:"commit",version:1});assert.equal(committed.totals?.created,250);
+    let committed; let chunks=0; do {committed=await memberBatchAction(c,actor,{id:preview.id,action:"commit",version:1});chunks++;assert.ok((committed.processed ?? 0)<=chunks*25);} while(committed.complete===false);assert.equal(chunks,10);assert.equal(committed.totals?.created,250);
     const repeat=await memberBatchAction(c,actor,{id:preview.id,action:"commit",version:1});assert.equal(repeat.duplicate,true);
     const repeatedFile=await createMemberPreview(c,actor,cells);assert.ok(repeatedFile.rows.every(r=>r.status==="skipped"));
     const fileRepeat=await commitMembers(c,actor,repeatedFile);assert.ok(fileRepeat.every(r=>r.status==="skipped"));
@@ -35,7 +35,7 @@ test("member register transaction safety, previews, repeated imports, updates an
     const updated=await memberBatchAction(c,actor,{id:update.id,action:"commit",version:2});assert.equal(updated.totals?.updated,1);
     const stale=await createMemberPreview(c,actor,[memberHeaders,cells[1]]);await c.query("UPDATE tpa.people SET version=version+1 WHERE id=$1",[stale.rows[0].match!.personId]);
     const staleResults=await commitMembers(c,actor,{...stale,choices:{updateRows:[2]}});assert.equal(staleResults[0].status,"conflict");
-    const provisioned=await saveMember(c,actor,{member:member(2),provisionAccount:true});assert.ok(provisioned.accountId);assert.equal(provisioned.invitationQueued,true);
+    const provisioned=await saveMember(c,actor,{member:member(2),provisionAccount:true});assert.ok(provisioned.accountId);assert.equal(provisioned.invitationQueued,false);
     assert.equal((await c.query('SELECT "emailVerified" FROM public."user" WHERE id=$1',[provisioned.accountId])).rows[0].emailVerified,false);
     assert.equal((await c.query("SELECT count(*)::int n FROM tpa.staff_roles WHERE user_id=$1",[provisioned.accountId])).rows[0].n,0);
     const orphan=(await saveMember(c,actor,{member:member(3),provisionAccount:true}));await c.query('DELETE FROM public."user" WHERE id=$1',[orphan.accountId]);
@@ -117,17 +117,18 @@ test("preservation imports hold differences and forbid updates or accounts",{ski
     assert.equal((await c.query('SELECT count(*)::int n FROM tpa.onboarding_invitations i JOIN public."user" u ON u.id=i.user_id WHERE u.email=$1',[member(700).email])).rows[0].n,0);
   } finally {await c.query("ROLLBACK");c.release();await pool.end();}
 });
-test("invitation queue failure rolls back account, person and membership with savepoint recovery",{skip:!enabled},async()=>{
+test("invitation hold failure rolls back account, person and membership with savepoint recovery",{skip:!enabled},async()=>{
   const pool=new Pool(databaseOptions()),c=await pool.connect(),actor=randomUUID(),failEmail="queue-failure@example.invalid";
   try {
     await c.query("BEGIN");await c.query('INSERT INTO public."user"(id,name,email,"emailVerified") VALUES($1,\'Queue fixture\',$2,false)',[actor,actor+"@example.invalid"]);
-    await c.query("CREATE FUNCTION tpa.test_invitation_queue_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.recipient='queue-failure@example.invalid' THEN RAISE EXCEPTION 'synthetic queue failure'; END IF; RETURN NEW; END $$");
-    await c.query("CREATE TRIGGER test_invitation_queue_failure BEFORE INSERT ON tpa.onboarding_mail FOR EACH ROW EXECUTE FUNCTION tpa.test_invitation_queue_failure()");
+    await c.query("CREATE FUNCTION tpa.test_invitation_queue_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF EXISTS(SELECT 1 FROM public.\"user\" WHERE id=NEW.user_id AND email='queue-failure@example.invalid') THEN RAISE EXCEPTION 'synthetic hold failure'; END IF; RETURN NEW; END $$");
+    await c.query("CREATE TRIGGER test_invitation_queue_failure BEFORE INSERT ON tpa.account_invitation_holds FOR EACH ROW EXECUTE FUNCTION tpa.test_invitation_queue_failure()");
     const preview=await createMemberPreview(c,actor,[memberHeaders,["CA","Queue","Fail","999997",failEmail,"","","","","","","",""],["CA","Queue","Good","999996","queue-good@example.invalid","","","","","","","",""]]);
-    const results=await commitMembers(c,actor,{...preview,choices:{provisionAccounts:true}});assert.equal(results[0].status,"failed");assert.equal(results[1].status,"created");assert.equal("invitationQueued" in results[1] && results[1].invitationQueued,true);
+    const results=await commitMembers(c,actor,{...preview,choices:{provisionAccounts:true}});assert.equal(results[0].status,"failed");assert.equal(results[1].status,"created");assert.equal("invitationQueued" in results[1] && results[1].invitationQueued,false);
     assert.equal((await c.query('SELECT count(*)::int n FROM public."user" WHERE email=$1',[failEmail])).rows[0].n,0);
     assert.equal((await c.query("SELECT count(*)::int n FROM tpa.people WHERE contact_email=$1",[failEmail])).rows[0].n,0);
     assert.equal((await c.query("SELECT count(*)::int n FROM tpa.memberships WHERE membership_number='999997'")).rows[0].n,0);
     assert.equal((await c.query("SELECT count(*)::int n FROM tpa.onboarding_mail WHERE recipient=$1",[failEmail])).rows[0].n,0);
   } finally {await c.query("ROLLBACK");c.release();await pool.end();}
 });
+

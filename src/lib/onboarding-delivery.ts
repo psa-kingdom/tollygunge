@@ -1,3 +1,5 @@
+import { deliverEventReminder } from "./event-reminders";
+import type { PoolClient } from "pg";
 import type { Pool } from "pg";
 import { openMail } from "./onboarding-mail";
 import {
@@ -32,7 +34,7 @@ export async function recordOnboardingEvent(
   );
   await reconcile(pool, e.data.email_id);
 }
-async function reconcile(pool: Pool, id: string) {
+async function reconcile(pool: Pool | PoolClient, id: string) {
   await pool.query(
     "UPDATE tpa.onboarding_mail SET status=CASE WHEN EXISTS(SELECT 1 FROM tpa.onboarding_mail_events WHERE provider_id=$1 AND type IN ('email.bounced','email.complained','email.failed','email.suppressed')) THEN 'bounced' WHEN EXISTS(SELECT 1 FROM tpa.onboarding_mail_events WHERE provider_id=$1 AND type='email.delivered') THEN 'delivered' ELSE status END WHERE provider_id=$1",
     [id],
@@ -43,11 +45,12 @@ export async function runOnboardingTick(
   env: Record<string, string | undefined> = process.env,
   deps = { request: providerRequest, quota: fetchEmailQuota },
 ) {
+  const sink = env.TPA_MAIL_SINK === "true";
   if (
     env.ONBOARDING_ENABLED !== "true" ||
-    !env.RESEND_API_KEY ||
+    (!sink && (!env.RESEND_API_KEY ||
     env.RESEND_DOMAIN_VERIFIED !== "true" ||
-    !env.RESEND_RECEIVING_API_KEY
+    !env.RESEND_RECEIVING_API_KEY))
   )
     return;
   await pool.query(
@@ -59,12 +62,14 @@ export async function runOnboardingTick(
   await pool.query(
     "UPDATE tpa.onboarding_mail SET status='failed',reason='retry_limit' WHERE status='leased' AND lease_until<now() AND attempts>=5",
   );
-  const quota = await deps.quota(env.RESEND_RECEIVING_API_KEY);
-  const pause = quotaPause(quota, "transactional");
-  if (pause) return;
+  if (!sink) {
+    const quota = await deps.quota(env.RESEND_RECEIVING_API_KEY!);
+    if (quotaPause(quota, "transactional")) return;
+  }
   const row = (
     await pool.query(
-      "UPDATE tpa.onboarding_mail SET status='leased',lease_until=now()+interval '40 seconds',attempts=attempts+1,first_attempt_at=coalesce(first_attempt_at,now()) WHERE id=(SELECT id FROM tpa.onboarding_mail WHERE (status='queued' OR status='leased' AND lease_until<now()) AND available_at<=now() AND attempts<5 ORDER BY CASE kind WHEN 'verification' THEN 0 WHEN 'invitation' THEN 1 ELSE 2 END,created_at FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *",
+      "UPDATE tpa.onboarding_mail SET status='leased',lease_until=now()+interval '40 seconds',attempts=attempts+1,first_attempt_at=coalesce(first_attempt_at,now()) WHERE id=(SELECT id FROM tpa.onboarding_mail WHERE (status='queued' OR status='leased' AND lease_until<now()) AND available_at<=now() AND attempts<5 AND (kind<>'event_reminder' OR $1) ORDER BY CASE kind WHEN 'verification' THEN 0 WHEN 'invitation' THEN 1 ELSE 2 END,created_at FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *",
+      [env.EVENT_REMINDERS_ENABLED !== "false"],
     )
   ).rows[0];
   if (!row) return;
@@ -83,23 +88,19 @@ export async function runOnboardingTick(
       );
       return;
     }
-    const payload = openMail(row.payload, env.BETTER_AUTH_SECRET);
-    const result = await deps.request(
-      "/emails",
-      env.RESEND_API_KEY,
-      {
-        from: env.AUTH_EMAIL_FROM || "TPA <no-reply@updates.tpassociation.org>",
-        to: [row.recipient],
-        ...payload,
-      },
-      "onboarding-" + row.id,
-    );
-    if (typeof result.id !== "string") throw Error("Invalid receipt");
-    await pool.query(
-      "UPDATE tpa.onboarding_mail SET status='accepted',provider_id=$2,lease_until=NULL,payload='{}'::jsonb WHERE id=$1",
-      [row.id, result.id],
-    );
-    await reconcile(pool, result.id);
+    const send = async (db: Pool | PoolClient) => {
+      const payload = openMail(row.payload, env.BETTER_AUTH_SECRET);
+      const result = sink ? { id: "sink-" + row.id } : await deps.request(
+        "/emails", env.RESEND_API_KEY!,
+        { from: env.AUTH_EMAIL_FROM || "TPA <no-reply@updates.tpassociation.org>", to: [row.recipient], ...payload },
+        "onboarding-" + row.id,
+      );
+      if (typeof result.id !== "string") throw Error("Invalid receipt");
+      await db.query("UPDATE tpa.onboarding_mail SET status='accepted',provider_id=$2,lease_until=NULL,payload='{}'::jsonb WHERE id=$1", [row.id,result.id]);
+      await reconcile(db,result.id);
+    };
+    if (row.kind === "event_reminder") await deliverEventReminder(pool,row.id,send);
+    else await send(pool);
   } catch (e) {
     const permanent = e instanceof EmailProviderError && !e.transient;
     await pool.query(

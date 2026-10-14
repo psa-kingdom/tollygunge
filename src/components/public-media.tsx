@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getDatabase } from "@/lib/database";
-export async function HomepageMedia() {
+import {homeDefaults} from '@/domain/website-home';
+export async function HomepageMedia({copy=homeDefaults.media}:{copy?:typeof homeDefaults.media}={}) {
   if (!process.env.DATABASE_URL) return null;
   const { rows } = await getDatabase().query(
-    "SELECT id,published,width,height FROM tpa.public_media WHERE published->>'homepageFeatured'='true' ORDER BY created_at DESC,id LIMIT 3",
+    "SELECT id,published,width,height FROM tpa.public_media WHERE published->>'homepageFeatured'='true' ORDER BY coalesce((published->>'displayOrder')::int,0),created_at DESC,id LIMIT 3",
   );
   if (!rows.length) return null;
   return (
@@ -15,11 +16,11 @@ export async function HomepageMedia() {
     >
       <div className="section-heading">
         <div>
-          <span className="eyebrow">OUR COMMUNITY</span>
-          <h2>Moments from TPA.</h2>
+          <span className="eyebrow">{copy.eyebrow}</span>
+          <h2>{copy.heading}</h2>
         </div>
-        <Link className="text-link" href="/resources#section-1">
-          View media ↗
+        <Link className="text-link" href={copy.linkHref}>
+          {copy.linkLabel}
         </Link>
       </div>
       <div className="media-gallery">

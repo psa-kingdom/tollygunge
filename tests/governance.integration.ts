@@ -381,6 +381,17 @@ test(
         (await req("/api/profile-portraits/" + randomUUID())).status,
         404,
       );
+      // Older association profiles must remain manageable after 200 newer people.
+      const newerIds = Array.from({ length: 201 }, () => randomUUID());
+      ids.push(...newerIds);
+      await pool.query(
+        "INSERT INTO tpa.people(id,draft,accepted) SELECT id,$2::jsonb,$2::jsonb FROM unnest($1::uuid[]) id",
+        [newerIds, JSON.stringify(row.draft)],
+      );
+      await pool.query("UPDATE tpa.people SET updated_at=now()-interval '1 year' WHERE id=$1", [row.id]);
+      const directory = await ok("/api/staff/governance", 0);
+      assert.ok(directory.records.some((person: { id: string }) => person.id === row.id),
+        "The staff directory must retain older profiles beyond the first 200 records");
     } finally {
       await pool.query(
         "DELETE FROM tpa.people WHERE id=ANY($1::uuid[]) OR user_id=ANY($2::text[])",

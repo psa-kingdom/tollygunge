@@ -23,6 +23,7 @@ import {
   type PublicContentContext,
 } from "./public-content-view";
 type Entry = {
+  archived_at?:string|null;
   id: string;
   slug: string;
   kind: string;
@@ -34,6 +35,7 @@ function pageBody(slug: string): ContentBody {
   const page = sitePages[slug];
   return {
     title: page.title,
+    label:page.label,
     intro: page.intro,
     sections: page.sections.map((s) => ({ ...s })),
     sourceUrl: "",
@@ -75,6 +77,7 @@ export function ContentEditor() {
     [panel, setPanel] = useState("edit"),
     [pending, setPending] = useState<(() => void) | null>(null);
   const dialogRef = useRef<HTMLElement>(null);
+  const [showArchived,setShowArchived]=useState(false);
   const closeDialog = useCallback(() => setPending(null), []);
   useModalFocus(Boolean(pending), dialogRef, closeDialog);
   const dirty =
@@ -98,7 +101,7 @@ export function ContentEditor() {
     validation = e instanceof Error ? e.message : "Check content.";
   }
   useEffect(() => {
-    api<Entry[]>("/api/staff/content")
+    api<Entry[]>("/api/staff/content?archived=true")
       .then(setEntries)
       .then(() => setMessage(""))
       .catch((e) => setMessage(e.message));
@@ -109,6 +112,7 @@ export function ContentEditor() {
       api<PublicContentContext>(`/api/staff/content/preview?page=${slug}`)
         .then((value) => {
           if (!cancelled) {
+            if(value.defaultPage&&!selected&&!dirtyRef.current){const defaults=editable(value.defaultPage);setBody(defaults);setBaseline(snapshot(defaults,'page'));}
             setContext(value);
             setContextPage(slug);
             setContextError("");
@@ -124,7 +128,7 @@ export function ContentEditor() {
     return () => {
       cancelled = true;
     };
-  }, [slug, kind, contextRefresh]);
+  }, [slug, kind, contextRefresh,selected]);
   useEffect(() => {
     const unload = (e: BeforeUnloadEvent) => {
       if (dirtyRef.current) {
@@ -185,12 +189,13 @@ export function ContentEditor() {
         body,
       });
       select(entry);
-      setEntries(await api<Entry[]>("/api/staff/content"));
+      setEntries(await api<Entry[]>("/api/staff/content?archived=true"));
       setMessage(
         action === "save"
           ? "Draft saved. Published content is unchanged."
           : action === "publish"
             ? "Published on the public site."
+            : action==='archive' ? 'Entry archived. Its history is retained.' : action==='restore' ? 'Entry restored as a private draft.'
             : "Publication removed.",
       );
     } catch (e) {
@@ -225,6 +230,9 @@ export function ContentEditor() {
   return (
     <div className="content-workspace">
       <aside className="record-list">
+        <label><input type="checkbox" checked={showArchived} onChange={e=>setShowArchived(e.target.checked)}/>Include archived</label>
+        <strong>Website pages</strong>
+        {pageSlugs.map(page=><button type="button" key={page} disabled={busy} onClick={()=>guard(()=>{const existing=entries.find(e=>e.kind==='page'&&e.slug===page);if(existing)select(existing);else{setSelected(null);setKind('page');setSlug(page);replace(pageBody(page),'page');setMessage('Original page defaults · private until you save and publish.');}})}>{sitePages[page].label}</button>)}
         <button
           type="button"
           className="button secondary"
@@ -234,7 +242,7 @@ export function ContentEditor() {
           New entry
         </button>
         {entries.length === 0 && <p>No content entries yet.</p>}
-        {entries.map((entry) => (
+        {entries.filter(entry=>showArchived||!entry.archived_at).map((entry) => (
           <button
             type="button"
             key={entry.id}
@@ -244,7 +252,7 @@ export function ContentEditor() {
           >
             <strong>{entry.draft.title}</strong>
             <small>
-              {entry.kind} · {entry.published ? "Published" : "Draft"} · /
+              {entry.kind} · {entry.archived_at?'Archived':entry.published ? "Published" : "Draft"} · /
               {entry.slug}
             </small>
           </button>
@@ -260,9 +268,10 @@ export function ContentEditor() {
             </p>
           </div>
           <span className="content-save-state">
-            {dirty ? "Unsaved changes" : selected ? "Saved draft" : "New entry"}
+            {selected?.archived_at?'Archived · private':dirty ? "Unsaved changes" : selected ? "Saved draft" : "New entry"}
           </span>
         </div>
+        {selected && <div className="action-row"><button type="button" className="button secondary" disabled={busy||dirty} onClick={()=>void act(selected.archived_at?'restore':'archive')}>{selected.archived_at?'Restore entry':'Archive entry'}</button></div>}
         <div
           className="content-mobile-tabs"
           role="tablist"
@@ -313,7 +322,7 @@ export function ContentEditor() {
                 void act("save");
               }}
             >
-              <fieldset className="content-save-lock" disabled={busy}>
+              <fieldset className="content-save-lock" disabled={busy||!!selected?.archived_at}>
                 <div className="form-grid">
                   <label>
                     Type
@@ -391,6 +400,8 @@ export function ContentEditor() {
                     maxLength={contentLimits.title}
                   />
                 </label>
+                {kind==='page'&&<label>Page label<input maxLength={160} value={body.label??sitePages[slug]?.label??''} onChange={e=>setBody({...body,label:e.target.value})}/></label>}
+                {kind!=='page'&&<label>Display order<input type="number" min={0} max={9999} value={body.displayOrder??0} onChange={e=>setBody({...body,displayOrder:Number(e.target.value)})}/></label>}
                 <TextCounter
                   label="Title"
                   value={body.title}
@@ -401,7 +412,7 @@ export function ContentEditor() {
                 )}
                 <h3 className="editor-field-heading">Introduction</h3>
                 <RichEditor
-                  disabled={busy}
+                  disabled={busy||!!selected?.archived_at}
                   label="Introduction"
                   document={body.introRich}
                   text={body.intro}
@@ -416,8 +427,7 @@ export function ContentEditor() {
                 />
                 {kind === "page" && (
                   <p className="notice">
-                    Website section titles and order are locked to preserve
-                    submenu links. Their appearance and body text can be edited.
+                      Section slots and links stay in place. Edit their headings and copy; the published navigation uses these headings.
                   </p>
                 )}
                 {body.sections.map((section, i) => (
@@ -427,7 +437,6 @@ export function ContentEditor() {
                       Section title
                       <input
                         value={section.title}
-                        readOnly={kind === "page"}
                         required
                         maxLength={contentLimits.heading}
                         onChange={(e) =>
@@ -604,7 +613,7 @@ export function ContentEditor() {
                         <button
                           type="button"
                           className="button secondary"
-                          disabled={busy}
+                      disabled={busy||!!selected?.archived_at}
                           onClick={() =>
                             guard(() => {
                               void act("unpublish");

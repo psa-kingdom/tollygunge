@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     return {
       assets: (
         await getDatabase().query(
-          "SELECT id,draft,published,width,height,byte_size,version,created_at FROM tpa.public_media WHERE ($1::uuid IS NULL OR id=$1) ORDER BY created_at DESC LIMIT 100",
+          "SELECT id,draft,published,width,height,byte_size,version,created_at FROM tpa.public_media WHERE ($1::uuid IS NULL OR id=$1) ORDER BY coalesce((published->>'displayOrder')::int,0),created_at DESC,id",
           [id],
         )
       ).rows,
@@ -82,6 +82,7 @@ export async function POST(request: Request) {
         altText: form.get("altText"),
         category: form.get("category"),
         homepageFeatured: form.get("homepageFeatured") === "true",
+        displayOrder:form.get('displayOrder')??0,
       });
       const file = form.get("file");
       if (!(file instanceof File)) throw new Error();

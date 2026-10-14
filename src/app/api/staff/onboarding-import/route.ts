@@ -1,6 +1,12 @@
 import { randomUUID, randomBytes, createHash } from "node:crypto";
+import { approvedAccountPolicy } from "@/domain/approved-account-batch";
 import { memberHeaders } from "@/domain/member-import";
-import { createMemberPreview, memberBatchAction, isMemberBatch } from "@/lib/member-import";
+import {
+  createMemberPreview,
+  createApprovedAccountPreview,
+  memberBatchAction,
+  isMemberBatch,
+} from "@/lib/member-import";
 import ExcelJS from "exceljs";
 import {
   operation,
@@ -27,15 +33,19 @@ export async function GET(r: Request) {
     const actor = await authorized(r, "staff:manage");
     const url = new URL(r.url);
     if (url.searchParams.has("template")) {
-      const fields = ["members","existing-members"].includes(url.searchParams.get("mode") ?? "") ? memberHeaders : [
-        "name",
-        "email",
-        "category",
-        "plan",
-        "phone",
-        "qualification",
-        "organization",
-      ];
+      const fields = ["members", "existing-members"].includes(
+        url.searchParams.get("mode") ?? "",
+      )
+        ? memberHeaders
+        : [
+            "name",
+            "email",
+            "category",
+            "plan",
+            "phone",
+            "qualification",
+            "organization",
+          ];
       if (url.searchParams.get("template") === "xlsx") {
         const w = new ExcelJS.Workbook();
         w.addWorksheet("Accounts").addRow(fields);
@@ -78,11 +88,20 @@ export async function GET(r: Request) {
         ).rows;
         return {
           ...batch,
+          mode:
+            batch.choices?.approval === approvedAccountPolicy.approval
+              ? "approved-accounts"
+              : batch.mode,
           results: (batch.results ?? []).map(
-            (result: { email: string; status: string }) => ({
+            (result: {
+              email: string;
+              status: string;
+              invitationStatus?: string;
+            }) => ({
               ...result,
-              emailStatus: mail.find((m) => m.recipient === result.email)
-                ?.status,
+              emailStatus:
+                mail.find((m) => m.recipient === result.email)?.status ??
+                (result.invitationStatus === "held" ? "held" : undefined),
               invitationId: mail.find((m) => m.recipient === result.email)?.id,
             }),
           ),
@@ -122,16 +141,71 @@ export async function POST(r: Request) {
       const cells = parsed;
       const p = await policy();
       const mode = String(form.get("mode") ?? "invitation");
-      if (!["invitation", "existing-members","members","accounts"].includes(mode)) throw new OperationError("Choose an import mode.");
-      if (mode === "existing-members" || mode === "members") {
-        return transaction(async c=>{
-          const preview=await createMemberPreview(c,actor.id,cells,cells.sourceRows,cells.cellErrors,mode==="existing-members");
-          await c.query("UPDATE tpa.onboarding_batches SET source_hash=$2,filename=$3 WHERE id=$1",[preview.id,createHash("sha256").update(new Uint8Array(await file.arrayBuffer())).digest("hex"),file.name]);
-          return {...preview,mode,rows:preview.rows.map(row=>({...row,...(row.status==="failed" || row.status==="conflict" ? {error:row.reason} : {})}))};
+      if (
+        ![
+          "invitation",
+          "existing-members",
+          "members",
+          "accounts",
+          "approved-accounts",
+        ].includes(mode)
+      )
+        throw new OperationError("Choose an import mode.");
+      if (
+        mode === "existing-members" ||
+        mode === "members" ||
+        mode === "approved-accounts"
+      ) {
+        return transaction(async (c) => {
+          const sourceHash = createHash("sha256")
+            .update(new Uint8Array(await file.arrayBuffer()))
+            .digest("hex");
+          const preview =
+            mode === "approved-accounts"
+              ? await createApprovedAccountPreview(
+                  c,
+                  actor.id,
+                  cells,
+                  sourceHash,
+                  cells.sourceRows,
+                  cells.cellErrors,
+                )
+              : await createMemberPreview(
+                  c,
+                  actor.id,
+                  cells,
+                  cells.sourceRows,
+                  cells.cellErrors,
+                  mode === "existing-members",
+                );
+          await c.query(
+            "UPDATE tpa.onboarding_batches SET source_hash=$2,filename=$3 WHERE id=$1",
+            [
+              preview.id,
+              createHash("sha256")
+                .update(new Uint8Array(await file.arrayBuffer()))
+                .digest("hex"),
+              file.name,
+            ],
+          );
+          return {
+            ...preview,
+            mode,
+            rows: preview.rows.map((row) => ({
+              ...row,
+              ...(row.status === "failed" || row.status === "conflict"
+                ? { error: row.reason }
+                : {}),
+            })),
+          };
         });
       }
-      if (Object.keys(cells.cellErrors ?? {}).length) throw new OperationError("Formula or malformed Excel cells are not accepted in account imports.");
-      if(process.env.ONBOARDING_ENABLED!=="true") throw new OperationError("Onboarding is disabled.",503);
+      if (Object.keys(cells.cellErrors ?? {}).length)
+        throw new OperationError(
+          "Formula or malformed Excel cells are not accepted in account imports.",
+        );
+      if (process.env.ONBOARDING_ENABLED !== "true")
+        throw new OperationError("Onboarding is disabled.", 503);
       if (!form.get("mapping"))
         return {
           headers: cells[0],
@@ -154,9 +228,11 @@ export async function POST(r: Request) {
         if (!row.error) {
           try {
             if (row.category && row.category !== "Professional")
-            throw new OperationError("Only professional applications may be imported.");
-          row.details = validateAnswers(row.details, p.fields);
-          await validatePostalAddresses(row.details,{},db,true);
+              throw new OperationError(
+                "Only professional applications may be imported.",
+              );
+            row.details = validateAnswers(row.details, p.fields);
+            await validatePostalAddresses(row.details, {}, db, true);
           } catch {
             row.error = "Mapped values do not match field rules.";
           }
@@ -179,8 +255,11 @@ export async function POST(r: Request) {
       return { id, rows };
     }
     const i = await jsonBody(r);
-    if(await isMemberBatch(i.id,actor.id)) return transaction(c=>memberBatchAction(c,actor.id,i));
-    if(process.env.ONBOARDING_ENABLED!=="true") throw new OperationError("Onboarding is disabled.",503);
+    if (await isMemberBatch(i.id, actor.id))
+      return transaction((c) => memberBatchAction(c, actor.id, i));
+    if (process.env.ONBOARDING_ENABLED !== "true")
+      throw new OperationError("Onboarding is disabled.", 503);
+    if (i.action === "reissue") throw new OperationError('Review the recipient and approved invitation template before issuing a replacement link.',409,'invitation_review_required');
     if (i.action === "retry" || i.action === "reissue") {
       return transaction(async (c) => {
         const job = (
@@ -205,6 +284,21 @@ export async function POST(r: Request) {
             [job.id],
           );
         } else {
+          await c.query('SELECT id FROM public."user" WHERE id=$1 FOR UPDATE', [
+            job.user_id,
+          ]);
+          if (
+            (
+              await c.query(
+                "SELECT 1 FROM tpa.onboarding_mail WHERE user_id=$1 AND kind='invitation' AND (status IN ('queued','leased') OR reason='uncertain_send_expired' OR created_at>now()-interval '10 minutes')",
+                [job.user_id],
+              )
+            ).rowCount
+          )
+            throw new OperationError(
+              "Invitation is queued, recently sent, or requires reconciliation.",
+              409,
+            );
           if (
             (
               await c.query(
@@ -248,9 +342,12 @@ export async function POST(r: Request) {
       ).rows[0];
       if (!b) throw new OperationError("Preview not found.", 404);
       if (b.committed_at) return { results: b.results, duplicate: true };
-      const results = [];
+      const results = [...(b.results ?? [])];
       const p = await policy(c);
-      for (const row of b.rows as ImportRow[]) {
+      for (const row of (b.rows as ImportRow[]).slice(
+        results.length,
+        results.length + 25,
+      )) {
         if (row.error) {
           results.push({
             email: row.email,
@@ -262,10 +359,15 @@ export async function POST(r: Request) {
         await c.query("SAVEPOINT onboarding_row");
         try {
           if (row.category && row.category !== "Professional")
-            throw new OperationError("Only professional applications may be imported.");
+            throw new OperationError(
+              "Only professional applications may be imported.",
+            );
           row.details = validateAnswers(row.details, p.fields);
-          await validatePostalAddresses(row.details,{},c,true);
-          const inserted = await createInvitedAccount(c,{name:row.name,email:row.email});
+          await validatePostalAddresses(row.details, {}, c, true);
+          const inserted = await createInvitedAccount(c, {
+            name: row.name,
+            email: row.email,
+          });
           if (!inserted) {
             results.push({
               email: row.email,
@@ -274,7 +376,7 @@ export async function POST(r: Request) {
             });
             continue;
           }
-          const user=inserted.accountId;
+          const user = inserted.accountId;
           await c.query(
             "INSERT INTO tpa.application_drafts(id,user_id,plan,category,details,requirement_version) VALUES($1,$2,$3,$4,$5,$6)",
             [
@@ -286,7 +388,7 @@ export async function POST(r: Request) {
               p.version,
             ],
           );
-          results.push({ email: row.email, status: "created" });
+          results.push({ email: row.email, status: "created",accountId:inserted.accountId,invitationStatus:inserted.invitationStatus,invitationQueued:false });
         } catch {
           await c.query("ROLLBACK TO SAVEPOINT onboarding_row");
           results.push({
@@ -299,12 +401,19 @@ export async function POST(r: Request) {
           await c.query("RELEASE SAVEPOINT onboarding_row");
         }
       }
+      const complete = results.length === b.rows.length;
       await c.query(
-        "UPDATE tpa.onboarding_batches SET committed_at=now(),results=$2 WHERE id=$1",
-        [b.id, JSON.stringify(results)],
+        "UPDATE tpa.onboarding_batches SET committed_at=CASE WHEN $3 THEN now() ELSE NULL END,results=$2 WHERE id=$1",
+        [b.id, JSON.stringify(results), complete],
       );
-      await audit(c, actor.id, "onboarding.import_committed", b.id);
-      return { results };
+      if (complete)
+        await audit(c, actor.id, "onboarding.import_committed", b.id);
+      return {
+        results,
+        complete,
+        processed: results.length,
+        total: b.rows.length,
+      };
     });
   });
 }

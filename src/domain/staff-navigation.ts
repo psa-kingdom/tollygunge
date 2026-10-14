@@ -73,6 +73,7 @@ const groups: {
   {
     label: "Publishing",
     items: [
+      {label:'Website settings',href:'/admin/workspaces/website',icon:'file',permission:'content:publish'},
       {
         label: "Content",
         href: "/admin/workspaces/content",
@@ -97,7 +98,7 @@ const groups: {
     label: "Administration",
     items: [
       {
-        label: "Payment details",
+        label: "Payments",
         href: "/admin/workspaces/payments",
         icon: "wallet",
         permission: "payments:manage",

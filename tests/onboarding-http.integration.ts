@@ -319,7 +319,7 @@ test(
       assert.equal(
         (await get("/api/staff/onboarding-import?id=" + preview.id, 0))
           .results[0].emailStatus,
-        "queued",
+        "held",
       );
       assert.deepEqual(
         results.results.map((x: { status: string }) => x.status),
@@ -336,6 +336,16 @@ test(
         ).duplicate,
         true,
       );
+      const importedUser=(await db.query('SELECT id FROM public."user" WHERE email=$1',[mail])).rows[0].id;
+      assert.equal((await db.query('SELECT count(*)::int n FROM tpa.onboarding_mail WHERE user_id=$1',[importedUser])).rows[0].n,0);
+      const importedPerson=randomUUID();
+      await db.query("INSERT INTO tpa.people(id,user_id,accepted,draft,contact_email) VALUES($1,$2,'{\"name\":\"Imported\"}','{\"name\":\"Imported\"}',$3)",[importedPerson,importedUser,mail]);
+      await db.query("INSERT INTO tpa.memberships(id,person_id,membership_number,source) VALUES($1,$2,$3,'staff')",[randomUUID(),importedPerson,randomUUID()]);
+      const templateState=await get('/api/staff/invitation-templates',0);
+      const templateDraft=await (await request('/api/staff/invitation-templates',0,{action:'save',revision:templateState.revision,subject:'Synthetic invitation',body:'Hello {{member_name}}\n{{setup_link}}\nExpires in {{expiry}}.'})).json();
+      assert.equal((await request('/api/staff/invitation-templates',0,{action:'approve',id:templateDraft.latest_id,revision:templateDraft.revision})).status,200);
+      const invitationReview=await (await request('/api/staff/invitation-releases',0,{action:'review',personIds:[importedPerson]})).json();
+      assert.equal((await request('/api/staff/invitation-releases',0,{action:'confirm',id:invitationReview.id,idempotencyKey:invitationReview.idempotency_key})).status,200);
       const job = (
         await db.query(
           "SELECT * FROM tpa.onboarding_mail WHERE recipient=$1 AND kind='invitation'",
@@ -361,6 +371,8 @@ test(
         [job.user_id],
       );
       assert.equal((await redeem()).status, 410);
+      assert.equal((await request("/api/staff/onboarding-import",0,{action:"reissue",id:job.id})).status,409);
+      await db.query("UPDATE tpa.onboarding_mail SET status='failed',reason='link_expired',created_at=now()-interval '49 hours' WHERE id=$1",[job.id]);
       assert.equal(
         (
           await request("/api/staff/onboarding-import", 0, {
@@ -368,8 +380,10 @@ test(
             id: job.id,
           })
         ).status,
-        200,
+        409,
       );
+      const replacementReview=await (await request('/api/staff/invitation-releases',0,{action:'review',personIds:[importedPerson]})).json();
+      assert.equal((await request('/api/staff/invitation-releases',0,{action:'confirm',id:replacementReview.id,idempotencyKey:replacementReview.idempotency_key})).status,200);
       const reissued = (
         await db.query(
           "SELECT payload FROM tpa.onboarding_mail WHERE recipient=$1 AND kind='invitation' ORDER BY created_at DESC LIMIT 1",

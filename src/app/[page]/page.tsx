@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
 import { publishedPage, publishedArticles } from "@/lib/public-content";
 import { getDatabase } from "@/lib/database";
+import {publishedSettings,publishedResources} from '@/lib/website-content';
 import { type PublicGovernanceEntry } from "@/components/public-governance";
 export const dynamic = "force-dynamic";
 import { sitePages as pages } from "@/domain/site-pages";
@@ -47,7 +48,7 @@ export default async function ContentPage({
     page === "resources" && process.env.DATABASE_URL
       ? (
           await getDatabase().query(
-            "SELECT id,published,width,height FROM tpa.public_media WHERE published IS NOT NULL ORDER BY created_at DESC LIMIT 100",
+            "SELECT id,published,width,height FROM tpa.public_media WHERE published IS NOT NULL ORDER BY coalesce((published->>'displayOrder')::int,0),created_at DESC,id",
           )
         ).rows
       : [];
@@ -80,7 +81,7 @@ export default async function ContentPage({
       <PublicContentView
         page={page}
         data={data}
-        context={{ people, media, events, articles }}
+        context={{ people, media, events, articles,biographyTemplate:(await publishedSettings('shared')).biographyHeading,importantLinks:page==='resources'?await publishedResources('link'):[],downloads:page==='resources'?await publishedResources('document'):[] }}
       />
     </SiteShell>
   );

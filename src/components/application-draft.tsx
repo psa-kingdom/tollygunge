@@ -575,6 +575,7 @@ export function ApplicationDraft({
           <button
             key={s}
             className="button secondary"
+            aria-label={`${i + 1}. ${s}`}
             aria-current={draft.step === i ? "step" : undefined}
             disabled={!ready || busy}
             onClick={async () => {

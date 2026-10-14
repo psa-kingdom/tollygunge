@@ -10,7 +10,7 @@ export async function publishedPeople() {
   ).rows;
   const people = (
     await db.query(
-      "SELECT p.id,p.published,(CASE WHEN p.published->>'portraitKind'='profile' THEN EXISTS(SELECT 1 FROM tpa.profile_portraits x WHERE x.id=(p.published->>'portraitId')::uuid AND x.person_id=p.id) ELSE EXISTS(SELECT 1 FROM tpa.public_media m WHERE m.id=(p.published->>'portraitId')::uuid AND m.published IS NOT NULL) END) AS portrait_available FROM tpa.people p WHERE p.published IS NOT NULL ORDER BY p.id",
+      "SELECT p.id,p.published,(CASE WHEN p.published->>'portraitKind'='profile' THEN EXISTS(SELECT 1 FROM tpa.profile_portraits x WHERE x.id=(p.published->>'portraitId')::uuid AND x.person_id=p.id) ELSE EXISTS(SELECT 1 FROM tpa.public_media m WHERE m.id=(p.published->>'portraitId')::uuid AND m.published IS NOT NULL) END) AS portrait_available FROM tpa.people p WHERE p.published IS NOT NULL AND p.archived_at IS NULL ORDER BY p.id",
     )
   ).rows;
   return people

@@ -3,6 +3,9 @@ import { currentActor } from "@/lib/actor";
 import { AccountControls } from "./account-controls";
 import { MemberNavigation } from "./member-navigation";
 import { StickyHeaderState } from "./sticky-header-state";
+import {publishedSettings,publicNavigation} from '@/lib/website-content';
+import {sharedDefaults,type SharedSettings} from '@/domain/website-settings';
+import Image from 'next/image';
 export const navigation = [
   {
     title: "About",
@@ -30,43 +33,38 @@ export const navigation = [
     links: ["Insights", "Media", "Downloads", "Important Links"],
   },
 ];
-export function Brand() {
+export function Brand({settings=sharedDefaults}:{settings?:SharedSettings}={}) {
   return (
     <Link href="/" className="brand">
-      <span className="brand-mark">
-        tpa<span>·</span>
-      </span>
-      <span className="brand-name">
-        TOLLYGUNGE
-        <br />
-        PROFESSIONAL ASSOCIATION
-      </span>
+      {settings.logoMediaId ? <Image src={`/media/${settings.logoMediaId}`} alt={settings.logoAlt} width={48} height={48} unoptimized/> : <span className="brand-mark">{settings.brandMark.endsWith('·')?<>{settings.brandMark.slice(0,-1)}<span>·</span></>:settings.brandMark}</span>}
+      <span className="brand-name" style={{whiteSpace:'pre-line'}}>{settings.organisation}</span>
     </Link>
   );
 }
 export async function Header() {
   const actor = await currentActor();
+  const settings=await publishedSettings('shared'),navigation=await publicNavigation();
   return (
     <header className="site-header">
       <StickyHeaderState />
-      <Brand />
+      <Brand settings={settings}/>
       <nav className="desktop-nav" aria-label="Primary">
-        {navigation.map((n) => (
-          <details className="nav-menu" name="primary-navigation" key={n.title}>
+        {navigation.map((n,navIndex) => (
+          <details className="nav-menu" name="primary-navigation" key={navIndex}>
             <summary>
               {n.title}
               <span>⌄</span>
             </summary>
             <div className="dropdown">
               {n.links.map((label, i) => (
-                <Link key={label} href={`${n.href}#section-${i}`}>
+                <Link key={i} href={`${n.href}#section-${i}`}>
                   {label}
                 </Link>
               ))}
             </div>
           </details>
         ))}
-        <Link href="/contact">Contact</Link>
+        <Link href={settings.contactHref}>{settings.contactLabel}</Link>
       </nav>
       <div className="header-actions">
         <Link href={actor ? "/account" : "/login"} className="login-link">
@@ -74,11 +72,11 @@ export async function Header() {
             ? actor.roles.length
               ? "Staff workspace ↗"
               : "Your account ↗"
-            : "Member login ↗"}
+            : `${settings.loginLabel} ↗`}
         </Link>
         {!actor && (
           <Link className="button small" href="/join">
-            Join TPA <span>→</span>
+            {settings.joinLabel} <span>→</span>
           </Link>
         )}
         <AccountControls actor={actor} />
@@ -86,19 +84,19 @@ export async function Header() {
       <details className="mobile-nav">
         <summary>Menu</summary>
         <nav aria-label="Mobile">
-          {navigation.map((n) => (
-            <details key={n.title} name="mobile-sections">
+          {navigation.map((n,navIndex) => (
+            <details key={navIndex} name="mobile-sections">
               <summary>{n.title}</summary>
               {n.links.map((label, i) => (
-                <Link key={label} href={`${n.href}#section-${i}`}>
+                <Link key={i} href={`${n.href}#section-${i}`}>
                   {label}
                 </Link>
               ))}
             </details>
           ))}
-          <Link href="/contact">Contact</Link>
+          <Link href={settings.contactHref}>{settings.contactLabel}</Link>
           <Link href={actor ? "/account" : "/login"}>
-            {actor ? "Your workspace" : "Member login"}
+            {actor ? "Your workspace" : settings.loginLabel}
           </Link>
         </nav>
       </details>
@@ -143,31 +141,26 @@ export async function AccountShell({
     </div>
   );
 }
-export function Footer() {
+export async function Footer() {
+  const settings=await publishedSettings('shared'),footer=settings.footer;
   return (
     <footer className="site-footer">
       <div>
-        <Brand />
-        <p>
-          Connect. Learn. Collaborate.
-          <br />
-          Grow. Contribute.
-        </p>
+        <Brand settings={settings}/>
+        <p style={{whiteSpace:'pre-line'}}>{footer.tagline}</p>
       </div>
       <div>
-        <span className="eyebrow">EXPLORE</span>
-        <Link href="/about">Our association</Link>
-        <Link href="/membership">Become a member</Link>
-        <Link href="/events">Events & learning</Link>
+        <span className="eyebrow">{footer.exploreTitle}</span>
+        {footer.links.map(link=><Link key={link.href+link.label} href={link.href}>{link.label}</Link>)}
       </div>
       <div>
-        <span className="eyebrow">GET IN TOUCH</span>
-        <Link href="/contact">Contact the secretariat ↗</Link>
-        <span>Tollygunge · Kolkata, India</span>
+        <span className="eyebrow">{footer.contactTitle}</span>
+        <Link href={footer.contactHref}>{footer.contactLabel}</Link>
+        <span>{footer.location}</span>
       </div>
       <div className="footer-bottom">
-        © {new Date().getFullYear()} Tollygunge Professional Association
-        <span>A shared commitment to progress.</span>
+        © {new Date().getFullYear()} {footer.copyrightName}
+        <span>{footer.closing}</span>
       </div>
     </footer>
   );

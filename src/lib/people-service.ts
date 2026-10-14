@@ -102,6 +102,7 @@ export async function enriched(
       );
   return {
     ...visibleRow,
+    membership_id:full?(await client.query('SELECT id FROM tpa.memberships WHERE person_id=$1',[row.id])).rows[0]?.id??null:undefined,
     published: row.published ? publicPerson(row.published) : null,
     draft: full ? row.draft : redactPerson(row.draft),
     accepted: full ? row.accepted : redactPerson(row.accepted),
@@ -172,6 +173,8 @@ export async function changePerson(
       "publish",
       "unpublish",
       "link",
+      "archive",
+      "restore",
     ].includes(action)
   )
     throw new OperationError("Choose a profile action.");
@@ -203,6 +206,15 @@ export async function changePerson(
     );
   if (!row && action !== "save")
     throw new OperationError("Save the profile first.");
+  if (row?.archived_at && action !== "restore" && !ownerOnly) throw new OperationError("Restore this archived profile before editing.",409);
+  if (action === "archive" || action === "restore") {
+    if (ownerOnly || !hasPermission(actor.roles,"content:publish")) throw new OperationError("Access denied.",403);
+    if (action === "restore" && !row?.archived_at) throw new OperationError("Profile is already active.",409);
+    await client.query(`UPDATE tpa.people SET archived_at=${action === "archive" ? "now()" : "NULL"},published=NULL,version=version+1,updated_at=now() WHERE id=$1`,[row.id]);
+    await client.query("INSERT INTO tpa.person_revisions(id,person_id,version,action,body,actor_id) SELECT $1,id,version,$2,draft,$3 FROM tpa.people WHERE id=$4",[randomUUID(),action,actor.id,row.id]);
+    await audit(client,actor.id,"person."+action,row.id);
+    return enriched(client,(await client.query("SELECT * FROM tpa.people WHERE id=$1",[row.id])).rows[0],actor);
+  }
   if (
     process.env.ONBOARDING_ENABLED === "true" &&
     row?.user_id &&
@@ -216,6 +228,7 @@ export async function changePerson(
   let draft: PersonBody = row?.draft;
   if (action === "save") {
     const submitted = record(input.body);
+    if(ownerOnly&&Object.hasOwn(submitted,'biographyTitle')&&submitted.biographyTitle!==row?.draft.biographyTitle)throw new OperationError('Public presentation headings are staff-managed.',403);
     const privateKeys = [
       "email",
       "mobile",

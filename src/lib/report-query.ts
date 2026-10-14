@@ -54,7 +54,7 @@ export async function reportQuery(
     sql = `SELECT coalesce(person.accepted->>'name',u.name) AS name,u.email,u."emailVerified" AS email_verified,coalesce(person.status,'unverified') AS profile_review,u."createdAt" AS created_at,coalesce(p.phone,'') AS phone,coalesce(p.organization,'') AS organization,coalesce(p.profession,'') AS profession,coalesce(p.job_title,'') AS job_title,coalesce(p.city,'') AS city,EXISTS(SELECT 1 FROM tpa.staff_roles s WHERE s.user_id=u.id) AS staff_account ${directoryFrom} ${directoryWhere} AND ${bounds('u."createdAt"', 7)} ORDER BY u."createdAt" DESC,u.id LIMIT $9`;
     values = [...directoryValues(filters), ...dates, limit];
   } else if (name === "events") {
-    sql = `SELECT e.title,e.starts_at,e.status,count(r.id) FILTER(WHERE r.status='registered')::int AS registrations,count(a.registration_id)::int AS attendance FROM tpa.events e LEFT JOIN tpa.event_registrations r ON r.event_id=e.id LEFT JOIN tpa.event_attendance a ON a.registration_id=r.id WHERE ${bounds("e.starts_at")} GROUP BY e.id ORDER BY e.starts_at DESC,e.id LIMIT $3`;
+    sql = `SELECT e.title,e.starts_at,e.status,count(r.id) FILTER(WHERE r.status='registered')::int AS registrations,count(a.registration_id) FILTER(WHERE a.outcome='attended')::int AS attendance FROM tpa.events e LEFT JOIN tpa.event_registrations r ON r.event_id=e.id LEFT JOIN tpa.event_attendance a ON a.registration_id=r.id WHERE ${bounds("e.starts_at")} GROUP BY e.id ORDER BY e.starts_at DESC,e.id LIMIT $3`;
     values = [...dates, limit];
   } else if (name === "inquiries") {
     sql = `SELECT status,count(*)::int AS total,count(*) FILTER(WHERE status<>'closed' AND follow_up_at<now())::int AS overdue FROM tpa.inquiries WHERE ${bounds("created_at")} GROUP BY status ORDER BY status`;

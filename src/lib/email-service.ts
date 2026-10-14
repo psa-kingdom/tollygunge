@@ -64,8 +64,9 @@ export async function emailReadiness(pool: Pool) {
     enabled: emailConfigured() && !!state?.healthy && state.status === "ready",
   };
 }
-const eligible =
+export const campaignEligibility =
   "coalesce(n.subscribed,false) AND u.\"emailVerified\" AND coalesce(p.preferences->>'contact','email')='email' AND s.email IS NULL";
+const eligible = campaignEligibility;
 export async function campaignRecipients(
   client: PoolClient,
   audience: { city: string; profession: string },

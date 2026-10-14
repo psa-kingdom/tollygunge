@@ -1,8 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
+import { EventSpeakers } from "./event-speakers";
+import { eventLink, type Speaker } from "@/domain/event-flow";
 import { api } from "./operations-client";
+import { renderFlyer } from "@/lib/flyer-canvas";
 import NextImage from "next/image";
-type Speaker = { name: string; credentials: string };
+type Variant={id:string;event_id:string;name:string;headline:string;presentation:{accent:string};status:string;version:number};
 type Event = {
   id: string;
   title: string;
@@ -10,6 +13,11 @@ type Event = {
   starts_at: string;
   speakers: Speaker[] | null;
   template_version: number;
+  fee_paise: number;
+  visibility: string;
+  status?:string;
+  registration_starts_at: string | null;
+  registration_ends_at: string | null;
 };
 export function FlyerBuilder() {
   const [events, setEvents] = useState<Event[]>([]),
@@ -18,8 +26,18 @@ export function FlyerBuilder() {
       { name: "", credentials: "" },
     ]),
     [image, setImage] = useState(""),
-    [message, setMessage] = useState("Loading published events…"),
+    [message, setMessage] = useState("Loading events…"),
     [busy, setBusy] = useState(false);
+  const [variants,setVariants]=useState<Variant[]>([]),[variant,setVariant]=useState<Variant|null>(null),[variantName,setVariantName]=useState('Standard flyer'),[headline,setHeadline]=useState(''),[accent,setAccent]=useState('gold'),[generatedAt,setGeneratedAt]=useState('');
+  useEffect(()=>{let active=true;if(event?.id) api<Variant[]>(`/api/staff/flyer-variants?eventId=${event.id}`).then(rows=>{if(active)setVariants(rows);}).catch(e=>{if(active)setMessage(e.message);});return()=>{active=false;};},[event?.id]);
+  function chooseVariant(row:Variant|null) {setVariant(row);setVariantName(row?.name??'Standard flyer');setHeadline(row?.headline??'');setAccent(row?.presentation.accent??'gold');setImage('');}
+  async function checkFresh() {
+    if(!event) throw Error('Choose an event.');
+    const latest=(await api<Event[]>(`/api/staff/flyers?id=${event.id}`))[0];
+    if(!latest||latest.template_version!==event.template_version) {setImage('');throw Error('Event changed. Reload and regenerate the preview.');}
+    if(JSON.stringify(speakers)!==JSON.stringify(latest.speakers)) {setImage('');throw Error('Save event speakers before generating or exporting.');}
+    if(variant) {const rows=await api<Variant[]>(`/api/staff/flyer-variants?eventId=${event.id}`);if(rows.find(r=>r.id===variant.id)?.version!==variant.version) {setImage('');throw Error('Variant changed. Reload before generating or exporting.');}}
+  }
   useEffect(() => {
     api<Event[]>("/api/staff/flyers" + (location.search || ""))
       .then((rows) => {
@@ -28,7 +46,7 @@ export function FlyerBuilder() {
         const chosen = rows.find((r) => r.id === id);
         if (chosen) {
           setEvent(chosen);
-          setSpeakers(chosen.speakers ?? [{ name: "", credentials: "" }]);
+          setSpeakers(chosen.speakers?.length ? chosen.speakers : [{ name: "", credentials: "" }]);
         }
       })
       .then(() => setMessage(""))
@@ -39,14 +57,18 @@ export function FlyerBuilder() {
     setBusy(true);
     setMessage("");
     try {
+      await checkFresh();
+      const timestamp=new Date().toISOString();
       setImage(
         await renderFlyer(
           event,
           speakers,
-          `${window.location.origin}/events/${event.id}`,
+          eventLink(window.location.origin,event),
+          {headline,accent,generatedAt:timestamp},
         ),
       );
-      setMessage("Preview generated. The QR opens this published event.");
+      setGeneratedAt(timestamp);
+      setMessage(event.status==='draft'?"Preview generated. Draft event: its registration QR becomes available after publication.":"Preview generated. The QR opens this published event.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Export failed.");
     } finally {
@@ -58,8 +80,8 @@ export function FlyerBuilder() {
       <section>
         <h2>Event flyer</h2>
         <p>
-          One or two speakers, with a registration QR. Only published events can
-          be promoted.
+          One to six speakers, with a registration QR. Draft events can be previewed;
+          publish the event before sharing its flyer.
         </p>
         <form
           className="member-settings"
@@ -69,84 +91,40 @@ export function FlyerBuilder() {
           }}
         >
           <label>
-            Published event
+            Event
             <select
+              disabled={busy}
               value={event?.id ?? ""}
               onChange={(e) => {
                 const row =
                   events.find((item) => item.id === e.target.value) ?? null;
                 setEvent(row);
-                setSpeakers(row?.speakers ?? [{ name: "", credentials: "" }]);
+                setSpeakers(row?.speakers?.length ? row.speakers : [{ name: "", credentials: "" }]);
                 setImage("");
+                chooseVariant(null);
               }}
             >
               <option value="">Choose event</option>
               {events.map((e) => (
                 <option key={e.id} value={e.id}>
-                  {e.title}
+                  {e.title}{e.status==='draft'?' · Draft preview':''}
                 </option>
               ))}
             </select>
           </label>
-          {events.length === 0 && <p>Publish an event to create its flyer.</p>}
-          <label>
-            Speaker layout
-            <select
-              value={speakers.length}
-              onChange={(e) => {
-                setSpeakers(
-                  Number(e.target.value) === 1
-                    ? [speakers[0]]
-                    : [speakers[0], { name: "", credentials: "" }],
-                );
-                setImage("");
-              }}
-            >
-              <option value={1}>One speaker</option>
-              <option value={2}>Two speakers</option>
-            </select>
-          </label>
-          {speakers.map((s, i) => (
-            <fieldset key={i}>
-              <legend>Speaker {i + 1}</legend>
-              <label>
-                Name
-                <input
-                  required
-                  minLength={2}
-                  maxLength={60}
-                  value={s.name}
-                  onChange={(e) => {
-                    setSpeakers(
-                      speakers.map((value, j) =>
-                        i === j ? { ...value, name: e.target.value } : value,
-                      ),
-                    );
-                    setImage("");
-                  }}
-                />
-              </label>
-              <label>
-                Credentials / role
-                <input
-                  maxLength={120}
-                  value={s.credentials}
-                  onChange={(e) => {
-                    setSpeakers(
-                      speakers.map((value, j) =>
-                        i === j
-                          ? { ...value, credentials: e.target.value }
-                          : value,
-                      ),
-                    );
-                    setImage("");
-                  }}
-                />
-              </label>
-            </fieldset>
-          ))}
+          {event && <fieldset disabled={busy}><legend>Flyer variants</legend>
+            <label>Saved variant<select value={variant?.id??''} onChange={e=>chooseVariant(variants.find(v=>v.id===e.target.value)??null)}><option value="">New variant</option>{variants.map(v=><option key={v.id} value={v.id}>{v.name} · {v.status}</option>)}</select></label>
+            <label>Variant name<input value={variantName} maxLength={80} onChange={e=>{setVariantName(e.target.value);setImage('');}}/></label>
+            <label>Promotional headline<input value={headline} maxLength={60} onChange={e=>{setHeadline(e.target.value);setImage('');}}/></label>
+            <label>Accent<select value={accent} onChange={e=>{setAccent(e.target.value);setImage('');}}><option value="gold">Gold</option><option value="navy">Navy</option></select></label>
+            <div className="action-row">{['draft','published','archived'].map(status=><button key={status} type="button" className="button secondary" disabled={busy||(status==='published'&&!image)||(!variant&&status==='archived')} onClick={async()=>{setBusy(true);try{await checkFresh();const saved=await api<Variant>('/api/staff/flyer-variants',{id:variant?.id,version:variant?.version??0,eventId:event.id,eventVersion:event.template_version,name:variantName,headline,presentation:{accent},status});setVariant(saved);setVariants(await api(`/api/staff/flyer-variants?eventId=${event.id}`));setImage('');setMessage(status==='published'?'Flyer published. Its shared view uses current event details.':'Variant saved. Regenerate the preview before export.');}catch(e){setMessage(e instanceof Error?e.message:'Save failed.');}finally{setBusy(false);}}}>{status==='draft'?'Save variant':status==='published'?'Publish flyer':'Archive variant'}</button>)}</div>
+            {variant?.status==='published'&&<a className="text-link" href={`/flyers/${variant.id}`}>Open shared flyer →</a>}
+          </fieldset>}
+          {events.length === 0 && <p>Create an event to prepare its flyer.</p>}
+          <fieldset disabled={busy}><legend>Event speakers</legend><EventSpeakers speakers={speakers} onChange={(rows) => { setSpeakers(rows); setImage(""); }} /></fieldset>
+          <p>Saving updates the shared speaker list on event details and future flyers.</p>
           <div className="action-row">
-            <button className="button" disabled={busy || !event}>
+            <button className="button" disabled={busy || !event || !speakers.length}>
               Generate preview
             </button>
             <button
@@ -181,7 +159,8 @@ export function FlyerBuilder() {
                         : item,
                     ),
                   );
-                  setMessage("Reusable speaker template saved.");
+                  setMessage("Event speakers saved.");
+                  setImage('');
                 } catch (error) {
                   setMessage(
                     error instanceof Error ? error.message : "Save failed.",
@@ -191,26 +170,27 @@ export function FlyerBuilder() {
                 }
               }}
             >
-              Save template
+              Save event speakers
             </button>
           </div>
         </form>
         <p role="status">{message}</p>
         {image && (
           <div className="action-row">
-            <a
+            <button type="button"
               className="button secondary"
-              href={image}
-              download="tpa-event-flyer.png"
+              disabled={busy}
+              onClick={async()=>{setBusy(true);try{await checkFresh();const link=document.createElement('a');link.href=image;link.download='tpa-event-flyer.png';link.click();}catch(e){setMessage(e instanceof Error?e.message:'Export failed.');}finally{setBusy(false);}}}
             >
               Download PNG
-            </a>
+            </button>
             <button
               className="button secondary"
               disabled={busy}
               onClick={async () => {
                 setBusy(true);
                 try {
+                  await checkFresh();
                   const { jsPDF } = await import("jspdf");
                   const pdf = new jsPDF({
                     compress: true,
@@ -231,8 +211,8 @@ export function FlyerBuilder() {
                   );
                   pdf.save("tpa-event-flyer.pdf");
                   setMessage("PDF export prepared.");
-                } catch {
-                  setMessage("PDF export failed. Please try again.");
+                } catch (error) {
+                  setMessage(error instanceof Error?error.message:"PDF export failed. Please try again.");
                 } finally {
                   setBusy(false);
                 }
@@ -242,6 +222,7 @@ export function FlyerBuilder() {
             </button>
           </div>
         )}
+        {image&&<p className="field-help">Generated {new Date(generatedAt).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})} IST. Downloaded files are static.</p>}
       </section>
       <section aria-label="Flyer preview">
         {image ? (
@@ -261,102 +242,4 @@ export function FlyerBuilder() {
       </section>
     </div>
   );
-}
-async function renderFlyer(event: Event, speakers: Speaker[], link: string) {
-  if (speakers.some((s) => s.name.trim().length < 2))
-    throw new Error("Provide each speaker name.");
-  const QRCode = (await import("qrcode")).default,
-    qr = await QRCode.toDataURL(link, {
-      width: 190,
-      margin: 2,
-      errorCorrectionLevel: "M",
-    });
-  const canvas = document.createElement("canvas");
-  canvas.width = 1080;
-  canvas.height = 1350;
-  const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#f5f4ef";
-  ctx.fillRect(0, 0, 1080, 1350);
-  ctx.fillStyle = "#172a40";
-  ctx.fillRect(0, 0, 1080, 260);
-  ctx.fillStyle = "#d0b77a";
-  ctx.font = "bold 100px Georgia";
-  ctx.fillText("tpa·", 70, 145);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "24px Arial";
-  ctx.fillText("TOLLYGUNGE PROFESSIONAL ASSOCIATION", 70, 205);
-  ctx.fillStyle = "#172a40";
-  ctx.font = "bold 54px Arial";
-  wrap(ctx, event.title, 70, 340, 940, 66, 4);
-  ctx.font = "26px Arial";
-  wrap(
-    ctx,
-    new Date(event.starts_at).toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      dateStyle: "long",
-      timeStyle: "short",
-    }) + " IST",
-    70,
-    620,
-    940,
-    34,
-    2,
-  );
-  wrap(ctx, event.location, 70, 700, 940, 34, 2);
-  speakers.forEach((speaker, i) => {
-    const y = 810 + i * 135;
-    ctx.fillStyle = "#e6e8e2";
-    ctx.fillRect(70, y - 35, 940, 120);
-    ctx.fillStyle = "#172a40";
-    ctx.font = "bold 30px Arial";
-    wrap(ctx, speaker.name.trim(), 95, y, 890, 35, 1);
-    ctx.font = "22px Arial";
-    wrap(ctx, speaker.credentials.trim(), 95, y + 38, 890, 27, 2);
-  });
-  ctx.fillStyle = "#172a40";
-  ctx.fillRect(0, 1100, 1080, 250);
-  const image = new Image();
-  image.src = qr;
-  await image.decode();
-  ctx.drawImage(image, 820, 1130, 190, 190);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 34px Arial";
-  ctx.fillText("CONNECT. LEARN. COLLABORATE.", 70, 1170);
-  ctx.font = "26px Arial";
-  ctx.fillText("Free registration · Scan to view event", 70, 1220);
-  ctx.font = "20px Arial";
-  ctx.fillText(
-    "Attendance is recorded separately from registration.",
-    70,
-    1270,
-  );
-  return canvas.toDataURL("image/png");
-}
-function wrap(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  width: number,
-  lineHeight: number,
-  maxLines: number,
-) {
-  const words = text.split(/\s+/);
-  let line = "",
-    row = 0;
-  for (const word of words) {
-    if (ctx.measureText(word).width > width)
-      throw new Error("A word is too long for this flyer. Shorten the text.");
-    const next = line ? line + " " + word : word;
-    if (ctx.measureText(next).width > width) {
-      if (++row >= maxLines)
-        throw new Error(
-          "Text is too long for this flyer layout. Shorten the title or speaker details.",
-        );
-      ctx.fillText(line, x, y);
-      y += lineHeight;
-      line = word;
-    } else line = next;
-  }
-  ctx.fillText(line, x, y);
 }

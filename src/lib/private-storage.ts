@@ -16,6 +16,13 @@ import { privateObjectKey } from "@/domain/documents";
 import { mediaObjectKey } from "@/domain/media";
 import { portraitObjectKey } from "@/domain/portrait-storage";
 import { paymentQrKey } from "@/domain/payment-details";
+import { uuid } from '@/domain/operations';
+export async function websiteFileStorage(id:string,action:'store'|'read'|'remove',bytes?:Uint8Array){
+ const {bucket,client}=storage(),Key=`tpa/editorial/documents/${uuid(id)}`;
+ if(action==='store'){if(!bytes)throw Error('PDF required.');await client.send(new PutObjectCommand({Bucket:bucket,Key,Body:bytes,ContentType:'application/pdf',CacheControl:'private, no-store'}));return;}
+ if(action==='remove'){await client.send(new DeleteObjectCommand({Bucket:bucket,Key}));return;}
+ const result=await client.send(new GetObjectCommand({Bucket:bucket,Key}));if(!result.Body)throw Error('PDF unavailable.');return result.Body.transformToByteArray();
+}
 export function privateStorageConfigured() {
   return Boolean(storageMode(process.env));
 }
@@ -164,4 +171,19 @@ export async function portraitStorage(
   );
   if (!result.Body) throw Error("Portrait unavailable.");
   return result.Body.transformToByteArray();
+}
+
+// Call only after event resource authorization. Keys never overlap onboarding evidence.
+export function eventAssetStorage(id:string,action:'store'|'remove',bytes?:Uint8Array,contentType?:string):Promise<void>;
+export function eventAssetStorage(id:string,action:'read'):Promise<ReadableStream>;
+export async function eventAssetStorage(id:string, action:'store'|'read'|'remove', bytes?:Uint8Array, contentType?:string):Promise<void|ReadableStream> {
+  const {bucket,client}=storage(),Key=`tpa/private/event-assets/${uuid(id)}`;
+  if(action==='store') {
+    if(!bytes||!contentType) throw Error('File required.');
+    await client.send(new PutObjectCommand({Bucket:bucket,Key,Body:bytes,ContentType:contentType,CacheControl:'private, no-store'}));return;
+  }
+  if(action==='remove') {await client.send(new DeleteObjectCommand({Bucket:bucket,Key}));return;}
+  const result=await client.send(new GetObjectCommand({Bucket:bucket,Key}));
+  if(!result.Body) throw Error('Resource unavailable.');
+  return result.Body.transformToWebStream() as ReadableStream;
 }

@@ -32,6 +32,32 @@ export async function attentionFor(actor: Actor) {
         count,
       });
   }
+  if (hasPermission(actor.roles, "payments:manage"))
+    await add(
+      "pending-payments",
+      "SELECT count(*)::int n FROM tpa.event_registrations WHERE status='registered' AND payment_status='pending'",
+      "event payments awaiting manual verification",
+      "/admin/workspaces/payments",
+      "Payments",
+      "High",
+    );
+  if (hasPermission(actor.roles, "payments:manage"))
+    await add(
+      "refund-review",
+      "SELECT count(*)::int n FROM tpa.event_registrations WHERE status='cancelled' AND payment_status='paid'",
+      "cancelled paid registrations needing refund review",
+      "/admin/workspaces/payments",
+      "Payments",
+      "High",
+    );
+  if (hasPermission(actor.roles, "members:review"))
+    await add(
+      "membership-records",
+      "SELECT count(*)::int n FROM tpa.memberships WHERE status IS NULL OR (status='active' AND valid_until<current_date)",
+      "membership records need status review",
+      "/admin/workspaces/members",
+      "Memberships",
+    );
   if (hasPermission(actor.roles, "members:review"))
     await add(
       "verification",
@@ -43,7 +69,7 @@ export async function attentionFor(actor: Actor) {
   if (hasPermission(actor.roles, "content:publish"))
     await add(
       "content",
-      "SELECT count(*)::int n FROM tpa.content_entries WHERE published IS NULL OR draft<>published",
+      "SELECT count(*)::int n FROM tpa.content_entries WHERE archived_at IS NULL AND (published IS NULL OR draft<>published)",
       "content drafts awaiting publication",
       "/admin/workspaces/content",
       "Publication",
@@ -60,7 +86,7 @@ export async function attentionFor(actor: Actor) {
   if (hasPermission(actor.roles, "content:publish"))
     await add(
       "profile-publication",
-      "SELECT count(*)::int n FROM tpa.people WHERE accepted_verified AND (published IS NULL OR (jsonb_set(accepted,'{links}',coalesce((SELECT jsonb_agg(l) FROM jsonb_array_elements(coalesce(accepted->'links','[]')) l WHERE l->>'public'='true'),'[]'))-'phone')<>(published-'verified'-'phone')) AND jsonb_array_length(coalesce(accepted->'assignments','[]'))>0",
+      "SELECT count(*)::int n FROM tpa.people WHERE archived_at IS NULL AND accepted_verified AND (published IS NULL OR (jsonb_set(accepted,'{links}',coalesce((SELECT jsonb_agg(l) FROM jsonb_array_elements(coalesce(accepted->'links','[]')) l WHERE l->>'public'='true'),'[]'))-'phone')<>(published-'verified'-'phone')) AND jsonb_array_length(coalesce(accepted->'assignments','[]'))>0",
       "association profiles awaiting publication",
       "/admin/workspaces/governance",
       "Publication",

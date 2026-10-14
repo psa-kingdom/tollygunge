@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "./operations-client";
 import { MemberRegister } from "./member-register";
+import { useSearchParams } from "next/navigation";
 type Person = {
   id: string;
   person_id: string | null;
@@ -38,27 +39,45 @@ const empty: Filters = {
   contact: "all",
   review: "all",
 };
-export function MembersWorkspace() {
-  const [view, setView] = useState("accounts");
+export function MembersWorkspace({
+  canManage = false,
+}: {
+  canManage?: boolean;
+}) {
+  const recordId = useSearchParams().get("id");
+  const [selection, setSelection] = useState<{
+    recordId: string | null;
+    view: "register" | "accounts";
+  }>();
+  const view =
+    selection?.recordId === recordId
+      ? selection.view
+      : recordId
+        ? "accounts"
+        : "register";
   return (
     <>
       <div className="action-row">
         <button
           className="button secondary"
-          onClick={() => setView("register")}
+          onClick={() => setSelection({ recordId, view: "register" })}
           aria-pressed={view === "register"}
         >
           Member register
         </button>
         <button
           className="button secondary"
-          onClick={() => setView("accounts")}
+          onClick={() => setSelection({ recordId, view: "accounts" })}
           aria-pressed={view === "accounts"}
         >
           Account directory
         </button>
       </div>
-      {view === "register" ? <MemberRegister /> : <AccountDirectory />}
+      {view === "register" ? (
+        <MemberRegister canManage={canManage} />
+      ) : (
+        <AccountDirectory key={recordId ?? "accounts"} />
+      )}
     </>
   );
 }

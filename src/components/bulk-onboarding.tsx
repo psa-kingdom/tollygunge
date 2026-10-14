@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { api } from "./operations-client";
+import { MemberImportJobProgress } from "./member-import-job-progress";
 type Row = {
   name: string;
   email: string;
@@ -15,10 +16,17 @@ type Row = {
   warnings?: string[];
   sourceRow?: number;
   membershipNumber?: string;
+  diagnosticIssues?: {
+    code: string;
+    field: string;
+    reason: string;
+    severity: string;
+  }[];
 };
 export function BulkOnboarding() {
   const [file, setFile] = useState<File | null>(null),
-    [mode, setMode] = useState("invitation"),
+    [parentBatchId, setParentBatchId] = useState(""),
+    [mode, setMode] = useState("existing-members"),
     [headers, setHeaders] = useState<string[]>([]),
     [fields, setFields] = useState<string[]>([]),
     [mapping, setMapping] = useState<Record<string, string>>({}),
@@ -35,6 +43,7 @@ export function BulkOnboarding() {
         status: string;
         reason?: string;
         emailStatus?: string;
+        invitationStatus?: string;
         invitationId?: string;
       }[]
     >([]),
@@ -58,12 +67,17 @@ export function BulkOnboarding() {
         ...batch,
         mode: batch.mode === "existing-members" ? "members" : batch.mode,
       });
-      setMode(
-        ["members", "existing-members"].includes(batch.mode ?? "")
-          ? "existing-members"
-          : "invitation",
+      setParentBatchId(
+        batch.mode === "approved-accounts" ? '' : batch.id,
       );
-      setResults(batch.results);
+      setMode(
+        batch.mode === "approved-accounts"
+          ? "approved-accounts"
+          : ["members", "existing-members"].includes(batch.mode ?? "")
+            ? "existing-members"
+            : "invitation",
+      );
+      setResults(batch.results ?? []);
       setMessage(
         batch.committed_at
           ? "Saved batch and current invitation status restored."
@@ -91,19 +105,30 @@ export function BulkOnboarding() {
       const form = new FormData();
       form.set("file", file);
       form.set("mode", mode);
+      if (mode === "existing-members" && (preview?.id || parentBatchId))
+        form.set("parentBatchId", preview?.id ?? parentBatchId);
       if (mapped) form.set("mapping", JSON.stringify(mapping));
-      const r = await fetch("/api/staff/onboarding-import", {
-        method: "POST",
-        body: form,
-      });
+      const r = await fetch(
+        mode === "existing-members"
+          ? "/api/staff/member-import-jobs"
+          : "/api/staff/onboarding-import",
+        {
+          method: "POST",
+          body: form,
+        },
+      );
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
-      if (mapped || mode === "existing-members")
+      if (mapped || mode === "existing-members") {
         setPreview({
           ...d,
           mode: d.mode === "existing-members" ? "members" : d.mode,
         });
-      else {
+        const savedUrl = new URL(location.href);
+        savedUrl.searchParams.set("id", d.id);
+        history.replaceState(null, "", savedUrl);
+        setParentBatchId(d.id);
+      } else {
         setHeaders(d.headers);
         setFields(d.fields);
         setMapping(
@@ -120,6 +145,38 @@ export function BulkOnboarding() {
       setBusy(false);
     }
   }
+  async function downloadCorrections() {
+    if (!preview) return;
+    try {
+      const data = await api<{ headers: string[]; rows: string[][] }>(
+        "/api/staff/member-import-jobs?correctionBatchId=" + preview.id,
+      );
+      const quote = (v: string, index: number) =>
+        '"' +
+        (/^[=+@]|^-\D/.test(v) &&
+        !(data.headers[index] === "Mobile" && /^\+\d[\d ().-]*$/.test(v))
+          ? "'" + v
+          : v
+        ).replaceAll('"', '""') +
+        '"';
+      const blob = new Blob(
+          [
+            [data.headers, ...data.rows]
+              .map((row) => row.map(quote).join(","))
+              .join("\r\n"),
+          ],
+          { type: "text/csv" },
+        ),
+        url = URL.createObjectURL(blob),
+        anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "member-corrections.csv";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setMessage((e as Error).message);
+    }
+  }
   return (
     <section>
       <h2>Import members or accounts</h2>
@@ -134,7 +191,12 @@ export function BulkOnboarding() {
             setResults([]);
           }}
         >
-          <option value="invitation">New accounts with invitations</option>
+          {mode === "approved-accounts" && (
+            <option value="approved-accounts" disabled>
+              Approved account batch � invitations held
+            </option>
+          )}
+          <option value="invitation">New accounts — invitations held</option>
           <option value="existing-members">
             Existing members — no invitations
           </option>
@@ -143,7 +205,7 @@ export function BulkOnboarding() {
       <p>
         {mode === "existing-members"
           ? "Use the supplied 13-column member workbook. All ambiguous duplicate groups are held. No emails, passwords, paid status or verification are created."
-          : "Create ordinary unverified accounts and send password-setup invitations."}
+          : "Create ordinary unverified accounts with invitations held. Review recipients and an approved template separately before sending."}
         Existing accounts are skipped. No passwords or verification badges can
         be imported.
       </p>
@@ -167,6 +229,7 @@ export function BulkOnboarding() {
           type="file"
           accept=".csv,.xlsx"
           onChange={(e) => {
+            if (preview?.mode === "members") setParentBatchId(preview.id);
             setFile(e.target.files?.[0] ?? null);
             setPreview(null);
             setHeaders([]);
@@ -217,6 +280,26 @@ export function BulkOnboarding() {
           </button>
         </>
       )}
+      {preview?.mode === "members" && (
+        <>
+          <button
+            className="button secondary"
+            onClick={() => void downloadCorrections()}
+          >
+            Download source correction template
+          </button>
+          <p>
+            Keep this original preview open when uploading its corrected
+            template. Source row numbers and original file hash must remain
+            unchanged.
+          </p>
+          <MemberImportJobProgress
+            key={preview.id}
+            batchId={preview.id}
+            version={preview.version ?? 1}
+          />
+        </>
+      )}
       {preview && !preview.committed_at && (
         <>
           <ul>
@@ -235,6 +318,18 @@ export function BulkOnboarding() {
                       </li>
                     ))}
                   </ul>
+                )}
+                {!!r.diagnosticIssues?.length && (
+                  <details>
+                    <summary>All independently checked issues</summary>
+                    <ul>
+                      {r.diagnosticIssues.map((issue, index) => (
+                        <li key={index}>
+                          {issue.code} · {issue.field}: {issue.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                 )}
                 {!!r.normalizations?.length && (
                   <details>
@@ -268,50 +363,82 @@ export function BulkOnboarding() {
               </li>
             ))}
           </ul>
-          <button
-            className="button"
-            disabled={busy}
-            onClick={async () => {
-              if (
-                !confirm(
-                  preview.mode === "members"
-                    ? "Import eligible members without emails, holding conflicts and preserving existing records?"
-                    : "Create the valid new accounts and queue their invitation emails?",
+          {preview.mode !== "members" && (
+            <button
+              className="button"
+              disabled={busy}
+              onClick={async () => {
+                if (
+                  !confirm(
+                    preview.mode === "approved-accounts"
+                      ? "Create eligible accounts from this approved batch with invitations held, retaining incomplete addresses and holding conflicts?"
+                      : preview.mode === "members"
+                        ? "Import eligible members without emails, holding conflicts and preserving existing records?"
+                        : `Create accounts with invitations held for exactly ${preview.rows.filter((r) => !r.error).length} eligible records? Existing accounts will be skipped.`,
+                  )
                 )
-              )
-                return;
-              setBusy(true);
-              try {
-                const d = await api<{ results: typeof results }>(
-                  "/api/staff/onboarding-import",
-                  {
-                    action: "commit",
-                    id: preview.id,
-                    version: preview.version,
-                  },
-                );
-                setResults(d.results);
-                setPreview({
-                  ...preview,
-                  committed_at: new Date().toISOString(),
-                });
-                setMessage(
-                  preview.mode === "members"
-                    ? "Member import committed without invitations. Review every row outcome."
-                    : "Import committed. Check Email settings for delivery status.",
-                );
-              } catch (e) {
-                setMessage(e instanceof Error ? e.message : "Commit failed.");
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            Confirm import
-          </button>
+                  return;
+                setBusy(true);
+                try {
+                  let d: {
+                    results: typeof results;
+                    complete?: boolean;
+                    processed?: number;
+                    total?: number;
+                  };
+                  do {
+                    d = await api<{
+                      results: typeof results;
+                      complete?: boolean;
+                      processed?: number;
+                      total?: number;
+                    }>("/api/staff/onboarding-import", {
+                      action: "commit",
+                      id: preview.id,
+                      version: preview.version,
+                    });
+                    setResults(d.results);
+                    setMessage(
+                      `Processed ${d.processed ?? d.results.length} of ${d.total ?? preview.rows.length} rows. Results saved; this batch can be resumed.`,
+                    );
+                  } while (d.complete === false);
+                  setPreview({
+                    ...preview,
+                    committed_at: new Date().toISOString(),
+                  });
+                  setMessage(
+                    preview.mode === "approved-accounts"
+                      ? "Accounts created with invitation delivery held. Review every row outcome."
+                      : preview.mode === "members"
+                        ? "Member import committed without invitations. Review every row outcome."
+                        : "Accounts created with invitations held. Configure the template and review recipients in the member register.",
+                  );
+                } catch (e) {
+                  setMessage(e instanceof Error ? e.message : "Commit failed.");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Confirm import
+            </button>
+          )}
         </>
       )}
       <ul>
+        {busy && preview && (
+          <li>
+            <progress
+              aria-label="Import progress"
+              max={preview.rows.length}
+              value={results.length}
+            />
+            <span>
+              {" "}
+              {results.length} of {preview.rows.length} records saved
+            </span>
+          </li>
+        )}
         {results.map((r, i) => (
           <li key={i}>
             {r.email}: {r.status} {r.reason}{" "}
@@ -378,6 +505,38 @@ export function BulkOnboarding() {
           Refresh batch and email status
         </button>
       )}
+      {preview?.committed_at &&
+        results.some((r) => ["failed", "conflict"].includes(r.status)) && (
+          <button
+            className="button secondary"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                const d = await api<{
+                  id: string;
+                  version: number;
+                  mode: string;
+                  rows: Row[];
+                }>("/api/staff/onboarding-import", {
+                  action: "retry",
+                  id: preview.id,
+                });
+                setPreview(d);
+                setResults([]);
+                setMessage(
+                  "Failed rows previewed again. Correct invalid source values in a new upload before committing.",
+                );
+              } catch (e) {
+                setMessage((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Review / retry failed records
+          </button>
+        )}
       <h3>Recent batches</h3>
       {batches.map((batch) => (
         <p key={batch.id}>

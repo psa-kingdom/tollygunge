@@ -1,0 +1,14 @@
+/** Read-only hosted controls/census acceptance: never approve or release real invitations. */
+import assert from 'node:assert/strict';import {readFile,writeFile,mkdir} from 'node:fs/promises';import {chromium,expect} from '@playwright/test';
+const base='https://tpassociation.org',folder='.local/controlled-invitations';await mkdir(folder,{recursive:true});
+const password=/^Password: (.+)$/m.exec(await readFile('.local/first-admin-password.txt','utf8'))?.[1];assert.ok(password);
+const response=await fetch(base+'/api/auth/sign-in/email',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({email:'tollygungecacpestudycircle@gmail.com',password})});assert.equal(response.status,200);
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try{const context=await browser.newContext();await context.addCookies(response.headers.getSetCookie().map(raw=>{const pair=raw.split(';')[0],separator=pair.indexOf('=');return {name:pair.slice(0,separator),value:pair.slice(separator+1),domain:'tpassociation.org',path:'/',secure:true,httpOnly:true};}));
+ const stateResponse=await context.request.get(base+'/api/staff/invitation-templates');assert.equal(stateResponse.status(),200);const state=await stateResponse.json();assert.equal(state.approved_id,null);assert.equal(state.latest_id,null);assert.equal(state.templates.length,0);
+ const page=await context.newPage(),observations=[];
+ for(const width of [1440,768,390]){await page.setViewportSize({width,height:1000});await page.goto(base+'/admin');const held=page.getByRole('link',{name:/202 Invitations held/});await expect(held).toBeVisible({timeout:60000});await held.click();await expect(page.getByRole('combobox',{name:'Invitations',exact:true})).toHaveValue('held');await expect(page.getByText('202 members',{exact:true})).toBeVisible({timeout:60000});await expect(page.getByRole('button',{name:'Review invitations for 0 selected members',exact:true})).toBeDisabled();
+ await page.goto(base+'/admin/workspaces/communications?invitationTemplate=1');await expect(page.getByLabel('Invitation body',{exact:true})).toBeEnabled();await expect(page.getByText('Invitations held: no approved template.',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Approve invitation template',exact:true})).toBeDisabled();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:folder+'/hosted-template-'+width+'.png',fullPage:true});observations.push({width,held:202,templateUnapproved:true,confirmationInitiallyDisabled:true});}
+ const evidence={inspectedAt:new Date().toISOString(),observations,productionTemplateApproved:false,productionInvitationsReleased:0,verified:true};await writeFile(folder+'/hosted-controls.json',JSON.stringify(evidence,null,2),{mode:0o600});console.log(JSON.stringify(evidence));
+}finally{await browser.close();}

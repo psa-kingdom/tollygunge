@@ -7,6 +7,7 @@ type Details = {
   altText: string;
   category: string;
   homepageFeatured?: boolean;
+  displayOrder?:number;
 };
 type Asset = {
   id: string;
@@ -207,6 +208,7 @@ export function MediaWorkspace() {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               />
             </label>
+              <label>Display order<input type="number" min={0} max={9999} value={form.displayOrder??0} onChange={e=>setForm({...form,displayOrder:Number(e.target.value)})}/></label>
             <label>
               Accessible image description
               <textarea

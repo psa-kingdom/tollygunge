@@ -3,6 +3,7 @@ import Link from "next/link";
 import { currentActor } from "@/lib/actor";
 import { attentionFor } from "@/lib/attention";
 import { staffNavigation } from "@/domain/staff-navigation";
+import { operationalOverview } from "@/lib/operational-overview";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Staff workspace",
@@ -13,6 +14,7 @@ export default async function Admin() {
   if (!actor) redirect("/login");
   if (!actor.roles.length) redirect("/member");
   const attention = await attentionFor(actor);
+  const overview = await operationalOverview(actor.roles);
   const shortcuts = staffNavigation(actor.roles)
     .flatMap((g) => g.items)
     .filter((x) => x.href !== "/admin");
@@ -20,7 +22,17 @@ export default async function Admin() {
     <main id="main" className="workspace-main">
       <span className="eyebrow">TPA / STAFF</span>
       <h1>Welcome, {actor.name}.</h1>
-      <p>Your access reflects your assigned association responsibilities.</p>
+      <p>
+        What needs your attention today? Review a record, take action, and
+        confirm the outcome.
+      </p>
+      <div className="service-shortcuts">
+        {overview.metrics.map((m) => (
+          <Link key={m.label} href={m.href}>
+            <strong>{m.count}</strong> {m.label} →
+          </Link>
+        ))}
+      </div>
       <div className="dashboard-bento">
         <section className="bento-card bento-primary">
           <span className="eyebrow">YOUR NEXT ACTION</span>
@@ -67,6 +79,19 @@ export default async function Admin() {
           </div>
         </section>
       </div>
+      {overview.activity.length > 0 && (
+        <section className="bento-card">
+          <h2>Recent activity</h2>
+          {overview.activity.map((a, index) => (
+            <p key={index}>
+              {a.name || "System"} · {a.action.replaceAll(".", " ").replaceAll("_", " ")} ·{" "}
+              {new Date(a.created_at).toLocaleString("en-IN", {
+                timeZone: "Asia/Kolkata",
+              })}
+            </p>
+          ))}
+        </section>
+      )}
       <p>
         <Link className="text-link" href="/preview/admin">
           Explore the labelled design preview →

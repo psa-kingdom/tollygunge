@@ -1,10 +1,11 @@
 "use client";
+import { eventReturnPath } from "@/domain/event-flow";
 import { clearRecovery } from "./draft-recovery";
 import { createAuthClient } from "better-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 const client = createAuthClient();
-export function GoogleSignIn({ enabled }: { enabled: boolean }) {
+export function GoogleSignIn({ enabled, returnTo }: { enabled: boolean; returnTo?: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   return (
@@ -18,7 +19,7 @@ export function GoogleSignIn({ enabled }: { enabled: boolean }) {
           try {
             const result = await client.signIn.social({
               provider: "google",
-              callbackURL: "/account",
+              callbackURL: eventReturnPath(returnTo) ?? "/account",
             });
             if (result.error) {
               setError("Sign-in could not start. Please try again later.");

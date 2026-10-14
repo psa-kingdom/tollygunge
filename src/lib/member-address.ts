@@ -1,6 +1,6 @@
 import type { Pool, PoolClient } from "pg";
 import { type Address, type Addresses, MemberValidationError, country, internationalPostalCode } from "@/domain/member-foundation";
-import { OperationError } from "./operation-api";
+import { OperationError } from "./operation-error";
 type DB = Pick<Pool | PoolClient, "query">;
 export async function postalVersion(db: DB) {
   const row = (await db.query("SELECT id,source_url,source_sha256,loaded_at FROM tpa.postal_versions WHERE active")).rows[0];

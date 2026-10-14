@@ -3,6 +3,7 @@ import { hasPermission } from "@/domain/access";
 import { currentActor } from "@/lib/actor";
 import { getDatabase } from "@/lib/database";
 import { paymentQrStorage } from "@/lib/private-storage";
+import { eventPaymentAccess } from '@/lib/event-payment-access';
 export const runtime = "nodejs";
 export async function GET(
   request: Request,
@@ -21,6 +22,15 @@ export async function GET(
     [id],
   );
   if (!exists.rowCount) return new Response(null, { status: 404 });
+  const eventId=new URL(request.url).searchParams.get('eventId');
+  if(eventId) {
+    try {
+      const result=await eventPaymentAccess(uuid(eventId),actor);
+      if(!result.records.some((r:{details:{qrId?:string}})=>r.details.qrId===id)) return new Response(null,{status:404});
+      const bytes=await paymentQrStorage(id,'read');
+      return new Response(bytes as BodyInit,{headers:{'Content-Type':'image/png','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
+    } catch {return new Response(null,{status:404});}
+  }
   if (
     !hasPermission(actor.roles, "payments:manage") &&
     !(

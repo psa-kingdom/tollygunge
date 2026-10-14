@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { api } from "./operations-client";
-type Details = {
+export type Details = {
   method?: "upi" | "bank";
   accountNumber?: string;
   ifsc?: string;
@@ -394,28 +394,28 @@ export function PaymentDetailsManager() {
     </>
   );
 }
-export function MemberPaymentDetails() {
+export function MemberPaymentDetails({ eventPayment = false, eventId }: { eventPayment?: boolean; eventId?:string }) {
   const [records, setRecords] = useState<{ id: string; details: Details }[]>(
       [],
     ),
     [message, setMessage] = useState("Loading payment details…");
   useEffect(() => {
     api<{ records: { id: string; details: Details }[] }>(
-      "/api/member/payment-details",
+      "/api/member/payment-details"+(eventId?"?eventId="+eventId:""),
     )
       .then((data) => {
         setRecords(data.records);
-        setMessage("");
+        setMessage((data as {legacy?:boolean}).legacy?"Historical event account was not recorded; confirm these legacy association instructions with staff before paying.":"");
       })
       .catch((e) => setMessage(e.message));
-  }, []);
+  }, [eventId]);
   return (
     <>
-      <div className="notice">
-        These are association payment details, not a payment request. Fees and
+      <div className={eventPayment ? "field-help" : "notice"}>
+        {eventPayment ? "Use the saved payment instructions below for this event. Include your registration identifier. Staff will confirm registration after verifying payment; scanning a QR does not confirm payment." : <>These are association payment details, not a payment request. Fees and
         transaction verification are still being configured. Do not transfer
         funds until TPA confirms the purpose and amount. A scan does not confirm
-        payment or approve membership.
+        payment or approve membership.</>}
       </div>
       {records.map((r) => (
         <section className="content-section" key={r.id}>
@@ -441,7 +441,7 @@ export function MemberPaymentDetails() {
           {r.details.qrId && (
             <Image
               unoptimized
-              src={`/api/payment-qr/${r.details.qrId}`}
+              src={`/api/payment-qr/${r.details.qrId}${eventId?"?eventId="+eventId:""}`}
               width={300}
               height={300}
               alt={`Payment QR for ${r.details.payee}`}
@@ -453,7 +453,7 @@ export function MemberPaymentDetails() {
       {!message && !records.length && (
         <p>No active payment details are available.</p>
       )}
-      <p role="status">{message}</p>
+      <p role={eventPayment?"alert":"status"}>{message}</p>
     </>
   );
 }

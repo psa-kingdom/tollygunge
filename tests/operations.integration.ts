@@ -364,7 +364,7 @@ test(
         version: event.version,
       });
       assert.equal(eventPublished.status, 200);
-      const published = await eventPublished.json();
+      await eventPublished.json();
       assert.equal((await request(`/events/${event.id}`)).status, 200);
       const races = await Promise.all([
         request("/api/member/events", 1, {
@@ -467,7 +467,7 @@ test(
         (
           await request("/api/staff/flyers", 0, {
             eventId: event.id,
-            version: 0,
+            version: (await pool.query("SELECT version FROM tpa.events WHERE id=$1", [event.id])).rows[0].version,
             speakers: [
               { name: "Synthetic speaker", credentials: "Professional" },
             ],
@@ -481,7 +481,7 @@ test(
           await request("/api/staff/events", 0, {
             action: "cancel",
             id: event.id,
-            version: published.version,
+            version: (await pool.query("SELECT version FROM tpa.events WHERE id=$1", [event.id])).rows[0].version,
           })
         ).status,
         200,
@@ -790,6 +790,9 @@ test(
         await pool.query("DELETE FROM tpa.inquiries WHERE id=$1", [id]);
       }
       for (const id of eventIds) {
+        await pool.query("DELETE FROM tpa.event_badges WHERE registration_id IN (SELECT id FROM tpa.event_registrations WHERE event_id=$1)", [id]);
+        await pool.query("DELETE FROM tpa.event_booking_payment_configurations WHERE event_id=$1", [id]);
+        await pool.query("DELETE FROM tpa.event_operation_history WHERE event_id=$1", [id]);
         await pool.query("DELETE FROM tpa.flyer_templates WHERE event_id=$1", [
           id,
         ]);
@@ -801,6 +804,8 @@ test(
           "DELETE FROM tpa.event_registrations WHERE event_id=$1",
           [id],
         );
+        await pool.query("UPDATE tpa.events SET payment_revision=NULL WHERE id=$1", [id]);
+        await pool.query("DELETE FROM tpa.event_payment_configurations WHERE event_id=$1", [id]);
         await pool.query("DELETE FROM tpa.events WHERE id=$1", [id]);
       }
       for (const id of contentIds)

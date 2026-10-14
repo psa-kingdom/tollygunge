@@ -3,9 +3,11 @@ import { useState } from "react";
 import { createAuthClient } from "better-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { eventReturnPath } from "@/domain/event-flow";
 import { NewPasswordField } from "./new-password-field";
 const client = createAuthClient();
-export function Signup() {
+export function Signup({ returnTo }: { returnTo?: string }) {
+  const destination = eventReturnPath(returnTo) ?? "/member";
   const router = useRouter();
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
@@ -21,14 +23,14 @@ export function Signup() {
             name: String(f.get("name")),
             email: String(f.get("email")).trim().toLowerCase(),
             password: String(f.get("password")),
-            callbackURL: "/member",
+            callbackURL: destination,
           });
           if (result.error)
             throw Error(
               result.error.message ||
                 "Unable to create account. Try signing in if you already have an account.",
             );
-          router.push("/member");
+          router.push(destination);
           router.refresh();
         } catch (e) {
           setMessage(
@@ -56,7 +58,7 @@ export function Signup() {
         {busy ? "Creating…" : "Create account"}
       </button>
       <p role="alert">{message}</p>
-      <Link href="/login">Already have an account? Sign in</Link>
+      <Link href={returnTo ? "/login?returnTo="+encodeURIComponent(destination) : "/login"}>Already have an account? Sign in</Link>
     </form>
   );
 }
@@ -101,8 +103,10 @@ export function VerifyEmail({
 }
 export function OnboardingSignIn({
   initialEmail = "",
+  returnTo,
 }: {
   initialEmail?: string;
+  returnTo?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false),
@@ -125,7 +129,7 @@ export function OnboardingSignIn({
             }),
           });
           if (!r.ok) throw Error("Check your email and password.");
-          router.push("/account");
+          router.push(eventReturnPath(returnTo) ?? "/account");
           router.refresh();
         } catch (e) {
           setMessage(e instanceof Error ? e.message : "Sign-in failed.");

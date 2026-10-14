@@ -1,9 +1,12 @@
-process.on("uncaughtException", () => {
-  console.error("Email worker unavailable; diagnostics withheld.");
+import { scheduleEventReminders } from "../src/lib/event-reminders";
+import { scheduleEventPromotions } from '../src/lib/event-promotion';
+import { workerFailureCategory } from "../src/domain/worker-diagnostics";
+process.on("uncaughtException", (error) => {
+  console.error("Email worker unavailable:", workerFailureCategory(error));
   process.exit(1);
 });
-process.on("unhandledRejection", () => {
-  console.error("Email worker unavailable; diagnostics withheld.");
+process.on("unhandledRejection", (error) => {
+  console.error("Email worker unavailable:", workerFailureCategory(error));
   process.exit(1);
 });
 import { fetchEmailQuota } from "../src/lib/email-provider";
@@ -37,12 +40,12 @@ while (!stopping && !elected) {
   ).rows[0].leader;
   if (!elected) await wait();
 }
-leadership.on("error", () => {
-  console.error("Email worker leadership lost.");
+leadership.on("error", (error) => {
+  console.error("Email worker leadership lost:", workerFailureCategory(error));
   process.exit(1);
 });
-pool.on("error", () => {
-  console.error("Email worker database connection unavailable.");
+pool.on("error", (error) => {
+  console.error("Email worker database connection unavailable:", workerFailureCategory(error));
   process.exit(1);
 });
 if (!elected) {
@@ -51,12 +54,15 @@ if (!elected) {
 } else {
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   let providerHealthy = false,
-    quotaAt = 0;
+    quotaAt = 0,
+    remindersAt = 0,
+    promotionsAt = 0;
   const beat = async () => {
     try {
       const requested =
         emailConfigured() || process.env.ONBOARDING_ENABLED === "true";
-      if (requested && Date.now() - quotaAt > 60000) {
+      if (process.env.TPA_MAIL_SINK === "true") providerHealthy = true;
+      if (process.env.TPA_MAIL_SINK !== "true" && requested && Date.now() - quotaAt > 60000) {
         quotaAt = Date.now();
         try {
           const quota = await fetchEmailQuota(
@@ -67,7 +73,8 @@ if (!elected) {
             [quota],
           );
           providerHealthy = true;
-        } catch {
+        } catch (error) {
+          console.error("Email provider unavailable:", workerFailureCategory(error));
           providerHealthy = false;
         }
       }
@@ -81,8 +88,8 @@ if (!elected) {
             : "disabled",
         ],
       );
-    } catch {
-      console.error("Email worker heartbeat unavailable.");
+    } catch (error) {
+      console.error("Email worker heartbeat unavailable:", workerFailureCategory(error));
     }
   };
   try {
@@ -93,6 +100,11 @@ if (!elected) {
     heartbeat = setInterval(() => void beat(), 10000);
     heartbeat.unref();
     while (!stopping) {
+      if(process.env.EVENT_PROMOTIONS_ENABLED==='true' && Date.now()-promotionsAt>=30000) {await scheduleEventPromotions(pool);promotionsAt=Date.now();}
+      if (process.env.ONBOARDING_ENABLED === "true" && process.env.EVENT_REMINDERS_ENABLED !== "false" && Date.now()-remindersAt>=30000) {
+        await scheduleEventReminders(pool);
+        remindersAt=Date.now();
+      }
       if (providerHealthy) await runOnboardingTick(pool);
       if (emailConfigured() && providerHealthy) {
         await recoverEmailLeases(pool);
@@ -101,8 +113,8 @@ if (!elected) {
       }
       await wait();
     }
-  } catch {
-    console.error("Email worker stopped; diagnostics withheld.");
+  } catch (error) {
+    console.error("Email worker stopped:", workerFailureCategory(error));
     process.exitCode = 1;
   } finally {
     if (heartbeat) clearInterval(heartbeat);

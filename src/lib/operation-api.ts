@@ -6,16 +6,9 @@ import { isSameOrigin } from "./request-policy";
 import { getDatabase } from "./database";
 import type { PoolClient } from "pg";
 import { MemberValidationError } from "@/domain/member-foundation";
-export class OperationError extends Error {
-  constructor(
-    message: string,
-    public status = 400,
-    public code?: string,
-    public fieldErrors?: Record<string, string>,
-  ) {
-    super(message);
-  }
-}
+import {OperationError} from './operation-error';
+export {OperationError} from './operation-error';
+export {audit} from './operation-audit';
 export async function authorized(
   request: Request,
   permission?: Permission,
@@ -51,17 +44,6 @@ export async function transaction<T>(work: (client: PoolClient) => Promise<T>) {
   } finally {
     client.release();
   }
-}
-export async function audit(
-  client: PoolClient,
-  actor: string,
-  action: string,
-  id: string,
-) {
-  await client.query(
-    "INSERT INTO tpa.audit_events(actor_user_id,action,entity_id) VALUES($1,$2,$3)",
-    [actor, action, id],
-  );
 }
 export async function operation(work: () => Promise<unknown>) {
   try {

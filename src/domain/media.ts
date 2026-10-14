@@ -3,6 +3,7 @@ import { matchesFileSignature, MAX_DOCUMENT_BYTES } from "./documents";
 import { record, text, uuid } from "./operations";
 export function mediaDetails(value: unknown) {
   const body = record(value);
+  const displayOrder=Number(body.displayOrder??0);if(!Number.isSafeInteger(displayOrder)||displayOrder<0||displayOrder>9999)throw Error('Use an order between 0 and 9999.');
   if (
     body.homepageFeatured !== undefined &&
     typeof body.homepageFeatured !== "boolean"
@@ -13,6 +14,7 @@ export function mediaDetails(value: unknown) {
     altText: text(body.altText, "Image description", 240, 5),
     category: text(body.category, "Category", 60, 3),
     homepageFeatured: body.homepageFeatured === true,
+    displayOrder,
   };
 }
 export function mediaObjectKey(id: string) {

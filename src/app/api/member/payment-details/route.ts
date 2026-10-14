@@ -1,8 +1,12 @@
 import { authorized, operation } from "@/lib/operation-api";
 import { getDatabase } from "@/lib/database";
+import { uuid } from '@/domain/operations';
+import { eventPaymentAccess } from '@/lib/event-payment-access';
 export async function GET(request: Request) {
   return operation(async () => {
-    await authorized(request);
+    const actor=await authorized(request);
+    const eventId=new URL(request.url).searchParams.get('eventId');
+    if(eventId) return {collectionEnabled:true,...await eventPaymentAccess(uuid(eventId),actor)};
     return {
       collectionEnabled: false,
       records: (

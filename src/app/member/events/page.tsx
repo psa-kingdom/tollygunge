@@ -1,3 +1,4 @@
+import { eventReturnPath } from "@/domain/event-flow";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { currentActor } from "@/lib/actor";
@@ -8,8 +9,10 @@ export const metadata = {
   title: "Your events",
   robots: { index: false, follow: false },
 };
-export default async function Page() {
-  if (!(await currentActor())) redirect("/login");
+export default async function Page({ searchParams }: { searchParams: Promise<Record<string,string|string[]|undefined>> }) {
+  const query = await searchParams;
+  const target = eventReturnPath(`/member/events?eventId=${query.eventId}`) ?? "/member/events";
+  if (!(await currentActor())) redirect("/login?returnTo="+encodeURIComponent(target));
   return (
     <SiteShell>
       <main id="main" className="page-content">

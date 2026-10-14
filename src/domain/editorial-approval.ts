@@ -3,6 +3,7 @@ import { personBody, type PersonBody } from "./people";
 const editorialFields = new Set([
   "biography",
   "biographyRich",
+  "biographyTitle",
   "portraitId",
   "portraitKind",
   "assignments",

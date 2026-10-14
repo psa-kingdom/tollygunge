@@ -49,7 +49,9 @@ export function PersonEditor({
   canEditPrivate = false,
   onSaved,
   onDirty,
+  biographyTemplate='About {name}',
 }: {
+  biographyTemplate?:string;
   entry: PersonEntry | null;
   groups?: ProfileGroup[];
   editorial?: { id: string; title: string }[];
@@ -250,7 +252,7 @@ export function PersonEditor({
     ) : (
       <main className="profile-preview-main">
         <span className="eyebrow">PROFILE PREVIEW</span>
-        <PublicGovernance entries={previewEntries} />
+        <PublicGovernance entries={previewEntries} biographyTemplate={biographyTemplate}/>
       </main>
     );
   const pending = entry?.reviews?.find((r) => r.status === "pending");
@@ -475,6 +477,7 @@ export function PersonEditor({
                 title="About you"
                 description="A short introduction to your work, interests and experience."
               >
+                {!owner && <label>Biography heading (optional)<input maxLength={160} value={body.biographyTitle??""} onChange={e=>field("biographyTitle",e.target.value)}/><small>Leave blank to use the website default with the full display name.</small></label>}
                 <RichEditor
                   label="Biography"
                   document={body.biographyRich}

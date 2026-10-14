@@ -4,7 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { NewPasswordField } from "./new-password-field";
+import { eventReturnPath } from "@/domain/event-flow";
 import { passwordPolicy, passwordError } from "@/domain/password-policy";
+import { FallbackPanel } from "./fallback-screen";
+import { LoadingScreen } from "./loading-screen";
 const client = createAuthClient();
 
 export function PasswordResetLanding() {
@@ -18,18 +21,15 @@ export function PasswordResetLanding() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
-  if (token === null) return <p role="status">Checking reset link…</p>;
+  if (token === null) return <LoadingScreen />;
   return token ? (
     <PasswordUpdate token={token} />
   ) : (
-    <p>
-      This link is missing or expired.{" "}
-      <Link href="/forgot-password">Request a new reset link.</Link>
-    </p>
+    <FallbackPanel kind="expiredLink" />
   );
 }
 
-export function PasswordSignIn({ enabled }: { enabled: boolean }) {
+export function PasswordSignIn({ enabled, returnTo }: { enabled: boolean; returnTo?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
@@ -52,7 +52,7 @@ export function PasswordSignIn({ enabled }: { enabled: boolean }) {
             );
             return;
           }
-          router.replace("/account");
+          router.replace(eventReturnPath(returnTo) ?? "/account");
           router.refresh();
         } catch {
           setMessage("Unable to connect. Please try again.");
