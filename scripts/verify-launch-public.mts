@@ -1,12 +1,12 @@
 /** Low-volume, read-only hosted browser QA; no authentication or form submission. */
 import { chromium } from "@playwright/test";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 const performanceOnly = process.argv.includes("--performance");
 const base = process.env.TPA_PUBLIC_QA_URL ?? "https://tpassociation.org";
 if (base !== "https://tpassociation.org" && !/^http:\/\/127\.0\.0\.1:\d+$/.test(base)) throw Error("Use production read-only QA or an explicit local QA URL");
 const local = base !== "https://tpassociation.org";
-const output = local ? ".local/premium-redesign/public" : ".local/launch-gate/" + (performanceOnly ? "performance" : "public");
+const output = local ? (process.env.TPA_PUBLIC_QA_OUTPUT ?? ".local/premium-redesign/public") : ".local/launch-gate/" + (performanceOnly ? "performance" : "public");
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const results = [];
@@ -50,7 +50,7 @@ try {
   }
 } finally {
   await browser.close();
-  await writeFile(`${output}/results.json`, JSON.stringify({ completed: new Date().toISOString(), readOnly: true, results }, null, 2));
+  await writeFile(`${output}/results.json`, JSON.stringify({ completed: new Date().toISOString(), readOnly: true, ...(local ? { buildId: (await readFile(".next/BUILD_ID", "utf8")).trim() } : {}), results }, null, 2));
 }
 console.log(JSON.stringify({ states: results.length, overflow: results.filter(r => r.overflow).length, failedResponses: results.filter(r => !r.status || r.status >= 400).length, runtimeErrors: results.filter(r => r.errors.length).length, accessibilityViolations: results.reduce((n, r) => n + r.accessibility.violations.length, 0) }));
 if (results.some(r => r.overflow || !r.status || r.status >= 400 || r.errors.length || r.accessibility.violations.length)) process.exitCode = 1;

@@ -6,13 +6,13 @@ import { resolve } from "node:path";
 
 const base = process.env.TPA_PUBLIC_QA_URL ?? "http://127.0.0.1:3159";
 assert.match(base, /^http:\/\/127\.0\.0\.1:\d+$/, "Use an isolated local preview");
-const dir = ".local/premium-redesign/interactions";
+const dir = process.env.TPA_INTERACTION_QA_OUTPUT ?? ".local/premium-redesign/interactions";
 await mkdir(dir, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const results: unknown[] = [];
 let passed = false;
 try {
-  for (const width of [1440, 768, 390, 320]) {
+  for (const width of [1440, 1024, 768, 390, 320]) {
     for (const colorScheme of ["light", "dark"] as const) {
       const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme });
       const page = await context.newPage();
@@ -21,19 +21,28 @@ try {
       page.on("request", (request) => { if (!["GET", "HEAD"].includes(request.method())) writes.push(request.url()); });
       await page.goto(base, { waitUntil: "networkidle" });
       await page.evaluate(() => document.fonts.ready);
+      assert.ok(await page.evaluate(() => document.fonts.check('400 16px "TPA Jakarta"') && document.fonts.check('500 48px "TPA Cormorant"')), "Both approved local fonts must load");
+      assert.ok(await page.locator(".kolkata-hero-art img").evaluate((element) => (element as HTMLImageElement).naturalWidth > 0), "Hero artwork must load");
+      if (width === 1440 && colorScheme === "light") {
+        const destinations = [...new Set(await page.locator('.public-shell a[href^="/"]').evaluateAll((links) => links.map((link) => new URL((link as HTMLAnchorElement).href).pathname)))];
+        for (const destination of destinations) assert.equal((await context.request.get(base + destination)).status(), 200, destination);
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       if (width === 1440 && colorScheme === "light") await page.screenshot({ path: dir + "/hero-desktop.png" });
       if (width === 390 && colorScheme === "light") await page.screenshot({ path: dir + "/hero-phone.png" });
       const cover = page.getByRole("button", { name: /Tollygunge Professional Association Welcome/ });
       await cover.press("Enter");
       await expect(page.getByRole("heading", { name: "A city of ideas.", exact: true })).toBeVisible();
+      await expect.poll(() => page.locator(".tpa-book-art img").evaluate((element) => (element as HTMLImageElement).naturalWidth > 0)).toBe(true);
       await expect(page.getByRole("button", { name: "Close book", exact: true })).toBeFocused();
       await page.getByRole("button", { name: "Highlight Tollygunge, South Kolkata" }).click();
       await expect(page.getByRole("button", { name: "Highlight Tollygunge, South Kolkata" })).toHaveAttribute("aria-pressed", "true");
       await page.getByRole("button", { name: "Next book chapter", exact: true }).click();
       await expect(page.getByRole("heading", { name: "Good people.", exact: true })).toBeVisible();
+      await expect.poll(() => page.locator(".tpa-book-art img").evaluate((element) => (element as HTMLImageElement).naturalWidth > 0)).toBe(true);
       await page.getByRole("button", { name: "Next book chapter", exact: true }).press("Enter");
       await expect(page.getByRole("heading", { name: "Shared knowledge.", exact: true })).toBeVisible();
+      await expect.poll(() => page.locator(".tpa-book-art img").evaluate((element) => (element as HTMLImageElement).naturalWidth > 0)).toBe(true);
       await expect(page.getByRole("button", { name: "Previous book chapter", exact: true })).toBeFocused();
       await expect(page.getByRole("button", { name: "Next book chapter", exact: true })).toBeDisabled();
       await page.emulateMedia({ reducedMotion: "reduce" });
@@ -50,6 +59,9 @@ try {
       await page.getByRole("button", { name: "Previous book chapter", exact: true }).press("Escape");
       await expect(cover).toBeFocused();
       await expect(page.getByRole("button", { name: "Close book", exact: true })).toBeHidden();
+      await page.getByRole("button", { name: "Send inquiry", exact: true }).click();
+      await expect(page.getByLabel("Full name", { exact: true })).toBeFocused();
+      assert.ok(await page.locator(".public-inquiry").evaluate((form) => !(form as HTMLFormElement).checkValidity()), "Empty inquiry remains invalid and must not submit");
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       assert.deepEqual(errors, []);
       assert.deepEqual(writes, []);
