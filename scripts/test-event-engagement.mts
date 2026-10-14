@@ -31,6 +31,13 @@ const root=new Pool(databaseOptions()),db=new Pool({...databaseOptions(env),max:
 const evidence={passed:false,buildId:(await readFile('.next/BUILD_ID','utf8')).trim(),syntheticOnly:true,externalEmails:0,externalStorageWrites:0,scenarios:[] as string[],screenshots:[] as string[],browserErrors:[] as string[]};
 const users:string[]=[],cookies:string[]=[];
 function pass(s:string){evidence.scenarios.push(s);console.log('PASS: '+s);}
+async function unavailableFlyer(id:string,title:string,actor?:number) {
+ const r=await fetch(base+'/flyers/'+id,{headers:actor===undefined?{}:{Cookie:'better-auth.session_token='+cookies[actor]}}),html=await r.text();
+ assert.ok([200,404].includes(r.status));
+ assert.ok(html.includes('A little off the beaten path.'));
+ assert.match(html,/name="robots" content="noindex[^"]*"/);
+ assert.ok(!html.includes(title),'Unavailable flyer must not expose its event title');
+}
 async function api(path:string,body?:unknown,actor=0,status=200){const response=await fetch(base+path,{method:body?'POST':'GET',headers:{Cookie:'better-auth.session_token='+cookies[actor],Origin:base,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});const data=await response.json();assert.equal(response.status,status,`${path}: ${JSON.stringify(data)}`);return data;}
 async function event(visibility='public',past=false){const id=randomUUID();await db.query(`INSERT INTO tpa.events(id,title,description,location,starts_at,ends_at,capacity,status,updated_by,visibility,speakers,fee_paise) VALUES($1,$2,'Professional event','Test hall',$3,$4,10,'published',$5,$6,$7,0)`,[id,past?'Historical workshop':'Engagement workshop',new Date(Date.now()+(past?-7200000:86400000)),new Date(Date.now()+(past?-3600000:90000000)),users[0],visibility,JSON.stringify([{name:'Dr. Educator',credentials:'CA',designation:'Director',organization:'TPA',description:'Professional educator'}])]);return (await db.query('SELECT * FROM tpa.events WHERE id=$1',[id])).rows[0];}
 async function registration(eventId:string,actor=1,payment='not_required'){const id=randomUUID();await db.query("INSERT INTO tpa.event_registrations(id,event_id,user_id,status,payment_status) VALUES($1,$2,$3,'registered',$4)",[id,eventId,users[actor],payment]);return id;}
@@ -45,12 +52,12 @@ try {
  const e=await event(),privateEvent=await event('members'),past=await event('public',true),draft=await event();await db.query("UPDATE tpa.events SET status='draft' WHERE id=$1",[draft.id]);
  assert.ok((await api('/api/staff/flyers?id='+draft.id)).some((row:{id:string})=>row.id===draft.id));
  const draftVariant=await api('/api/staff/flyer-variants',{eventId:draft.id,eventVersion:draft.version,name:'Draft preview',headline:'Coming soon',presentation:{accent:'gold'},status:'draft'});
- await api('/api/staff/flyer-variants',{...draftVariant,eventId:draft.id,eventVersion:draft.version,status:'published'},0,409);assert.equal((await fetch(base+'/flyers/'+draftVariant.id)).status,404);
+ await api('/api/staff/flyer-variants',{...draftVariant,eventId:draft.id,eventVersion:draft.version,status:'published'},0,409);await unavailableFlyer(draftVariant.id,draft.title);
  const variant=await api('/api/staff/flyer-variants',{eventId:e.id,eventVersion:e.version,name:'Registration opening',headline:'Register now',presentation:{accent:'gold'},status:'published'});
  await api('/api/staff/flyer-variants',{...variant,eventId:e.id,eventVersion:0},0,409);
  const memberVariant=await api('/api/staff/flyer-variants',{eventId:privateEvent.id,eventVersion:privateEvent.version,name:'Member flyer',headline:'Members welcome',presentation:{accent:'navy'},status:'published'});
- assert.equal((await fetch(base+'/flyers/'+variant.id)).status,200);assert.equal((await fetch(base+'/flyers/'+memberVariant.id)).status,404);
- assert.equal((await fetch(base+'/flyers/'+memberVariant.id,{headers:{Cookie:'better-auth.session_token='+cookies[1]}})).status,200);assert.equal((await fetch(base+'/flyers/'+memberVariant.id,{headers:{Cookie:'better-auth.session_token='+cookies[3]}})).status,404);
+ assert.equal((await fetch(base+'/flyers/'+variant.id)).status,200);await unavailableFlyer(memberVariant.id,privateEvent.title);
+ assert.equal((await fetch(base+'/flyers/'+memberVariant.id,{headers:{Cookie:'better-auth.session_token='+cookies[1]}})).status,200);await unavailableFlyer(memberVariant.id,privateEvent.title,3);
  await db.query("UPDATE tpa.events SET title='Updated canonical workshop',version=version+1 WHERE id=$1",[e.id]);assert.ok((await (await fetch(base+'/flyers/'+variant.id)).text()).includes('Updated canonical workshop'));pass('Variant conflicts, canonical event updates and public/member flyer authorization');
  const attendedReg=await registration(past.id,1),absentReg=await registration(past.id,2);await db.query("INSERT INTO tpa.event_attendance(registration_id,checked_in_by,outcome) VALUES($1,$3,'attended'),($2,$3,'absent')",[attendedReg,absentReg,users[0]]);
  const rule=(await api('/api/staff/event-badges'))[0];await api('/api/staff/event-badges',{...rule,enabled:true});

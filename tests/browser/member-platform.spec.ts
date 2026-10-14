@@ -207,12 +207,12 @@ test("profile uses full-size private preview, protects privacy, saves and retrie
     page.getByRole("button", { name: "Saving…", exact: true }),
   ).toBeDisabled();
   await expect(
-    page.getByText("Profile service unavailable. Please retry.", {
+    page.getByText("The service is temporarily unavailable. Before resubmitting a change, check whether it was saved.", {
       exact: true,
     }),
   ).toBeVisible();
   await page
-    .getByText("Profile service unavailable. Please retry.", { exact: true })
+    .getByText("The service is temporarily unavailable. Before resubmitting a change, check whether it was saved.", { exact: true })
     .scrollIntoViewIfNeeded();
   await page.screenshot({ path: info.outputPath("profile-save-error.png") });
   await page.unroute("**/api/member/profile");
@@ -574,7 +574,7 @@ test("completed professional application submits for review without publication"
   await submit.click();
   await expect(submit).toBeDisabled();
   await expect(
-    page.getByText("Verification service unavailable. Please retry.", {
+    page.getByText("The service is temporarily unavailable. Before resubmitting a change, check whether it was saved.", {
       exact: true,
     }),
   ).toBeVisible();

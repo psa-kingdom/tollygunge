@@ -16,6 +16,7 @@ const run = (args) =>
     p.on("error", reject);
   });
 await run(["scripts/migrate.mjs"]);
+await run(["--import", "tsx", "scripts/provision-postal.mts"]);
 await run([
   "--import",
   "tsx",
@@ -54,6 +55,9 @@ try {
     "tests/onboarding-http.integration.ts",
     "tests/workspace-ux-http.integration.ts",
   ]);
+  // HTTP lifecycle acceptance publishes a new required field. Browser journeys
+  // start from the baseline policy in this isolated database, as local QA does.
+  await run(["--import", "tsx", "--input-type=module", "-e", "import {Pool} from 'pg';import {initialFields} from './src/domain/verification.ts';const p=new Pool({connectionString:process.env.DATABASE_URL,ssl:false});try{await p.query('INSERT INTO tpa.verification_policies(version,fields) SELECT coalesce(max(version),0)+1,$1::jsonb FROM tpa.verification_policies',[JSON.stringify(initialFields)]);}finally{await p.end();}"]);
   await run(["node_modules/@playwright/test/cli.js", "test"]);
 } finally {
   server.kill();

@@ -79,9 +79,18 @@ try {
   serverLog.closeSync(log);
   let ready=false;for(let n=0;n<60;n++){if(server.exitCode!==null)throw Error("Server exited");try{if((await fetch(base+"/api/health")).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready);
   async function request(path:string,body?:unknown,actor=0,status=200){const r=await fetch(base+path,{method:body?"POST":"GET",headers:{Cookie:"better-auth.session_token="+cookies[actor],Origin:base,...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined});const data=await r.json();assert.equal(r.status,status,`${path}: ${JSON.stringify(data)}`);return data;}
+  async function unavailableEvent(id:string, title?:string) {
+    const response=await fetch(base+"/events/"+id), html=await response.text();
+    // Next's loading boundary streams 200 before notFound resolves. Verify the
+    // actual unavailable UI and noindex boundary, not just the transport status.
+    assert.ok([200,404].includes(response.status));
+    assert.ok(html.includes("A little off the beaten path."));
+    assert.match(html, /name="robots" content="noindex"/);
+    if(title) assert.ok(!html.includes(title), "Unavailable event title must remain private");
+  }
   async function event(overrides:Record<string,unknown>={}){
     let row=await request("/api/staff/events",{action:"save",version:0,title:"Event acceptance workshop",description:"A practical learning session for association members.",location:"TPA test hall",startsAt:new Date(Date.now()+3*86400000).toISOString(),endsAt:new Date(Date.now()+3*86400000+3600000).toISOString(),capacity:20,feePaise:0,...overrides});
-    assert.equal((await fetch(base+"/events/"+row.id)).status,404);
+    await unavailableEvent(row.id,row.title);
     row=await request("/api/staff/events",{action:"publish",id:row.id,version:row.version});return row;
   }
   async function row(id:string){return (await db.query("SELECT * FROM tpa.event_registrations WHERE id=$1",[id])).rows[0];}
@@ -120,7 +129,7 @@ try {
   const attempts=await Promise.all([1,2].map(actor=>fetch(base+"/api/member/events",{method:"POST",headers:{Cookie:"better-auth.session_token="+cookies[actor],Origin:base,"Content-Type":"application/json"},body:JSON.stringify({action:"register",eventId:free.id})})));
   assert.deepEqual(attempts.map(r=>r.status).sort(),[200,409]);
   privateEvent=await event({visibility:"members",title:"Members-only workshop",speakers:[speakers[0]]});
-  assert.equal((await fetch(base+"/events/"+privateEvent.id)).status,404);
+  await unavailableEvent(privateEvent.id,"Members-only workshop");
   await request("/api/member/events",{action:"register",eventId:privateEvent.id},2,403);await request("/api/member/events",{action:"register",eventId:privateEvent.id},1);
   const rebooking=await event({title:"Unpaid rebooking",feePaise:50000});
   const oldBooking=await request("/api/member/events",{action:"register",eventId:rebooking.id},1);

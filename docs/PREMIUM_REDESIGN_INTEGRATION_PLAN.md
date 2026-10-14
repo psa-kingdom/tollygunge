@@ -105,3 +105,7 @@ This is approximately 6–10.5 hours after blockers clear. Shared shells and rep
 ## Phase 1 outcome
 
 Repository identity and dirty-tree safety assessed; reference inspected in isolation; file-level integration plan prepared. Runtime application remains unchanged. Redesign branch creation and implementation await the explicit safety/skill blockers above. The reference is a visual source, while the current application and all its uncommitted features remain the functional source of truth.
+
+### Subsequent authorization and implementation
+
+The user subsequently authorized installing suitable skills and preserving/completing the uncommitted application work. The official full `frontend-skill` was installed and read. The current source was archived and committed without resetting or discarding files, and `codex/tpa-premium-redesign` was created safely from that exact baseline. The earlier blockers are resolved. See `PREMIUM_REDESIGN_DELIVERY.md` for implementation and acceptance; the Phase 1 findings above remain a historical snapshot.

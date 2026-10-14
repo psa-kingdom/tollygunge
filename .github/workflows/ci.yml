@@ -29,6 +29,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+      - run: node --test tests/runtime-supervisor.test.mjs
       - run: npm run test:db
       - run: npm run test:email
       - run: npm run build
@@ -67,6 +68,14 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - run: node scripts/verify-onboarding-ci.mjs
+      - run: mkdir -p .local && node --import tsx scripts/test-member-foundation.mts
+      - run: node --import tsx scripts/test-approved-accounts.mts
+      - run: node --import tsx scripts/test-member-import-jobs.mts --http
+        env:
+          TPA_JOB_BROWSER: "true"
+          TPA_BROWSER_CHANNEL: ""
+      - run: node --import tsx scripts/test-invitation-release.mts
+      - run: node --import tsx scripts/test-invitation-release.mts --http
       - uses: actions/upload-artifact@v4
         if: always()
         with:

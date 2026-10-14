@@ -17,6 +17,9 @@ test(
     const env = {
       ...process.env,
       ONBOARDING_ENABLED: "true",
+      // This fixture injects its own provider; exercise retries rather than the
+      // launch harness's mail sink, which deliberately accepts immediately.
+      TPA_MAIL_SINK: "false",
       RESEND_API_KEY: "test",
       RESEND_RECEIVING_API_KEY: "test",
       RESEND_DOMAIN_VERIFIED: "true",

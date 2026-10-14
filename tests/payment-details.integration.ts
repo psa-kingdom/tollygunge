@@ -1,4 +1,5 @@
 import test from "node:test";
+import { assertPageRedirect } from "./helpers/page-boundaries";
 import assert from "node:assert/strict";
 import { randomUUID, randomBytes, createHmac } from "node:crypto";
 import { Pool } from "pg";
@@ -66,22 +67,10 @@ test(
           },
           body: body ? JSON.stringify(body) : undefined,
         });
-      assert.equal(
-        (await request("/account", 0)).headers.get("location"),
-        "/admin",
-      );
-      assert.equal(
-        (await request("/member", 0)).headers.get("location"),
-        "/admin",
-      );
-      assert.equal(
-        (await request("/login", 0)).headers.get("location"),
-        "/admin",
-      );
-      assert.equal(
-        (await request("/account", 1)).headers.get("location"),
-        "/member",
-      );
+      await assertPageRedirect(await request("/account", 0), "/admin");
+      await assertPageRedirect(await request("/member", 0), "/admin");
+      await assertPageRedirect(await request("/login", 0), "/admin");
+      await assertPageRedirect(await request("/account", 1), "/member");
       const profile = await (await request("/account/profile", 0)).text();
       assert.ok(profile.includes('aria-label="Account navigation"'));
       assert.ok(!profile.includes("Member login ↗"));

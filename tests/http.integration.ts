@@ -1,4 +1,5 @@
 import test from "node:test";
+import { assertPageNotFound, assertPageRedirect } from "./helpers/page-boundaries";
 import assert from "node:assert/strict";
 import { randomUUID, randomBytes, createHmac } from "node:crypto";
 import { Pool } from "pg";
@@ -59,7 +60,7 @@ test(
           },
         });
       for (const path of ["/member", "/admin", "/admin/workspaces/content"])
-        assert.equal((await request(path)).headers.get("location"), "/login");
+        await assertPageRedirect(await request(path), "/login");
       for (const path of [
         "/api/member/profile",
         "/api/documents",
@@ -87,10 +88,7 @@ test(
         'UPDATE public."user" SET "emailVerified"=true WHERE id=$1',
         [people[0]],
       );
-      assert.equal(
-        (await request("/admin", 0)).headers.get("location"),
-        "/member",
-      );
+      await assertPageRedirect(await request("/admin", 0), "/member");
       assert.equal(
         (
           await request("/api/member/profile", 0, {
@@ -210,12 +208,11 @@ test(
           "INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,$2)",
           [people[2], role],
         );
-        for (const workspace of workspaces)
-          assert.equal(
-            (await request("/admin/workspaces/" + workspace, 2)).status,
-            allowed[role].includes(workspace) ? 200 : 404,
-            role + " " + workspace,
-          );
+        for (const workspace of workspaces) {
+          const response = await request("/admin/workspaces/" + workspace, 2);
+          if (allowed[role].includes(workspace)) assert.equal(response.status, 200, role + " " + workspace);
+          else await assertPageNotFound(response);
+        }
       }
       const upload = async (
         bytes: Uint8Array,

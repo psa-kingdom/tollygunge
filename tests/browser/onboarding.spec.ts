@@ -658,7 +658,7 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
   await qualification.fill("Recovered local change");
   await expect(page.getByRole("status").last()).not.toHaveText("Saved");
   await expect(page.getByRole("status").last()).toContainText(
-    /fetch|failed|unavailable/i,
+    /fetch|failed|unavailable|unable to connect/i,
   );
   page.on("dialog", (dialog) => dialog.accept());
   await page.reload();

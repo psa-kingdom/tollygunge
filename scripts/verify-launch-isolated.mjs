@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import pg from "pg";
 const url = new URL(process.env.DATABASE_URL || "");
 assert.equal(url.hostname, "127.0.0.1"); assert.equal(url.port, "55439");
@@ -17,6 +17,16 @@ const env = { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot,
   TPA_TEST_URL: "http://127.0.0.1:3145", TPA_TEST_STORAGE: "false", TPA_TEST_EXPECT_STORAGE_DISABLED: "true",
   RESEND_WEBHOOK_SECRET: "whsec_" + Buffer.from("synthetic-disposable-secret").toString("base64") };
 const results = [];
+// Next also reads local dotenv files. Explicitly blank keys not deliberately
+// configured above so a disposable run cannot inherit hosted provider access.
+for (const file of [".env", ".env.local", ".env.production", ".env.production.local"]) {
+  try {
+    for (const line of (await readFile(file, "utf8")).split(/\r?\n/)) {
+      const key = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=/)?.[1];
+      if (key && !(key in env)) env[key] = "";
+    }
+  } catch (error) { if (error.code !== "ENOENT") throw error; }
+}
 const browserOnly = process.argv.includes("--browser-only");
 const grepIndex = process.argv.indexOf("--browser-grep");
 assert.ok(grepIndex < 0 || process.argv[grepIndex + 1], "Supply a browser grep expression");

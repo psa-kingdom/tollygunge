@@ -1,4 +1,5 @@
 import test from "node:test";
+import { assertPageNotFound, assertPageRedirect } from "./helpers/page-boundaries";
 import assert from "node:assert/strict";
 import { randomUUID, randomBytes, createHmac } from "node:crypto";
 import { Pool } from "pg";
@@ -174,7 +175,7 @@ test(
       const longEntry = await longSaved.json();
       contentIds.push(longEntry.id);
       assert.equal(longEntry.draft.sections[0].text.length, 20000);
-      assert.equal((await request(`/resources/${longSlug}`)).status, 404);
+      await assertPageNotFound(await request(`/resources/${longSlug}`));
       const longPublish = await request("/api/staff/content", 3, {
         action: "publish",
         id: longEntry.id,
@@ -218,7 +219,7 @@ test(
         ).status,
         200,
       );
-      assert.equal((await request(`/resources/${longSlug}`)).status, 404);
+      await assertPageNotFound(await request(`/resources/${longSlug}`));
       const slug = `synthetic-${randomUUID()}`,
         body = {
           title: "Synthetic editorial test",
@@ -242,10 +243,9 @@ test(
       assert.equal(saved.status, 200);
       const entry = await saved.json();
       contentIds.push(entry.id);
-      assert.equal((await request(`/resources/${slug}`)).status, 404);
+      await assertPageNotFound(await request(`/resources/${slug}`));
       const deniedPreview = await request(`/admin/content/${entry.id}`, 1);
-      assert.equal(deniedPreview.status, 307);
-      assert.ok(deniedPreview.headers.get("location")?.endsWith("/member"));
+      await assertPageRedirect(deniedPreview, "/member");
       assert.equal(
         (await request(`/admin/content/${entry.id}`, 3)).status,
         200,
@@ -296,7 +296,7 @@ test(
         ).status,
         200,
       );
-      assert.equal((await request(`/resources/${slug}`)).status, 404);
+      await assertPageNotFound(await request(`/resources/${slug}`));
       const application = {
         version: 0,
         plan: "Annual",
@@ -357,7 +357,7 @@ test(
       assert.equal(eventResponse.status, 200);
       const event = await eventResponse.json();
       eventIds.push(event.id);
-      assert.equal((await request(`/events/${event.id}`)).status, 404);
+      await assertPageNotFound(await request(`/events/${event.id}`));
       const eventPublished = await request("/api/staff/events", 0, {
         action: "publish",
         id: event.id,
@@ -486,7 +486,7 @@ test(
         ).status,
         200,
       );
-      assert.equal((await request(`/events/${event.id}`)).status, 404);
+      await assertPageNotFound(await request(`/events/${event.id}`));
       const history = await (
         await request("/api/member/events", winner)
       ).json();

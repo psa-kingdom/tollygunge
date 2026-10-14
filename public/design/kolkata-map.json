@@ -1,0 +1,13 @@
+{
+  "source": "https://www.openstreetmap.org/relation/9381363",
+  "attribution": "© OpenStreetMap contributors",
+  "tollygunge": {
+    "longitude": 88.3453908,
+    "latitude": 22.498636,
+    "source": "https://www.openstreetmap.org/node/1350661689"
+  },
+  "pin": {
+    "x": 47.988608060944244,
+    "y": 63.89714062758147
+  }
+}

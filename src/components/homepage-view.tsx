@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { homeDefaults } from "@/domain/website-home";
 import Link from "next/link";
+import Image from "next/image";
+import { CommunityAtlas } from "@/components/community-atlas";
+import { PageReveals } from "@/components/page-reveals";
 import { PublicInquiry } from "@/components/public-inquiry";
 
 export function HomeView({
@@ -15,7 +18,8 @@ export function HomeView({
   brandMark?: string;
 }) {
   return (
-    <main id="main">
+    <main id="main" className="premium-home">
+      <PageReveals />
       <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow">
@@ -44,6 +48,40 @@ export function HomeView({
             {home.copy.heroNote08}
           </div>
         </div>
+        <figure className="kolkata-hero-art">
+          <Image src="/design/kolkata-watercolor.webp" alt="A watercolor of Kolkata landmarks, books and a fountain pen" width={1254} height={1254} sizes="(max-width: 700px) 90vw, 48vw" priority />
+        </figure>
+      </section>
+      <div className="values-strip">
+        <span>{home.copy.valuesStrip25}</span>
+        <strong>{home.copy.valuesStrip26}</strong>
+        <i>✦</i>
+        <strong>{home.copy.valuesStrip27}</strong>
+        <i>✦</i>
+        <strong>{home.copy.valuesStrip28}</strong>
+        <i>✦</i>
+        <strong>{home.copy.valuesStrip29}</strong>
+        <i>✦</i>
+        <strong>{home.copy.valuesStrip30}</strong>
+      </div>
+      <section className="section intro">
+        <div>
+          <span className="eyebrow">{home.copy.eyebrow31}</span>
+          <h2>
+            {home.copy.section32}
+            <br />
+            {home.copy.section33}
+          </h2>
+        </div>
+        <div>
+          <p>{home.copy.section34}</p>
+          <Link href={home.links.textLink06Href} className="text-link">
+            {home.copy.textLink35}
+            <span>→</span>
+          </Link>
+        </div>
+      </section>
+      <section className="section community-atlas-section" aria-label="Our community in Kolkata">
         <aside className="community-guide" aria-label="Explore TPA">
           <div className="guide-heading">
             <span className="eyebrow">{home.copy.eyebrow09}</span>
@@ -88,35 +126,7 @@ export function HomeView({
             {home.copy.guideLocation23} <span>{home.copy.guideLocation24}</span>
           </div>
         </aside>
-      </section>
-      <div className="values-strip">
-        <span>{home.copy.valuesStrip25}</span>
-        <strong>{home.copy.valuesStrip26}</strong>
-        <i>✦</i>
-        <strong>{home.copy.valuesStrip27}</strong>
-        <i>✦</i>
-        <strong>{home.copy.valuesStrip28}</strong>
-        <i>✦</i>
-        <strong>{home.copy.valuesStrip29}</strong>
-        <i>✦</i>
-        <strong>{home.copy.valuesStrip30}</strong>
-      </div>
-      <section className="section intro">
-        <div>
-          <span className="eyebrow">{home.copy.eyebrow31}</span>
-          <h2>
-            {home.copy.section32}
-            <br />
-            {home.copy.section33}
-          </h2>
-        </div>
-        <div>
-          <p>{home.copy.section34}</p>
-          <Link href={home.links.textLink06Href} className="text-link">
-            {home.copy.textLink35}
-            <span>→</span>
-          </Link>
-        </div>
+        <CommunityAtlas />
       </section>
       <section className="section opportunities">
         <div className="section-heading">
