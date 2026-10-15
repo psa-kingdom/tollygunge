@@ -1,5 +1,7 @@
 # Reviewed live-product and website-control release — 13 October 2026
 
+> Historical snapshot instructions. For the current candidate, use [Final production release and recovery](FINAL_PRODUCTION_RELEASE.md). Do not deploy this older package or reuse its test-recipient authorization.
+
 **Prepared only. Deployment requires final user approval.** Base: main `6532f3a9d8a58ae462a9902fce95fe01bce4d8a4`, current deployment `7359d379-a8f7-468e-a9d7-a8568560cf21`. Use the exact snapshot target and build identity in `.local/live-product/release-manifest.json`; this replaces the 12 October review package. Exact hashes/diff: `release-manifest.json`, `release.patch`. The snapshot preserves main's CI workflow and onboarding CI postal/policy fixture corrections, which are absent from the older working checkout. Do not deploy the working directory wholesale. The current control inventory is [WEBSITE_ADMIN_CONTROL.md](WEBSITE_ADMIN_CONTROL.md).
 
 ## Before deployment

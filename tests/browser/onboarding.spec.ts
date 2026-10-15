@@ -220,13 +220,16 @@ test("verification links show their own account for signed-out visitors and an u
     await db.end();
   }
 });
-test("invitation activation offers explicit sign-in when another staff account is active", async ({
+for (const cacheState of ["cold", "warm"] as const) {
+test(`invitation activation offers explicit sign-in when another staff account is active (${cacheState} cache)`, async ({
   context,
 }, info) => {
   const db = new Pool(databaseOptions());
   const origin = process.env.TPA_TEST_URL!,
     staffEmail = randomUUID() + "@example.invalid",
     email = randomUUID() + "@example.invalid";
+  const activationNetwork: { path: string; status: number; elapsedMs: number }[] = [];
+  let activationStarted = Date.now();
   try {
     expect(
       (
@@ -313,7 +316,17 @@ test("invitation activation offers explicit sign-in when another staff account i
       .text.split("\n")
       .find((line: string) => line.startsWith("http"))!;
     const page = await context.newPage();
+    activationStarted = Date.now();
+    page.on("response", (response) => {
+      const path = new URL(response.url()).pathname;
+      if (path.startsWith("/api/onboarding/") || path.startsWith("/api/auth/"))
+        activationNetwork.push({ path, status: response.status(), elapsedMs: Date.now() - activationStarted });
+    });
     await page.goto(link);
+    if (cacheState === "warm") {
+      await expect(page.getByLabel("New password", { exact: true })).toBeVisible();
+      await page.reload();
+    }
     await page
       .getByLabel("New password", { exact: true })
       .fill("Invited-browser-password-123!");
@@ -357,10 +370,15 @@ test("invitation activation offers explicit sign-in when another staff account i
       ).user.email,
     ).toBe(email);
   } finally {
+    await info.attach("activation-network", {
+      body: JSON.stringify({ cacheState, activationNetwork }),
+      contentType: "application/json",
+    });
     await context.close();
     await db.end();
   }
 });
+}
 test(
   "new account resumes details, verifies email, recovers password and stays signed in",
   { tag: "@onboarding" },

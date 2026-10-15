@@ -43,6 +43,12 @@ async function check(path, statuses, privateRequest = false) {
 try {
   const health = await check("/api/health", [200]);
   if (health && (await health.json()).status !== "ready") failures++;
+  if (args.includes("--expect-hardened-headers") &&
+      (health?.headers.get("strict-transport-security") !== "max-age=31536000" ||
+       health?.headers.get("x-content-type-options") !== "nosniff")) {
+    console.log("FAIL security response headers");
+    failures++;
+  }
   for (const path of [
     "/",
     "/about",
