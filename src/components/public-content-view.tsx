@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { PageReveals } from "./page-reveals";
 import { PublicInquiry } from "./public-inquiry";
 import {
   PublicGovernance,
@@ -46,9 +47,14 @@ export function PublicContentView({
   readOnly?: boolean;
 }) {
   const { people, media, events, articles } = context;
+  const illustration = page === "membership" || page === "about"
+    ? "/design/book-community-watercolor.webp"
+    : page === "resources" ? "/design/book-knowledge-watercolor.webp" : undefined;
   return (
-    <main id="main">
+    <main id="main" className="public-information">
+      <PageReveals sectionsSelector=":scope > .content-page > .content-section" />
       <div className="page-heading">
+        <div className="page-heading-copy">
         <span className="eyebrow">{data.label}</span>
         <h1
           className={
@@ -58,6 +64,8 @@ export function PublicContentView({
           {data.title}
         </h1>
         <RichContent document={data.introRich} text={data.intro} />
+        </div>
+        {illustration && <Image className="page-heading-art" src={illustration} width={480} height={480} sizes="(max-width: 767px) 260px, 390px" alt="" aria-hidden="true" />}
       </div>
       <div className="content-page">
         {data.sections.map((section, i) => (
@@ -75,6 +83,7 @@ export function PublicContentView({
             >
               {section.title}
             </h2>
+            <div className="public-section-body">
             <RichContent document={section.rich} text={section.text} />
             {["about", "governance"].includes(page) && (
               <PublicGovernance
@@ -196,6 +205,7 @@ export function PublicContentView({
                 </div>
               </div>
             )}
+            </div>
           </section>
         ))}
       </div>

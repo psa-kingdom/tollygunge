@@ -550,6 +550,35 @@ p {
 .content-section p {
   max-width: 750px;
 }
+/* Informational pages share the approved identity without touching the homepage. */
+.public-information { --information-gutter:clamp(20px,5vw,72px); }
+.public-information .page-heading,.public-information .content-page { width:calc(100% - 2 * var(--information-gutter));max-width:1320px;margin-inline:auto;padding-inline:0; }
+.public-information .page-heading { display:grid;grid-template-columns:minmax(0,1fr);gap:32px;align-items:center;padding-block:clamp(40px,6vw,88px) 48px; }
+.public-information .page-heading:has(.page-heading-art) { grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); }
+.page-heading-copy { min-width:0;max-width:760px; }
+.public-information .page-heading h1 { font-size:clamp(36px,4.4vw,64px);line-height:1.08;max-width:18ch;margin-block:16px 22px; }
+.public-information .page-heading p { max-width:62ch;font-size:16px;line-height:1.8;color:var(--muted); }
+.page-heading-art { width:100%;height:auto;max-width:390px;justify-self:end;object-fit:contain; }
+.public-information .content-page { padding-bottom:clamp(48px,6vw,88px); }
+.public-information .content-section { display:grid;grid-template-columns:minmax(180px,.65fr) minmax(0,2fr);gap:clamp(24px,4vw,64px);padding-block:clamp(30px,4vw,48px);transition:opacity var(--motion-enter) ease,transform var(--motion-enter) ease; }
+.public-information .content-section>h2 { font-size:clamp(26px,2.6vw,34px);line-height:1.2; }
+.public-section-body { min-width:0;overflow-wrap:anywhere; }
+.public-section-body>:first-child { margin-top:0; }
+.public-section-body p { max-width:72ch; }
+.public-information .plan-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:16px; }
+.public-information .plan-card { padding:clamp(18px,2vw,28px);border-radius:var(--radius-panel);background:var(--surface);border-top:2px solid var(--gold); }
+.public-information .plan-card h3 { font-size:26px; }
+.public-information .content-section.reveal-waiting:not(:focus-within) { opacity:0;transform:translateY(8px); }
+@media(max-width:767px) {
+  .public-information .page-heading:has(.page-heading-art),.public-information .content-section { grid-template-columns:minmax(0,1fr); }
+  .public-information .page-heading { gap:20px;padding-bottom:32px; }
+  .page-heading-art { max-width:260px;justify-self:center; }
+  .public-information .content-section { gap:18px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .public-information .content-section { transition:none; }
+  .public-information .content-section.reveal-waiting { opacity:1;transform:none; }
+}
 .plan-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2708,8 +2737,11 @@ html[data-color-mode="dark"] .button:not(.secondary):not(.gold):not(.danger):hov
 :is(.table-scroll,.table-wrap,table[tabindex]):focus-visible { outline:2px solid var(--accent-text);outline-offset:4px; }
 @keyframes overlay-enter { from { opacity:0;transform:translateY(2px); } to { opacity:1;transform:translateY(0); } }
 .account-menu,.attention-panel,.command-dialog[open],.member-nav-more[open]>div,.nav-menu[open]>.dropdown,.mobile-nav[open]>nav { animation:overlay-enter var(--motion-control) ease-out; }
+@keyframes workspace-enter { from { opacity:0;transform:translateY(6px); } to { opacity:1;transform:translateY(0); } }
+.member-page-heading,.member-welcome,.workspace-main>h1,.login-panel,.public-information .page-heading-copy { animation:workspace-enter var(--motion-enter) ease-out both; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .account-menu,.attention-panel,.command-dialog[open],.member-nav-more[open]>div,.nav-menu[open]>.dropdown,.mobile-nav[open]>nav { animation:none; }
   button, a, summary, input, select, textarea, .member-service-tile { transition: none !important; }
+  .member-page-heading,.member-welcome,.workspace-main>h1,.login-panel,.public-information .page-heading-copy { animation:none; }
 }
