@@ -324,9 +324,20 @@ test(`invitation activation offers explicit sign-in when another staff account i
     });
     await page.goto(link);
     if (cacheState === "warm") {
-      await expect(page.getByLabel("New password", { exact: true })).toBeVisible();
+      // Reading the fragment deliberately scrubs it from the address bar.
+      // Reloading that redacted URL must explain how to recover; it cannot
+      // reactivate a secret that the browser no longer has.
+      await expect(page.getByRole("button", { name: "Set password", exact: true })).toBeEnabled();
+      await expect(page).toHaveURL(origin + "/invitation");
       await page.reload();
+      await expect(page.getByRole("status")).toContainText("Open the full invitation link from your email.");
+      await expect(page.getByRole("button", { name: "Set password", exact: true })).toBeDisabled();
+      // Leave the document before reopening the original link, so this is a
+      // full navigation with warm assets rather than a same-document hash jump.
+      await page.goto("about:blank");
+      await page.goto(link);
     }
+    await expect(page.getByRole("button", { name: "Set password", exact: true })).toBeEnabled();
     await page
       .getByLabel("New password", { exact: true })
       .fill("Invited-browser-password-123!");
@@ -336,6 +347,7 @@ test(`invitation activation offers explicit sign-in when another staff account i
     await expect(
       page.getByRole("heading", { name: "Account activated.", exact: true }),
     ).toBeVisible();
+    expect(activationNetwork.filter((entry) => entry.path === "/api/onboarding/invitation")).toHaveLength(1);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
     ).toBeTruthy();

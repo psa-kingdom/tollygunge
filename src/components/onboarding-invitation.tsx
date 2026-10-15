@@ -6,11 +6,13 @@ export function Invitation() {
   const [token, setToken] = useState(""),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
+    [tokenRead, setTokenRead] = useState(false),
     [complete, setComplete] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => {
       setToken(new URLSearchParams(location.hash.slice(1)).get("token") ?? "");
       history.replaceState(null, "", "/invitation");
+      setTokenRead(true);
     }, 0);
     return () => clearTimeout(t);
   }, []);
@@ -64,7 +66,11 @@ export function Invitation() {
       <button className="button" disabled={!token || busy}>
         Set password
       </button>
-      <p role="status">{message}</p>
+      <p role="status">
+        {message || (tokenRead && !token
+          ? "Open the full invitation link from your email. If it has expired or was already used, ask TPA for a new invitation."
+          : "")}
+      </p>
       <Link href="/login?switch=1">Sign in</Link>
     </form>
   );
