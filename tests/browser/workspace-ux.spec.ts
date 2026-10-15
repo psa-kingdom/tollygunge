@@ -363,12 +363,19 @@ test("empty payment roster is keyboard accessible at responsive widths", async (
   });
   await staff(context);
   await page.route("**/api/staff/registration-payments?*", route => route.fulfill({ json: [] }));
-  const widths = info.project.name === "desktop" ? [1440, 1280] : [info.project.name === "tablet" ? 768 : 390];
+  const widths = info.project.name === "desktop" ? [1440, 1280] : info.project.name === "tablet" ? [768] : [320, 390];
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/admin/workspaces/payments");
     await expect(page.getByText("0 records shown (up to 250)")).toBeVisible();
     const table = page.getByRole("table", { name: "Registration payments", exact: true });
+    // Keep short column names readable rather than breaking their letters to fit.
+    const headerLines = await table.locator("th").evaluateAll(headers => headers.map(header => {
+      const range = document.createRange();
+      range.selectNodeContents(header);
+      return range.getClientRects().length;
+    }));
+    expect(headerLines.every(lines => lines === 1)).toBe(true);
     await page.getByRole("combobox", { name: "Payment status", exact: true }).focus();
     await page.keyboard.press("Tab");
     await expect(table).toBeFocused();
