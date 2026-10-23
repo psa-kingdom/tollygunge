@@ -83,9 +83,8 @@ export function MediaWorkspace() {
         permission to publish. Application documents are excluded.
       </p>
       <p>
-        Published assets appear in Resources. Choose homepage placement below to
-        include an image in the landing page gallery (latest three). Save
-        changes, then publish to update public descriptions and placement. Image
+        Published assets appear in Resources. The landing page uses the text-led Paper v3 design.
+        Save changes, then publish to update public descriptions. Image
         files are retained as separate assets; upload a new image and withdraw
         the old one to replace a photograph.
       </p>
@@ -225,16 +224,7 @@ export function MediaWorkspace() {
             >
               {selected ? "Save draft details" : "Upload private draft"}
             </button>
-            <label className="consent">
-              <input
-                type="checkbox"
-                checked={form.homepageFeatured === true}
-                onChange={(e) =>
-                  setForm({ ...form, homepageFeatured: e.target.checked })
-                }
-              />
-              Feature in the homepage gallery after publication
-            </label>
+
           </form>
           {selected && (
             <>

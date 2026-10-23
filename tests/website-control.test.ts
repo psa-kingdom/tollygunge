@@ -6,9 +6,27 @@ import {
   biographyHeading,
   websiteLink,
   resourceBody,
+  footerGroups,
+  defaultFooterGroups,
 } from "../src/domain/website-settings";
 import { homeDefaults } from "../src/domain/website-home";
 import { personBody, publicPerson } from "../src/domain/people";
+
+test("footer groups preserve legacy overrides and validate new editable groups",()=>{
+  const legacy=structuredClone(sharedDefaults);
+  legacy.footer.exploreTitle="Published association links";legacy.footer.contactTitle="Published contact links";
+  assert.equal(footerGroups(legacy.footer)[0].title,legacy.footer.exploreTitle);
+  assert.equal(footerGroups(legacy.footer)[2].title,legacy.footer.contactTitle);
+  legacy.footer.links=[{label:"Published custom destination",href:"/contact"},...legacy.footer.links.slice(1)];
+  assert.equal(footerGroups(legacy.footer)[0].links[0].label,"Published custom destination");
+  assert.equal((settingsBody("shared",legacy) as typeof sharedDefaults).footer.groups,undefined);
+  const grouped=structuredClone(sharedDefaults);
+  grouped.footer.groups=structuredClone(defaultFooterGroups);
+  assert.deepEqual((settingsBody("shared",grouped) as typeof sharedDefaults).footer.groups,defaultFooterGroups);
+  grouped.footer.groups[0].links[0].href="javascript:alert(1)";
+  assert.throws(()=>settingsBody("shared",grouped));
+  grouped.footer.groups=[];assert.throws(()=>settingsBody("shared",grouped));
+});
 test("biography headings preserve full names and explicit person overrides", () => {
   assert.equal(biographyHeading("CA R. N. Singh"), "About CA R. N. Singh");
   assert.equal(

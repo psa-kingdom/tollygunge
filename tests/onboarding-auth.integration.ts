@@ -11,7 +11,7 @@ test(
   async () => {
     const db = new Pool(databaseOptions()),
       email = randomUUID() + "@example.invalid",
-      password = randomBytes(24).toString("hex");
+      password = randomBytes(6).toString("hex");
     const auth = createAuth(db, { ...process.env, ONBOARDING_ENABLED: "true" });
     const request = (path: string, body: object, keep = false) =>
       auth.handler(

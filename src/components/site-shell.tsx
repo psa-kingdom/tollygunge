@@ -5,7 +5,8 @@ import { MemberNavigation } from "./member-navigation";
 import { StickyHeaderState } from "./sticky-header-state";
 import {publishedSettings,publicNavigation} from '@/lib/website-content';
 import {sharedDefaults,type SharedSettings} from '@/domain/website-settings';
-import Image from 'next/image';
+import { TpaLogo } from './tpa-logo';
+import { PublicFooter } from './public-footer';
 export const navigation = [
   {
     title: "About",
@@ -35,8 +36,8 @@ export const navigation = [
 ];
 export function Brand({settings=sharedDefaults}:{settings?:SharedSettings}={}) {
   return (
-    <Link href="/" className="brand">
-      {settings.logoMediaId ? <Image src={`/media/${settings.logoMediaId}`} alt={settings.logoAlt} width={48} height={48} unoptimized/> : <span className="brand-mark">{settings.brandMark.endsWith('·')?<>{settings.brandMark.slice(0,-1)}<span>·</span></>:settings.brandMark}</span>}
+    <Link href="/" className="brand" aria-label={`${settings.organisation.replace(/\s+/g, ' ').trim()} homepage`}>
+      <TpaLogo src={settings.logoMediaId ? `/media/${settings.logoMediaId}` : undefined} />
       <span className="brand-name" style={{whiteSpace:'pre-line'}}>{settings.organisation}</span>
     </Link>
   );
@@ -142,32 +143,11 @@ export async function AccountShell({
   );
 }
 export async function Footer() {
-  const settings=await publishedSettings('shared'),footer=settings.footer;
-  return (
-    <footer className="site-footer">
-      <div>
-        <Brand settings={settings}/>
-        <p style={{whiteSpace:'pre-line'}}>{footer.tagline}</p>
-      </div>
-      <div>
-        <span className="eyebrow">{footer.exploreTitle}</span>
-        {footer.links.map(link=><Link key={link.href+link.label} href={link.href}>{link.label}</Link>)}
-      </div>
-      <div>
-        <span className="eyebrow">{footer.contactTitle}</span>
-        <Link href={footer.contactHref}>{footer.contactLabel}</Link>
-        <span>{footer.location}</span>
-      </div>
-      <div className="footer-bottom">
-        © {new Date().getFullYear()} {footer.copyrightName}
-        <span>{footer.closing}</span>
-      </div>
-    </footer>
-  );
+  return <PublicFooter settings={await publishedSettings('shared')}/>;
 }
-export function SiteShell({ children }: { children: React.ReactNode }) {
+export function SiteShell({ children, variant }: { children: React.ReactNode; variant?: "v3" }) {
   return (
-    <div className="public-shell">
+    <div className={variant === "v3" ? "public-shell v3-landing" : "public-shell"}>
       <Header />
       {children}
       <Footer />

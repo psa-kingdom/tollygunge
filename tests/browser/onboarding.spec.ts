@@ -47,7 +47,7 @@ test("verification links show their own account for signed-out visitors and an u
           data: {
             name: "Verification link test",
             email,
-            password: "Browser-test-password-123!",
+            password: "Browser!1234",
           },
         },
       );
@@ -140,10 +140,10 @@ test("verification links show their own account for signed-out visitors and an u
     await staffPage.goto(resetLink);
     await staffPage
       .getByLabel("New password", { exact: true })
-      .fill("Cross-account-recovery-password-123!");
+      .fill("Recover!1234");
     await staffPage
       .getByLabel("Confirm new password", { exact: true })
-      .fill("Cross-account-recovery-password-123!");
+      .fill("Recover!1234");
     await staffPage
       .getByRole("button", { name: "Reset password", exact: true })
       .click();
@@ -169,7 +169,7 @@ test("verification links show their own account for signed-out visitors and an u
     await staffPage.getByLabel("Email", { exact: true }).fill(targetEmail);
     await staffPage
       .getByLabel("Password", { exact: true })
-      .fill("Cross-account-recovery-password-123!");
+      .fill("Recover!1234");
     await staffPage
       .getByRole("button", { name: "Sign in", exact: true })
       .click();
@@ -238,7 +238,7 @@ test(`invitation activation offers explicit sign-in when another staff account i
           data: {
             name: "Invitation test staff",
             email: staffEmail,
-            password: "Browser-test-password-123!",
+            password: "Browser!1234",
           },
         })
       ).ok(),
@@ -340,7 +340,7 @@ test(`invitation activation offers explicit sign-in when another staff account i
     await expect(page.getByRole("button", { name: "Set password", exact: true })).toBeEnabled();
     await page
       .getByLabel("New password", { exact: true })
-      .fill("Invited-browser-password-123!");
+      .fill("Invited!1234");
     await page
       .getByRole("button", { name: "Set password", exact: true })
       .click();
@@ -371,7 +371,7 @@ test(`invitation activation offers explicit sign-in when another staff account i
     await page.getByLabel("Email", { exact: true }).fill(email);
     await page
       .getByLabel("Password", { exact: true })
-      .fill("Invited-browser-password-123!");
+      .fill("Invited!1234");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(page).toHaveURL(/\/member$/);
     expect(
@@ -398,7 +398,7 @@ test(
     test.setTimeout(360000); // Full remote-database auth and recovery journey.
     const db = new Pool(databaseOptions()),
       email = randomUUID() + "@example.invalid",
-      password = "Browser-test-password-123!";
+      password = "Browser!1234";
     try {
       await page.goto("/signup");
       await page.getByLabel("Full name", { exact: true }).fill("Browser test");
@@ -615,10 +615,10 @@ test(
       await page.goto(resetLink);
       await page
         .getByLabel("New password", { exact: true })
-        .fill("Replacement-password-123!");
+        .fill("Replace!1234");
       await page
         .getByLabel("Confirm new password", { exact: true })
-        .fill("Replacement-password-123!");
+        .fill("Replace!1234");
       await page
         .getByRole("button", { name: "Reset password", exact: true })
         .click();
@@ -645,7 +645,7 @@ test(
       await page.getByLabel("Email", { exact: true }).fill(email);
       await page
         .getByLabel("Password", { exact: true })
-        .fill("Replacement-password-123!");
+        .fill("Replace!1234");
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
       await expect(page).toHaveURL(/\/member$/);
     } finally {
@@ -670,7 +670,7 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
     .fill(randomUUID() + "@example.invalid");
   await page
     .getByLabel("Password", { exact: true })
-    .fill("Persistence-password-123!");
+    .fill("Persist!1234");
   await page
     .getByRole("button", { name: "Create account", exact: true })
     .click();
@@ -739,7 +739,7 @@ test("member dashboard separates verification states and keeps the editor off th
     data: {
       name: "Portal design test",
       email,
-      password: "Browser-test-password-123!",
+      password: "Browser!1234",
     },
   });
   expect(signup.ok()).toBeTruthy();

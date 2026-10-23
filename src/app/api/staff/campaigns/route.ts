@@ -96,6 +96,16 @@ export async function POST(request: Request) {
       );
     if (input.action === "preview") {
       const audience = campaignAudience(input.audience);
+      if (audience.source === "public") {
+        const client = await getDatabase().connect();
+        try {
+          await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+          const counts = (await client.query("SELECT now() AS as_of,count(*)::int AS matched,count(*) FILTER(WHERE n.status='confirmed' AND s.email IS NULL)::int AS eligible,count(*) FILTER(WHERE n.status='unsubscribed')::int AS unsubscribed,count(*) FILTER(WHERE n.status='pending')::int AS unverified,count(*) FILTER(WHERE n.status='confirmed' AND s.email IS NOT NULL)::int AS preference_blocked FROM tpa.public_subscribers n LEFT JOIN tpa.email_suppressions s ON s.email=n.email")).rows[0];
+          const sample = (await client.query("SELECT '' AS name,n.email FROM tpa.public_subscribers n LEFT JOIN tpa.email_suppressions s ON s.email=n.email WHERE n.status='confirmed' AND s.email IS NULL ORDER BY n.id LIMIT 20")).rows;
+          await client.query("COMMIT");
+          return { ...counts, sample, audience, deliveryEnabled: false };
+        } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
+      }
       const values = [audience.city, audience.profession];
       const base =
         "FROM public.\"user\" u LEFT JOIN tpa.member_profiles p ON p.user_id=u.id LEFT JOIN tpa.newsletter_consents n ON n.user_id=u.id LEFT JOIN tpa.email_suppressions s ON s.email=lower(u.email) WHERE ($1='' OR lower(coalesce(p.city,''))=lower($1)) AND ($2='' OR lower(coalesce(p.profession,''))=lower($2))";

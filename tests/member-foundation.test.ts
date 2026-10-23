@@ -51,8 +51,8 @@ test("editorial serializers never expose private member data or unknown keys",()
   const body={...personBody({name:"Alice Example"}),email:"private@example.invalid",mobile:"+919876543210",addresses:{correspondence:{line1:"Private"}},membershipNumber:"123",futureSecret:"private"};
   for(const safe of [publicPerson(body as never),redactPerson(body as never)]) for(const key of ["email","mobile","addresses","membershipNumber","futureSecret"]) assert.ok(!(key in safe));
 });
-test("8–128 password boundaries and Professional-only policy writes",()=>{
-  assert.ok(passwordError("a".repeat(7)));assert.equal(passwordError("a".repeat(8)),"");assert.equal(passwordError("a".repeat(128)),"");assert.ok(passwordError("a".repeat(129)));
+test("6–12 password boundaries and Professional-only policy writes",()=>{
+  assert.ok(passwordError("a".repeat(5)));assert.equal(passwordError("a".repeat(6)),"");assert.equal(passwordError("a".repeat(12)),"");assert.ok(passwordError("a".repeat(13)));
   assert.ok(initialFields.every(f=>f.categories.every(c=>c==="Professional")));assert.ok(!initialFields.some(f=>f.documentKind==="student_evidence"));
   assert.throws(()=>validateFields([{...initialFields[0],categories:["Student"]}]));
   assert.equal(validateAnswers({phone:"9876543210"},initialFields).phone,memberInput(valid).mobile);

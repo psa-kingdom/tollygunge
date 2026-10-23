@@ -107,8 +107,8 @@ test(
       );
       assert.equal((await action(asset, 3, "publish")).status, 200);
       const publishedHome = await (await request("/", {}, false)).text();
-      assert.ok(publishedHome.includes(edited.title));
-      assert.ok(publishedHome.includes(`/media/${asset}`));
+      assert.ok(!publishedHome.includes(edited.title));
+      assert.ok(!publishedHome.includes(`/media/${asset}`));
       const updatedResources = await (
         await request("/resources", {}, false)
       ).text();
@@ -120,7 +120,7 @@ test(
         200,
       );
       assert.ok(
-        (await (await request("/", {}, false)).text()).includes(edited.title),
+        !(await (await request("/", {}, false)).text()).includes(edited.title),
       );
       assert.equal((await action(asset, 5, "publish")).status, 200);
       assert.ok(

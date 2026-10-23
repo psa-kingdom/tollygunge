@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:structure": "node scripts/check-repository-structure.mjs",
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build && node scripts/build-worker.mjs",
     "start": "next start --hostname 127.0.0.1",
@@ -17,7 +18,8 @@
     "test:email": "node --env-file-if-exists=.env.local --import tsx --test tests/email.integration.ts",
     "test:onboarding": "node --env-file-if-exists=.env.local --import tsx scripts/test-onboarding-local.mts",
     "test:events": "node --env-file-if-exists=.env.local --import tsx scripts/test-event-flow.mts",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "test:newsletter": "node scripts/verify-public-newsletter.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",

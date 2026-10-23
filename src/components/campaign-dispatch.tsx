@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { api } from "./operations-client";
 import type { EmailReadiness } from "./email-deliveries";
 type Review = {
-  campaign: { version: number; name: string; subject: string; body: string };
+  campaign: { version: number; name: string; subject: string; body: string; audience?: { source?: string } };
   eligible: number;
   sample: { name: string; email: string }[];
   reviewToken: string;
@@ -116,6 +116,7 @@ export function CampaignDispatch({
           )}
           <details>
             <summary>Recipient sample ({review.sample.length})</summary>
+            <p>Audience: {review.campaign.audience?.source === "public" ? "Public newsletter subscribers" : "Eligible website accounts"}</p>
             {review.sample.map((x) => (
               <p key={x.email}>
                 {x.name} · {x.email}

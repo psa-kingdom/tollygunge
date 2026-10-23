@@ -1,6 +1,6 @@
 // Current homepage layout slots. Defaults preserve the existing public copy.
 export const homeFieldLabels:Record<string,string>={
- eyebrow01:'Hero · Eyebrow',heroCopy02:'Hero · Heading line 1',heroCopy03:'Hero · Heading line 2',heroCopy04:'Hero · Emphasized heading',heroCopy05:'Hero · Introduction',button06:'Hero · Primary button label',textLink07:'Hero · Secondary link label',heroNote08:'Hero · Footnote',
+ eyebrow01:'Hero · Eyebrow',heroCopy02:'Hero · Heading line 1',heroCopy03:'Hero · Emphasized heading line 2',heroCopy04:'Hero · Heading line 3',heroCopy05:'Hero · Introduction',button06:'Hero · Primary button label',textLink07:'Hero · Secondary link label',heroNote08:'Hero · Footnote',
  eyebrow09:'Association guide · Eyebrow',communityGuide11:'Association guide · Heading line 1',communityGuide12:'Association guide · Heading line 2',communityGuide13:'Association guide · Introduction',guideNumber14:'Association guide · First item number',guideLinks15:'Association guide · First item title',guideLinks16:'Association guide · First item description',guideNumber17:'Association guide · Second item number',guideLinks18:'Association guide · Second item title',guideLinks19:'Association guide · Second item description',guideNumber20:'Association guide · Third item number',guideLinks21:'Association guide · Third item title',guideLinks22:'Association guide · Third item description',guideLocation23:'Association guide · Location',guideLocation24:'Association guide · Closing line',
  valuesStrip25:'Values · Eyebrow',valuesStrip26:'Values · First value',valuesStrip27:'Values · Second value',valuesStrip28:'Values · Third value',valuesStrip29:'Values · Fourth value',valuesStrip30:'Values · Fifth value',
  eyebrow31:'Introduction · Eyebrow',section32:'Introduction · Heading line 1',section33:'Introduction · Heading line 2',section34:'Introduction · Body',textLink35:'Introduction · Link label',
@@ -25,7 +25,7 @@ export const homeDefaults = {
     heroCopy05:
       "A professional community where experience meets new ideas. Connect with people who believe that progress is better when we make it together.",
     button06: "Find your place at TPA ",
-    textLink07: "Get to know us ↗",
+    textLink07: "Subscribe to updates",
     heroNote08: " For professionals, entrepreneurs & the next generation.",
     eyebrow09: "THE ASSOCIATION, AT A GLANCE",
     communityGuide11: "A shared space.",
@@ -78,7 +78,7 @@ export const homeDefaults = {
   },
   links: {
     button01Href: "/join",
-    textLink02Href: "/about",
+    textLink02Href: "#subscribe",
     guideLinks03Href: "/events",
     guideLinks04Href: "/membership",
     guideLinks05Href: "#connect",

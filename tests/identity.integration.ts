@@ -18,7 +18,8 @@ test(
     const id = randomUUID(),
       email = `${id}@example.invalid`;
     const initial = randomBytes(24).toString("hex"),
-      replacement = randomBytes(24).toString("hex");
+      replacement = randomBytes(6).toString("hex"),
+      finalPassword = randomBytes(6).toString("hex");
     let capturedToken = "",
       deliveries = 0;
     const auth = createAuth(
@@ -114,7 +115,7 @@ test(
         (
           await request("reset-password", {
             token: capturedToken,
-            newPassword: initial,
+            newPassword: finalPassword,
           })
         ).status,
         400,
@@ -135,7 +136,7 @@ test(
             "change-password",
             {
               currentPassword: "incorrect-password",
-              newPassword: initial,
+              newPassword: finalPassword,
               revokeOtherSessions: true,
             },
             renewedCookie,
@@ -149,7 +150,7 @@ test(
             "change-password",
             {
               currentPassword: replacement,
-              newPassword: initial,
+              newPassword: finalPassword,
               revokeOtherSessions: true,
             },
             renewedCookie,

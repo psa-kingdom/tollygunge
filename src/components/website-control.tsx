@@ -1,14 +1,16 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
-import Image from "next/image";
+import { TpaLogo } from "./tpa-logo";
 import { api } from "./operations-client";
 import {
   websiteDefaults,
   type SettingsKey,
   type SharedSettings,
   settingsBody,
+  footerGroups,
 } from "@/domain/website-settings";
+import { PublicFooter } from "./public-footer";
 import { homeDefaults,homeFieldLabels } from "@/domain/website-home";
 import { HomeView } from "./homepage-view";
 import { ContentPreview } from "./content-preview";
@@ -67,7 +69,7 @@ function TreeFields({
             value={value}
             onChange={(e) => onChange(path, e.target.value)}
           >
-            <option value="">Use text brand</option>
+            <option value="">Use supplied TPA logo</option>
             {logos
               .filter((l) => l.published)
               .map((l) => (
@@ -128,17 +130,7 @@ function SharedPreview({ body }: { body: SharedSettings }) {
     <>
       <header className="site-header">
         <div className="brand">
-          {body.logoMediaId ? (
-            <Image
-              src={"/media/" + body.logoMediaId}
-              alt={body.logoAlt}
-              width={48}
-              height={48}
-              unoptimized
-            />
-          ) : (
-            <span className="brand-mark">{body.brandMark}</span>
-          )}
+          <TpaLogo src={body.logoMediaId ? "/media/" + body.logoMediaId : undefined} alt={body.logoMediaId ? body.logoAlt : "Tollygunge Professional Association logo"} />
           <span className="brand-name" style={{ whiteSpace: "pre-line" }}>
             {body.organisation}
           </span>
@@ -165,28 +157,7 @@ function SharedPreview({ body }: { body: SharedSettings }) {
           headings for matching navigation destinations.
         </p>
       </main>
-      <footer className="site-footer">
-        <div style={{ whiteSpace: "pre-line" }}>{body.footer.tagline}</div>
-        <div>
-          <strong>{body.footer.exploreTitle}</strong>
-          {body.footer.links.map((l) => (
-            <Link prefetch={false} key={l.href} href={l.href}>
-              {l.label}
-            </Link>
-          ))}
-        </div>
-        <div>
-          <strong>{body.footer.contactTitle}</strong>
-          <Link prefetch={false} href={body.footer.contactHref}>
-            {body.footer.contactLabel}
-          </Link>
-          <p>{body.footer.location}</p>
-        </div>
-        <div className="footer-bottom">
-          © {new Date().getFullYear()} {body.footer.copyrightName} ·{" "}
-          {body.footer.closing}
-        </div>
-      </footer>
+      <div className="v3-landing"><PublicFooter settings={body} preview/></div>
     </>
   );
 }
@@ -366,7 +337,7 @@ function SettingsEditor({
   }
   const rendered: ReactNode =
     settingKey === "home" ? (
-      <HomeView home={draft as typeof homeDefaults} readOnly />
+      <div className="v3-landing"><HomeView home={draft as typeof homeDefaults} readOnly /></div>
     ) : (
       <SharedPreview body={draft as SharedSettings} />
     );
@@ -394,6 +365,11 @@ function SettingsEditor({
           </p>
         )}
         <fieldset disabled={busy || !row}>
+          {settingKey === "shared" && !(draft as SharedSettings).footer.groups && <button className="button secondary" type="button" onClick={()=>setDraft(current=>{
+            const next=structuredClone(current) as SharedSettings;
+            next.footer.groups=structuredClone(footerGroups(next.footer));
+            return next as Tree;
+          })}>Customize footer link groups</button>}
           <TreeFields value={draft} onChange={change} logos={logos} />
           <div className="action-row">
             <button className="button" disabled={!!validation}>

@@ -363,7 +363,7 @@ test(
           headers: { origin: base!, "content-type": "application/json" },
           body: JSON.stringify({
             token,
-            password: "test-password-at-least-12",
+            password: "Test-12!Abcd",
           }),
         });
       await db.query(
