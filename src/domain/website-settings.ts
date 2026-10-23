@@ -73,9 +73,9 @@ export function footerGroups(footer: SharedSettings["footer"]): FooterGroup[] {
   if (footer.groups) return footer.groups;
   const defaults = JSON.stringify(footer.links) === JSON.stringify(sharedDefaults.footer.links);
   return [
-    defaults ? defaultFooterGroups[0] : {title:footer.exploreTitle,links:footer.links},
+    defaults ? {...defaultFooterGroups[0],title:footer.exploreTitle===sharedDefaults.footer.exploreTitle?defaultFooterGroups[0].title:footer.exploreTitle} : {title:footer.exploreTitle,links:footer.links},
     defaultFooterGroups[1],
-    {...defaultFooterGroups[2],links:[{label:footer.contactLabel,href:footer.contactHref},...defaultFooterGroups[2].links.slice(1)]},
+    {...defaultFooterGroups[2],title:footer.contactTitle===sharedDefaults.footer.contactTitle?defaultFooterGroups[2].title:footer.contactTitle,links:[{label:footer.contactLabel,href:footer.contactHref},...defaultFooterGroups[2].links.slice(1)]},
   ];
 }
 export const websiteDefaults = { shared: sharedDefaults, home: homeDefaults };

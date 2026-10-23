@@ -14,6 +14,9 @@ import { personBody, publicPerson } from "../src/domain/people";
 
 test("footer groups preserve legacy overrides and validate new editable groups",()=>{
   const legacy=structuredClone(sharedDefaults);
+  legacy.footer.exploreTitle="Published association links";legacy.footer.contactTitle="Published contact links";
+  assert.equal(footerGroups(legacy.footer)[0].title,legacy.footer.exploreTitle);
+  assert.equal(footerGroups(legacy.footer)[2].title,legacy.footer.contactTitle);
   legacy.footer.links=[{label:"Published custom destination",href:"/contact"},...legacy.footer.links.slice(1)];
   assert.equal(footerGroups(legacy.footer)[0].links[0].label,"Published custom destination");
   assert.equal((settingsBody("shared",legacy) as typeof sharedDefaults).footer.groups,undefined);
