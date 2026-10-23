@@ -10,7 +10,7 @@ test('complete footer exposes grouped working destinations and keyboard navigati
     const url=new URL(href,'http://localhost');const response=await request.get(url.pathname);expect(response.status(),href).toBe(200);
     if(url.hash){await page.goto(href);await expect(page.locator(url.hash)).toHaveCount(1);}
   }
-  await page.goto('/');const first=page.locator('footer nav a').first();await first.focus();await page.keyboard.press('Tab');await expect(page.locator('footer nav a').nth(1)).toBeFocused();
+  await page.goto('/',{waitUntil:'networkidle'});const first=page.locator('footer nav a').first();await first.focus();await expect(first).toBeFocused();await page.keyboard.press('Tab');await expect(page.locator('footer nav a').nth(1)).toBeFocused();
   expect(await page.locator('footer nav a').nth(1).evaluate(e=>getComputedStyle(e).outlineStyle)).not.toBe('none');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.goto('/about');await expect(page.locator('footer').getByRole('navigation',{name:'Footer',exact:true})).toBeVisible();
