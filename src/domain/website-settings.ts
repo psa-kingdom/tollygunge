@@ -1,6 +1,6 @@
 import { record, text, uuid } from "./operations";
 import { homeDefaults } from "./website-home";
-export const sharedDefaults = {
+const sharedBaseDefaults = {
   organisation: "TOLLYGUNGE\nPROFESSIONAL ASSOCIATION",
   brandMark: "tpa·",
   logoMediaId: "",
@@ -61,7 +61,23 @@ export const sharedDefaults = {
     contactHref: "/contact",
   },
 };
-export type SharedSettings = typeof sharedDefaults;
+export type FooterGroup = { title: string; links: { label: string; href: string }[] };
+export type SharedSettings = typeof sharedBaseDefaults & { footer: typeof sharedBaseDefaults.footer & { groups?: FooterGroup[] } };
+export const sharedDefaults: SharedSettings = sharedBaseDefaults;
+export const defaultFooterGroups: FooterGroup[] = [
+  {title:"Association",links:[{label:"About TPA",href:"/about"},{label:"Governance",href:"/governance"},{label:"Membership",href:"/membership"}]},
+  {title:"Explore",links:[{label:"Events",href:"/events"},{label:"Insights",href:"/resources#section-0"},{label:"Downloads",href:"/resources#section-2"},{label:"Important links",href:"/resources#section-3"}]},
+  {title:"Connect",links:[{label:"Contact",href:"/contact"},{label:"Member login",href:"/login"},{label:"Join TPA",href:"/join"},{label:"Newsletter subscription",href:"/#subscribe"}]},
+];
+export function footerGroups(footer: SharedSettings["footer"]): FooterGroup[] {
+  if (footer.groups) return footer.groups;
+  const defaults = JSON.stringify(footer.links) === JSON.stringify(sharedDefaults.footer.links);
+  return [
+    defaults ? defaultFooterGroups[0] : {title:footer.exploreTitle,links:footer.links},
+    defaultFooterGroups[1],
+    {...defaultFooterGroups[2],links:[{label:footer.contactLabel,href:footer.contactHref},...defaultFooterGroups[2].links.slice(1)]},
+  ];
+}
 export const websiteDefaults = { shared: sharedDefaults, home: homeDefaults };
 export type SettingsKey = keyof typeof websiteDefaults;
 export function websiteLink(value: unknown) {
@@ -111,6 +127,15 @@ export function settingsBody(
   ) as (typeof websiteDefaults)[SettingsKey];
   if (key === "shared") {
     const body = result as SharedSettings;
+    const footer = record(record(value).footer);
+    if (footer.groups !== undefined) {
+      if (!Array.isArray(footer.groups) || footer.groups.length < 1 || footer.groups.length > 6) throw Error("Use one to six footer groups.");
+      body.footer.groups = footer.groups.map(value => {
+        const group = record(value);
+        if (!Array.isArray(group.links) || group.links.length < 1 || group.links.length > 12) throw Error("Use one to twelve links per footer group.");
+        return { title: text(group.title,"Footer group title",80,1), links:group.links.map(value => {const link=record(value);return {label:text(link.label,"Footer link label",100,1),href:websiteLink(link.href)};}) };
+      });
+    }
     if (
       !body.organisation.trim() ||
       !body.brandMark.trim() ||

@@ -15,6 +15,8 @@ const config = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
+      { source: "/api/newsletter/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
+      { source: "/newsletter/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
     ];
   },
   outputFileTracingIncludes: {

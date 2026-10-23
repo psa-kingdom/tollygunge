@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { NewPasswordField } from "./new-password-field";
 import { eventReturnPath } from "@/domain/event-flow";
-import { passwordPolicy, passwordError } from "@/domain/password-policy";
+import { passwordPolicy, passwordError, existingPasswordMaximum } from "@/domain/password-policy";
 import { FallbackPanel } from "./fallback-screen";
 import { LoadingScreen } from "./loading-screen";
 const client = createAuthClient();
@@ -71,7 +71,7 @@ export function PasswordSignIn({ enabled, returnTo }: { enabled: boolean; return
           name="password"
           type="password"
           autoComplete="current-password"
-          maxLength={128}
+          maxLength={existingPasswordMaximum}
           required
         />
       </label>
@@ -219,7 +219,7 @@ export function PasswordUpdate({
             name="current"
             autoComplete="current-password"
             required
-            maxLength={passwordPolicy.maximum}
+            maxLength={existingPasswordMaximum}
           />
         </label>
       )}

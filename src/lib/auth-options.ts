@@ -1,4 +1,4 @@
-import { passwordPolicy } from "@/domain/password-policy";
+import { passwordPolicy, existingPasswordMaximum, newCredentialError } from "@/domain/password-policy";
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { email as memberEmail } from "@/domain/member-foundation";
@@ -27,6 +27,13 @@ export function createAuth(
     trustedOrigins: env.BETTER_AUTH_URL ? [env.BETTER_AUTH_URL] : [],
     hooks: {
       before: createAuthMiddleware(async (context) => {
+        const credentialError = newCredentialError(context.path, context.body);
+        if (credentialError) throw new APIError("BAD_REQUEST", {
+          code: typeof context.body?.newPassword === "string"
+            ? (context.body.newPassword.length < passwordPolicy.minimum ? "PASSWORD_TOO_SHORT" : "PASSWORD_TOO_LONG")
+            : (String(context.body?.password).length < passwordPolicy.minimum ? "PASSWORD_TOO_SHORT" : "PASSWORD_TOO_LONG"),
+          message: credentialError,
+        });
         if (
           !["/request-password-reset", "/send-verification-email"].includes(
             context.path,
@@ -146,7 +153,7 @@ export function createAuth(
       enabled: true,
       disableSignUp: env.ONBOARDING_ENABLED !== "true",
       minPasswordLength: passwordPolicy.minimum,
-      maxPasswordLength: passwordPolicy.maximum,
+      maxPasswordLength: existingPasswordMaximum,
       resetPasswordTokenExpiresIn: 15 * 60,
       revokeSessionsOnPasswordReset: true,
       onPasswordReset: async ({ user }) => {

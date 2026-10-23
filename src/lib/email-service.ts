@@ -1,3 +1,4 @@
+import { publicUnsubscribeToken } from "./public-newsletter";
 import { sealMail } from "./onboarding-mail";
 import {
   randomUUID,
@@ -69,8 +70,9 @@ export const campaignEligibility =
 const eligible = campaignEligibility;
 export async function campaignRecipients(
   client: PoolClient,
-  audience: { city: string; profession: string },
-) {
+  audience: { city: string; profession: string; source?: "public" | "members" },
+): Promise<{ id: string; name: string; email: string; subscriberId?: string }[]> {
+  if (audience.source === "public") return (await client.query("SELECT n.id,'' AS name,n.email,n.id AS \"subscriberId\" FROM tpa.public_subscribers n LEFT JOIN tpa.email_suppressions s ON s.email=n.email WHERE n.status='confirmed' AND s.email IS NULL ORDER BY n.id LIMIT 10001")).rows as { id: string; name: string; email: string; subscriberId?: string }[];
   return (
     await client.query(
       `SELECT u.id,u.name,u.email FROM public."user" u LEFT JOIN tpa.member_profiles p ON p.user_id=u.id LEFT JOIN tpa.newsletter_consents n ON n.user_id=u.id LEFT JOIN tpa.email_suppressions s ON s.email=lower(u.email) WHERE ($1='' OR lower(coalesce(p.city,''))=lower($1)) AND ($2='' OR lower(coalesce(p.profession,''))=lower($2)) AND ${eligible} ORDER BY u.id LIMIT 10001`,
@@ -149,6 +151,7 @@ export async function reviewCampaign(
         name: campaign.name,
         subject: campaign.subject,
         body: campaign.body,
+        audience: campaign.audience,
       },
       eligible: recipients.length,
       sample: recipients
@@ -231,16 +234,20 @@ export async function dispatchCampaign(
       tokens = [];
     for (const person of recipients) {
       const token = randomBytes(32).toString("base64url");
-      tokens.push({ hash: tokenHash(token), user: person.id });
+      const publicVersion = person.subscriberId ? (await client.query("SELECT version FROM tpa.public_subscribers WHERE id=$1", [person.id])).rows[0].version : null;
+      const publicToken = person.subscriberId ? await publicUnsubscribeToken(client, person.id, publicVersion) : null;
+      if (!publicToken) tokens.push({ hash: tokenHash(token), user: person.id });
       jobs.push({
         id: randomUUID(),
-        user: person.id,
+        user: person.subscriberId ? null : person.id,
+        subscriber: person.subscriberId ?? null,
         email: emailAddress(person.email),
         payload: {
           subject: campaign.subject,
           body: campaign.body,
+          subscriptionVersion: publicVersion,
           unsubscribe: sealMail(
-            `${process.env.BETTER_AUTH_URL}/unsubscribe#token=${token}`,
+            `${process.env.BETTER_AUTH_URL}/${publicToken ? "newsletter/unsubscribe" : "unsubscribe"}#token=${publicToken ?? token}`,
           ),
         },
       });
@@ -250,7 +257,7 @@ export async function dispatchCampaign(
       [JSON.stringify(tokens)],
     );
     await client.query(
-      'INSERT INTO tpa.email_jobs(id,kind,dispatch_id,user_id,recipient,payload,created_by) SELECT x.id,\'campaign\',$2,x."user",x.email,x.payload,$3 FROM jsonb_to_recordset($1::jsonb) AS x(id uuid,"user" text,email text,payload jsonb)',
+      'INSERT INTO tpa.email_jobs(id,kind,dispatch_id,user_id,subscriber_id,recipient,payload,created_by) SELECT x.id,\'campaign\',$2,x."user",x.subscriber,x.email,x.payload,$3 FROM jsonb_to_recordset($1::jsonb) AS x(id uuid,"user" text,subscriber uuid,email text,payload jsonb)',
       [JSON.stringify(jobs), dispatch, actor],
     );
     await emailAudit(client, actor, "email.campaign_dispatched", dispatch);

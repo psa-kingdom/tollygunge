@@ -12,3 +12,6 @@ Credential.md
 
 playwright-report/
 test-results/
+
+# Local browser review evidence; preserve files, exclude generated output from Git.
+/output/playwright/

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { api } from "./operations-client";
 import { CampaignDispatch } from "./campaign-dispatch";
 import { useEmailEditGuard } from "./email-edit-guard";
-type Audience = { city: string; profession: string };
+type Audience = { city: string; profession: string; source?: "members" | "public" };
 type Campaign = {
   id?: string;
   version: number;
@@ -277,10 +277,16 @@ export function CampaignWorkspace({
                 />
               </label>
               <div className="form-grid">
+                <label>Audience source
+                  <select value={form.audience.source ?? "members"} onChange={e => field("audience", {city:"", profession:"", ...(e.target.value === "public" ? {source:"public" as const} : {})})}>
+                    <option value="members">Eligible website accounts</option><option value="public">Public newsletter subscribers</option>
+                  </select>
+                </label>
                 <label>
                   Audience city (optional)
                   <input
                     maxLength={120}
+                    disabled={form.audience.source === "public"}
                     value={form.audience.city}
                     onChange={(e) =>
                       field("audience", {
@@ -294,6 +300,7 @@ export function CampaignWorkspace({
                   Audience profession (optional)
                   <input
                     maxLength={120}
+                    disabled={form.audience.source === "public"}
                     value={form.audience.profession}
                     onChange={(e) =>
                       field("audience", {
@@ -305,7 +312,7 @@ export function CampaignWorkspace({
                 </label>
               </div>
               <p>
-                Leave filters blank for all eligible accounts. City and
+                Public newsletter subscribers include only confirmed public opt-ins. Member filters apply only to eligible website accounts. City and
                 profession match the full profile value, ignoring case. They do
                 not establish professional eligibility or approved membership.
               </p>

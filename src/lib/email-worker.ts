@@ -184,6 +184,11 @@ export async function processEmailJob(
       return;
     }
     const eligibleNow = async () => {
+      if (job.kind === "subscription_confirmation") {
+        const active = (await pool.query("SELECT 1 FROM tpa.public_subscribers n JOIN tpa.public_subscription_tokens t ON t.subscriber_id=n.id WHERE n.id=$1 AND n.email=$2 AND n.status='pending' AND n.version=$3 AND t.token_hash=$4 AND t.purpose='confirm' AND t.used_at IS NULL AND t.expires_at>now() AND NOT EXISTS(SELECT 1 FROM tpa.email_suppressions s WHERE s.email=n.email)", [job.subscriber_id, job.recipient, job.payload.subscriptionVersion, job.payload.tokenHash])).rowCount;
+        if (!active) await finish("skipped", "subscription_confirmation_obsolete");
+        return !!active;
+      }
       if(job.payload.eventPromotion) {
         if(env.EVENT_PROMOTIONS_ENABLED!=='true') {await finish('queued','promotion_paused',new Date(Date.now()+60000));return false;}
         if(!(await pool.query("SELECT 1 FROM tpa.staff_roles WHERE user_id=$1 AND role IN ('administrator','event_operator')",[job.created_by])).rowCount) {await finish('skipped','sender_event_permission_revoked');return false;}
@@ -202,8 +207,10 @@ export async function processEmailJob(
       if (job.kind === "campaign") {
         const eligible = (
           await pool.query(
-            "SELECT 1 FROM public.\"user\" u JOIN tpa.newsletter_consents n ON n.user_id=u.id LEFT JOIN tpa.member_profiles p ON p.user_id=u.id JOIN tpa.email_dispatches d ON d.id=$3 WHERE u.id=$1 AND lower(u.email)=$2 AND u.\"emailVerified\" AND n.subscribed AND coalesce(p.preferences->>'contact','email')='email' AND d.cancelled_at IS NULL",
-            [job.user_id, job.recipient, job.dispatch_id],
+            job.subscriber_id
+              ? "SELECT 1 FROM tpa.public_subscribers n JOIN tpa.email_dispatches d ON d.id=$3 WHERE n.id=$1 AND n.email=$2 AND n.status='confirmed' AND n.version=$4 AND d.cancelled_at IS NULL"
+              : "SELECT 1 FROM public.\"user\" u JOIN tpa.newsletter_consents n ON n.user_id=u.id LEFT JOIN tpa.member_profiles p ON p.user_id=u.id JOIN tpa.email_dispatches d ON d.id=$3 WHERE u.id=$1 AND lower(u.email)=$2 AND u.\"emailVerified\" AND n.subscribed AND coalesce(p.preferences->>'contact','email')='email' AND d.cancelled_at IS NULL",
+            job.subscriber_id ? [job.subscriber_id, job.recipient, job.dispatch_id, job.payload.subscriptionVersion] : [job.user_id, job.recipient, job.dispatch_id],
           )
         ).rowCount;
         if (!eligible) {
@@ -253,7 +260,7 @@ export async function processEmailJob(
     const body =
       job.kind === "campaign"
         ? campaignEmail(job.payload.body, unsubscribeUrl!)
-        : { text: job.payload.body };
+        : { text: job.kind === "subscription_confirmation" ? openMail(job.payload.sealedBody, env.BETTER_AUTH_SECRET) : job.payload.body };
     const parent = messageId(job.payload.parent);
     const unsubscribe = new URL(unsubscribeUrl ?? env.BETTER_AUTH_URL!);
     const token = new URLSearchParams(unsubscribe.hash.slice(1)).get("token");
@@ -265,7 +272,7 @@ export async function processEmailJob(
       throw new EmailProviderError(false, true, "payload_unavailable");
     }
     const request = savedRequest ?? {
-      from: job.kind === "campaign" ? campaignAddress : inboxAddress,
+      from: job.kind === "reply" ? inboxAddress : campaignAddress,
       to: [job.recipient],
       reply_to: inboxAddress,
       subject: job.payload.subject,
@@ -273,7 +280,7 @@ export async function processEmailJob(
       headers:
         job.kind === "campaign"
           ? {
-              "List-Unsubscribe": `<${env.BETTER_AUTH_URL}/api/email/unsubscribe?token=${token}>`,
+              "List-Unsubscribe": `<${env.BETTER_AUTH_URL}/api/${job.subscriber_id ? "newsletter" : "email"}/unsubscribe?token=${token}>`,
               "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
             }
           : parent

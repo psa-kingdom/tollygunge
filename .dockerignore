@@ -12,3 +12,6 @@ references
 tests
 docs
 *.tsbuildinfo
+
+# Browser review galleries are local evidence, not application build inputs.
+/output/playwright/

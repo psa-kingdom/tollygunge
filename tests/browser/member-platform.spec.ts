@@ -426,14 +426,14 @@ test("password requirements validate before submission and header remains visibl
 }, info) => {
   await page.goto("/signup");
   const password = page.getByLabel("Password", { exact: false });
-  await password.fill("1234567");
+  await password.fill("12345");
   await expect(
-    page.getByText("Use at least 8 characters.", { exact: true }),
+    page.getByText("Use at least 6 characters.", { exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: info.outputPath("password-minimum-error.png"),
   });
-  await password.fill("12345678");
+  await password.fill("123456");
   await expect(
     page.getByText("Password length meets the requirement.", { exact: true }),
   ).toBeVisible();

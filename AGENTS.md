@@ -7,3 +7,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+Repository placement policy: follow [docs/engineering/REPOSITORY_STRUCTURE.md](docs/engineering/REPOSITORY_STRUCTURE.md) before creating or moving files. Run `npm run check:structure` before handoff; new top-level destinations require a documented purpose and a checker update.

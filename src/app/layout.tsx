@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./premium.css";
+import "./v3.css";
 import { appearanceBootstrap } from "@/domain/appearance";
 import {publishedSettings} from '@/lib/website-content';
 import { sharedDefaults } from '@/domain/website-settings';
