@@ -115,7 +115,7 @@ test("logo reserves space, retains accessible links on failure and respects publ
         body: '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="80"><rect width="240" height="80" fill="navy"/></svg>',
       }),
     );
-    await page.goto("/");
+    await page.goto("/", {waitUntil:"networkidle"});
     await expect(brand.locator("img")).toHaveAttribute(
       "src",
       `/media/${mediaId}`,
@@ -204,7 +204,7 @@ for (const width of [320, 390, 768, 1440]) {
           animations: "disabled",
         });
       };
-      await page.goto("/");
+      await page.goto("/", {waitUntil:"networkidle"});
       await expect(page.locator("html")).toHaveAttribute(
         "data-color-mode",
         mode,
@@ -226,7 +226,7 @@ for (const width of [320, 390, 768, 1440]) {
         ["404", "/missing/phase8b-logo"],
         ["preview", "/preview/admin"],
       ]) {
-        await page.goto(url);
+        await page.goto(url, {waitUntil:"networkidle"});
         await capture(name);
       }
       await staff(context);
@@ -235,7 +235,7 @@ for (const width of [320, 390, 768, 1440]) {
         ["admin", "/admin"],
         ["settings", "/admin/workspaces/website"],
       ]) {
-        await page.goto(url);
+        await page.goto(url, {waitUntil:"networkidle"});
         await expect(page).toHaveURL(new RegExp(url + "$"));
         if (name === "settings") {
           await expect(page.locator(".content-editor-columns")).toBeVisible();
