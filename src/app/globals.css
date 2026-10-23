@@ -2668,6 +2668,7 @@ html[data-color-mode="dark"] :is(.eyebrow,.member-optional-section summary,.memb
 .private-address-summary dt { font-size:12px;font-weight:600;margin-bottom:8px;color:var(--muted); }
 .private-address-summary dd { margin:0;font-size:14px;overflow-wrap:anywhere; }
 @media(max-width:600px) {
+ .member-shell .account-header { padding-block:13px; }
  .member-shell .account-header .brand-name { display:block;font-size:8px;line-height:1.5; }
  .member-shell .account-header .brand { gap:8px; }
  .member-shell .account-header .brand-mark { font-size:32px;letter-spacing:-3px; }

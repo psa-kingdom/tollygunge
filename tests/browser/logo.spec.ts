@@ -190,8 +190,8 @@ for (const width of [320, 390, 768, 1440]) {
           expect(await images.count()).toBeGreaterThan(0);
           for (const img of await images.all()) {
             await expect(img).toHaveJSProperty("complete", true);
-            expect(
-              await img.evaluate((el: HTMLImageElement) => el.naturalWidth),
+            await expect.poll(
+              () => img.evaluate((el: HTMLImageElement) => el.naturalWidth),
             ).toBeGreaterThan(0);
             expect(
               await img.evaluate((el) => getComputedStyle(el).objectFit),

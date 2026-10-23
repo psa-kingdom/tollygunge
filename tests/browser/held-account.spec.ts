@@ -206,7 +206,7 @@ test("held account is visible, activates only after release, and retains private
     await page.goto(link);
     await page
       .getByLabel("New password", { exact: true })
-      .fill("Held-browser-password-123!");
+      .fill("Held!123456");
     await page
       .getByRole("button", { name: "Set password", exact: true })
       .click();
@@ -219,7 +219,7 @@ test("held account is visible, activates only after release, and retains private
     await page.getByLabel("Email", { exact: true }).fill(email);
     await page
       .getByLabel("Password", { exact: true })
-      .fill("Held-browser-password-123!");
+      .fill("Held!123456");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(page).toHaveURL(/\/member$/);
     await page.goto("/account/profile");
