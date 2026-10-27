@@ -15,8 +15,9 @@ const env = { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot,
   TEMP: process.env.TEMP, TMP: process.env.TMP, USERPROFILE: process.env.USERPROFILE,
   DATABASE_URL: url.href, DATABASE_SSL: "false", TPA_DATABASE_NAME: name,
   BETTER_AUTH_URL: `http://127.0.0.1:${port}`, BETTER_AUTH_SECRET: "synthetic-launch-isolated-secret-32-characters",
-  ONBOARDING_ENABLED: "true", TPA_MAIL_SINK: "true", TPA_BROWSER_CHANNEL: "chrome",
-  TPA_TEST_URL: `http://127.0.0.1:${port}`, TPA_DESIGN_QA_OUTPUT: process.env.TPA_DESIGN_QA_OUTPUT, TPA_TEST_STORAGE: "false", TPA_TEST_EXPECT_STORAGE_DISABLED: "true",
+  ONBOARDING_ENABLED: "true", TPA_MAIL_SINK: "true", TPA_BROWSER_CHANNEL: process.env.TPA_BROWSER_CHANNEL ?? "",
+  TPA_TEST_URL: `http://127.0.0.1:${port}`, TPA_PRIVATE_HEADER_TEST_URL: `http://127.0.0.1:${port}`, TPA_DESIGN_QA_OUTPUT: process.env.TPA_DESIGN_QA_OUTPUT, TPA_TEST_STORAGE: "false", TPA_TEST_EXPECT_STORAGE_DISABLED: "true",
+  TPA_RESTRICTED_ROLE_TESTS:process.env.TPA_RESTRICTED_ROLE_TESTS,TPA_ROLE_EVIDENCE_DIR:process.env.TPA_ROLE_EVIDENCE_DIR,
   RESEND_WEBHOOK_SECRET: "whsec_" + Buffer.from("synthetic-disposable-secret").toString("base64") };
 const results = [];
 // Next also reads local dotenv files. Explicitly blank keys not deliberately
@@ -78,7 +79,13 @@ try {
   await run("browser-policy-fixture", ["--import", "tsx", "--input-type=module", "-e", "import {Pool} from 'pg';import {initialFields} from './src/domain/verification.ts';const p=new Pool({connectionString:process.env.DATABASE_URL,ssl:false});try{await p.query('INSERT INTO tpa.verification_policies(version,fields) SELECT coalesce(max(version),0)+1,$1::jsonb FROM tpa.verification_policies',[JSON.stringify(initialFields)]);}finally{await p.end();}"]);
   if (!process.argv.includes("--skip-browser")) {
     const code = await run("browser", ["node_modules/@playwright/test/cli.js", "test", ...(grepIndex < 0 ? [] : ["--grep", process.argv[grepIndex + 1]])]);
-    if (code !== 0) await run("browser-failure-retest", ["node_modules/@playwright/test/cli.js", "test", "--last-failed"]);
+    // Preserve the first result; the outer runner archives traces before another stage.
+    if (code !== 0) console.error("Browser acceptance failed; no automatic retry was run.");
+  }
+  if(process.argv.includes('--public-interactions')){
+    env.TPA_PUBLIC_QA_URL=env.TPA_TEST_URL;
+    env.TPA_INTERACTION_QA_OUTPUT=process.env.TPA_PUBLIC_INTERACTION_OUTPUT||'.local/phase7b/public-interactions';
+    await run('public-interactions',['--import','tsx','scripts/verify-premium-interactions.mts']);
   }
   if (process.argv.includes("--design-audit")) await run("design-audit", ["--import", "tsx", "scripts/verify-phase3-design.mts", ...(process.argv.includes("--phase4") ? ["--phase4"] : []), ...(process.argv.includes("--scout") ? ["--scout"] : []), ...(process.argv.includes("--table-refinement") ? ["--table-refinement"] : []), ...(process.argv.includes("--resume-from") ? ["--resume-from", process.argv[process.argv.indexOf("--resume-from") + 1]] : [])]);
   if (!browserOnly) {
@@ -93,7 +100,7 @@ try {
     await new Promise(r => setTimeout(r, 1000));
   }
   assert.ok(ready);
-  await run("baseline-http", ["--import", "tsx", "--test", "tests/http.integration.ts", "tests/operations.integration.ts", "tests/media.integration.ts", "tests/payment-details.integration.ts", "tests/inquiries.integration.ts", "tests/governance.integration.ts", "tests/portraits.integration.ts", "tests/campaigns.integration.ts", "tests/reports-news.integration.ts", "tests/email-http.integration.ts"]);
+  await run("baseline-http", ["--import", "tsx", "--test", "tests/http.integration.ts", "tests/operations.integration.ts", "tests/media.integration.ts", "tests/payment-details.integration.ts", "tests/inquiries.integration.ts", "tests/governance.integration.ts", "tests/portraits.integration.ts", "tests/campaigns.integration.ts", "tests/reports-news.integration.ts", "tests/email-http.integration.ts", "tests/private-download-headers.integration.ts"]);
   }
 } finally {
   outageServer?.kill();

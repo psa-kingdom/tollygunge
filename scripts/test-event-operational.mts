@@ -161,7 +161,7 @@ try {
  pass('Audited reopening and attendance correction revoke the badge before re-finalization');
  pass('Completion requires attendance reconciliation, awards a badge and freezes operational changes');
  if(process.argv.includes('--browser')) {
-  browser=await chromium.launch({channel:process.env.TPA_BROWSER_CHANNEL || 'chrome',headless:true});
+  browser=await chromium.launch({channel:process.env.TPA_BROWSER_CHANNEL || undefined,headless:true});
   for(const width of [1440,768,390]) {
    const context=await browser.newContext({viewport:{width,height:1000}});await context.addCookies([{name:'better-auth.session_token',value:cookies[0],url:base}]);
    const page=await context.newPage();const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));

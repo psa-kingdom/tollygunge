@@ -14,6 +14,7 @@ import { hashPassword } from "better-auth/crypto";
 import { eventLink, istInput } from "../src/domain/event-flow";
 import { Webhook } from "svix";
 import { EmailProviderError } from "../src/lib/email-provider";
+import {verifyPaymentTable} from '../tests/helpers/payment-table-acceptance';
 
 // Creates only a disposable database; external transport credentials are removed.
 const workerOnly=process.argv.includes("--worker-only");
@@ -247,7 +248,7 @@ try {
   const instructions={label:"Synthetic event payments",payee:"TPA TEST PAYEE",upiId:"synthetic-test@upi",phone:"",qrId:null};
   await db.query("INSERT INTO tpa.payment_details(id,status,draft,active_snapshot) VALUES($1,'active',$2,$2)",[randomUUID(),instructions]);
   let browserEvent=await event({title:"Community learning workshop",feePaise:75000,speakers,location:"Tollygunge association auditorium"});
-  browser=await chromium.launch({channel:process.env.TPA_BROWSER_CHANNEL || "chrome"});
+  browser=await chromium.launch({channel:process.env.TPA_BROWSER_CHANNEL || undefined});
   for(const viewport of [{width:1440,height:1000},{width:768,height:1024},{width:390,height:844}]){
     const label=viewport.width===1440?"desktop":viewport.width===768?"tablet":"phone";
     const staffContext=await browser.newContext({viewport}),memberContext=await browser.newContext({viewport});
@@ -337,6 +338,7 @@ try {
   for(const width of [1440,768,390]){const context=await browser.newContext({viewport:{width,height:900}});await context.addCookies([{name:"better-auth.session_token",value:cookies[4],url:base}]);const p=await context.newPage();await p.goto(base+"/member/events?eventId="+browserEvent.id);const card=p.locator("article").filter({has:p.getByRole("heading",{name:browserEvent.title,exact:true})});await check(card).toContainText("Registration confirmed");await check(card).toContainText("Attendance recorded");await p.screenshot({path:`${dir}/confirmed-attendance-${width}.png`,fullPage:true});evidence.screenshots.push(`confirmed-attendance-${width}.png`);await context.close();}
   pass("Confirmed member state, started-event attendance, duplicate check-in and desktop/tablet/phone attendance display");
   }
+  if(process.argv.includes('--payment-table')){const qa=await verifyPaymentTable(browser!,base,cookies[0],db,dir);await writeFile(dir+'/payment-table.json',JSON.stringify(qa,null,2));pass('Payment table readable at 320/390/768 in both themes, keyboard scrolling, empty state and cancelled confirmation focus');}
   assert.deepEqual(evidence.browserErrors,[]);
   evidence.passed=true;evidence.completed=new Date().toISOString();await save();console.log("Evidence: "+dir);
 } catch(e){await save();throw e;}

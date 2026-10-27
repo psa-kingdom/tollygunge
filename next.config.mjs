@@ -15,8 +15,17 @@ const config = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
-      { source: "/api/newsletter/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
-      { source: "/newsletter/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
+      ...[
+        "/api/documents/:path*",
+        "/api/event-assets/:path*",
+        "/api/email/unsubscribe",
+        "/api/auth/verify-email",
+        "/api/newsletter/:path*",
+        "/newsletter/:path*",
+      ].map((source) => ({
+        source,
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      })),
     ];
   },
   outputFileTracingIncludes: {

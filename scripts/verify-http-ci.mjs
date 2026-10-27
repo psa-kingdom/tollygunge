@@ -42,6 +42,7 @@ try {
       "tests/campaigns.integration.ts",
       "tests/reports-news.integration.ts",
       "tests/email-http.integration.ts",
+      "tests/private-download-headers.integration.ts",
     ],
     {
       stdio: "inherit",
@@ -49,6 +50,7 @@ try {
         ...process.env,
         RESEND_WEBHOOK_SECRET:"whsec_"+Buffer.from("synthetic-disposable-secret").toString("base64"),
         TPA_TEST_URL: "http://127.0.0.1:3000",
+        TPA_PRIVATE_HEADER_TEST_URL: "http://127.0.0.1:3000",
         TPA_TEST_STORAGE: "false",
         TPA_TEST_EXPECT_STORAGE_DISABLED: "true",
       },

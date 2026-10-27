@@ -590,7 +590,7 @@ try {
     "Links and PDF downloads publish/withdraw; invalid files are rejected and replacement preserves published bytes and old references",
   );
   if (process.argv.includes("--browser")) {
-    browser = await chromium.launch({ channel: "chrome", headless: true });
+    browser = await chromium.launch({ channel: process.env.TPA_BROWSER_CHANNEL || undefined, headless: true });
     const context = await browser.newContext();
     await context.addCookies([
       {
