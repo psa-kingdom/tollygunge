@@ -111,11 +111,24 @@ test(
         });
         assert.equal(alertResponse.status, 200);
         const { items } = await alertResponse.json();
+        const signupAlert = items.find(
+          (x: { id: string }) => x.id === "new-signups",
+        );
+        if (i === 0 || i === 1) {
+          assert.ok(signupAlert, "Membership reviewers see recent self-service signups");
+          assert.equal(signupAlert.category, "Account");
+          assert.equal(signupAlert.href, "/admin/workspaces/members?view=accounts");
+          assert.ok(signupAlert.count >= 1);
+        } else {
+          assert.equal(signupAlert, undefined, "Other roles cannot see signup alerts");
+        }
         if (i === 3 || i === 5) assert.equal(items.length, 0);
         if (i === 1)
           assert.ok(
             items.every(
-              (x: { category: string }) => ["Verification", "Memberships"].includes(x.category),
+              (x: { id: string; category: string }) =>
+                ["Verification", "Memberships"].includes(x.category) ||
+                (x.id === "new-signups" && x.category === "Account"),
             ),
           );
         if (i === 2)
