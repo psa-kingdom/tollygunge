@@ -450,6 +450,7 @@
 .portal :global(.payment-results-toolbar label) { display:grid; gap:6px; min-width:180px; }
 .portal :global(.payment-results-toolbar p) { margin:0; color:var(--muted); font-size:12px; }
 .portal :global(.registration-payments .table-scroll > table) { display:table; width:100%; }
+.portal :global(.registration-payments .operations-table th) { white-space:nowrap; }
 .portal :global(.email-settings-workspace) { display:grid; gap:20px; min-width:0; }
 .portal :global(.email-settings-workspace > .workspace-panel) { margin:0; }
 .portal :global(.email-settings-controls) { display:grid; gap:16px; margin-top:20px; max-width:680px; }
