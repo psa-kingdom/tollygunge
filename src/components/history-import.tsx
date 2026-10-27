@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { WorkspacePanel, WorkspaceSteps, WorkspaceEmptyState } from "./workspace-ui";
+import { useState, useRef } from "react";
 import { api } from "./operations-client";
 import type { HistoryRow } from "@/domain/history-import";
 type Preview = {
@@ -15,8 +16,12 @@ export function HistoryImport() {
     [preview, setPreview] = useState<Preview | null>(null),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
+  const csvInput = useRef<HTMLInputElement>(null);
   return (
     <>
+      <WorkspaceSteps steps={["Upload CSV", "Validate records", "Review results"]} current={preview ? 2 : file ? 1 : 0} />
+      <div className="workspace-two-panels">
+      <WorkspacePanel title="Upload historical records">
       <p>
         Validate a proposed attendance CSV against existing identities, events
         and attendance. Ambiguous people and duplicates are flagged; no records
@@ -63,7 +68,8 @@ export function HistoryImport() {
         <label>
           Historical CSV
           <input
-            type="file"
+            ref={csvInput}
+          type="file"
             accept=".csv,text/csv"
             required
             onChange={(e) => {
@@ -76,9 +82,12 @@ export function HistoryImport() {
           Preview & validate
         </button>
       </form>
+      </WorkspacePanel>
+      {preview ? <WorkspacePanel title="Validation summary"><p><strong>{preview.valid}</strong> valid of <strong>{preview.total}</strong> rows.</p><p>Review the row-level validation below. This workflow previews records; it does not commit them.</p></WorkspacePanel> : <WorkspaceEmptyState icon="upload" title="Your validation preview" description="Choose a CSV and run validation to check identities, events and duplicate attendance before reviewing the results." actionLabel="Choose CSV" onAction={() => csvInput.current?.click()} />}
+      </div>
       <p role="status">{message}</p>
       {preview && (
-        <>
+        <WorkspacePanel title="Row validation">
           <div className="notice">{preview.notice}</div>
           <p>
             {preview.filename} · {preview.valid} valid of {preview.total} rows
@@ -112,7 +121,7 @@ export function HistoryImport() {
               </tbody>
             </table>
           </div>
-        </>
+        </WorkspacePanel>
       )}
     </>
   );

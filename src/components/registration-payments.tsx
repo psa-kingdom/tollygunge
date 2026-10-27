@@ -1,4 +1,5 @@
 "use client";
+import { WorkspacePanel, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState } from "react";
 import { eventTime } from "@/domain/event-flow";
 import { api } from "./operations-client";
@@ -24,6 +25,7 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
     [note, setNote] = useState(""),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   async function load(state: string) {
     setRows(
       await api<Payment[]>("/api/staff/registration-payments?status=" + state+(eventId?"&eventId="+eventId:"")),
@@ -37,23 +39,24 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
       })
       .catch((e) => {
         if (active) setMessage(e.message);
-      });
+      }).finally(() => { if (active) setLoaded(true); });
     return () => {
       active = false;
     };
   }, [filter,eventId]);
   return (
-    <section>
-      <h2>Registration payments</h2>
+    <WorkspacePanel title="Registration payments" className="registration-payments">
       <p>
         Payments are manually verified. Confirm only after checking the bank or
         payment record. A refund status records a refund already performed.
       </p>
+      <div className="payment-results-toolbar">
       <label>
         Payment status{" "}
         <select
           value={filter}
           onChange={(e) => {
+            setLoaded(false);
             setFilter(e.target.value);
             setSelected(undefined);
           }}
@@ -65,9 +68,11 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
           )}
         </select>
       </label>
-      <p>{rows.length} records shown (up to 250)</p>
-      <div className="table-scroll" role="region" aria-label="Registration payments">
-        <table className="operations-table" tabIndex={0} aria-label="Registration payments">
+      <p>{loaded ? `${rows.length} records shown (up to 250)` : "Loading payments…"}</p>
+      </div>
+      {loaded && !rows.length && !message && <WorkspaceEmptyState icon="wallet" title="No payments match this status" description="Payment references submitted for event registrations will appear here for review." actionLabel={filter === "all" ? "Refresh payments" : "View all statuses"} onAction={() => {if (filter === "all") void load(filter).catch(e => setMessage(e.message)); else setFilter("all");}} />}
+      {!!rows.length && <div className="table-scroll" role="region" tabIndex={0} aria-label="Registration payments">
+        <table className="operations-table" aria-label="Registration payments">
           <thead>
             <tr>
               <th>Member</th>
@@ -78,6 +83,7 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
             </tr>
           </thead>
           <tbody>
+
             {rows.map((r) => (
               <tr key={r.id}>
                 <td>
@@ -107,8 +113,8 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
             ))}
           </tbody>
         </table>
-      </div>
-      {!rows.length && <p>No payments match this status.</p>}
+      </div>}
+
       {selected && (
         <form
           className="member-settings"
@@ -184,6 +190,6 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
         </form>
       )}
       <p role={eventId?"alert":"status"}>{message}</p>
-    </section>
+    </WorkspacePanel>
   );
 }

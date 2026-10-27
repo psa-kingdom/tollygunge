@@ -6,4 +6,13 @@
 .primary,.secondary{transition:background-color var(--motion-control,180ms) ease}.mark{font-family:var(--font-editorial,Georgia),serif}.help,.links a{min-height:44px;align-items:center;display:flex}
 @media(prefers-reduced-motion:reduce){.primary,.secondary{transition:none}}
 
+/* Embedded portal empty/error states are supporting content, not page heroes. */
+.compact { padding:24px; margin:20px 0; border:1px solid var(--line); border-radius:10px; background:var(--surface); }
+.compact .symbol { font-size:36px; margin-bottom:12px; }
+.compact .eyebrow { font-size:10px; margin-bottom:8px; }
+.compact .title { font-family:inherit; font-size:20px; margin-bottom:12px; }
+.compact .description { font-size:13px; line-height:1.6; margin-bottom:16px; }
+.compact :is(.primary,.secondary) { min-height:40px; padding:8px 14px; font-size:12px; gap:10px; }
+.compact .primary { color:var(--action-text,#fff); }
+
 @media(prefers-color-scheme:dark){.screen,.panel{--fallback-navy:var(--ink,#edf1ee);--fallback-gold:var(--gold,#d5b878);--fallback-paper:var(--paper,#101f2a);--fallback-line:var(--line,#364955);--fallback-muted:var(--muted,#b5c3cc);--fallback-accent:var(--accent-text,#e2c58a)}}

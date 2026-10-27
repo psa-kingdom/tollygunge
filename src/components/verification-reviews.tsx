@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { verificationSteps } from "@/domain/verification";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import type { Review, VerificationData } from "./verification-workspace";
 export function VerificationReviews({
   data,
@@ -173,7 +174,7 @@ export function VerificationReviews({
         )}
       </div>
       {error && <p role="alert">{error}</p>}
-      <div className={"review-layout" + (selected ? " has-selection" : "")}>
+      <div className={"review-layout" + (selected ? " has-selection" : "") + (records && !(view === "reviews" ? records.reviews : records.verified).length ? " is-empty" : "")}>
         <div
           className="review-list"
           role="group"
@@ -203,7 +204,7 @@ export function VerificationReviews({
           )}
           {records &&
             (view === "reviews" ? records.reviews : records.verified).length ===
-              0 && <p>No records match this filter.</p>}
+              0 && <WorkspaceEmptyState icon="shield" title={query || status !== "pending" ? "No records match this filter" : view === "reviews" ? "No profiles waiting for review" : "No verified accounts yet"} description={view === "reviews" ? "Submitted profiles appear here for review. You can also browse accounts that are already verified." : "Profiles will appear here after verification is approved."} actionLabel={query || status !== "pending" ? "Reset filters" : view === "reviews" ? "View verified accounts" : "Open review queue"} onAction={() => {setQuery("");setStatus("pending");setDeepId(null);setPage(1);setVerifiedPage(1);choose("");if (!query && status === "pending") setView(view === "reviews" ? "verified" : "reviews");}} />}
           <div className="action-row">
             <button
               disabled={(view === "reviews" ? page : verifiedPage) <= 1}
@@ -307,12 +308,7 @@ export function VerificationReviews({
               )}
             </>
           ) : (
-            <div className="review-empty">
-              <h2>Select a record</h2>
-              <p>
-                Review submitted details and evidence before making a decision.
-              </p>
-            </div>
+            <WorkspaceEmptyState compact icon="shield" title="Select a record" description="Choose a profile from the queue to review its submitted details and private evidence before making a decision." />
           )}
           {decision && (
             <section className="decision-panel">

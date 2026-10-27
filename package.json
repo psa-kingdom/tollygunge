@@ -24,6 +24,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",
     "@aws-sdk/s3-request-presigner": "^3.1146.0",
+    "@gsap/react": "^2.1.2",
     "@tiptap/extension-table": "3.31.4",
     "@tiptap/extension-text-align": "3.31.4",
     "@tiptap/extension-text-style": "3.31.4",
@@ -32,6 +33,7 @@
     "@tiptap/starter-kit": "3.31.4",
     "better-auth": "1.7.7",
     "exceljs": "4.4.0",
+    "gsap": "^3.15.0",
     "html-to-text": "9.0.5",
     "jspdf": "^4.2.1",
     "next": "^16.3.8",

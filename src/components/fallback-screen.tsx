@@ -3,12 +3,13 @@ import { fallbacks, type FallbackKind } from "@/domain/fallbacks";
 import styles from "./fallback-screen.module.css";
 import { TpaLogo } from "./tpa-logo";
 
-export function FallbackPanel({ kind, retry, reference }: { kind: FallbackKind; retry?: () => void; reference?: string }) {
+export function FallbackPanel({ kind, retry, reference, compact = false }: { kind: FallbackKind; retry?: () => void; reference?: string; compact?: boolean }) {
   const content = fallbacks[kind];
-  return <section className={styles.panel} aria-labelledby="fallback-title">
+  const Heading = compact ? "h2" : "h1";
+  return <section className={`${styles.panel}${compact ? ` ${styles.compact}` : ""}`} aria-labelledby="fallback-title">
     <div className={styles.symbol} aria-hidden="true">{kind === "notFound" ? "404" : kind === "error" || kind === "unavailable" ? "↻" : "·"}</div>
     <p className={styles.eyebrow}>{content.label}</p>
-    <h1 id="fallback-title" className={styles.title}>{content.title}</h1>
+    <Heading id="fallback-title" className={styles.title}>{content.title}</Heading>
     <p className={styles.description}>{content.description}</p>
     <div className={styles.actions}>
       {retry && <button className={styles.primary} onClick={retry}>Try again <span aria-hidden="true">↻</span></button>}

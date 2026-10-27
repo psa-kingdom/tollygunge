@@ -54,16 +54,13 @@ export function CampaignDispatch({
   }, [load]);
   const valid = review && review.campaign.version === version && !dirty;
   return (
-    <section className="content-section">
-      <h3>Review and dispatch</h3>
+    <section className="campaign-panel campaign-send" aria-label="Review and send campaign">
+      <h3>3. Review and send</h3>
       <p>
-        Only saved drafts can be sent. An immutable audience snapshot is checked
-        again before every delivery; later opt-ins are not added to this
-        dispatch.
+        Review the saved message and recipient list before confirming delivery. Reviewing does not send the campaign.
       </p>
-      {dirty && (
-        <p className="notice">Save your changes before reviewing recipients.</p>
-      )}
+      <p className="campaign-next-step">{archived ? "Restore this archived draft before reviewing it." : !id ? "Save your first draft above to unlock the review step." : dirty ? "You have unsaved changes. Save the draft above before reviewing it." : "Your draft is saved. Review it to check recipients and email readiness."}</p>
+      <details className="campaign-rules"><summary>How recipient checks work</summary><p>The recipient list is fixed when you review the campaign. New subscribers are not added to that send. Consent and email preferences are checked again before each delivery, so the final recipient count may decrease.</p></details>
       <button
         className="button secondary"
         disabled={busy || !id || dirty || archived}
@@ -175,7 +172,7 @@ export function CampaignDispatch({
         </section>
       )}
       <p role="status">{message}</p>
-      <h4>Dispatch history</h4>
+      <details className="campaign-history"><summary>Sending history ({dispatches.length})</summary>
       {dispatches.length ? (
         dispatches.map((d) => (
           <article className="email-message" key={d.id}>
@@ -214,8 +211,9 @@ export function CampaignDispatch({
           </article>
         ))
       ) : (
-        <p>No dispatches yet.</p>
+        <p>No sends yet. After you confirm a campaign, its progress will appear here.</p>
       )}
+      </details>
     </section>
   );
 }

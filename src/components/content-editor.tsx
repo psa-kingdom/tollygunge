@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useModalFocus } from "./use-modal-focus";
 import Link from "next/link";
@@ -77,6 +78,8 @@ export function ContentEditor() {
     [panel, setPanel] = useState("edit"),
     [pending, setPending] = useState<(() => void) | null>(null);
   const dialogRef = useRef<HTMLElement>(null);
+  const [editGroup, setEditGroup] = useState("details");
+  const [sectionIndex, setSectionIndex] = useState(0);
   const [showArchived,setShowArchived]=useState(false);
   const closeDialog = useCallback(() => setPending(null), []);
   useModalFocus(Boolean(pending), dialogRef, closeDialog);
@@ -228,11 +231,13 @@ export function ContentEditor() {
     </label>
   );
   return (
-    <div className="content-workspace">
-      <aside className="record-list">
+    <div className="content-workspace page-content-workspace">
+      <aside className="record-list" aria-label="Content catalogue">
+        <h2>Content library</h2>
+        <p>Choose a website page or saved entry to edit its private draft.</p>
         <label><input type="checkbox" checked={showArchived} onChange={e=>setShowArchived(e.target.checked)}/>Include archived</label>
         <strong>Website pages</strong>
-        {pageSlugs.map(page=><button type="button" key={page} disabled={busy} onClick={()=>guard(()=>{const existing=entries.find(e=>e.kind==='page'&&e.slug===page);if(existing)select(existing);else{setSelected(null);setKind('page');setSlug(page);replace(pageBody(page),'page');setMessage('Original page defaults · private until you save and publish.');}})}>{sitePages[page].label}</button>)}
+        {pageSlugs.map(page=><button type="button" key={page} disabled={busy} onClick={()=>guard(()=>{const existing=entries.find(e=>e.kind==='page'&&e.slug===page);if(existing)select(existing);else{setSelected(null);setKind('page');setSlug(page);replace(pageBody(page),'page');setMessage('Original page defaults · private until you save and publish.');}})}>{page.replace(/-/g, " ").replace(/^./, c => c.toUpperCase())}<small>/{page}</small></button>)}
         <button
           type="button"
           className="button secondary"
@@ -241,7 +246,7 @@ export function ContentEditor() {
         >
           New entry
         </button>
-        {entries.length === 0 && <p>No content entries yet.</p>}
+        {entries.length === 0 && <WorkspaceEmptyState compact icon="file" title="No saved entries yet" description="Choose a website page above or create an entry. Drafts remain private until published." />}
         {entries.filter(entry=>showArchived||!entry.archived_at).map((entry) => (
           <button
             type="button"
@@ -317,15 +322,72 @@ export function ContentEditor() {
           >
             <form
               className="member-settings"
+              onInvalidCapture={e => {
+                const target = e.target as HTMLInputElement;
+                if (!target.closest("[hidden]")) return;
+                e.preventDefault();
+                const group = target.closest<HTMLElement>("[data-content-group]");
+                if (group) setEditGroup(group.dataset.contentGroup!);
+                const section = target.closest<HTMLElement>("[data-section-index]");
+                if (section) setSectionIndex(Number(section.dataset.sectionIndex));
+                requestAnimationFrame(() => { target.focus(); target.reportValidity(); });
+              }}
               onSubmit={(e) => {
                 e.preventDefault();
                 void act("save");
               }}
             >
+              <nav className="content-group-tabs" aria-label="Draft editing groups">
+                {[ ["details", "Page details"], ["intro", "Introduction"], ["sections", "Sections"], ["source", "Sources & checks"] ].map(([key, label]) => <button type="button" key={key} className="button secondary" aria-pressed={editGroup === key} onClick={() => setEditGroup(key)}>{label}</button>)}
+              </nav>
               <fieldset className="content-save-lock" disabled={busy||!!selected?.archived_at}>
+                <div className="action-row content-publish-actions">
+                  <button className="button" disabled={busy || !!validation}>
+                    Save draft
+                  </button>
+                  {selected && (
+                    <>
+                      <Link
+                        className="button secondary"
+                        href={`/admin/content/${selected.id}`}
+                      >
+                        Preview saved draft
+                      </Link>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        disabled={
+                          busy ||
+                          dirty ||
+                          !!validation ||
+                          (kind === "page" && !!contextError) ||
+                          (kind === "page" && contextPage !== slug)
+                        }
+                        onClick={() => void act("publish")}
+                      >
+                        Publish saved draft
+                      </button>
+                      {selected.published && (
+                        <button
+                          type="button"
+                          className="button secondary"
+                      disabled={busy||!!selected?.archived_at}
+                          onClick={() =>
+                            guard(() => {
+                              void act("unpublish");
+                            })
+                          }
+                        >
+                          Unpublish
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div data-content-group="details" className="content-edit-group" hidden={editGroup !== "details"}>
                 <div className="form-grid">
                   <label>
-                    Type
+                    Content type
                     <select
                       value={kind}
                       disabled={!!selected || busy}
@@ -410,6 +472,8 @@ export function ContentEditor() {
                 {sizing("Page title size", body.titleSize, (titleSize) =>
                   setBody({ ...body, titleSize }),
                 )}
+                </div>
+                <div data-content-group="intro" className="content-edit-group" hidden={editGroup !== "intro"}>
                 <h3 className="editor-field-heading">Introduction</h3>
                 <RichEditor
                   disabled={busy||!!selected?.archived_at}
@@ -425,13 +489,16 @@ export function ContentEditor() {
                     setBody({ ...body, introRich, intro })
                   }
                 />
+                </div>
+                <div data-content-group="sections" className="content-edit-group" hidden={editGroup !== "sections"}>
+                <label>Section to edit<select value={Math.min(sectionIndex, body.sections.length - 1)} onChange={e => setSectionIndex(Number(e.target.value))}>{body.sections.map((section, i) => <option key={i} value={i}>{i + 1}. {section.title || "Untitled section"}</option>)}</select></label>
                 {kind === "page" && (
                   <p className="notice">
                       Section slots and links stay in place. Edit their headings and copy; the published navigation uses these headings.
                   </p>
                 )}
                 {body.sections.map((section, i) => (
-                  <fieldset key={i}>
+                  <fieldset key={i} data-section-index={i} hidden={i !== Math.min(sectionIndex, body.sections.length - 1)}>
                     <legend>Section {i + 1}</legend>
                     <label>
                       Section title
@@ -519,6 +586,8 @@ export function ContentEditor() {
                     Add section ({body.sections.length} / 12)
                   </button>
                 )}
+                </div>
+                <div data-content-group="source" className="content-edit-group" hidden={editGroup !== "source"}>
                 {kind === "news" && (
                   <p className="notice">
                     News is an original attributed summary: maximum 1,000
@@ -578,54 +647,13 @@ export function ContentEditor() {
                   columns. Scripts, embedded HTML, arbitrary styles and private
                   documents are not supported.
                 </p>
+                </div>
                 {validation && (
                   <p className="form-error" role="status">
                     {validation}
                   </p>
                 )}
-                <div className="action-row">
-                  <button className="button" disabled={busy || !!validation}>
-                    Save draft
-                  </button>
-                  {selected && (
-                    <>
-                      <Link
-                        className="button secondary"
-                        href={`/admin/content/${selected.id}`}
-                      >
-                        Preview saved draft
-                      </Link>
-                      <button
-                        type="button"
-                        className="button secondary"
-                        disabled={
-                          busy ||
-                          dirty ||
-                          !!validation ||
-                          (kind === "page" && !!contextError) ||
-                          (kind === "page" && contextPage !== slug)
-                        }
-                        onClick={() => void act("publish")}
-                      >
-                        Publish saved draft
-                      </button>
-                      {selected.published && (
-                        <button
-                          type="button"
-                          className="button secondary"
-                      disabled={busy||!!selected?.archived_at}
-                          onClick={() =>
-                            guard(() => {
-                              void act("unpublish");
-                            })
-                          }
-                        >
-                          Unpublish
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
+
               </fieldset>
             </form>
             <p role="status">{message}</p>

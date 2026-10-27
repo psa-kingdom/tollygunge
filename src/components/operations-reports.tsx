@@ -1,4 +1,5 @@
 "use client";
+import { WorkspacePanel, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
 import {
@@ -200,6 +201,8 @@ export function OperationsReports() {
         memberships; attendance is recorded check-ins, not accredited learning
         hours.
       </p>
+      <div className="workspace-two-panels">
+      <WorkspacePanel title="Build a report" description="Choose the dataset and reporting period, then apply the filters.">
       <form
         className="member-settings"
         onSubmit={(e) => {
@@ -309,8 +312,8 @@ export function OperationsReports() {
           </button>
         </fieldset>
       </form>
-      <section className="content-section">
-        <h2>Saved report presets</h2>
+      </WorkspacePanel>
+      <WorkspacePanel title="Saved report presets">
         <p>
           Private presets belong to you. Administrators maintain shared presets.
           Relative periods resolve in India time when applied.
@@ -406,9 +409,10 @@ export function OperationsReports() {
             </button>
           </div>
         </div>
-      </section>
+      </WorkspacePanel>
+      </div>
       {result && applied && (
-        <section className="content-section">
+        <WorkspacePanel className="content-section">
           <div className="action-row">
             <h2>{reportDefinitions[applied.report].label}</h2>
             <button
@@ -435,7 +439,7 @@ export function OperationsReports() {
             matching rows up to 10,000; larger exports require narrower filters.
           </p>
           {!result.rows.length ? (
-            <p>No matching records. Empty exports include column headers.</p>
+            <WorkspaceEmptyState icon="chart" title="No matching report records" description="Try a different reporting period or broader filters. Empty exports still include their column headers." actionLabel="Reset report filters" onAction={() => {setFilters(initial);void load(report,initial);}} />
           ) : (
             <div className="table-scroll" role="region" aria-label="Report results" tabIndex={0}>
               <table className="operations-table">
@@ -460,7 +464,7 @@ export function OperationsReports() {
               </table>
             </div>
           )}
-        </section>
+        </WorkspacePanel>
       )}
       <p role="status" aria-live="polite">
         {message}

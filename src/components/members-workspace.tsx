@@ -57,7 +57,7 @@ export function MembersWorkspace({
         : "register";
   return (
     <>
-      <div className="action-row">
+      <div className="action-row member-directory-tabs" role="group" aria-label="Member views">
         <button
           className="button secondary"
           onClick={() => setSelection({ recordId, view: "register" })}

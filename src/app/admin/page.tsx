@@ -4,6 +4,7 @@ import { currentActor } from "@/lib/actor";
 import { attentionFor } from "@/lib/attention";
 import { staffNavigation } from "@/domain/staff-navigation";
 import { operationalOverview } from "@/lib/operational-overview";
+import { PortalIcon } from "@/components/portal-icon";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Staff workspace",
@@ -15,23 +16,25 @@ export default async function Admin() {
   if (!actor.roles.length) redirect("/member");
   const attention = await attentionFor(actor);
   const overview = await operationalOverview(actor.roles);
-  const shortcuts = staffNavigation(actor.roles)
+  const workspaceCount = staffNavigation(actor.roles)
     .flatMap((g) => g.items)
-    .filter((x) => x.href !== "/admin");
+    .filter((x) => x.href !== "/admin").length;
   return (
-    <main id="main" className="workspace-main">
+    <main id="main" className="workspace-main portal-overview">
+      <header className="portal-page-heading">
       <span className="eyebrow">TPA / STAFF</span>
       <h1>Welcome, {actor.name}.</h1>
       <p>
         What needs your attention today? Review a record, take action, and
         confirm the outcome.
       </p>
+      </header>
       <div className="service-shortcuts service-metrics">
-        {overview.metrics.map((m) => (
+        {overview.metrics.map((m, index) => (
           <Link key={m.label} href={m.href}>
             <strong>{m.count}</strong>
             <span className="metric-label">{m.label}</span>
-            <span aria-hidden="true">→</span>
+            <PortalIcon name={["people", "shield", "file", "profile", "mail", "wallet", "calendar", "calendar"][index] ?? "chart"} className="metric-icon" />
           </Link>
         ))}
       </div>
@@ -52,46 +55,35 @@ export default async function Admin() {
             <p>You’re up to date in your permitted workspaces.</p>
           )}
         </section>
-        <section className="bento-card">
+        <section className="bento-card bento-status">
           <span className="eyebrow">WORKSPACE STATUS</span>
           <h2>{attention.length}</h2>
           <p>Active alerts needing attention</p>
-          <p>{shortcuts.length} permitted workspaces</p>
-        </section>
-        <section className="bento-card">
-          <span className="eyebrow">YOUR ACCOUNT</span>
-          <h2>Profile & security</h2>
-          <p>Manage your personal details and sign-in settings.</p>
+          <p>{workspaceCount} permitted workspaces</p>
+          <div className="portal-account-shortcuts">
           <Link href="/account/profile" className="text-link">
             Your profile →
           </Link>
-          <br />
           <Link href="/member/security" className="text-link">
             Account security →
           </Link>
-        </section>
-        <section className="bento-card bento-shortcuts">
-          <h2>Your workspaces</h2>
-          <div className="service-shortcuts">
-            {shortcuts.map((item) => (
-              <Link key={item.href} href={item.href}>
-                {item.label} <span>→</span>
-              </Link>
-            ))}
           </div>
         </section>
       </div>
       {overview.activity.length > 0 && (
         <section className="bento-card">
           <h2>Recent activity</h2>
+          <ul className="portal-activity-list">
           {overview.activity.map((a, index) => (
-            <p key={index}>
-              {a.name || "System"} · {a.action.replaceAll(".", " ").replaceAll("_", " ")} ·{" "}
-              {new Date(a.created_at).toLocaleString("en-IN", {
+            <li key={index}>
+              <div><strong>{a.name || "System"}</strong><span> · {a.action.replaceAll(".", " ").replaceAll("_", " ")}</span></div>
+              <time dateTime={new Date(a.created_at).toISOString()}>{new Date(a.created_at).toLocaleString("en-IN", {
                 timeZone: "Asia/Kolkata",
-              })}
-            </p>
+                day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
+              })}</time>
+            </li>
           ))}
+          </ul>
         </section>
       )}
       <p>

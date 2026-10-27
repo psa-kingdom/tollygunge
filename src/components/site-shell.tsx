@@ -7,6 +7,11 @@ import {publishedSettings,publicNavigation} from '@/lib/website-content';
 import {sharedDefaults,type SharedSettings} from '@/domain/website-settings';
 import { TpaLogo } from './tpa-logo';
 import { PublicFooter } from './public-footer';
+import { StaffNavigation } from "./staff-navigation";
+import { staffNavigation } from "@/domain/staff-navigation";
+import { WorkspaceSearch } from "./workspace-search";
+import { PortalIcon } from "./portal-icon";
+import { PortalFrame } from "./portal-frame";
 export const navigation = [
   {
     title: "About",
@@ -110,36 +115,33 @@ export async function AccountShell({
   children: React.ReactNode;
 }) {
   const actor = await currentActor();
+  return <PortalShell actor={actor}>{children}</PortalShell>;
+}
+
+export function PortalShell({ actor, children }: {
+  actor: Awaited<ReturnType<typeof currentActor>>;
+  children: React.ReactNode;
+}) {
   const staff = Boolean(actor?.roles.length);
   return (
-    <div className={staff ? "staff-account-shell" : "member-shell"}>
-      <header className="site-header account-header">
-        <StickyHeaderState />
+    <PortalFrame staff={staff} sidebar={<>
         <Brand />
-        {staff ? (
-          <nav aria-label="Account navigation">
-            <Link href={staff ? "/admin" : "/member"}>
-              {staff ? "Staff workspace" : "Your account"}
-            </Link>
-            <Link href="/account/profile">Profile</Link>
-            {!staff && (
-              <>
-                <Link href="/member/application">Application</Link>
-                <Link href="/member/events">Events</Link>
-                <Link href="/member/inquiries">Inquiries</Link>
-                <Link href="/member/payments">Payment details</Link>
-              </>
-            )}
-            <Link href="/member/security">Security</Link>
-            <Link href="/">Public website</Link>
-          </nav>
-        ) : (
-          <MemberNavigation />
-        )}
-        <AccountControls actor={actor} />
-      </header>
-      {children}
-    </div>
+        <p className="portal-workspace-label">{staff ? "Association workspace" : "Member portal"}</p>
+        {staff ? <StaffNavigation groups={staffNavigation(actor?.roles ?? [])} /> : <MemberNavigation />}
+        <Link className="portal-public-link" href="/" aria-label="Public website" data-nav-label="Public website"><PortalIcon name="external" /><span className="portal-nav-label">Public website</span></Link>
+      </>}>
+      <div className="staff-content portal-content">
+        <header className="workspace-topbar portal-topbar">
+          <StickyHeaderState />
+          <div className="portal-context"><span className="portal-context-mark">TPA</span><span className="portal-context-divider">/</span><span>{staff ? "Staff workspace" : "Member portal"}</span></div>
+          <div className="portal-utilities">
+            {staff && <WorkspaceSearch />}
+            <AccountControls actor={actor} />
+          </div>
+        </header>
+        {children}
+      </div>
+    </PortalFrame>
   );
 }
 export async function Footer() {

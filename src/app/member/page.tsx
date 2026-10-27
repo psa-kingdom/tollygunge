@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AccountShell as SiteShell } from "@/components/site-shell";
 import { currentActor } from "@/lib/actor";
+import { PortalIcon } from "@/components/portal-icon";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -57,34 +58,34 @@ export default async function Member() {
             {[
               [
                 "/member/events",
-                "01",
+                "calendar",
                 "Events & attendance",
                 "Discover learning opportunities and manage your registrations.",
               ],
               [
                 "/member/inquiries",
-                "02",
+                "message",
                 "Your inquiries",
                 "Follow your conversations with the association.",
               ],
               [
                 "/member/security",
-                "03",
+                "shield",
                 "Account security",
                 "Manage your password and signed-in sessions.",
               ],
               [
                 "/member/payments",
-                "04",
+                "wallet",
                 "Payment details",
                 "View association payment information when available.",
               ],
-            ].map(([href, number, title, description]) => (
+            ].map(([href, icon, title, description]) => (
               <Link className="member-service-tile" href={href} key={href}>
-                <span className="eyebrow">{number}</span>
+                <PortalIcon name={icon} />
                 <h3>
                   {title}
-                  <span aria-hidden="true">↗</span>
+                  <PortalIcon name="arrow" />
                 </h3>
                 <p>{description}</p>
               </Link>

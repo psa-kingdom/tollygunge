@@ -1,4 +1,6 @@
 "use client";
+import { WorkspacePanel, WorkspaceEmptyState } from "./workspace-ui";
+import { PortalIcon } from "./portal-icon";
 import { useEffect, useState } from "react";
 import { useEmailEditGuard } from "./email-edit-guard";
 import { VerificationReviews } from "./verification-reviews";
@@ -93,7 +95,7 @@ export function VerificationWorkspace() {
         membership and public publication. Publishing requirements preserves
         existing badges.
       </p>
-      <div role="tablist" className="action-row">
+      <div role="tablist" aria-label="Verification tools" className="workspace-tabs">
         {["Review queue", "Requirements", "History"].map((t) => (
           <button
             role="tab"
@@ -151,18 +153,17 @@ export function VerificationWorkspace() {
         />
       )}
       {tab === "Requirements" && data?.admin && (
-        <>
-          <h2>Requirements</h2>
+        <WorkspacePanel title="Verification requirements" description="Manage the fields members must complete before submitting a profile.">
           <p>
             Published version {data.policy.version}. Saved drafts do not change
             member requirements. Archive fields by hiding them; their answers
             remain stored.
           </p>
           {verificationSteps.map((step, stepIndex) => (
-            <section className="requirements-step" key={step}>
-              <h3>
+            <details className="requirements-step" key={step} open={stepIndex === 0}>
+              <summary><h3>
                 {stepIndex + 1}. {step}
-              </h3>
+              </h3><span>{fields.filter(field => field.step === stepIndex).length} fields<PortalIcon name="chevron" /></span></summary>
               {fields.map(
                 (f, i) =>
                   f.step === stepIndex && (
@@ -322,9 +323,9 @@ export function VerificationWorkspace() {
                     </details>
                   ),
               )}
-            </section>
+            </details>
           ))}
-          <h3>Add custom field</h3>
+          <details className="workspace-notice-disclosure"><summary>Add a custom field</summary>
           <form
             className="member-settings"
             onSubmit={(e) => {
@@ -402,7 +403,8 @@ export function VerificationWorkspace() {
             </label>
             <button className="button secondary">Add field</button>
           </form>
-          <h3>Preview</h3>
+          </details>
+          <details className="workspace-notice-disclosure"><summary>Preview member requirements</summary>
           {verificationSteps.map((s, i) => (
             <p key={s}>
               {i + 1}. {s}:{" "}
@@ -412,7 +414,8 @@ export function VerificationWorkspace() {
                 .join(", ")}
             </p>
           ))}
-          <div className="action-row">
+          </details>
+          <div className="action-row workspace-savebar">
             <button
               disabled={busy}
               className="button"
@@ -458,13 +461,13 @@ export function VerificationWorkspace() {
               active.
             </p>
           )}
-        </>
+        </WorkspacePanel>
       )}
       {tab === "Requirements" && !data?.admin && (
         <p>Only administrators can configure requirements.</p>
       )}
       {tab === "History" && (
-        <section className="verification-history">
+        <WorkspacePanel title="Verification history" description="Search the latest 100 recorded verification actions." className="verification-history">
           <label>
             Filter history
             <input
@@ -473,6 +476,8 @@ export function VerificationWorkspace() {
               placeholder="Action or identifier"
             />
           </label>
+          {data && !data.history.length && <WorkspaceEmptyState icon="shield" title="No verification decisions yet" description="Profile reviews and requirement changes will appear here once recorded." actionLabel="Open review queue" onAction={() => setTab("Review queue")} />}
+          {!!data?.history.length &&
           <div className="table-wrap" role="region" aria-label="Verification history" tabIndex={0}>
             <table>
               <thead>
@@ -502,9 +507,8 @@ export function VerificationWorkspace() {
                   ))}
               </tbody>
             </table>
-          </div>
-          <p>Latest 100 verification audit entries.</p>
-        </section>
+          </div>}
+        </WorkspacePanel>
       )}
     </>
   );

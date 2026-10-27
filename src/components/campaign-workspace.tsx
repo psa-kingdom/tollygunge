@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { WorkspaceEmptyState, WorkspaceSteps } from "./workspace-ui";
+import { useEffect, useState, useRef } from "react";
 import { api } from "./operations-client";
 import { CampaignDispatch } from "./campaign-dispatch";
 import { useEmailEditGuard } from "./email-edit-guard";
@@ -43,6 +44,15 @@ export function CampaignWorkspace({
 }: {
   onDirtyChange?: (dirty: boolean) => void;
 }) {
+  const [step, setStep] = useState(0);
+  const editor = useRef<HTMLDivElement>(null);
+  function goToStep(next: number) {
+    setStep(next);
+    requestAnimationFrame(() => {
+      editor.current?.focus({ preventScroll: true });
+      editor.current?.scrollIntoView({ block: "start" });
+    });
+  }
   const [savedForm, setSavedForm] = useState(empty);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]),
     [form, setForm] = useState(empty);
@@ -86,6 +96,7 @@ export function CampaignWorkspace({
     setCampaigns(data.campaigns);
   }
   async function open(id: string) {
+    setStep(0);
     setBusy(true);
     setMessage("");
     setPreview(undefined);
@@ -118,6 +129,7 @@ export function CampaignWorkspace({
       );
       setRevisions(detail.revisions);
       await refresh();
+      goToStep(action === "save" ? 1 : 0);
       setMessage(
         action === "save"
           ? "Campaign draft saved. No messages were sent."
@@ -132,21 +144,14 @@ export function CampaignWorkspace({
     }
   }
   function field<K extends keyof Campaign>(key: K, value: Campaign[K]) {
+    setStep(0);
     setForm({ ...form, [key]: value });
     setPreview(undefined);
   }
   return (
-    <section className="content-section" aria-label="Campaign drafts">
+    <section className="content-section campaign-workspace" aria-label="Campaign drafts">
       <h2>Campaign drafts</h2>
-      <p>
-        Prepare a newsletter, review its saved audience and retain revisions.
-        Dispatches run through consent-safe background jobs and delivery events.
-      </p>
-      <p>
-        Eligible recipients must have newsletter consent, a verified email and
-        optional email messages enabled. Preview checks current choices;
-        delivery must check them again when sending is enabled.
-      </p>
+      <p>Write your newsletter, check the message and audience, then review the saved draft before sending. Saving a draft never sends emails.</p>
       <div className="operations-layout">
         <aside className="record-list">
           <button
@@ -154,6 +159,7 @@ export function CampaignWorkspace({
             disabled={busy}
             onClick={() =>
               guard.proceed(() => {
+                setStep(0);
                 setForm(empty);
                 setSavedForm(empty);
                 setRevisions([]);
@@ -210,13 +216,19 @@ export function CampaignWorkspace({
             </button>
           ))}
           {!busy && !campaigns.length && (
-            <p>No campaign drafts in this view.</p>
+            <WorkspaceEmptyState compact icon="mail" title="No campaign drafts in this view" description="Create a draft in the editor or adjust the campaign filters. Saving does not send messages." />
           )}
           {campaigns.length === 100 && (
             <p>Showing the latest 100 matching drafts.</p>
           )}
         </aside>
-        <div>
+        <div className="campaign-editor" ref={editor} tabIndex={-1} aria-label="Campaign editor">
+          <WorkspaceSteps
+            steps={["Write campaign", "Preview message & audience", "Review & send"]}
+            current={step}
+            onStepChange={goToStep}
+            canVisit={next => !busy && (next === 0 || (!!form.id && !dirty && form.status !== "archived" && (next === 1 || !!preview)))}
+          />
           <div className="action-row">
             <h3>{form.id ? form.name : "New campaign draft"}</h3>
             {form.id && (
@@ -234,6 +246,7 @@ export function CampaignWorkspace({
               Archived draft. Restore to edit its content and audience.
             </p>
           )}
+          <div className="campaign-stage" hidden={step !== 0}>
           <form
             className="member-settings"
             onSubmit={(e) => {
@@ -245,7 +258,82 @@ export function CampaignWorkspace({
               className="plain-fieldset"
               disabled={busy || form.status === "archived"}
             >
-              <legend>Message and audience</legend>
+              <legend>1. Write the campaign</legend>
+          <details className="campaign-template">
+            <summary>Use a saved email template</summary>
+            <p>
+              Choose a template to copy its subject and message into this draft. This replaces the text in the editor; your saved campaign changes only when you save.
+            </p>
+            <div className="campaign-template-controls">
+            <button
+              type="button"
+              className="button secondary"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                setMessage("");
+                try {
+                  const data = await api<{ templates: Template[] }>(
+                    "/api/staff/communications",
+                  );
+                  setTemplates(data.templates);
+                  setTemplateId("");
+                  setMessage(
+                    data.templates.length
+                      ? "Saved templates loaded."
+                      : "No saved templates yet.",
+                  );
+                } catch (error) {
+                  setMessage((error as Error).message);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Load saved templates
+            </button>
+            <label>
+              Template to reuse
+              <select
+                value={templateId}
+                disabled={busy || form.status === "archived"}
+                onChange={(e) => setTemplateId(e.target.value)}
+              >
+                <option value="">Select a template</option>
+                {templates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="button secondary"
+              disabled={busy || !templateId || form.status === "archived"}
+              onClick={() => {
+                const template = templates.find(
+                  (item) => item.id === templateId,
+                );
+                if (template) {
+                  setForm({
+                    ...form,
+                    subject: template.subject,
+                    body: template.body,
+                  });
+                  setPreview(undefined);
+                  setMessage(
+                    "Template copied into the editor. Save the draft to retain it.",
+                  );
+                }
+              }}
+            >
+              Apply template to message
+            </button>
+            </div>
+            <p>Select a template before applying it. Manage reusable templates in the Email templates tab.</p>
+          </details>
+
               <label>
                 Campaign name
                 <input
@@ -316,9 +404,23 @@ export function CampaignWorkspace({
                 profession match the full profile value, ignoring case. They do
                 not establish professional eligibility or approved membership.
               </p>
-              <button className="button">Save campaign draft</button>
+              <button className="button">Save and continue</button>
             </fieldset>
           </form>
+          {form.id && <button type="button" className="button secondary" disabled={busy} onClick={() => void change(form.status === "archived" ? "restore" : "archive")}>{form.status === "archived" ? "Restore draft" : "Archive draft"}</button>}
+          </div>
+          <section hidden={step !== 1} className="campaign-panel campaign-stage" aria-label="Message and audience preview">
+          <h3>2. Preview message and audience</h3>
+          <p>Check how the message reads, then preview who can receive it. This step does not send emails.</p>
+          <div className="campaign-message-preview">
+          <span className="campaign-caption">Subject</span>
+          <p>
+            <strong>{form.subject || "Add a subject in the editor above."}</strong>
+          </p>
+          <p className="prose-text">
+            {form.body || "Your message will appear here as you write."}
+          </p>
+          </div>
           <div className="action-row">
             <button
               className="button secondary"
@@ -343,97 +445,7 @@ export function CampaignWorkspace({
             >
               Preview current audience
             </button>
-            {form.id && (
-              <button
-                className="button secondary"
-                disabled={busy}
-                onClick={() =>
-                  void change(
-                    form.status === "archived" ? "restore" : "archive",
-                  )
-                }
-              >
-                {form.status === "archived" ? "Restore draft" : "Archive draft"}
-              </button>
-            )}
           </div>
-          <details>
-            <summary>Use a saved email template</summary>
-            <p>
-              Load the latest saved templates, then copy one into this draft.
-              Changes to templates do not change a saved campaign.
-            </p>
-            <button
-              className="button secondary"
-              disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                setMessage("");
-                try {
-                  const data = await api<{ templates: Template[] }>(
-                    "/api/staff/communications",
-                  );
-                  setTemplates(data.templates);
-                  setTemplateId("");
-                  setMessage(
-                    data.templates.length
-                      ? "Saved templates loaded."
-                      : "No saved templates yet.",
-                  );
-                } catch (error) {
-                  setMessage((error as Error).message);
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              Load saved templates
-            </button>
-            <label>
-              Template to reuse
-              <select
-                value={templateId}
-                disabled={busy || form.status === "archived"}
-                onChange={(e) => setTemplateId(e.target.value)}
-              >
-                <option value="">Select a template</option>
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              className="button secondary"
-              disabled={busy || !templateId || form.status === "archived"}
-              onClick={() => {
-                const template = templates.find(
-                  (item) => item.id === templateId,
-                );
-                if (template) {
-                  setForm({
-                    ...form,
-                    subject: template.subject,
-                    body: template.body,
-                  });
-                  setPreview(undefined);
-                  setMessage(
-                    "Template copied into the editor. Save the draft to retain it.",
-                  );
-                }
-              }}
-            >
-              Replace draft message with selected template
-            </button>
-          </details>
-          <h3>Message preview</h3>
-          <p>
-            <strong>{form.subject || "Campaign subject preview"}</strong>
-          </p>
-          <p className="prose-text">
-            {form.body || "Campaign message preview"}
-          </p>
           {preview && (
             <section className="notice" aria-label="Audience preview">
               <h3>{preview.eligible} eligible recipients</h3>
@@ -472,8 +484,18 @@ export function CampaignWorkspace({
               )}
             </section>
           )}
+          <div className="action-row campaign-step-actions">
+            <button type="button" className="button secondary" disabled={busy} onClick={() => goToStep(0)}>Back to writing</button>
+            <button type="button" className="button" disabled={busy || !preview || dirty || !form.id} onClick={() => goToStep(2)}>Continue to review</button>
+          </div>
+          {!preview && <p>Preview the current audience to continue. No emails will be sent.</p>}
+          </section>
+          {step === 2 && <div className="campaign-stage">
+          <button type="button" className="button secondary" disabled={busy} onClick={() => goToStep(1)}>Back to preview</button>
+          <CampaignDispatch key={`${form.id}-${form.version}`} id={form.id} version={form.version} dirty={dirty} archived={form.status === "archived"} />
+          </div>}
           {revisions.length > 0 && (
-            <details>
+            <details className="campaign-history">
               <summary>Saved revision history (latest 30)</summary>
               {revisions.map((revision) => (
                 <details key={revision.version}>
@@ -497,13 +519,6 @@ export function CampaignWorkspace({
               ))}
             </details>
           )}
-          <CampaignDispatch
-            key={form.id ?? "new"}
-            id={form.id}
-            version={form.version}
-            dirty={dirty}
-            archived={form.status === "archived"}
-          />
           <p role="status" aria-live="polite">
             {message}
           </p>

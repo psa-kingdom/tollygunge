@@ -1,4 +1,4 @@
-import { RegistrationPayments } from "@/components/registration-payments";
+import { PaymentsWorkspace } from "@/components/payments-workspace";
 import { VerificationWorkspace } from "@/components/verification-workspace";
 import {
   BulkOnboarding,
@@ -17,10 +17,10 @@ import { FlyerBuilder } from "@/components/flyer-builder";
 import { HistoryImport } from "@/components/history-import";
 import { StaffAccess } from "@/components/staff-access";
 import { MediaWorkspace } from "@/components/media-workspace";
-import { PaymentDetailsManager } from "@/components/payment-details";
 import { GovernanceWorkspace } from "@/components/governance-workspace";
 import { staffWorkspaceLabel } from "@/domain/staff-navigation";
 import { MembersWorkspace } from "@/components/members-workspace";
+import { WorkspacePageHeading } from "@/components/workspace-ui";
 import {WebsiteControl} from '@/components/website-control';
 const permissions: Record<string, Permission> = {
   verification: "members:review",
@@ -70,9 +70,10 @@ export default async function Workspace({
   )
     notFound();
   return (
-    <main id="main" className="workspace-main">
+    <main id="main" className="workspace-main workspace-page">
       <Link href="/admin">← Staff workspace</Link>
-      <h1>{staffWorkspaceLabel(workspace)}</h1>
+      <WorkspacePageHeading workspace={workspace} title={staffWorkspaceLabel(workspace)} />
+      <div className="workspace-body" data-workspace={workspace}>
       {workspace==='website'?<WebsiteControl/>:workspace === "verification" ? (
         <VerificationWorkspace />
       ) : workspace === "onboarding" ? (
@@ -107,10 +108,7 @@ export default async function Workspace({
           canManage={hasPermission(actor.roles, "staff:manage")}
         />
       ) : workspace === "payments" ? (
-        <>
-          <RegistrationPayments />
-          <PaymentDetailsManager />
-        </>
+        <PaymentsWorkspace />
       ) : (
         <>
           <p className="notice">
@@ -123,6 +121,7 @@ export default async function Workspace({
           </Link>
         </>
       )}
+      </div>
     </main>
   );
 }
