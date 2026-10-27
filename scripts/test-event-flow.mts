@@ -47,7 +47,8 @@ try {
   const earlier=files.filter(f=>f<"030_");
   await db.query("BEGIN;\n"+(await Promise.all(earlier.map(f=>readFile("migrations/"+f,"utf8")))).join("\n")+"\nCOMMIT;");
   const users:string[]=[],cookies:string[]=[];
-  const syntheticPassword=randomBytes(24).toString("hex")+"Aa1!";
+  // This identity exercises both an existing login and new-account creation.
+  const syntheticPassword="Event!"+randomBytes(3).toString("hex");
   for(const role of ["administrator","member","guest","member","member"]) {
     const id=randomUUID(),token=randomBytes(24).toString("hex");users.push(id);
     await db.query('INSERT INTO public."user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)',[id,role==="administrator"?"Event administrator":"Event member "+users.length,`event${users.length}@example.invalid`]);

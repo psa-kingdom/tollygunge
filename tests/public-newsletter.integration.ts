@@ -9,6 +9,7 @@ import { processEmailJob } from "../src/lib/email-worker";
 import { openMail } from "../src/lib/onboarding-mail";
 import { tokenHash } from "../src/domain/email";
 import { EmailProviderError } from "../src/lib/email-provider";
+import { restrictedWorkerPool } from "./helpers/restricted-worker-pool.mjs";
 
 test("public newsletter lifecycle and delivery use isolated consent and the existing worker", {skip: !process.env.TPA_DATABASE_NAME?.startsWith("tpa_onboarding_test_")}, async t => {
   const pool = new Pool(databaseOptions());
@@ -23,7 +24,10 @@ test("public newsletter lifecycle and delivery use isolated consent and the exis
   const lastConfirmation=async(address:string)=>(await pool.query("SELECT * FROM tpa.email_jobs WHERE recipient=$1 AND kind='subscription_confirmation' ORDER BY created_at DESC,id DESC LIMIT 1",[address])).rows[0];
   const tokenFor=(job:{payload:{sealedBody:Parameters<typeof openMail>[0]}})=>new URL((openMail(job.payload.sealedBody,env.BETTER_AUTH_SECRET) as string).split("\n").find(line=>line.startsWith("http"))!).hash.split("token=")[1];
   let confirmation: Awaited<ReturnType<typeof lastConfirmation>>, subscriber:string;
+  let worker = pool;
   try {
+    worker = await restrictedWorkerPool(pool, process.env, "email");
+    t.diagnostic("Newsletter delivery database identity: " + (await worker.query("SELECT current_user AS name")).rows[0].name);
     const before=(await pool.query('SELECT count(*)::int n FROM public."user"')).rows[0].n;
     await t.test("guest requests are normalized, private, idempotent and create no accounts",async()=>{
       const [response,duplicate]=await Promise.all([requestPublicSubscription(pool,{email:email.toUpperCase(),consent:true},env),requestPublicSubscription(pool,{email,consent:true},env)]);
@@ -37,11 +41,11 @@ test("public newsletter lifecycle and delivery use isolated consent and the exis
       assert.ok((await pool.query("SELECT 1 FROM tpa.public_subscription_tokens WHERE token_hash=$1",[tokenHash(tokenFor(confirmation))])).rowCount);
     });
     await t.test("confirmation delivery honors quota and retry semantics with synthetic transport",async()=>{
-      await lease(confirmation.id);await processEmailJob(pool,confirmation.id,owner,env,{...deps,quota:async()=>({...quota,daily:{...quota.daily,used:100}})});
+      await lease(confirmation.id);await processEmailJob(worker,confirmation.id,owner,env,{...deps,quota:async()=>({...quota,daily:{...quota.daily,used:100}})});
       assert.equal((await state(confirmation.id)).reason,"quota_wait");assert.equal(requests.length,0);
-      await lease(confirmation.id);await processEmailJob(pool,confirmation.id,owner,env,{...deps,request:async()=>{throw new EmailProviderError(true,false,"rate_limited");}});
+      await lease(confirmation.id);await processEmailJob(worker,confirmation.id,owner,env,{...deps,request:async()=>{throw new EmailProviderError(true,false,"rate_limited");}});
       assert.equal((await state(confirmation.id)).status,"queued");
-      await lease(confirmation.id);await processEmailJob(pool,confirmation.id,owner,env,deps);
+      await lease(confirmation.id);await processEmailJob(worker,confirmation.id,owner,env,deps);
       assert.equal((await state(confirmation.id)).status,"accepted");assert.equal(requests.length,1);assert.ok(String(requests[0].text).includes("Confirm subscription"));
     });
     await t.test("confirmation is explicit, single use and expires",async()=>{
@@ -74,12 +78,12 @@ test("public newsletter lifecycle and delivery use isolated consent and the exis
     await t.test("public audience excludes pending addresses, deduplicates and uses public unsubscribe headers",async()=>{
       const c=await pool.connect();try{const rows=await campaignRecipients(c,{city:"",profession:"",source:"public"});assert.equal(rows.length,1);assert.equal(rows[0].subscriberId,subscriber);}finally{c.release();}
       const job=await dispatch();assert.equal(job.user_id,null);assert.equal(job.subscriber_id,subscriber);
-      await lease(job.id);await processEmailJob(pool,job.id,owner,env,deps);assert.equal((await state(job.id)).status,"accepted");
+      await lease(job.id);await processEmailJob(worker,job.id,owner,env,deps);assert.equal((await state(job.id)).status,"accepted");
       assert.ok(JSON.stringify(requests.at(-1)?.headers).includes("/api/newsletter/unsubscribe"));
     });
     await t.test("unsubscribe during quota lookup prevents sending and leaves member preferences intact",async()=>{
       const job=await dispatch(), url=new URL(openMail(job.payload.unsubscribe,env.BETTER_AUTH_SECRET));const token=new URLSearchParams(url.hash.slice(1)).get("token")!;const sent=requests.length;
-      await lease(job.id);await processEmailJob(pool,job.id,owner,env,{...deps,quota:async()=>{await unsubscribePublicSubscription(pool,token);return quota;}});
+      await lease(job.id);await processEmailJob(worker,job.id,owner,env,{...deps,quota:async()=>{await unsubscribePublicSubscription(pool,token);return quota;}});
       assert.equal(requests.length,sent);assert.equal((await state(job.id)).status,"skipped");
       await unsubscribePublicSubscription(pool,token);assert.equal((await pool.query("SELECT subscribed FROM tpa.newsletter_consents WHERE user_id=$1",[account])).rows[0].subscribed,false);
       await pool.query("UPDATE tpa.public_subscription_requests SET requested_at=now()-interval '2 minutes' WHERE email=$1",[email]);
@@ -87,10 +91,10 @@ test("public newsletter lifecycle and delivery use isolated consent and the exis
       await assert.rejects(()=>confirmPublicSubscription(pool,tokenFor(confirmation)));await confirmPublicSubscription(pool,tokenFor(renewed));
     });
     await t.test("suppression and cancellation are checked again before guest delivery",async()=>{
-      const cancelled=await dispatch();await pool.query("UPDATE tpa.email_dispatches SET cancelled_at=now() WHERE id=$1",[cancelled.dispatch_id]);await lease(cancelled.id);await processEmailJob(pool,cancelled.id,owner,env,deps);assert.equal((await state(cancelled.id)).status,"skipped");
+      const cancelled=await dispatch();await pool.query("UPDATE tpa.email_dispatches SET cancelled_at=now() WHERE id=$1",[cancelled.dispatch_id]);await lease(cancelled.id);await processEmailJob(worker,cancelled.id,owner,env,deps);assert.equal((await state(cancelled.id)).status,"skipped");
       const job=await dispatch(),sent=requests.length;await pool.query("INSERT INTO tpa.email_suppressions(email,reason) VALUES($1,'bounce')",[email]);
-      await lease(job.id);await processEmailJob(pool,job.id,owner,env,deps);assert.equal((await state(job.id)).reason,"suppressed");assert.equal(requests.length,sent);
+      await lease(job.id);await processEmailJob(worker,job.id,owner,env,deps);assert.equal((await state(job.id)).reason,"suppressed");assert.equal(requests.length,sent);
       const address="suppressed-"+email;await pool.query("INSERT INTO tpa.email_suppressions(email,reason) VALUES($1,'complaint')",[address]);await requestPublicSubscription(pool,{email:address,consent:true},env);assert.equal((await pool.query("SELECT 1 FROM tpa.public_subscribers WHERE email=$1",[address])).rowCount,0);
     });
-  } finally { await pool.end(); }
+  } finally { if (worker !== pool) await worker.end(); await pool.end(); }
 });

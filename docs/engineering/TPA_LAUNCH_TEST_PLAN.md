@@ -35,10 +35,13 @@ Preparing an inventory does not execute any case or establish launch readiness.
    same-origin/trusted origins, cookie/session creation and redirects. Fix only
    confirmed causes and add failing-then-passing regression evidence. A prompt
    saying login fails is not itself reproduction evidence.
-3. Run existing structure, unit/runtime, lint, typecheck, production web/worker
-   builds and migration consistency checks. Audit runners before invocation:
-   several load `.env.local`; inherit only explicit safe values. Reuse the
-   existing Node test runner, PostgreSQL suites and Playwright framework.
+3. Use `npm run test:launch -- --static` for guarded structure, unit/runtime,
+   lint, typecheck and production web/worker builds. Use the guarded integration
+   stages described below for migration/database/API/browser checks. Historical
+   `test:db`, `test:http`, `test:onboarding`, `test:events` and other raw package
+   scripts auto-load `.env.local` and bypass the new launch safety wrapper;
+   do not use them as this launch run's entrypoint. Reuse the existing Node test
+   runner, PostgreSQL suites and Playwright framework inside the wrapper.
 4. Run isolated database/API and complete browser journeys using unique synthetic
    identities, a disposable loopback database, mail sink/mocks and local object
    storage mocks where supported. Test all six staff roles and members A/B,
@@ -59,6 +62,41 @@ Preparing an inventory does not execute any case or establish launch readiness.
    and available provider identity/logs. Preview/hosted write journeys, actual
    inbox receipt, physical devices, full recovery and capacity are separate
    acceptance boundaries. Missing infrastructure is BLOCKED, never PASS.
+
+## Guarded commands and overlap
+
+Run `npm run test:launch -- --list` to inspect stages without executing them.
+Run `npm run test:launch -- --static` first. Before integration, set `DATABASE_URL`
+through the local approved process to the dedicated QA maintenance database:
+host `127.0.0.1`, port `55439`, database `postgres`, user `tpa_qa` or `postgres`
+with CREATEDB privilege. Do not copy a hosted connection or print its secret.
+The wrapper rejects hosted URLs, alternate database identities, connection query
+options and fragments; unavailable/rejected QA infrastructure is BLOCKED.
+Static stages use synthetic settings and do not require a reachable database.
+
+The complete standard integration entrypoint is
+`npm run test:launch -- --integration`. Its `core` stage already includes browser
+acceptance plus outage/public-interaction checks. The `restricted` stage executes
+that complete core suite again under scoped runtime identities, plus the email
+runtime check. Avoid requesting an extra standalone browser run.
+
+For a full integration pass without duplicating core, the recommended explicit
+stage sequence is:
+
+```powershell
+npm run test:launch -- --stage newsletter,member,accounts,import-jobs,invitation-db,invitation-http,website,event-flow,engagement,event-operations,roles,restricted
+```
+
+The last restricted stage supplies full core/browser acceptance. Use `--stage core`
+alone for targeted diagnosis only, or rerun a failing named stage after a fix and
+retain the original failure. Do not label overlapping executions as additional
+distinct scenario coverage. The wrapper serializes selected stages, records the
+exact command and exit result, and distinguishes node assertions, Playwright
+summaries and phase counts. Browser channel overrides use the wrapper's
+`--browser-channel chrome` or `--browser-channel msedge` option if installed.
+
+Current fixture/selector failures are test-run findings until their cause and
+effect are established; they are not evidence that authentication is broken.
 
 ## Safe result recording and repeatable generation
 

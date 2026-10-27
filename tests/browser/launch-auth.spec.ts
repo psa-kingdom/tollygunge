@@ -77,7 +77,7 @@ for (const staff of [false, true]) {
     expect((await context.request.get("/api/member/events")).status()).toBe(401);
 
     expect((await submit(page, user.email, "Wrong!1234")).status()).toBe(401);
-    await expect(page.getByRole("alert")).toContainText("Check your email and password.");
+    await expect(page.getByRole("alert").filter({ hasText: "Check your email and password." })).toBeVisible();
     expect(await (await context.request.get("/api/auth/get-session")).json()).toBeNull();
 
     expect((await submit(page, user.email, password, true)).status()).toBe(200);
@@ -148,7 +148,7 @@ test("unverified staff require operator approval and held accounts cannot sign i
   const held = await identity({ held: true });
   await page.goto("/login");
   expect((await submit(page, held.email)).status()).toBe(403);
-  await expect(page.getByRole("alert")).toContainText("Check your email and password.");
+  await expect(page.getByRole("alert").filter({ hasText: "Check your email and password." })).toBeVisible();
   expect(await (await context.request.get("/api/auth/get-session")).json()).toBeNull();
   expect((await context.request.get("/api/member/events")).status()).toBe(401);
 });

@@ -13,6 +13,8 @@ const stages = [
   ["roles", ["scripts/security/verify-database-roles.mjs"]],
   ["email-runtime", ["scripts/security/verify-email-role-runtime.mjs"]],
   ["core-browser", ["scripts/verify-launch-isolated.mjs", "--fallback-outage", "--public-interactions"]],
+  ["auth", ["scripts/verify-launch-isolated.mjs", "--browser-grep", "actual .* form login|expired database session|unverified staff require", "--fallback-outage", "--public-interactions"]],
+  ["newsletter", ["scripts/verify-public-newsletter.mjs"]],
   ["member-foundation", ["--import", "tsx", "scripts/test-member-foundation.mts", "--http"]],
   ["approved-accounts", ["--import", "tsx", "scripts/test-approved-accounts.mts"]],
   ["import-jobs", ["--import", "tsx", "scripts/test-member-import-jobs.mts", "--http"]],

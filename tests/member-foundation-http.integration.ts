@@ -65,7 +65,7 @@ test("member HTTP contracts enforce access, errors, register retrieval, previews
     await pool.query("INSERT INTO tpa.application_drafts(id,user_id,plan,category,details) VALUES($1,$2,'Annual','Professional','{\"phone\":\"1234567890\"}')",[randomUUID(),actors[1]]);
     const legacyDraft=await request("/api/member/application",1,{category:"Professional",plan:"Annual",version:1,details:{phone:"1234567890",fullName:" Legacy   Draft ",organization:"Example  & Co"},documentIds:[]});assert.equal(legacyDraft.status,200);const savedDraft=await legacyDraft.json();assert.equal(savedDraft.details.phone,"1234567890");assert.equal(savedDraft.details.fullName,"Legacy Draft");
     const ordinary="boundary-"+prefix+"@example.invalid";
-    const signup=(password:string)=>request("/api/auth/sign-up/email",undefined,{name:"Boundary synthetic",email:ordinary+password.length,password});
+    const signup=(password:string)=>request("/api/auth/sign-up/email",undefined,{name:"Boundary synthetic",email:ordinary.replace("@",`${password.length}@`),password});
     assert.equal((await signup("a".repeat(5))).status,400);assert.equal((await signup("a".repeat(13))).status,400);assert.equal((await signup("a".repeat(6))).status,200);assert.equal((await signup("a".repeat(12))).status,200);
     assert.equal((await request("/api/onboarding/invitation",undefined,{token:"x".repeat(43),password:"a".repeat(5)})).status,400);
     assert.equal((await request("/api/onboarding/invitation",undefined,{token:"x".repeat(43),password:"a".repeat(13)})).status,400);
