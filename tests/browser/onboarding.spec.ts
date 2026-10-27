@@ -780,12 +780,17 @@ test("member dashboard separates verification states and keeps the editor off th
     },
   ];
   for (const [index, state] of states.entries()) {
+    const remaining = index > 2 ? [] : [
+      { id: "photograph", label: "Photograph", step: 3, href: "/member/application?step=3" },
+      ...(index === 0 ? [{ id: "email", label: "Verify your account email", step: -1, href: "/member#verification-email-action" }] : []),
+    ];
     await page.route("**/api/member/verification", (route) =>
       route.fulfill({
         json: {
           email,
           emailVerified: index > 0,
           missing: index > 2 ? [] : ["Photograph"],
+          progress: { total: 2, completed: 2 - remaining.length, percent: (2 - remaining.length) * 50, remaining },
           ...state,
         },
       }),
@@ -805,11 +810,18 @@ test("member dashboard separates verification states and keeps the editor off th
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBeTruthy();
+    const mobileMenu = page.getByRole("button", { name: /Member navigation/ });
+    if (page.viewportSize()!.width <= 800) await mobileMenu.click();
     await page.getByRole("link", { name: "Overview", exact: true }).focus();
     await page.keyboard.press("Tab");
     await expect(
       page.getByRole("link", { name: "Verification", exact: true }),
     ).toBeFocused();
+    if (page.viewportSize()!.width <= 800) {
+      await page.keyboard.press("Escape");
+      await expect(mobileMenu).toBeFocused();
+      await expect(page.getByRole("navigation", { name: "Account navigation" })).toBeHidden();
+    }
     await page.screenshot({
       path: info.outputPath(`dashboard-state-${index}.png`),
       fullPage: true,
