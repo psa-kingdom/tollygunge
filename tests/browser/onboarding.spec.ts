@@ -415,15 +415,19 @@ test(
         page.getByRole("heading", { name: "Edit person", exact: true }),
       ).toHaveCount(0);
       await expect(
-        page.getByRole("link", { name: "Continue your details", exact: true }),
+        page.getByRole("link", { name: /^Go to Membership & professional details/ }),
       ).toBeVisible();
       await page.screenshot({
         path: info.outputPath("member-dashboard-unverified.png"),
         fullPage: true,
       });
       await page
-        .getByRole("link", { name: "Continue your details", exact: true })
+        .getByRole("link", { name: /^Go to Membership & professional details/ })
         .click();
+      await expect(page).toHaveURL(/\/member\/application\?step=0$/);
+      // The dashboard link pins its requested step. Test saved-step restoration
+      // through the normal resume URL, without that explicit step override.
+      await page.goto("/member/application");
       await page.getByLabel("Qualification *").fill("Test qualification");
       await expect(page.getByRole("status").last()).toHaveText("Saved");
       await page.reload();
@@ -542,7 +546,7 @@ test(
         .toBeTruthy();
       await page.goto("/member");
       await expect(
-        page.getByRole("link", { name: "Continue your details", exact: true }),
+        page.getByRole("link", { name: /^Go to / }),
       ).toBeVisible();
       await expect(
         page.getByText("Email: Verified", { exact: true }),
@@ -550,7 +554,7 @@ test(
       await expect(
         page.getByText("Loading your profile…", { exact: true }),
       ).toHaveCount(0);
-      const header = await page.locator(".account-header").boundingBox(),
+      const header = await page.locator(".portal-topbar").boundingBox(),
         main = await page.locator("main").boundingBox();
       expect(header!.y + header!.height).toBeLessThanOrEqual(main!.y + 1);
       await page.screenshot({
@@ -676,7 +680,7 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
     .click();
   await expect(page).toHaveURL(/\/member$/);
   await page
-    .getByRole("link", { name: "Continue your details", exact: true })
+    .getByRole("link", { name: /^Go to Membership & professional details/ })
     .click();
   const qualification = page.getByLabel("Qualification *");
   await qualification.fill("Server baseline");

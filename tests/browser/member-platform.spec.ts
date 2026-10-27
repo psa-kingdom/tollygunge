@@ -608,10 +608,13 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
     );
   for (const width of [1440, 1280, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 1000 });
-    if (width >= 1280)
-      expect(
-        (await page.locator(".member-profile-editor").boundingBox())!.width,
-      ).toBeGreaterThan(width - 150);
+    if (width >= 1280) {
+      const main = (await page.locator("main").boundingBox())!;
+      const editor = (await page.locator(".member-profile-editor").boundingBox())!;
+      expect(editor.width).toBeGreaterThan(main.width - 100);
+      expect(editor.x).toBeGreaterThanOrEqual(main.x);
+      expect(editor.x + editor.width).toBeLessThanOrEqual(main.x + main.width + 1);
+    }
     for (const mode of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme: mode as "light" | "dark" });
       await page.evaluate(() => scrollTo(0, 0));
@@ -638,17 +641,18 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
       if (width <= 1100)
         await page.getByRole("tab", { name: "Edit", exact: true }).click();
       await page.evaluate(() => scrollTo(0, 500));
-      await expect(page.locator(".account-header")).toHaveClass(/is-scrolled/);
-      expect((await page.locator(".account-header").boundingBox())!.y).toBe(0);
+      await expect(page.locator(".portal-topbar")).toHaveClass(/is-scrolled/);
+      expect((await page.locator(".portal-topbar").boundingBox())!.y).toBe(0);
       if (width <= 600)
         expect(
-          (await page.locator(".account-header").boundingBox())!.height,
+          (await page.locator(".portal-topbar").boundingBox())!.height,
         ).toBeLessThanOrEqual(140);
       await page.evaluate(() => scrollTo(0, 0));
     }
   }
   await page.setViewportSize({ width: 640, height: 500 });
-  const menu = page.locator(".member-nav-more > summary");
+  await page.evaluate(() => scrollTo(0, 0));
+  const menu = page.getByRole("button", { name: /Member navigation/ });
   await menu.focus();
   await menu.press("Enter");
   await expect(
@@ -656,10 +660,11 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
   ).toBeVisible();
   await menu.press("Tab");
   await expect(
-    page.getByRole("link", { name: "Inquiries", exact: true }),
+    page.getByRole("link", { name: "Overview", exact: true }),
   ).toBeFocused();
-  await menu.focus();
-  await menu.press("Enter");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("navigation", { name: "Account navigation" })).toBeHidden();
+  await expect(menu).toBeFocused();
   await page.evaluate(() => (document.documentElement.style.zoom = "2"));
   await noOverflow(page);
   await page.screenshot({
@@ -784,6 +789,6 @@ test("published preview retains its snapshot and keyboard preview tabs work", as
   ).toBeVisible();
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   expect(
-    (await page.locator("header.site-header").boundingBox())!.y,
+    (await page.locator(".portal-topbar").boundingBox())!.y,
   ).toBeGreaterThanOrEqual(0);
 });
