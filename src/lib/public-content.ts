@@ -1,14 +1,15 @@
 import "server-only";
+import { cache } from "react";
 import { getDatabase } from "./database";
 import type { ContentBody } from "@/domain/operations";
-export async function publishedPage(slug: string): Promise<ContentBody | null> {
+export const publishedPage = cache(async function publishedPage(slug: string): Promise<ContentBody | null> {
   if (!process.env.DATABASE_URL) return null;
   const { rows } = await getDatabase().query(
     "SELECT published FROM tpa.content_entries WHERE slug=$1 AND kind='page' AND published IS NOT NULL AND archived_at IS NULL",
     [slug],
   );
   return rows[0]?.published ?? null;
-}
+});
 export async function publishedArticles() {
   if (!process.env.DATABASE_URL) return [];
   return (

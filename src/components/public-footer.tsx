@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "./navigation-link";
 import { TpaLogo } from "./tpa-logo";
 import { footerGroups, type SharedSettings } from "@/domain/website-settings";
 

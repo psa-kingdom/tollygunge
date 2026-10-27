@@ -161,3 +161,28 @@ sections, and sources/checks. Hidden fields remain mounted to preserve edits;
 invalid native form fields reveal their editing group before focus. Website
 settings groups top-level fields instead of rendering the entire tree. Save and
 publication actions sit above the active editing fields without overlaying them.
+
+## Navigation loading behavior — 28 October 2026
+
+Removed root/admin/member route-level loading boundaries that replaced whole page
+content with the generic Please wait panel. Client navigation now keeps the
+current content until the server result is ready. Main public/portal links use
+Next Link with hover/focus-triggered prefetch and useLinkStatus feedback: a
+layout-independent top indicator appears after 180ms and honors reduced motion.
+The pending indicator renders through a portal so closing a mobile menu cannot
+hide it. Links retain their original handlers, modifiers and destinations.
+Embedded loading states (member events/password controls) use quiet local content
+placeholders instead of the old full-page message.
+
+React cache deduplicates currentActor and publishedPage only within a server
+render, including layout/page and metadata/page overlap. There is no cross-user
+session/role cache and no persistent published-content cache. Header dependencies
+and homepage settings load concurrently. Authentication, publication freshness,
+error boundaries and API permission checks remain intact. No public visual
+redesign or static caching of authenticated pages is part of this change.
+
+A pre-change local click sample took 751/77/84ms across three staff routes. These
+are diagnostic observations, not a production speed guarantee. Browser tests hold
+route responses to verify retained content and pending feedback, and switch
+admin/member/anonymous sessions to verify isolation. Local verification uses
+synthetic accounts and performs no business writes.

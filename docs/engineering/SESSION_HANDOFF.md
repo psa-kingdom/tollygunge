@@ -1,172 +1,172 @@
-# Portal redesign session handoff
+# Session handoff: portals and navigation
 
-Updated: 27 October 2026. Continue in this existing checkout; work is uncommitted.
+Updated: 28 October 2026 (Asia/Calcutta). Continue in the existing checkout.
 
-## Workspace and scope
+## Start here
 
 - Repository: `psa-kingdom/tollygunge`.
-- Windows checkout: `C:\Users\srv93\OneDrive\Documents\ChatGPT\New project\tollygunge`.
-- Shell: PowerShell. User timezone: Asia/Calcutta.
-- Local preview: `http://127.0.0.1:3000/admin`. The user's Codex browser has this open.
-- Production site: `https://tpassociation.org`; no deployment, push, or commit has been performed.
-- User wants elegant, modern, clean admin and member portals: compact spacing,
-  clear information architecture, consistent fields/buttons/icons, useful empty
-  states and subtle motion. Public landing-page work is deferred until the portals
-  are finished. Preserve business logic, permissions and existing workflows.
+- Checkout: `C:\Users\srv93\OneDrive\Documents\ChatGPT\New project\tollygunge`.
+- Shell: PowerShell. Branch: `main`.
+- Portal redesign checkpoint: `c74af8f` — `Redesign portals and simplify staff workspace workflows`.
+- The portal redesign and layout follow-ups are committed. The user also
+  requested committing the subsequent navigation fixes and this handoff. They are
+  included in the following checkpoint, titled `Improve navigation loading and
+  document session handoff`. Use `git log -1 --oneline` for its hash.
+- No push or deployment was performed. Production: `https://tpassociation.org`.
+- Local preview: `http://127.0.0.1:3000/admin`.
+- Read `AGENTS.md`, `docs/engineering/REPOSITORY_STRUCTURE.md`, and
+  `docs/engineering/PORTAL_DESIGN_SYSTEM.md` before implementation. Read relevant
+  installed Next.js docs in `node_modules/next/dist/docs` before framework edits.
+- Inspect `git status --short` and preserve all existing changes/untracked files.
+  Do not reset the checkout or discard local runtime/evidence files.
 
-## Completed work
+## User priorities and scope
 
-1. Shared portal shell and scoped visual system across staff, member and account
-   pages: white surfaces, navy text, blue accents, Jakarta typography, compact
-   controls, grouped navigation, dark mode and responsive layouts. Public styling
-   stays outside this portal CSS scope.
-2. Reorganized sidebar workspaces, including verification, bulk onboarding,
-   inquiries, communications, events, flyers, historical imports, website/content,
-   media, committees, payments, email settings, reports and staff access. Improved
-   headings, toolbars, browse/edit layouts, empty-state actions and workflow steps.
-3. Added desktop sidebar collapse in both staff and member portals. Expanded width
-   is 232px (216px at intermediate widths); collapsed rail is 72px. CSS grid
-   transitions over 240ms, with instant changes under reduced motion. A labelled
-   button at the bottom of the sidebar toggles it. Preference persists in
-   localStorage under `tpa.portal.sidebar-collapsed`.
-4. Collapsed links retain accessible names and show labels on hover or keyboard
-   focus. The desktop preference does not alter the mobile menu below 801px.
-5. Installed `gsap` and `@gsap/react` for navigation icon feedback. Scoped
-   `useGSAP`/`contextSafe` handlers apply a subtle 1.5px lift and 1.08 scale on hover
-   or focus, overwrite interrupted tweens, clean up listeners and stop/revert
-   when reduced motion is enabled. No looping animation.
-6. Latest requested change: removed the redundant **Your workspaces** shortcut card
-   from `/admin`. Sidebar links already provide those destinations. Recent activity
-   now follows the attention/status cards. The permitted-workspace count remains.
+The user wants compact, readable, easily understandable admin/member portals,
+consistent controls and spacing, clear actions, useful empty states, and less
+scrolling. They give concrete browser annotations and expect fixes to be visually
+verified rather than declared complete from code inspection alone.
 
-## Key files
+Public landing-page redesign remains deferred. The latest navigation fix applies
+to public and authenticated navigation without changing public visual design.
+Preserve business logic, authorization, publication rules and sending safeguards.
+Do not automatically commit subsequent work, push, publish content or deploy.
 
-- `src/components/site-shell.tsx`: server portal composition; public shell also
-  lives here, so keep changes scoped.
-- `src/components/portal-frame.tsx`: client boundary, persistent collapse state,
-  collapse button, label overlay and GSAP handlers.
-- `src/components/portal-theme.module.css`: portal-only palette, layouts, controls,
-  navigation rail, responsive and reduced-motion rules.
-- `src/components/portal-icon.tsx`: shared stroke icon set.
-- `src/components/staff-navigation.tsx`, `member-navigation.tsx`: grouped links,
-  accessible names and independent mobile menus.
-- `src/components/workspace-ui.tsx` and `.module.css`: shared workspace layout,
-  headings, empty states, workflow and tabs.
-- `src/components/payments-workspace.tsx`: payment tool tabs.
-- `src/app/admin/page.tsx`: overview, including latest card removal.
-- `tests/browser/portal-design.spec.ts`: local-only UI regression coverage.
-- `docs/engineering/PORTAL_DESIGN_SYSTEM.md`: reference lock, decisions and
-  workspace layout patterns. Read before changing the visual direction.
+## Completed and committed in c74af8f
 
-Many other workspace components are modified as part of this session. Inspect
-`git status --short` and preserve the existing edits and untracked files. Do not
-reset the checkout or assume uncommitted changes are disposable.
+- Shared portal shell: white surfaces, navy text, blue actions, bundled Jakarta
+  typography, grouped navigation, dark mode and responsive layouts. Portal CSS
+  stays scoped away from public pages.
+- Collapsible staff/member desktop sidebar: 232px expanded (216px intermediate),
+  72px collapsed; localStorage key `tpa.portal.sidebar-collapsed`. Accessible names
+  and hover/focus labels remain available. Mobile navigation is independent.
+- GSAP/@gsap/react navigation-icon hover/focus feedback with cleanup and reduced
+  motion support. No looping icon animation.
+- Removed duplicate Your workspaces overview card; recent activity follows metrics.
+- Verification requirements: stacked labels, full-width controls and checkbox/
+  action spacing inside expanded field settings.
+- Inquiries: count, pagination and Refresh moved below results/empty state.
+- Communications: Delivery details button opens a native modal with separate
+  campaign readiness, password-reset setup, subscriber and consent explanations.
+  Close/Escape/focus restoration work; unrelated CRM shortcut was removed.
+- Campaigns: an interactive three-step workflow shows one stage at a time:
+  Write -> Preview -> Review & send. Saving advances to Preview; audience preview
+  unlocks Review. Back/step navigation preserves edits; editing invalidates later
+  steps. Review unmounts on leaving its stage to discard old confirmation.
+  Loading/applying templates uses non-submit buttons. Nothing sends on Next/save.
+- Payments: standalone full-width empty state; table headers appear only for
+  populated results. Native table layout with keyboard-focusable scroll region.
+- Email settings: stacked fields, wider recipient textarea, separate recipient
+  rows and short Send test actions; empty history layout improved.
+- Website settings: related links moved into Manage other website content,
+  with explicit descriptions of the separate staff-workspace destinations.
+- Content: clearer catalogue page names/paths; Edit and Preview are separate
+  full-width views at every viewport. Editing groups: Page details, Introduction,
+  Sections (one section selected at a time), Sources & checks. Fields remain
+  mounted to retain edits; native invalid fields reveal their group before focus.
+- Website settings also uses smaller field groups. Catalogue buttons no longer
+  flex-shrink and clip paths outside their borders. Save/publish actions sit
+  **above active fields**, not in a sticky overlay that can cover controls.
 
-## Design references and skills
+## Latest uncommitted work: loading/navigation
 
-Refero research established Open Collective Raise as the navy/white foundation,
-Linear/Zapier for grouped navigation and compact data controls, and Luma for
-action-led event empty states and editing flows. Exact references are in the design
-system document. Keep this established direction when applying small follow-ups.
+The user complained about the generic Loading your page / Please wait screen
+appearing on almost every link. They explicitly authorized fixing both the
+presentation and unnecessary work after the portal commit.
 
-User requested Emil Kowalski's design-engineering and animate guidance, and later
-the official GreenSock skills. These were read remotely and applied; do not claim
-they were installed globally:
+Implemented:
 
-- https://github.com/emilkowalski/skills
-- https://github.com/greensock/gsap-skills/tree/main/skills/gsap-react
-- https://github.com/greensock/gsap-skills/tree/main/skills/gsap-core
+1. Deleted `src/app/loading.tsx`, `src/app/admin/loading.tsx`, and
+   `src/app/member/loading.tsx`. These broad Suspense fallbacks replaced whole
+   pages. Client navigation now retains the current content until the destination
+   is ready; error and not-found boundaries remain intact.
+2. Added `src/components/navigation-link.tsx` and `.module.css`. It wraps Next
+   Link for the main public/portal links, prefetches on hover/keyboard focus, and
+   uses `useLinkStatus` for a thin top indicator after 180ms. The indicator is
+   portalled to document.body so closing a mobile menu cannot hide it. It has
+   reduced-motion styling. Existing events, destinations/modifier behavior and
+   explicit prefetch=false are retained. No eager prefetch of every menu item.
+3. Updated link imports in staff/member navigation, site-shell, account-controls,
+   homepage-view and public-footer to use the wrapper. No public redesign.
+4. Replaced embedded LoadingScreen presentation with local neutral skeletons,
+   used by member-events and password-controls. New `loading-screen.module.css`.
+5. Wrapped `currentActor` in `src/lib/actor.ts` and `publishedPage` in
+   `src/lib/public-content.ts` with React cache to deduplicate repeated reads
+   **within a server render only**. No cross-user/persistent session/role cache.
+   Database permission checks and dynamic rendering remain intact.
+6. Parallelized independent Header dependencies in site-shell and home/shared
+   settings in `src/app/page.tsx` using Promise.all.
+7. Added navigation regression checks to `tests/browser/portal-design.spec.ts`
+   and implementation notes to `PORTAL_DESIGN_SYSTEM.md`.
 
-Use the available Refero design skill for new design research. Use Agent Reach's
-GitHub route when retrieving GitHub skill contents. BrowserOS Neo tools were not
-configured; browser verification used Codex's in-app browser through CUA.
+Local three-route click samples: before 751/77/84ms; after 290/87/103ms.
+These small, noisy samples are diagnostic only, not a production speed guarantee.
+The retained-page behavior is verified with intentionally held server responses.
 
-## Validation and current runtime
+## Latest validation
 
-- Earlier portal pass: 111 unit tests passed.
-- After sidebar work: **21 browser checks passed** across desktop, tablet and phone,
-  including all staff/member destinations, overflow, mobile keyboard navigation,
-  dark mode, reduced motion, collapse persistence and public style isolation.
-- Sidebar implementation passed build, lint, typecheck and structure checks.
-- After latest overview-card removal: production build (including TypeScript) and
-  structure check passed; refreshed the actual local browser and confirmed the
-  card is absent and the remaining overview sections are present. The full browser
-  suite was not rerun for this simple removal.
-- Local app is currently `npm run start` on port 3000, last tool session `53357`.
-  Session IDs may not be controllable from a different chat: inspect the process
-  before starting another server. Do not kill unrelated Node processes.
-- Local PostgreSQL was started via `.local/start-postgres.mjs`, on port 55432 with
-  database `tpa_local_test`. `.env.local` is local-only; do not print or commit it.
-- Synthetic admin/member accounts exist. Browser tests take credentials through
-  `TPA_UI_ADMIN_EMAIL`, `TPA_UI_ADMIN_PASSWORD`, `TPA_UI_MEMBER_EMAIL`, and
-  `TPA_UI_MEMBER_PASSWORD`; do not put passwords in tracked documentation.
-- Browser tests use `TPA_TEST_URL=http://127.0.0.1:3000` and
-  `TPA_BROWSER_CHANNEL=msedge` (installed Edge; bundled Chromium is unavailable).
-  Run `npx playwright test tests/browser/portal-design.spec.ts` with synthetic
-  credentials supplied locally. Tests reuse auth sessions and do not submit
-  business changes. Do not bypass other integration tests' database safety gates.
-- Avoid `networkidle` waits: background status polling can keep the page busy.
-  Existing tests wait for page content, fonts and animation frames instead.
-- Stop the local app before rebuilding, then restart it; serving an old build
-  during replacement can cause stale chunks/stream errors. `next start` emits an
-  existing standalone-output warning but serves successfully.
-- `next-env.d.ts` had pre-existing references to `.next/dev/types/`. Builds rewrite
-  them to `.next/types/`; restore the original dev references after build rather
-  than discarding the user's pre-existing modification.
+- Production build (including TypeScript): passed on final navigation code.
+- Full lint: passed; focused lint rerun after the final indicator adjustment passed.
+- `npm run check:structure` and `git diff --check`: passed. The structure checker
+  checks indexed paths; manually reviewed new CSS/component files are in src/components.
+- `npm test`: all **111 unit tests passed**.
+- **15 navigation browser checks passed** across desktop/tablet/phone: all staff/
+  member destinations, mobile navigation, dark/reduced-motion checks, public style
+  isolation, admin/member/anonymous session isolation, and retained-page navigation.
+- **3 additional focused slow-navigation checks passed**, including actual opacity
+  after the indicator delay, not just DOM presence.
+- Previous targeted UI checks covered campaign progression, mocked save/preview
+  (no send), payment empty/populated tables, email settings, and content/settings.
+- The entire expanded browser suite was NOT rerun after the navigation changes.
+  Report only the actual targeted runs above.
+- The user was told to refresh the local page once to load the new build. The
+  latest checks used fresh Playwright contexts; do not assume their existing
+  in-app browser tab has refreshed or that production has these changes.
 
-## Browser and visual evidence
+## Runtime and verification
 
-In the previous CUA runtime, browser `iab` had local tab `3` and production tab `2`.
-Re-inventory tabs in a new chat; do not assume old bindings remain available. The
-local tab is authenticated and marked as a deliverable. Production was left alone.
+- App was left running via `npm run start` on port 3000; latest tool session 54499.
+  Session IDs may not survive a new chat. Inspect the listening process before
+  starting another server. Do not kill unrelated Node processes.
+- Local PostgreSQL: port 55432, database `tpa_local_test`, started through ignored
+  `.local/start-postgres.mjs`. Check its state before restarting.
+- `.env.local` and local synthetic account scripts are ignored. Never print or
+  commit passwords, environment files, session cookies or private data.
+- Browser test environment: `TPA_TEST_URL=http://127.0.0.1:3000`,
+  `TPA_BROWSER_CHANNEL=msedge`, plus locally supplied `TPA_UI_ADMIN_EMAIL`,
+  `TPA_UI_ADMIN_PASSWORD`, `TPA_UI_MEMBER_EMAIL`, `TPA_UI_MEMBER_PASSWORD`.
+- Run `npx playwright test tests/browser/portal-design.spec.ts` with those local
+  credentials for the full suite, or use a targeted --grep. Synthetic save flows
+  are mocked. Do not send emails, publish content or change real payment records.
+- Ignored `.local/check-navigation-regressions.mjs` runs the 15-check subset;
+  `.local/check-navigation.mjs` runs the three slow-navigation checks.
+  These runners source local synthetic credentials; inspect without exposing them.
+- Use content/font/frame waits, not networkidle (background polling continues).
+- Stop the local app before rebuilding; restart afterward to avoid stale chunks.
+  `next start` emits the existing standalone-output warning but serves locally.
+- `next-env.d.ts` is committed with `.next/dev/types/` imports. Builds rewrite
+  them to `.next/types/`; restore the dev references after a build.
+- BrowserOS Neo tools were unavailable in this session. Verification used local
+  Playwright/installed Edge; an earlier session used CUA. Re-inventory tools/tabs
+  rather than assuming previous browser IDs or bindings still exist.
 
-Ignored screenshots under `output/playwright/portal-workspaces/`:
+## Evidence and references
 
-- `overview-simplified.png`: latest full overview after removing duplicate links.
-- `sidebar-collapsed.png`: compact navigation in the members workspace.
-- `events-editor.png`, `bulk-onboarding.png`, `communications.png`,
-  `bulk-onboarding-phone.png`: prior workspace layout evidence.
+- Latest ignored screenshots: `test-results/portal-design-slow-navigat-*/navigation-pending.png`.
+  Test-results are replaced by subsequent Playwright runs.
+- Prior UI screenshots remain under ignored `output/playwright/portal-workspaces/`
+  (campaign-workflow, communications-details, crm-footer, and earlier portal views).
+- The reference lock is in `PORTAL_DESIGN_SYSTEM.md`: Refero Open Collective Raise
+  foundation, Linear/Zapier navigation/data controls, Luma action-led empty states.
+- Emil Kowalski and official GreenSock skills were previously read remotely and
+  applied; they were not installed globally. Exact links are in the design system.
 
-## How to continue
+## Next chat
 
-Read this handoff and the design system, inspect the current diff, and continue
-the user's next portal feedback in this checkout. No explicit feature request is
-currently pending: the latest card removal is complete. Do not begin public
-landing-page redesign or deploy automatically. Follow `AGENTS.md` and the
-repository structure policy; this Next.js version requires reading relevant
-bundled docs under `node_modules/next/dist/docs` before writing framework code.
-For small reversible changes, act without unnecessary confirmation. Show the
-updated local preview and report only validation actually performed.
-
-## Follow-up: verification field layout
-
-Fixed the expanded requirements editor after user feedback: stacked form-grid
-labels, full-width controls, explicit fieldset/checkbox/action spacing, and removal
-of an inherited form-grid top margin. Changes remain portal-scoped. Browser
-coverage now checks actual field geometry inside the accordion. The earlier
-21-check browser suite, lint and structure checks passed; production rebuild also
-passed. The latest local runtime was restarted on port 3000.
-
-## Campaign stepper navigation — 28 October 2026
-
-Campaigns show one stage at a time. Save and continue persists the draft before
-opening Preview. An audience preview unlocks Review & send. Step buttons and Back
-navigation preserve controlled draft fields; edits invalidate preview access.
-Review is unmounted when leaving its stage, discarding its previous confirmation.
-Loading/applying templates uses explicit non-submit buttons. Shared WorkspaceSteps
-supports optional interactive navigation; bulk onboarding keeps its existing
-indicator behavior. Six browser checks passed across desktop, tablet and phone,
-including a mocked campaign save/preview flow that asserts no send was requested.
-Production build, focused lint and structure checks passed. Local preview is on
-port 3000; work remains uncommitted and undeployed.
-
-
-## Commit checkpoint — 28 October 2026
-
-The user requested committing the accumulated portal redesign and follow-up work.
-Content/settings editing now uses smaller groups, catalogue text stays inside its
-buttons, and actions sit above the active fields. Latest build, focused lint,
-structure and desktop/tablet/phone content checks passed. Local evidence, test
-accounts and environment files remain ignored. Loading-screen diagnosis is the
-next topic; no loading-navigation changes have been made. Public landing-page
-redesign remains deferred. No push or deployment is included in this checkpoint.
+There is no new feature request pending. The navigation implementation was
+reported complete locally; the user requested this handoff and then authorized
+committing all remaining work.
+Read this file and the design system, inspect the current diff, and continue from
+user feedback. The navigation checkpoint follows the existing portal checkpoint
+c74af8f. Confirm current status rather than assuming there are uncommitted changes. Do not resume the deferred public landing-page
+redesign or push/deploy without instruction.

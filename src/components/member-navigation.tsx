@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "./navigation-link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { PortalIcon } from "./portal-icon";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "./navigation-link";
 import { currentActor } from "@/lib/actor";
 import { AccountControls } from "./account-controls";
 import { MemberNavigation } from "./member-navigation";
@@ -48,8 +48,7 @@ export function Brand({settings=sharedDefaults}:{settings?:SharedSettings}={}) {
   );
 }
 export async function Header() {
-  const actor = await currentActor();
-  const settings=await publishedSettings('shared'),navigation=await publicNavigation();
+  const [actor, settings, navigation] = await Promise.all([currentActor(), publishedSettings("shared"), publicNavigation()]);
   return (
     <header className="site-header">
       <StickyHeaderState />

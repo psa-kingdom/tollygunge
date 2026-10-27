@@ -1,8 +1,10 @@
 import "server-only";
+import { cache } from "react";
 import { headers } from "next/headers";
 import { authConfigured, getAuth } from "./auth";
 import { getDatabase } from "./database";
-export async function currentActor(requestHeaders?: Headers) {
+// React cache deduplicates only within this server render; authorization stays request-scoped.
+export const currentActor = cache(async function currentActor(requestHeaders?: Headers) {
   if (!authConfigured()) return null;
   const session = await getAuth().api.getSession({
     headers: requestHeaders ?? (await headers()),
@@ -28,4 +30,4 @@ export async function currentActor(requestHeaders?: Headers) {
     email: session.user.email,
     roles: rows.map((row) => row.role),
   };
-}
+});

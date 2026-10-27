@@ -6,7 +6,7 @@ import {
   useState,
   type RefObject,
 } from "react";
-import Link from "next/link";
+import Link from "./navigation-link";
 import { SignOut } from "./auth-controls";
 
 function usePopoverPosition(

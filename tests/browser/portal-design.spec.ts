@@ -384,6 +384,69 @@ test("website shortcuts explain destinations and content editor separates edit f
   await expect(title).toHaveValue("");
 });
 
+test("navigation keeps authentication isolated between requests", async ({ page }) => {
+  await signIn(page, "ADMIN");
+  await expect(page.locator("#staff-navigation")).toBeAttached();
+  await page.context().clearCookies();
+  await signIn(page, "MEMBER");
+  await page.goto("/admin");
+  await page.waitForURL("**/member");
+  await expect(page.locator("#staff-navigation")).toHaveCount(0);
+  await page.context().clearCookies();
+  await page.goto("/admin");
+  await page.waitForURL("**/login");
+  await expect(page.locator("#staff-navigation")).toHaveCount(0);
+});
+
+test("slow navigation retains the current page instead of replacing it with a loading screen", async ({ page }, info) => {
+  await signIn(page, "ADMIN");
+  const toggle = page.getByRole("button", { name: /Workspace navigation/ });
+  if (await toggle.isVisible()) await toggle.click();
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  let requested = false;
+  await page.route("**/admin/workspaces/verification?**", async route => {
+    requested = true;
+    await gate;
+    await route.continue();
+  });
+  const heading = await page.locator("main h1").textContent();
+  try {
+    await page.locator('#staff-navigation a[href="/admin/workspaces/verification"]').click();
+    await expect.poll(() => requested).toBeTruthy();
+    await expect(page.locator("main h1")).toHaveText(heading!);
+    await expect(page.locator(".tpa-loading")).toHaveCount(0);
+    await expect(page.getByRole("status").filter({ hasText: "Opening page…" })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Opening page…" })).toHaveCSS("opacity", "1");
+    await page.screenshot({ path: info.outputPath("navigation-pending.png") });
+  } finally {
+    release();
+  }
+  await page.waitForURL("**/admin/workspaces/verification");
+  await expect(page.getByRole("status").filter({ hasText: "Opening page…" })).toHaveCount(0);
+  await expect(page.locator("main h1")).toHaveText("Verification");
+  await page.goto("/about");
+  let releasePublic!: () => void;
+  const publicGate = new Promise<void>(resolve => { releasePublic = resolve; });
+  let publicRequested = false;
+  await page.route("**/membership?**", async route => {
+    publicRequested = true;
+    await publicGate;
+    await route.continue();
+  });
+  const publicHeading = await page.locator("main h1").textContent();
+  try {
+    await page.locator('footer a[href="/membership"]').first().click();
+    await expect.poll(() => publicRequested).toBeTruthy();
+    await expect(page.locator("main h1")).toHaveText(publicHeading!);
+    await expect(page.locator(".tpa-loading")).toHaveCount(0);
+  } finally {
+    releasePublic();
+  }
+  await page.waitForURL("**/membership");
+  await expect(page.locator("main h1")).not.toHaveText(publicHeading!);
+});
+
 for (const role of ["ADMIN", "MEMBER"] as const) {
   test(`${role.toLowerCase()} sidebar remembers collapse and keeps navigation accessible`, async ({ page }, info) => {
     await signIn(page, role);

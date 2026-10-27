@@ -1,4 +1,7 @@
-import { loadingContent } from "@/domain/fallbacks";
+import styles from "./loading-screen.module.css";
 export function LoadingScreen() {
-  return <div className="tpa-loading" role="status" aria-live="polite"><span aria-hidden="true" /><strong>{loadingContent.title}</strong><p>{loadingContent.description}</p></div>;
+  return <div className={styles.placeholder} role="status" aria-live="polite">
+    <span className={styles.label}>Loading content…</span>
+    <div aria-hidden="true"><span /><span /><span /></div>
+  </div>;
 }
