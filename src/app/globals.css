@@ -1193,6 +1193,12 @@ button:disabled {
 .operations-table th,.operations-table td {padding:14px;border-bottom:1px solid var(--line);vertical-align:top;}
 .operations-table th {font-weight:600;color:var(--muted);}
 .operations-table[tabindex] th {white-space:nowrap;}
+.registration-payments-table {min-width:720px;}
+.registration-payments-table td:first-child {min-width:160px;}
+.registration-payments-table td:nth-child(2) {min-width:200px;}
+.registration-payments-table td:nth-child(3),.registration-payments-table td:nth-child(4) {white-space:nowrap;}
+.registration-payments-table td:last-child {min-width:144px;}
+.registration-payments-table td:last-child button {white-space:nowrap;}
 .prose-text {white-space:pre-wrap;overflow-wrap:anywhere;}
 .flyer-preview {width:100%;height:auto;border:1px solid var(--line);border-radius:8px;}
 @media(max-width:800px){.operations-layout{grid-template-columns:minmax(0,1fr);}.record-list{max-height:300px;overflow:auto;}}

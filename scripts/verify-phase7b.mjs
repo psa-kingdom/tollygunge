@@ -21,7 +21,7 @@ const stages = [
   ["invitation-db", ["--import", "tsx", "scripts/test-invitation-release.mts"]],
   ["invitation-http", ["--import", "tsx", "scripts/test-invitation-release.mts", "--http"]],
   ["website-control", ["--import", "tsx", "scripts/test-website-control.mts", "--browser"]],
-  ["event-flow", ["--import", "tsx", "scripts/test-event-flow.mts"]],
+  ["event-flow", ["--import", "tsx", "scripts/test-event-flow.mts", "--payment-table"]],
   ["engagement", ["--import", "tsx", "scripts/test-event-engagement.mts"]],
   ["event-operations", ["--import", "tsx", "scripts/test-event-operational.mts", "--browser"]],
 ];

@@ -604,7 +604,7 @@ try {
     const p = await context.newPage();
     const errors: string[] = [];
     p.on("pageerror", (e) => errors.push(e.message));
-    const axe = resolve(".local/technical-qa/node_modules/axe-core/axe.min.js");
+    const axe = resolve("node_modules/axe-core/axe.min.js");
     for (const width of [1440, 768, 390]) {
       await p.setViewportSize({ width, height: 1000 });
       for (const path of [

@@ -22,7 +22,7 @@ const stages = [
   { id: "invitation-db", group: "integration", args: ["--import", "tsx", "scripts/test-invitation-release.mts"] },
   { id: "invitation-http", group: "integration", args: ["--import", "tsx", "scripts/test-invitation-release.mts", "--http"] },
   { id: "website", group: "integration", args: ["--import", "tsx", "scripts/test-website-control.mts", "--browser"] },
-  { id: "event-flow", group: "integration", args: ["--import", "tsx", "scripts/test-event-flow.mts"] },
+  { id: "event-flow", group: "integration", args: ["--import", "tsx", "scripts/test-event-flow.mts", "--payment-table"] },
   { id: "engagement", group: "integration", args: ["--import", "tsx", "scripts/test-event-engagement.mts"] },
   { id: "event-operations", group: "integration", args: ["--import", "tsx", "scripts/test-event-operational.mts", "--browser"] },
   { id: "roles", group: "integration", args: ["scripts/security/verify-database-roles.mjs"] },
