@@ -1,5 +1,33 @@
 # Session handoff: portals and navigation
 
+Commit checkpoint: the user approved committing the profile-progress, admin-alert,
+dashboard accent pilot and member-layout follow-up. They are included together in
+this checkpoint; earlier references below to uncommitted work describe the review
+stage. Use git status/log to confirm the current checkout. Nothing was pushed or
+deployed. Public landing-page work remains deferred.
+
+Member dashboard layout follow-up: after screenshot feedback, removed the nested
+two-column verification layout, made email status a compact footer, grouped the
+explanation/action, and stopped the personal-profile card stretching to match
+verification. All changes stay scoped to member-home. Production build, focused
+lint, structure, design scan and three Edge responsive/state/theme checks passed.
+Evidence: output/playwright/member-layout/. Still local and uncommitted.
+
+Latest: the approved dashboard accent pilot is implemented locally and remains
+uncommitted alongside the profile-progress/admin-alert work. Only member/admin
+overview containers receive blue/teal decorative tokens, semantic metric chips,
+hover/focus/press feedback and reduced-motion overrides. Completion shows an
+inline ready-to-submit check while approval status remains separate. Metric
+presentation follows its label and count, never its array position. No APIs,
+permissions, database schema, notification logic or public-site styles changed.
+See PORTAL_DESIGN_SYSTEM.md for the updated reference lock and verification.
+Before/after screenshots are in ignored output/playwright/dashboard-pilot/;
+final/ contains the validated six viewport/theme combinations. Build, lint,
+structure, 116 unit tests and 18 focused Edge checks passed. The local database
+was restarted after the paused session; app is on port 3000. Inspect current
+processes before restarting anything. Do not commit or expand the pilot until
+the user reviews it. Public landing-page work remains deferred.
+
 Updated: 28 October 2026 (Asia/Calcutta). Continue in the existing checkout.
 
 ## Start here
@@ -170,3 +198,32 @@ Read this file and the design system, inspect the current diff, and continue fro
 user feedback. The navigation checkpoint follows the existing portal checkpoint
 c74af8f. Confirm current status rather than assuming there are uncommitted changes. Do not resume the deferred public landing-page
 redesign or push/deploy without instruction.
+
+## Latest follow-up: profile completion and admin applicant notices
+
+The user requested a profile-completion percentage with next-step navigation and
+admin notifications for new applicants. Implemented locally and not committed:
+- verificationProgress in src/domain/verification.ts derives completion from the
+  published policy/saved answers. memberVerification exposes it; member-onboarding
+  displays a horizontal bar, next requirement and linked remaining-item checklist.
+- /member/application?step=0..4 opens the corresponding form step.
+- attentionFor distinguishes recent self-service signups (last 7 days, no
+  submission; excludes staff, invitation-created and membership-linked accounts)
+  from submitted applications awaiting profile review. Signups link to
+  /admin/workspaces/members?view=accounts; submissions link to Verification.
+- DashboardAttention polls every 30s and refreshes on focus/visibility. The bell
+  uses the same attention API. Profile completion never grants approval.
+
+Final validation: production build, focused lint, structure, 114 unit tests and
+six focused desktop/tablet/phone browser checks passed. Pending-application UI
+changes are tested with mocked responses; no fabricated profile was submitted or
+approved. Actual Edge UI confirms the QA signup notice. Normal signin throttling
+was respected during reruns. Edge is left on the admin overview as the local
+synthetic admin. App tool session 18399, port 3000; inspect before restarting.
+
+The existing QA Signup Test 28 Oct account was created through actual Edge signup,
+then logout/login tested. It remains email/profile-unverified, with welcome and
+verification mail queued (provider setup missing). Credentials remain only in
+ignored .local/signup-flow-account.json. Do not print or commit them. The next
+end-to-end member flow is controlled-inbox email verification, then completion and
+submission for admin review. Public landing-page redesign remains deferred.

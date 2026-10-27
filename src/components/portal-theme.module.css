@@ -238,6 +238,18 @@
 .portal :global(.member-verification-grid) { gap: 24px; }
 .portal :global(.member-email-card) { padding: 16px; border-radius: 8px; }
 .portal :global(.member-verification .member-progress-number) { font-size: 32px; line-height: 1.3; color: var(--ink); }
+.portal :global(.profile-completion) { display:grid; gap:12px; margin-bottom:16px; }
+.portal :global(.profile-completion-heading) { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.portal :global(.profile-completion-heading strong) { font-size:24px; color:var(--ink); }
+.portal :global(.profile-completion-heading span) { font-size:12px; color:var(--muted); }
+.portal :global(.profile-completion progress) { appearance:none; width:100%; height:8px; border:0; border-radius:99px; overflow:hidden; background:var(--line); }
+.portal :global(.profile-completion progress::-webkit-progress-bar) { background:var(--line); border-radius:99px; }
+.portal :global(.profile-completion progress::-webkit-progress-value) { background:var(--action-bg); border-radius:99px; }
+.portal :global(.profile-completion progress::-moz-progress-bar) { background:var(--action-bg); }
+.portal :global(.profile-completion p) { margin:0; font-size:13px; line-height:1.65; }
+.portal :global(.profile-completion summary) { font-size:12px; cursor:pointer; }
+.portal :global(.profile-completion ul) { display:grid; gap:8px; padding-left:20px; font-size:12px; }
+.portal :global(.dashboard-alert-help) { font-size:12px; color:var(--muted); line-height:1.65; }
 .portal :global(.member-services) { margin-top: 24px; }
 .portal :global(.member-service-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
 .portal :global(.member-service-tile) { padding: 20px; background: var(--surface); }
@@ -652,4 +664,86 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .portal:global(.workspace), .portal :global(.portal-sidebar :is(.brand-name, .portal-nav-label)) { transition: none; }
+}
+
+/* Dashboard pilot: decorative accents never carry approval or alert status. */
+.portal :global(:is(.member-home, .portal-overview)) {
+  --dashboard-blue-bg: #eef4ff;
+  --dashboard-blue-fg: #2455b6;
+  --dashboard-teal-bg: #edf7f7;
+  --dashboard-teal-fg: #17666a;
+  --dashboard-warning-bg: #fff4dd;
+  --dashboard-warning-fg: #805308;
+  --dashboard-success-bg: #edf7ef;
+  --dashboard-success-fg: #28643c;
+}
+:global(html[data-color-mode="dark"]) .portal :global(:is(.member-home, .portal-overview)) {
+  --dashboard-blue-bg: #223653;
+  --dashboard-blue-fg: #b6ceff;
+  --dashboard-teal-bg: #18383b;
+  --dashboard-teal-fg: #a9dedc;
+  --dashboard-warning-bg: #3d301b;
+  --dashboard-warning-fg: #f3cd83;
+  --dashboard-success-bg: #203a2b;
+  --dashboard-success-fg: #afdbbd;
+}
+.portal :global(.member-home .profile-completion) {
+  padding: 12px; border-radius: 8px; background: var(--dashboard-blue-bg);
+}
+.portal :global(.member-home) { align-items: start; }
+.portal :global(.member-home > .member-profile-summary) { justify-content: flex-start; gap: 16px; }
+.portal :global(.member-home > .member-profile-summary .button) { margin-top: 0; }
+.portal :global(.member-home .member-verification-grid) { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.portal :global(.member-home .member-card-heading) { align-items: flex-start; }
+.portal :global(.member-home .member-card-heading h2) { margin-bottom: 0; }
+.portal :global(.member-home .profile-completion) { gap: 10px; margin-bottom: 16px; }
+.portal :global(.member-home .profile-completion details) { margin: 0; }
+.portal :global(.member-home .member-verification-action) { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; }
+.portal :global(.member-home .member-verification-action > p) { flex: 1 1 240px; margin: 0; max-width: 60ch; }
+.portal :global(.member-home .member-verification-action > .button) { flex: 0 1 auto; max-width: 100%; }
+.portal :global(.member-home .member-email-card) {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  padding: 16px 0 0; border: 0; border-top: 1px solid var(--line);
+  border-radius: 0; background: transparent;
+}
+.portal :global(.member-home .member-email-card > strong) { font-size: 12px; }
+.portal :global(.member-home .member-email-card > p) { flex: 1 1 auto; margin: 0; font-size: 12px; }
+.portal :global(.member-home .member-email-card > p[role="status"]:not(:empty)) { flex-basis: 100%; }
+@media (max-width: 600px) {
+  .portal :global(.member-home .member-verification-action) { align-items: flex-start; flex-direction: column; }
+  .portal :global(.member-home .member-verification-action > p) { flex-basis: auto; }
+}
+.portal :global(.member-home .profile-completion-heading strong) { color: var(--dashboard-blue-fg); }
+.portal :global(.member-home .profile-completion-ready) { display: flex; align-items: flex-start; gap: 8px; color: var(--dashboard-blue-fg); }
+.portal :global(.member-home .profile-completion-ready svg) { flex-shrink: 0; width: 18px; height: 18px; margin-top: 2px; }
+.portal :global(.member-home .profile-completion progress::-webkit-progress-value) { transition: width 180ms ease; }
+.portal :global(.member-home .profile-completion progress::-moz-progress-bar) { transition: width 180ms ease; }
+.portal :global(.member-home .member-service-tile[data-tone="blue"] > .portal-icon),
+.portal :global(.portal-overview .service-metrics [data-tone="blue"] .metric-icon) { background: var(--dashboard-blue-bg); color: var(--dashboard-blue-fg); }
+.portal :global(.member-home .member-service-tile[data-tone="teal"] > .portal-icon),
+.portal :global(.portal-overview .service-metrics [data-tone="teal"] .metric-icon) { background: var(--dashboard-teal-bg); color: var(--dashboard-teal-fg); }
+.portal :global(.portal-overview .service-metrics [data-tone="warning"] .metric-icon) { background: var(--dashboard-warning-bg); color: var(--dashboard-warning-fg); }
+.portal :global(.portal-overview .service-metrics [data-tone="success"] .metric-icon) { background: var(--dashboard-success-bg); color: var(--dashboard-success-fg); }
+.portal :global(.portal-overview .service-metrics [data-tone="neutral"] .metric-icon) { background: var(--surface-muted); color: var(--muted); }
+.portal :global(.member-home .member-service-tile),
+.portal :global(.portal-overview .service-metrics a) { transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease; }
+.portal :global(.member-home .member-service-tile:is(:hover, :focus-visible)),
+.portal :global(.portal-overview .service-metrics a:is(:hover, :focus-visible)) { border-color: var(--dashboard-blue-fg); box-shadow: 0 2px 8px rgb(18 43 74 / 8%); }
+.portal :global(.member-home .member-service-tile h3 .portal-icon),
+.portal :global(.portal-overview .attention-arrow) { display: inline-block; transition: transform 140ms ease; }
+.portal :global(.member-home .member-service-tile:is(:hover, :focus-visible) h3 .portal-icon),
+.portal :global(.portal-overview .attention-row:is(:hover, :focus-visible) .attention-arrow) { transform: translateX(2px); }
+.portal :global(.portal-overview .attention-row) { border-radius: 6px; transition: background-color 140ms ease, box-shadow 140ms ease; }
+.portal :global(.portal-overview .attention-row[data-tone="warning"] > span) { color: var(--dashboard-warning-fg); }
+.portal :global(.portal-overview .attention-row:is(:hover, :focus-visible)) { background: var(--dashboard-blue-bg); box-shadow: 0 0 0 6px var(--dashboard-blue-bg); }
+.portal :global(.portal-overview .attention-row:active) { background: var(--dashboard-teal-bg); box-shadow: 0 0 0 6px var(--dashboard-teal-bg); }
+.portal :global(:is(.member-home, .portal-overview) .button) { transition: filter 140ms ease, transform 140ms ease; }
+.portal :global(:is(.member-home, .portal-overview) .button:active) { transform: scale(.99); filter: brightness(.94); }
+@media (prefers-reduced-motion: reduce) {
+  .portal :global(:is(.member-home, .portal-overview) :is(a, .button, .portal-icon, .attention-arrow)) { transition: none; }
+  .portal :global(.member-home .profile-completion progress::-webkit-progress-value),
+  .portal :global(.member-home .profile-completion progress::-moz-progress-bar) { transition: none; }
+  .portal :global(.member-home .member-service-tile:is(:hover, :focus-visible) h3 .portal-icon),
+  .portal :global(.portal-overview .attention-row:is(:hover, :focus-visible) .attention-arrow),
+  .portal :global(:is(.member-home, .portal-overview) .button:active) { transform: none; }
 }

@@ -25,6 +25,57 @@ composition are not part of this direction.
 | Aligned filters and structured member table | Linear and Zapier; identity and actions | Separate selection, name/email, membership number, status and account columns; preserve existing accessible record-button names |
 | Context-sensitive density | User's brief | 8/12/16/20/24px working gaps, 38–40px desktop controls, 44px mobile targets and 16px mobile inputs |
 | Purposeful motion | Emil's `emil-design-eng` and `animate` guidance | 140ms button feedback and 160ms pointer-opened popovers; instant keyboard command dialog and page headings; reduced-motion alternatives |
+| Dashboard decorative accents | [Aboard task overview](https://refero.design/pages/a0a318b7-2e11-40a4-84ae-d0b87e7b812b); restrained colored icon chips | Selective blue/teal service chips, neutral metric surfaces; metric treatments follow label meaning and count, never index |
+| Encouraging completion feedback | [Cake Equity onboarding](https://refero.design/pages/2e3932ef-f22d-41d6-b29e-bfe39baee7f0); clear next-step feedback | Pale blue required-details progress; inline completion check, separate approval badge; no celebration effects |
+
+### Dashboard accent pilot — 28 October 2026
+
+Raise remains dominant. Resume.io style (`6c5eed97-53d1-49df-bc95-b456eef1eb0d`)
+informs restrained feature surfaces only. Aboard and Cake Equity contribute the
+specific patterns above; their broader palettes and layouts are not adopted.
+
+| Role | Light background / foreground | Dark background / foreground |
+| --- | --- | --- |
+| Decorative blue | `#eef4ff` / `#2455b6` | `#223653` / `#b6ceff` |
+| Decorative teal | `#edf7f7` / `#17666a` | `#18383b` / `#a9dedc` |
+| Actionable pending work | `#fff4dd` / `#805308` | `#3d301b` / `#f3cd83` |
+| Actual active-members metric | `#edf7ef` / `#28643c` | `#203a2b` / `#afdbbd` |
+
+Pilot tokens and overrides apply only inside `.member-home` and `.portal-overview`.
+Green/amber/red retain semantic meanings. Zero metrics use neutral chips. Static
+cards have no motion or hover affordance. Interactive cards change borders/shadows
+without moving; arrows move at most 2px. Control feedback is 140ms and progress
+changes 180ms; reduced motion removes transitions and transforms. Sidebar behavior
+and all public styling remain outside the pilot. Completion, notifications and
+approval logic are unchanged, including the uncommitted profile-progress work.
+
+Before/after evidence lives locally under `output/playwright/dashboard-pilot/`.
+The `before/` desktop/phone folders and `before-tablet/` tablet folder hold the
+baseline; `final/` holds the validated pilot. Each contains light/dark screenshots for empty,
+incomplete, complete, submitted and verified member states and pending admin alerts.
+Review copies use `member-before.png`, `member-after.png`, `admin-before.png`,
+and `admin-after.png`. Synthetic verification/attention responses perform no
+application submission, approval, payment or email write.
+
+Validation: production build, full lint, structure checks, all 116 unit tests and
+18 focused Edge browser tests passed (pilot plus surrounding regressions across
+390/768/1320px). Rendered text contrast is at least 4.5:1 in both modes. Checks
+cover keyboard focus, 44px mobile card/button targets, distinct attention-link
+pressed feedback, reduced motion, unchanged card geometry on hover, no horizontal
+overflow, and no public-page token/palette leakage. Admin page height is unchanged;
+the member progress panel adds at most 45–51 CSS pixels across the captured states
+and viewports, without adding a section or changing the service grid. All work
+remains local and uncommitted pending visual review.
+
+Member dashboard layout follow-up: the profile-summary card uses its natural
+height and aligns to the top of the verification card. Verification no longer
+splits its narrow card into two columns: progress spans the available width,
+the explanation and primary action form one wrapping group, and email status
+uses a compact footer row. Small screens stack the action group in DOM order.
+This changes presentation only. Build, focused lint, structure, mechanical design
+scan and three Edge viewport/state/theme checks passed. Evidence:
+`output/playwright/member-layout/`. Desktop checks also guard against stretched
+profile cards and excessively tall verification cards.
 
 Emil guidance: [design engineering](https://github.com/emilkowalski/skills/tree/main/skills/emil-design-eng)
 and [animation construction](https://github.com/emilkowalski/skills/tree/main/skills/animate).
@@ -186,3 +237,32 @@ are diagnostic observations, not a production speed guarantee. Browser tests hol
 route responses to verify retained content and pending feedback, and switch
 admin/member/anonymous sessions to verify isolation. Local verification uses
 synthetic accounts and performs no business writes.
+
+## Profile completion and applicant alerts — 28 October 2026
+
+Member overview now shows a native horizontal progress bar, percentage, required
+item count, next missing requirement and a collapsible linked checklist. Progress
+is derived from the currently published policy and saved answers, including
+conditional professional-registration/selected-address checks and account-email
+verification. Completed means required fields are filled; it does not approve a
+profile or membership. Member application links accept validated step=0..4 to
+open the right form step while retaining saved fields.
+
+Admin Needs attention and the bell distinguish recent self-service sign-ups
+(last seven days, not yet submitted) from applications awaiting profile review.
+Existing staff, membership-linked accounts and invitation-created accounts are
+excluded from the new-signup notice. Its link opens Members directly in Account
+directory view. Submitted applications retain the existing pending-submission
+queue and explicit administrator review; no automatic approval was introduced.
+Dashboard alerts refresh every 30 seconds and on focus/visibility, preserving the
+last result with a refresh error message if a request fails.
+
+Validation: production build, focused lint/structure checks and all 114 unit tests
+passed. Six focused Edge browser checks passed (two each on desktop/tablet/phone)
+for progress, step links, live signup/submission alert changes and directory links.
+Mocked responses exercise pending-application alerts without submitting fabricated
+evidence. The actual Edge admin dashboard also shows the existing QA signup.
+Rapid login runs encountered the normal local rate limit; reruns were spaced
+without disabling security controls. No new real-world emails or approvals were
+performed. Evidence is ignored under output/playwright/completion-* and
+output/playwright/signup-flow/admin-signup-alert.png.

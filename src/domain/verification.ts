@@ -314,6 +314,18 @@ export function missingFields(
   return missing;
 }
 
+/** Completion of applicable required items; completion never grants approval. */
+export function verificationProgress(fields: VerificationField[], answers: Record<string, string>, category: string, emailVerified: boolean) {
+  const missing = missingFields(fields, answers, category, emailVerified);
+  const tasks = fields.filter(f => applicable(f, category) && (f.required || (f.regulated && ["CA", "CS", "ICMAI", "Bar Council"].includes(answers.professionalBody)))).map(f => ({ id: f.id, label: f.label, step: f.step, complete: !missing.includes(f.label) }));
+  if (category !== "Professional") tasks.push({ id: "category", label: "Professional category required", step: 0, complete: false });
+  if (["Office", "Residence"].includes(answers.correspondenceAddress)) tasks.push({ id: "selected-address", label: "Complete your selected correspondence address", step: 2, complete: !missing.some(label => ["Selected correspondence address", "Complete selected correspondence address", "Check selected correspondence address"].includes(label)) });
+  tasks.push({ id: "email", label: "Verify your account email", step: -1, complete: emailVerified });
+  const completed = tasks.filter(task => task.complete).length;
+  const remaining = tasks.filter(task => !task.complete).map(({ id, label, step }) => ({ id, label, step, href: step < 0 ? "/member#verification-email-action" : `/member/application?step=${step}` }));
+  return { total: tasks.length, completed, percent: Math.round(completed / tasks.length * 100), remaining };
+}
+
 export function requirementUpdateNeeded(
   fields: VerificationField[],
   previous: VerificationField[],

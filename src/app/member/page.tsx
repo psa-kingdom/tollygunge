@@ -81,7 +81,7 @@ export default async function Member() {
                 "View association payment information when available.",
               ],
             ].map(([href, icon, title, description]) => (
-              <Link className="member-service-tile" href={href} key={href}>
+              <Link className="member-service-tile" href={href} key={href} data-tone={icon === "message" || icon === "wallet" ? "teal" : "blue"}>
                 <PortalIcon name={icon} />
                 <h3>
                   {title}

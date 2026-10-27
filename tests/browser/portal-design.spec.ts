@@ -56,6 +56,24 @@ async function primaryActionContrast(page: Page) {
   expect(ratio).toBeGreaterThanOrEqual(4.5);
 }
 
+async function dashboardTextContrast(page: Page) {
+  const ratios = await page.locator('.profile-completion :is(strong, p, summary), .service-metrics :is(strong, .metric-label), .attention-row :is(span, small), .member-service-tile :is(h3, p)').evaluateAll(elements => elements.filter(el => (el as HTMLElement).offsetHeight > 0).map(el => {
+    const luminance = (color: string) => {
+      const rgb = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(channel => {
+        const value = channel / 255;
+        return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4;
+      });
+      return rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722;
+    };
+    let surface: Element | null = el;
+    while (surface && getComputedStyle(surface).backgroundColor === 'rgba(0, 0, 0, 0)') surface = surface.parentElement;
+    const foreground = luminance(getComputedStyle(el).color);
+    const background = luminance(surface ? getComputedStyle(surface).backgroundColor : 'rgb(255, 255, 255)');
+    return { text: el.textContent?.slice(0, 60), ratio: (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05) };
+  }));
+  expect(ratios.filter(value => value.ratio < 4.5)).toEqual([]);
+}
+
 async function mobileNavigation(page: Page, label: string, navigation: string) {
   const toggle = page.getByRole("button", { name: new RegExp(label) });
   if (await toggle.isVisible()) {
@@ -445,6 +463,148 @@ test("slow navigation retains the current page instead of replacing it with a lo
   }
   await page.waitForURL("**/membership");
   await expect(page.locator("main h1")).not.toHaveText(publicHeading!);
+});
+
+test("member completion links to missing form steps and keeps approval separate", async ({ page }, info) => {
+  await signIn(page, "MEMBER");
+  await page.route("**/api/member/verification", route => route.fulfill({ json: {
+    email: "member@example.test", emailVerified: false, verified: false, updateRequested: false, missing: ["Mobile number"], reviews: [],
+    progress: { total: 10, completed: 6, percent: 60, remaining: [{ id: "phone", label: "Mobile number", step: 2, href: "/member/application?step=2" }, { id: "photograph", label: "Passport photograph", step: 3, href: "/member/application?step=3" }, { id: "signature", label: "Typed applicant signature", step: 4, href: "/member/application?step=4" }, { id: "email", label: "Verify your account email", step: -1, href: "/member#verification-email-action" }] },
+  } }));
+  await page.reload();
+  await expect(page.getByText("60% complete", { exact: true })).toBeVisible();
+  const progress = page.getByRole("progressbar", { name: "Profile completion", exact: true });
+  await expect(progress).toHaveAttribute("value", "6");
+  await expect(progress).toHaveAttribute("max", "10");
+  await expect(page.locator(".member-badge")).toHaveText("Not verified");
+  await layoutFits(page);
+  await page.screenshot({ path: info.outputPath("member-completion.png"), fullPage: true });
+  // Let the actual application endpoints supply the full policy/schema after navigation.
+  await page.unroute("**/api/member/verification");
+  await page.getByRole("link", { name: /Go to Contact & preferences/ }).click();
+  await expect(page).toHaveURL(/\/member\/application\?step=2/);
+  await expect(page.getByRole("heading", { name: "Contact & preferences", exact: true })).toBeVisible();
+});
+
+test("admin dashboard updates signup and application notifications without approving accounts", async ({ page }) => {
+  await signIn(page, "ADMIN");
+  let items = [{ id: "new-signups", label: "2 new sign-ups awaiting applications (last 7 days)", href: "/admin/workspaces/members?view=accounts", category: "Account", priority: "Low", count: 2 }];
+  await page.route("**/api/attention", route => route.fulfill({ json: { items } }));
+  await page.reload();
+  const dashboard = page.getByRole("region", { name: "Needs attention", exact: true });
+  await expect(dashboard.getByRole("link", { name: /2 new sign-ups/ })).toBeVisible();
+  items = [{ id: "verification", label: "1 applications awaiting profile review", href: "/admin/workspaces/verification", category: "Verification", priority: "Normal", count: 1 }];
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(dashboard.getByRole("link", { name: /1 applications awaiting profile review/ })).toBeVisible();
+  await expect(dashboard.getByRole("link", { name: /2 new sign-ups/ })).toHaveCount(0);
+  await dashboard.getByRole("link", { name: /1 applications awaiting profile review/ }).click();
+  await expect(page.getByRole("heading", { name: "Verification", exact: true })).toBeVisible();
+  await page.goto("/admin/workspaces/members?view=accounts");
+  await expect(page.getByRole("button", { name: "Account directory", exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("dashboard color pilot covers themes, completion states and interactive feedback", async ({ page }, info) => {
+  const baseline = process.env.TPA_DASHBOARD_CAPTURE_BASELINE === "1";
+  await page.setViewportSize({ width: info.project.name === "desktop" ? 1320 : info.project.name === "tablet" ? 768 : 390, height: 900 });
+  await signIn(page, "MEMBER");
+  let state = "empty";
+  await page.route("**/api/member/verification", route => {
+    const completed = state === "empty" ? 0 : state === "incomplete" ? 6 : 10;
+    return route.fulfill({ json: {
+      email: "member@example.test", emailVerified: completed === 10, verified: state === "verified", updateRequested: false,
+      missing: [], reviews: state === "submitted" ? [{ status: "pending", reason: "" }] : [],
+      progress: { total: 10, completed, percent: completed * 10, remaining: Array.from({ length: 10 - completed }, (_, index) => ({ id: `item-${index}`, label: index === 0 ? "Qualification" : `Required item ${index + 1}`, step: 0, href: "/member/application?step=0" })) },
+    } });
+  });
+  for (const mode of ["light", "dark"]) {
+    for (const value of ["empty", "incomplete", "complete", "submitted", "verified"]) {
+      state = value;
+      await page.goto("/member");
+      await expect(page.getByText(`${value === "empty" ? 0 : value === "incomplete" ? 60 : 100}% complete`, { exact: true })).toBeVisible();
+      await page.evaluate(value => document.documentElement.setAttribute("data-color-mode", value), mode);
+      await layoutFits(page);
+      if (!baseline) {
+        await dashboardTextContrast(page);
+        await primaryActionContrast(page);
+        const profileCard = await page.locator('.member-profile-summary').boundingBox();
+        expect(profileCard!.height).toBeLessThan(300);
+        if (info.project.name === 'desktop') {
+          const verificationCard = await page.locator('.member-verification').boundingBox();
+          expect(profileCard!.y).toEqual(verificationCard!.y);
+          expect(verificationCard!.height).toBeLessThan(500);
+        }
+        if (info.project.name === "phone") {
+          for (const target of await page.locator('.member-home :is(.button, .member-service-tile)').all()) expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+        }
+        await expect(page.locator(".profile-completion-ready")).toHaveCount(value === "complete" ? 1 : 0);
+        if (value === "complete") await expect(page.locator(".member-badge")).toHaveText("Not verified");
+        if (value === "submitted") await expect(page.locator(".member-badge")).toHaveText("Under review");
+        if (value === "verified") await expect(page.locator(".member-badge")).toHaveText("Verified");
+      }
+      await page.screenshot({ path: info.outputPath(`member-${mode}-${value}.png`), fullPage: true });
+    }
+  }
+  if (!baseline) {
+    const tile = page.locator('.member-service-tile[href="/member/events"]');
+    await tile.scrollIntoViewIfNeeded();
+    const before = await tile.boundingBox();
+    await tile.hover();
+    await expect(tile).toHaveCSS("transform", "none");
+    const after = await tile.boundingBox();
+    expect(after).toEqual(before);
+    await tile.focus();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Shift+Tab");
+    expect(await tile.evaluate(el => el.matches(":focus-visible"))).toBeTruthy();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(tile).toHaveCSS("transition-duration", "0s");
+  }
+  await page.context().clearCookies();
+  await signIn(page, "ADMIN");
+  let alerts = [{ id: "verification", label: "2 applications awaiting profile review", href: "/admin/workspaces/verification", category: "Verification", priority: "Normal", count: 2 }];
+  await page.route("**/api/attention", route => route.fulfill({ json: { items: alerts } }));
+  await page.reload();
+  for (const mode of ["light", "dark"]) {
+    await page.evaluate(value => document.documentElement.setAttribute("data-color-mode", value), mode);
+    await expect(page.getByRole("region", { name: "Needs attention", exact: true }).getByRole("link", { name: /2 applications/ })).toBeVisible();
+    await layoutFits(page);
+    if (!baseline) {
+      await dashboardTextContrast(page);
+      await expect(page.locator('.portal-overview .attention-row[data-tone="warning"]')).toHaveCount(1);
+      const metrics = await page.locator(".service-metrics > a").evaluateAll(elements => elements.map(el => ({ count: Number(el.querySelector("strong")!.textContent), tone: el.getAttribute("data-tone") })));
+      expect(metrics.every(metric => metric.count !== 0 || metric.tone !== "warning")).toBeTruthy();
+      const row = page.locator('.portal-overview .attention-row').first();
+      await row.scrollIntoViewIfNeeded();
+      await row.focus();
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
+      expect(await row.evaluate(el => el.matches(':focus-visible'))).toBeTruthy();
+      await row.hover();
+      const hoverBackground = await row.evaluate(el => getComputedStyle(el).backgroundColor);
+      await page.mouse.down();
+      await expect(row).not.toHaveCSS('background-color', hoverBackground);
+      await page.mouse.move(0, 0);
+      await page.mouse.up();
+      await row.blur();
+      await page.evaluate(() => window.scrollTo(0, 0));
+    }
+    await page.screenshot({ path: info.outputPath(`admin-${mode}-pending.png`), fullPage: true });
+  }
+  alerts = [];
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(page.getByRole("region", { name: "Needs attention", exact: true }).getByText("You’re up to date in your permitted workspaces.", { exact: true })).toBeVisible();
+  if (!baseline) {
+    const attentionLink = page.locator('.portal-account-shortcuts a').first();
+    await attentionLink.focus();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Shift+Tab");
+    await expect(attentionLink).toBeFocused();
+    if (info.project.name === "phone") {
+      for (const target of await page.locator('.service-metrics > a').all()) expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    }
+    await page.goto('/');
+    expect(await page.locator('main').evaluate(el => getComputedStyle(el).getPropertyValue('--dashboard-blue-bg'))).toBe('');
+  }
 });
 
 for (const role of ["ADMIN", "MEMBER"] as const) {

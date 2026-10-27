@@ -4,7 +4,9 @@ import { currentActor } from "@/lib/actor";
 import { attentionFor } from "@/lib/attention";
 import { staffNavigation } from "@/domain/staff-navigation";
 import { operationalOverview } from "@/lib/operational-overview";
+import { DashboardAttention } from "@/components/dashboard-attention";
 import { PortalIcon } from "@/components/portal-icon";
+import { dashboardMetricPresentation } from "@/domain/dashboard-presentation";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Staff workspace",
@@ -30,46 +32,15 @@ export default async function Admin() {
       </p>
       </header>
       <div className="service-shortcuts service-metrics">
-        {overview.metrics.map((m, index) => (
-          <Link key={m.label} href={m.href}>
+        {overview.metrics.map((m) => (
+          <Link key={m.label} href={m.href} data-count={m.count} data-tone={dashboardMetricPresentation(m.label, m.count).tone}>
             <strong>{m.count}</strong>
             <span className="metric-label">{m.label}</span>
-            <PortalIcon name={["people", "shield", "file", "profile", "mail", "wallet", "calendar", "calendar"][index] ?? "chart"} className="metric-icon" />
+            <PortalIcon name={dashboardMetricPresentation(m.label, m.count).icon} className="metric-icon" />
           </Link>
         ))}
       </div>
-      <div className="dashboard-bento">
-        <section className="bento-card bento-primary">
-          <span className="eyebrow">YOUR NEXT ACTION</span>
-          <h2>Needs attention</h2>
-          {attention.length ? (
-            attention.map((item) => (
-              <a className="attention-row" key={item.id} href={item.href}>
-                <span>{item.label}</span>
-                <small>
-                  {item.category} · {item.priority} →
-                </small>
-              </a>
-            ))
-          ) : (
-            <p>You’re up to date in your permitted workspaces.</p>
-          )}
-        </section>
-        <section className="bento-card bento-status">
-          <span className="eyebrow">WORKSPACE STATUS</span>
-          <h2>{attention.length}</h2>
-          <p>Active alerts needing attention</p>
-          <p>{workspaceCount} permitted workspaces</p>
-          <div className="portal-account-shortcuts">
-          <Link href="/account/profile" className="text-link">
-            Your profile →
-          </Link>
-          <Link href="/member/security" className="text-link">
-            Account security →
-          </Link>
-          </div>
-        </section>
-      </div>
+      <DashboardAttention initialItems={attention} workspaceCount={workspaceCount} />
       {overview.activity.length > 0 && (
         <section className="bento-card">
           <h2>Recent activity</h2>

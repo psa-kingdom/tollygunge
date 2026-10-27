@@ -15,7 +15,7 @@ export async function attentionFor(actor: Actor) {
   async function add(
     id: string,
     sql: string,
-    label: string,
+    label: string | ((count: number) => string),
     href: string,
     category: string,
     priority: "High" | "Normal" | "Low" = "Normal",
@@ -25,7 +25,7 @@ export async function attentionFor(actor: Actor) {
     if (count)
       items.push({
         id,
-        label: `${count} ${label}`,
+        label: `${count} ${typeof label === "function" ? label(count) : label}`,
         href,
         category,
         priority,
@@ -62,9 +62,24 @@ export async function attentionFor(actor: Actor) {
     await add(
       "verification",
       "SELECT count(*)::int n FROM tpa.verification_submissions WHERE status='pending'",
-      "profiles awaiting verification",
+      count => count === 1 ? "application awaiting profile review" : "applications awaiting profile review",
       "/admin/workspaces/verification",
       "Verification",
+    );
+  if (hasPermission(actor.roles, "members:review"))
+    await add(
+      "new-signups",
+      `SELECT count(*)::int n FROM public."user" u
+       WHERE u."createdAt">=now()-interval '7 days'
+       AND NOT EXISTS(SELECT 1 FROM tpa.staff_roles r WHERE r.user_id=u.id)
+       AND NOT EXISTS(SELECT 1 FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id WHERE p.user_id=u.id)
+       AND NOT EXISTS(SELECT 1 FROM tpa.account_invitation_holds h WHERE h.user_id=u.id)
+       AND NOT EXISTS(SELECT 1 FROM tpa.onboarding_invitations i WHERE i.user_id=u.id)
+       AND NOT EXISTS(SELECT 1 FROM tpa.verification_submissions s WHERE s.user_id=u.id)`,
+      count => count === 1 ? "new sign-up awaiting an application (last 7 days)" : "new sign-ups awaiting applications (last 7 days)",
+      "/admin/workspaces/members?view=accounts",
+      "Account",
+      "Low",
     );
   if (hasPermission(actor.roles, "content:publish"))
     await add(
