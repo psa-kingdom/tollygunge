@@ -36,8 +36,10 @@ export function PasswordSignIn({ enabled, returnTo }: { enabled: boolean; return
   return (
     <form
       className="member-settings"
+      aria-busy={busy}
       onSubmit={async (event) => {
         event.preventDefault();
+        if (busy) return;
         setBusy(true);
         setMessage("");
         const data = new FormData(event.currentTarget);
@@ -48,7 +50,7 @@ export function PasswordSignIn({ enabled, returnTo }: { enabled: boolean; return
           });
           if (result.error) {
             setMessage(
-              "Email or password is incorrect, or sign-in is unavailable.",
+              "Unable to sign in. Check your email and password, or reset your password.",
             );
             return;
           }
@@ -75,13 +77,13 @@ export function PasswordSignIn({ enabled, returnTo }: { enabled: boolean; return
           required
         />
       </label>
+      <Link href="/forgot-password" className="auth-recovery">
+        Forgot password?
+      </Link>
       <button className="button" disabled={!enabled || busy}>
         {busy ? "Signing in…" : "Sign in"}
       </button>
-      <p role="status">{message}</p>
-      <Link href="/forgot-password" className="text-link">
-        Forgot password?
-      </Link>
+      <p className="auth-message" role="alert">{message}</p>
     </form>
   );
 }

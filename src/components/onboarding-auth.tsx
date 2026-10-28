@@ -14,9 +14,12 @@ export function Signup({ returnTo }: { returnTo?: string }) {
   return (
     <form
       className="member-settings"
+      aria-busy={busy}
       onSubmit={async (e) => {
         e.preventDefault();
+        if (busy) return;
         setBusy(true);
+        setMessage("");
         const f = new FormData(e.currentTarget);
         try {
           const result = await client.signUp.email({
@@ -34,7 +37,7 @@ export function Signup({ returnTo }: { returnTo?: string }) {
           router.refresh();
         } catch (e) {
           setMessage(
-            e instanceof Error ? e.message : "Unable to create account.",
+            e instanceof Error ? `${e.message} Try again, or sign in if you already have an account.` : "Unable to create account. Please try again.",
           );
         } finally {
           setBusy(false);
@@ -50,15 +53,15 @@ export function Signup({ returnTo }: { returnTo?: string }) {
         <input name="email" type="email" required autoComplete="email" />
       </label>
       <NewPasswordField label="Password" />
-      <p>
-        Your account lets you save details. A Verified profile requires separate
-        review; membership and payment remain separate.
+      <p className="auth-policy">
+        Creating an account does not approve your membership. Profile verification,
+        membership approval, and payment are separate steps.
       </p>
       <button className="button" disabled={busy}>
         {busy ? "Creating…" : "Create account"}
       </button>
-      <p role="alert">{message}</p>
-      <Link href={returnTo ? "/login?returnTo="+encodeURIComponent(destination) : "/login"}>Already have an account? Sign in</Link>
+      <p className="auth-message" role="alert">{message}</p>
+      <p className="auth-switch">Already have an account?{" "}<Link href={returnTo ? "/login?returnTo="+encodeURIComponent(destination) : "/login"}>Sign in</Link></p>
     </form>
   );
 }
@@ -114,10 +117,13 @@ export function OnboardingSignIn({
   return (
     <form
       className="member-settings"
+      aria-busy={busy}
       onSubmit={async (e) => {
         e.preventDefault();
+        if (busy) return;
         const f = new FormData(e.currentTarget);
         setBusy(true);
+        setMessage("");
         try {
           const r = await fetch("/api/onboarding/sign-in", {
             method: "POST",
@@ -132,7 +138,7 @@ export function OnboardingSignIn({
           router.push(eventReturnPath(returnTo) ?? "/account");
           router.refresh();
         } catch (e) {
-          setMessage(e instanceof Error ? e.message : "Sign-in failed.");
+          setMessage(e instanceof Error ? `${e.message} Try again or reset your password.` : "Sign-in failed. Please try again.");
         } finally {
           setBusy(false);
         }
@@ -157,18 +163,18 @@ export function OnboardingSignIn({
           required
         />
       </label>
+      <Link className="auth-recovery" href="/forgot-password">Forgot password?</Link>
       <label className="consent">
         <input name="keepSignedIn" type="checkbox" />
         Keep me signed in for 30 days on this device
       </label>
-      <p>
+      <p className="session-help">
         Otherwise you stay signed in for 7 days. Staff sessions last 7 days.
       </p>
       <button className="button" disabled={busy}>
         {busy ? "Signing in…" : "Sign in"}
       </button>
-      <p role="alert">{message}</p>
-      <Link href="/forgot-password">Forgot password?</Link>
+      <p className="auth-message" role="alert">{message}</p>
     </form>
   );
 }
