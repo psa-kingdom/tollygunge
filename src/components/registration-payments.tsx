@@ -72,7 +72,7 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
       </div>
       {loaded && !rows.length && !message && <WorkspaceEmptyState icon="wallet" title="No payments match this status" description="Payment references submitted for event registrations will appear here for review." actionLabel={filter === "all" ? "Refresh payments" : "View all statuses"} onAction={() => {if (filter === "all") void load(filter).catch(e => setMessage(e.message)); else setFilter("all");}} />}
       {!!rows.length && <div className="table-scroll" role="region" tabIndex={0} aria-label="Registration payments">
-        <table className="operations-table" aria-label="Registration payments">
+        <table className="operations-table registration-payments-table" aria-label="Registration payments">
           <thead>
             <tr>
               <th>Member</th>

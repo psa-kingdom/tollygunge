@@ -161,13 +161,13 @@ try {
  pass('Audited reopening and attendance correction revoke the badge before re-finalization');
  pass('Completion requires attendance reconciliation, awards a badge and freezes operational changes');
  if(process.argv.includes('--browser')) {
-  browser=await chromium.launch({channel:process.env.TPA_BROWSER_CHANNEL || 'chrome',headless:true});
+  browser=await chromium.launch({channel:process.env.TPA_BROWSER_CHANNEL || undefined,headless:true});
   for(const width of [1440,768,390]) {
    const context=await browser.newContext({viewport:{width,height:1000}});await context.addCookies([{name:'better-auth.session_token',value:cookies[0],url:base}]);
    const page=await context.newPage();const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(base+'/admin/workspaces/events?id='+event.id);await check(page.getByRole('region',{name:'Event command center',exact:true})).toBeVisible();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);assert.deepEqual(errors,[]);
-   await page.addScriptTag({path:resolve('.local/technical-qa/node_modules/axe-core/axe.min.js')});
+   await page.addScriptTag({path:resolve('node_modules/axe-core/axe.min.js')});
    const accessibility=await page.evaluate(async()=>{
     const axe=(window as unknown as {axe:{run:(scope:unknown,options:unknown)=>Promise<{violations:unknown[];incomplete:unknown[]}>}}).axe;
     return axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa']}});

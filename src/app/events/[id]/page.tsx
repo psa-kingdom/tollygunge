@@ -5,7 +5,15 @@ import { PublicEventResources } from "@/components/public-event-resources";
 import { SiteShell } from "@/components/site-shell";
 import { getDatabase } from "@/lib/database";
 import { uuid } from "@/domain/operations";
+import { publicMetadata } from "@/domain/public-metadata";
+import { PublicBreadcrumbs } from "@/components/public-breadcrumbs";
 export const dynamic = "force-dynamic";
+export async function generateMetadata({params}:{params:Promise<{id:string}>}) {
+  const {id}=await params;
+  try { uuid(id); } catch { return { title: "Event not found", robots: {index:false,follow:false} }; }
+  const row=(await getDatabase().query("SELECT title,description FROM tpa.events WHERE id=$1 AND status='published' AND visibility='public'",[id])).rows[0];
+  return row ? publicMetadata(`/events/${id}`,row.title,row.description) : {title:"Event not found",robots:{index:false,follow:false}};
+}
 export default async function Page({
   params,
 }: {
@@ -27,7 +35,7 @@ export default async function Page({
   return (
     <SiteShell>
       <main id="main" className="page-content">
-        <Link href="/events">← Events</Link>
+        <PublicBreadcrumbs section="Events" href="/events" title={event.title} />
         <h1>{event.title}</h1>
         {event.fee_paise > 0 && <p className="notice">Payment is manually verified. Your registration is confirmed after staff checks payment.</p>}
         <p>{eventTime(event.starts_at)} to {eventTime(event.ends_at)}</p>

@@ -1,6 +1,8 @@
 import Link from "./navigation-link";
 import { TpaLogo } from "./tpa-logo";
 import { footerGroups, type SharedSettings } from "@/domain/website-settings";
+import { releaseVersion } from "@/domain/release";
+import { ReportIssueLink } from "./report-issue-link";
 
 export function PublicFooter({settings,preview=false}:{settings:SharedSettings;preview?:boolean}) {
   const footer=settings.footer;
@@ -19,5 +21,6 @@ export function PublicFooter({settings,preview=false}:{settings:SharedSettings;p
       </div>)}
     </nav>
     <div className="footer-bottom"><span>© {new Date().getFullYear()} {footer.copyrightName}</span><span>{footer.location}</span><span>{footer.closing}</span></div>
+    <nav className="footer-utility" aria-label="Website support"><Link href="/privacy">Privacy</Link><ReportIssueLink /><span>Version {releaseVersion}</span></nav>
   </footer>;
 }

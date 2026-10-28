@@ -18,6 +18,7 @@ import {
 } from "../src/lib/email-worker";
 import { recordEmailEvent } from "../src/lib/email-events";
 import { EmailProviderError } from "../src/lib/email-provider";
+import {restrictedWorkerPool} from './helpers/restricted-worker-pool.mjs';
 const enabled = !!process.env.DATABASE_URL && !!process.env.TPA_DATABASE_NAME;
 const quota = {
   daily: { used: 0, limit: 100, resets_at: "2099-01-01T00:00:00Z" },
@@ -32,6 +33,7 @@ test(
       "Use an isolated test database only.",
     );
     const pool = new Pool(databaseOptions()),
+      workerPool = await restrictedWorkerPool(pool,process.env,'email'),
       actor = randomUUID(),
       user = randomUUID(),
       campaign = randomUUID(),
@@ -62,7 +64,7 @@ test(
       },
     };
     const job = async () => {
-      const j = await claimEmailJob(pool, owner);
+      const j = await claimEmailJob(workerPool, owner);
       assert.ok(j);
       return j;
     };
@@ -124,7 +126,7 @@ test(
         true,
       );
       let j = await job();
-      await processEmailJob(pool, j.id, owner, process.env, {
+      await processEmailJob(workerPool, j.id, owner, process.env, {
         ...deps,
         quota: async () => {
           await pool.query(
@@ -145,7 +147,7 @@ test(
         [j.id],
       );
       j = await job();
-      await processEmailJob(pool, j.id, owner, process.env, {
+      await processEmailJob(workerPool, j.id, owner, process.env, {
         ...deps,
         quota: async () => ({ ...quota, daily: { ...quota.daily, used: 80 } }),
       });
@@ -157,7 +159,7 @@ test(
       );
       j = await job();
       let stable = "";
-      await processEmailJob(pool, j.id, owner, process.env, {
+      await processEmailJob(workerPool, j.id, owner, process.env, {
         ...deps,
         request: async (_p, _k, _b, idem) => {
           stable = idem!;
@@ -170,7 +172,7 @@ test(
         [j.id],
       );
       j = await job();
-      await processEmailJob(pool, j.id, owner, process.env, {
+      await processEmailJob(workerPool, j.id, owner, process.env, {
         ...deps,
         request: async (_p, _k, body, idem) => {
           assert.equal(idem, stable);
@@ -213,7 +215,7 @@ test(
         "UPDATE tpa.email_jobs SET status='leased',lease_owner=$2,lease_until=now()-interval '1 minute',first_attempt_at=now()-interval '24 hours' WHERE id=$1",
         [j.id, owner],
       );
-      await recoverEmailLeases(pool);
+      await recoverEmailLeases(workerPool);
       assert.equal((await state(j.id)).status, "review");
       const row = await state(j.id),
         token = new URLSearchParams(
@@ -251,7 +253,7 @@ test(
       });
       j = await job();
       assert.equal(j.kind, "inbound");
-      await processEmailJob(pool, j.id, owner, process.env, {
+      await processEmailJob(workerPool, j.id, owner, process.env, {
         ...deps,
         request: async () => ({
           to: ["contact@updates.tpassociation.org"],
@@ -301,7 +303,7 @@ test(
       await pool.query("DELETE FROM tpa.staff_roles WHERE user_id=$1", [actor]);
       j = await job();
       assert.equal(j.id, reply.id);
-      await processEmailJob(pool, j.id, owner, process.env, deps);
+      await processEmailJob(workerPool, j.id, owner, process.env, deps);
       assert.equal((await state(j.id)).reason, "sender_permission_revoked");
     } finally {
       // This suite is confined to the disposable database; remove exact fixture dependencies.
@@ -346,6 +348,7 @@ test(
       await pool.query('DELETE FROM public."user" WHERE id=ANY($1::text[])', [
         [actor, user],
       ]);
+      if(workerPool!==pool)await workerPool.end();
       await pool.end();
       for (const k of Object.keys(process.env))
         if (!(k in old)) delete process.env[k];

@@ -5,7 +5,7 @@ import { mkdir, readFile, writeFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createServer, type Server } from "node:http";
 import { Pool } from "pg";
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect, type Page } from "@playwright/test";
 import { sharedDefaults } from "../src/domain/website-settings";
 import { homeDefaults } from "../src/domain/website-home";
 import { personBody } from "../src/domain/people";
@@ -65,10 +65,12 @@ Object.assign(env, {
 let server: ReturnType<typeof spawn> | undefined,
   storage: Server | undefined,
   browser: Awaited<ReturnType<typeof chromium.launch>> | undefined,
+  diagnosticPage: Page | undefined,
   created = false;
 const cookies: string[] = [],
   ids: string[] = [],
   scenarios: string[] = [],
+  browserErrors: string[] = [],
   views: unknown[] = [];
 function pass(s: string) {
   scenarios.push(s);
@@ -590,7 +592,7 @@ try {
     "Links and PDF downloads publish/withdraw; invalid files are rejected and replacement preserves published bytes and old references",
   );
   if (process.argv.includes("--browser")) {
-    browser = await chromium.launch({ channel: "chrome", headless: true });
+    browser = await chromium.launch({ channel: process.env.TPA_BROWSER_CHANNEL || undefined, headless: true });
     const context = await browser.newContext();
     await context.addCookies([
       {
@@ -602,15 +604,19 @@ try {
       },
     ]);
     const p = await context.newPage();
+    diagnosticPage = p;
     const errors: string[] = [];
     p.on("pageerror", (e) => errors.push(e.message));
-    const axe = resolve(".local/technical-qa/node_modules/axe-core/axe.min.js");
-    for (const width of [1440, 768, 390]) {
+    p.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
+    p.on("pageerror", (e) => browserErrors.push(e.message));
+    const axe = resolve("node_modules/axe-core/axe.min.js");
+    for (const width of [1440, 768, 390, 320]) {
       await p.setViewportSize({ width, height: 1000 });
       for (const path of [
         "/admin/workspaces/governance",
         "/admin/workspaces/website",
         "/admin/workspaces/content",
+        "/admin/workspaces/media",
       ]) {
         await p.goto(base + path, { waitUntil: "networkidle" });
         await expect(p.getByRole("heading", { level: 1 })).toBeVisible();
@@ -660,8 +666,10 @@ try {
       p.getByRole("textbox", { name: /Biography heading/ }),
     ).toHaveValue("Career and contribution");
     await p.goto(base + "/admin/workspaces/website");
+    await expect(p).toHaveURL(base + "/admin/workspaces/website");
     await p.getByRole("tab", { name: "Homepage", exact: true }).click();
-    await p.getByText("Copy", { exact: true }).click();
+    await p.getByRole("combobox", { name: "Settings group", exact: true }).selectOption("copy");
+    await p.locator("summary").filter({ hasText: /^Copy$/ }).click();
     const title = p.getByRole("textbox", {
       name: "Hero · Heading line 1",
       exact: true,
@@ -672,7 +680,8 @@ try {
     await expect(p.getByRole("status")).toContainText("Draft saved");
     await p.reload();
     await p.getByRole("tab", { name: "Homepage", exact: true }).click();
-    await p.getByText("Copy", { exact: true }).click();
+    await p.getByRole("combobox", { name: "Settings group", exact: true }).selectOption("copy");
+    await p.locator("summary").filter({ hasText: /^Copy$/ }).click();
     await expect(title).toHaveValue("UI managed homepage");
     await p
       .getByRole("button", { name: "Publish saved draft", exact: true })
@@ -686,6 +695,51 @@ try {
       path: dir + "/public-home-managed.png",
       fullPage: true,
     });
+    await p.goto(base + "/admin/workspaces/content");
+    await p.getByRole("button", { name: /^Synthetic page/ }).click();
+    await p.getByRole("textbox", { name: "Title", exact: true }).fill("Synthetic browser page");
+    await p.getByRole("button", { name: "Save draft", exact: true }).click();
+    await expect(p.getByRole("status")).toContainText("Draft saved");
+    await p.reload();
+    await p.getByRole("button", { name: /^Synthetic browser page/ }).click();
+    await expect(p.getByRole("textbox", { name: "Title", exact: true })).toHaveValue("Synthetic browser page");
+    await p.getByRole("tab", { name: "Preview", exact: true }).click();
+    await expect(p.locator("iframe").first()).toBeVisible();
+    await p.screenshot({ path: dir + "/content-preview.png", fullPage: true });
+    await p.getByRole("tab", { name: "Edit", exact: true }).click();
+    await p.getByRole("button", { name: "Publish saved draft", exact: true }).click();
+    await expect(p.getByRole("status")).toContainText("Published on the public site");
+    assert.ok((await (await fetch(base + "/about")).text()).includes("Synthetic browser page"));
+    await p.getByRole("button", { name: "Unpublish", exact: true }).click();
+    await expect(p.getByRole("button", { name: "Unpublish", exact: true })).toBeHidden();
+    await p.getByRole("button", { name: "Archive entry", exact: true }).click();
+    await expect(p.getByRole("button", { name: "Restore entry", exact: true })).toBeVisible();
+    await p.getByRole("button", { name: "Restore entry", exact: true }).click();
+    await expect(p.getByRole("button", { name: "Archive entry", exact: true })).toBeVisible();
+    const restoredContent = (await request("/api/staff/content")).find((entry: {id:string}) => entry.id === page.id);
+    assert.equal(restoredContent.published, null);
+    pass("Actual Content editor saves/reloads, previews, publishes, withdraws, archives and restores privately");
+
+    await p.goto(base + "/admin/workspaces/media");
+    const { default: sharp } = await import("sharp");
+    const syntheticImage = await sharp({ create: { width: 80, height: 40, channels: 4, background: "#315d7a" } }).png().toBuffer();
+    await p.locator('input[type="file"]').setInputFiles({ name: "synthetic-qa.png", mimeType: "image/png", buffer: syntheticImage });
+    await p.getByRole("textbox", { name: "Title", exact: true }).fill("Synthetic browser image");
+    await p.getByRole("textbox", { name: "Category", exact: true }).fill("Synthetic QA");
+    await p.getByRole("textbox", { name: "Accessible image description", exact: true }).fill("A synthetic solid blue rectangle");
+    await p.getByRole("button", { name: "Upload private draft", exact: true }).click();
+    await expect(p.getByRole("status")).toContainText("Image saved privately");
+    await p.getByRole("textbox", { name: "Title", exact: true }).fill("Synthetic browser image revised");
+    await p.getByRole("button", { name: "Save draft details", exact: true }).click();
+    await expect(p.getByRole("status")).toContainText("Draft details saved");
+    await p.getByRole("button", { name: "Publish saved image and description", exact: true }).click();
+    await expect(p.getByRole("status")).toContainText("now public");
+    await p.reload();
+    await p.getByRole("button", { name: /^Synthetic browser image revised/ }).click();
+    await expect(p.getByRole("textbox", { name: "Title", exact: true })).toHaveValue("Synthetic browser image revised");
+    await p.getByRole("button", { name: "Unpublish image", exact: true }).click();
+    await expect(p.getByRole("status")).toContainText("Public access is closed");
+    pass("Actual Media library uploads to isolated storage, saves descriptions, publishes, reloads and withdraws");
     assert.deepEqual(errors, []);
     pass(
       "Actual admin browser saves, reloads and publishes homepage; people heading and desktop/tablet/phone accessibility pass",
@@ -709,6 +763,12 @@ try {
     ),
   );
   console.log("Evidence: " + dir);
+} catch (error) {
+  if (diagnosticPage && !diagnosticPage.isClosed()) {
+    await diagnosticPage.screenshot({ path: dir + "/first-failure.png", fullPage: true }).catch(() => {});
+    await writeFile(dir + "/first-failure.json", JSON.stringify({ url: diagnosticPage.url(), body: await diagnosticPage.locator("body").innerText().catch(() => ""), browserErrors, error: String(error), syntheticOnly: true }, null, 2));
+  }
+  throw error;
 } finally {
   await browser?.close();
   if (server) {

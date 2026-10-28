@@ -1,0 +1,418 @@
+{
+  "public.account": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "public.rateLimit": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "public.session": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "public.user": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "public.verification": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.account_invitation_holds": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.application_documents": [
+    "DELETE",
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.application_drafts": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.audit_events": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.campaign_drafts": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.campaign_revisions": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.communication_templates": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.content_entries": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.content_revisions": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.email_conversations": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.email_dispatches": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.email_events": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.email_jobs": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.email_messages": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.email_notes": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.email_receipts": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.email_suppressions": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.email_unsubscribe_tokens": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.email_worker_state": [
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_announcements": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_assets": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_attendance": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_badge_rules": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_badges": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_booking_payment_configurations": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.event_entitlements": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_expenses": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_operation_history": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.event_payment_configurations": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.event_payment_history": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.event_promotion_settings": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_promotions": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.event_registrations": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.event_reminders": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.events": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.flyer_templates": [
+    "SELECT"
+  ],
+  "tpa.flyer_variants": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.governance_profiles": [
+    "SELECT"
+  ],
+  "tpa.governance_revisions": [
+    "SELECT"
+  ],
+  "tpa.inquiries": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.inquiry_notes": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.inquiry_updates": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.invitation_release_reviews": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.invitation_template_state": [
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.invitation_templates": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.member_import_job_rows": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.member_import_jobs": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.member_import_worker_state": [
+    "SELECT"
+  ],
+  "tpa.member_profiles": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.memberships": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.news_source_revisions": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.news_sources": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.newsletter_consents": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.onboarding_batches": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.onboarding_invitations": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.onboarding_limits": [
+    "SELECT"
+  ],
+  "tpa.onboarding_mail": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.onboarding_mail_events": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.onboarding_settings": [
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.operator_approved_identities": [
+    "SELECT"
+  ],
+  "tpa.payment_detail_revisions": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.payment_details": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.payment_qr_images": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.people": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.person_assignments": [
+    "DELETE",
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.person_revisions": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.postal_city_aliases": [
+    "SELECT"
+  ],
+  "tpa.postal_locations": [
+    "SELECT"
+  ],
+  "tpa.postal_versions": [
+    "SELECT"
+  ],
+  "tpa.private_documents": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.profile_groups": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.profile_portraits": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.profile_reviews": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.public_media": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.public_subscribers": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.public_subscription_requests": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.public_subscription_tokens": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.report_presets": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.staff_roles": [
+    "DELETE",
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.verification_policies": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.verification_policy_draft": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.verification_submissions": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.website_resource_files": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.website_resources": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.website_revisions": [
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.website_settings": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ]
+}

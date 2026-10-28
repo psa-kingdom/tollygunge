@@ -9,6 +9,7 @@ import {publishedSettings,publishedResources} from '@/lib/website-content';
 import { type PublicGovernanceEntry } from "@/components/public-governance";
 export const dynamic = "force-dynamic";
 import { sitePages as pages } from "@/domain/site-pages";
+import { publicMetadata } from "@/domain/public-metadata";
 export function generateStaticParams() {
   return Object.keys(pages).map((page) => ({ page }));
 }
@@ -18,8 +19,9 @@ export async function generateMetadata({
   params: Promise<{ page: string }>;
 }) {
   const { page } = await params;
-  if (!pages[page]) return { title: "Page not found" };
-  return { title: (await publishedPage(page))?.title ?? pages[page].title };
+  if (!pages[page]) return { title: "Page not found", robots: { index: false, follow: false } };
+  const content = await publishedPage(page);
+  return publicMetadata(`/${page}`, content?.title ?? pages[page].title, content?.intro || pages[page].intro);
 }
 export default async function ContentPage({
   params,

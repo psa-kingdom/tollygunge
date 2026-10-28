@@ -7,9 +7,16 @@ import { join } from "node:path";
 // Workers retain database leases. Their failures must never kill web.
 export function startRuntime({ spawnProcess = spawn, exit = process.exit, schedule = setTimeout, cancel = clearTimeout, report = console.error, publish = publishHealth, env = process.env } = {}) {
   const webEnv = { ...env };
+  // Scoped URLs belong to the supervisor, never to sibling child processes.
+  for (const key of ["TPA_EMAIL_DATABASE_URL", "TPA_IMPORT_DATABASE_URL", "TPA_MIGRATION_DATABASE_URL"])
+    delete webEnv[key];
   delete webEnv.RESEND_RECEIVING_API_KEY;
   webEnv.RESEND_RECEIVING_CONFIGURED = env.RESEND_RECEIVING_API_KEY ? "true" : "false";
   const importEnv = { ...webEnv };
+  importEnv.DATABASE_URL = env.TPA_IMPORT_DATABASE_URL || env.DATABASE_URL;
+  const emailEnv = { ...env, DATABASE_URL: env.TPA_EMAIL_DATABASE_URL || env.DATABASE_URL };
+  for (const key of ["TPA_EMAIL_DATABASE_URL", "TPA_IMPORT_DATABASE_URL", "TPA_MIGRATION_DATABASE_URL"])
+    delete emailEnv[key];
   for (const key of Object.keys(importEnv))
     if (/^(RESEND_|SMTP_|GOOGLE_|R2_|CLOUDFLARE_)/.test(key)) delete importEnv[key];
   const children = new Set(), timers = new Set();
@@ -65,7 +72,7 @@ export function startRuntime({ spawnProcess = spawn, exit = process.exit, schedu
     });
   }
   launch("server.js", webEnv);
-  launch("email-worker.mjs", env, "email");
+  launch("email-worker.mjs", emailEnv, "email");
   launch("member-import-worker.mjs", importEnv, "import");
   function heartbeat() {
     if (stopping) return;
