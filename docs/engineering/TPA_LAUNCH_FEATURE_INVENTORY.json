@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-28T04:15:02.156Z",
+  "generatedAt": "2026-10-28T04:40:08.788Z",
   "branch": "testing/launch-readiness",
-  "sourceSha": "d532d51512487e0ee2caed9d45170218ac7800f4",
+  "sourceSha": "0c56e13236804b5065a8a1f68d77637070449ce4",
   "sourceWorkingTree": "Inventory describes current files; a HEAD SHA does not imply a clean tree or tested build.",
   "resultPolicy": "QA mappings identify candidate acceptance cases, not executed coverage. Each result records its own testedSha, environment, evidence and limitation. Broad suite success never automatically promotes mapped features.",
   "discoveryLimits": [
@@ -24,11 +24,11 @@
     "PLANNED": 12
   },
   "totals": {
-    "PASS": 68,
+    "PASS": 71,
     "FAIL": 0,
     "FIXED AND RETESTED": 2,
     "BLOCKED": 11,
-    "NOT TESTED": 365,
+    "NOT TESTED": 362,
     "DEFERRED": 12
   },
   "features": [
@@ -14617,12 +14617,13 @@
       "route": "/admin/workspaces/access",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -14672,12 +14673,13 @@
       "route": "/admin/workspaces/communications",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -14722,12 +14724,13 @@
       "route": "/admin/workspaces/content",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -14780,12 +14783,13 @@
       "route": "/admin/workspaces/crm",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -14876,12 +14880,13 @@
       "route": "/admin/workspaces/events",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -14972,12 +14977,13 @@
       "route": "/admin/workspaces/flyers",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15021,12 +15027,13 @@
       "route": "/admin/workspaces/governance",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15066,12 +15073,13 @@
       "route": "/admin/workspaces/imports",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15115,12 +15123,13 @@
       "route": "/admin/workspaces/media",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15203,12 +15212,13 @@
       "route": "/admin/workspaces/members",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15291,12 +15301,13 @@
       "route": "/admin/workspaces/onboarding",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15346,12 +15357,13 @@
       "route": "/admin/workspaces/onboarding-email",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15399,12 +15411,13 @@
       "route": "/admin/workspaces/payments",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15436,12 +15449,13 @@
       "route": "/admin/workspaces/reports",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15496,12 +15510,13 @@
       "route": "/admin/workspaces/verification",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15546,12 +15561,13 @@
       "route": "/admin/workspaces/website",
       "result": {
         "status": "NOT TESTED",
-        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "summary": "PARTIAL: current live deployment loaded this workspace; 18 views and all five report previews inspected across the portal without saving, publishing, paying, exporting or sending. Local integrated portal acceptance is recorded separately.",
         "evidence": [
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json"
         ],
         "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
-        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "testedSha": "live deployment f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4; source SHA not exposed",
         "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
@@ -15895,9 +15911,11 @@
           ".local/launch-readiness/live-login-diagnosis-2026-10-27T12-48-01.786Z/results.json",
           ".local/launch-readiness/live-login-sanitized.json",
           ".local/launch-readiness/live-login-diagnosis-2026-10-27T12-53-32.082Z/results.json",
-          ".local/launch-readiness/live-browser-traversal.json"
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/live-browser-current-deployment.json",
+          ".local/launch-readiness/2026-10-28T04-33-02.962Z-46402741/security/restricted-2026-10-28T04-34-26.347Z-fc13b121/portal.log"
         ],
-        "environment": "Local synthetic QA at recorded SHA; separately production account diagnostics and authenticated browser traversal on deployment 9fc00623. One admin recovery request explicitly approved; no member invitation or operational data mutation.",
+        "environment": "Local synthetic regression at recorded SHA; production diagnostics and user-authorized recovery on earlier deployment, followed by authenticated read-only traversal on current f2665e96 deployment. No member sends or operational mutations.",
         "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
         "limitation": "Local testedSha identifies the synthetic regression; live provider does not expose its source SHA. Real member login was not exercised in production. Existing verification rules and all 202 member invitation holds remain unchanged.",
         "executionHistory": [
@@ -16343,12 +16361,16 @@
         "E2E-02"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Policy/conditional progress unit tests pass; integrated portal checks cover missing-step links and distinct incomplete/complete/submitted/verified states. Completion does not approve a profile.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-28T04-15-28.357Z-7b46cc13/results.json",
+          ".local/launch-readiness/2026-10-28T04-33-02.962Z-46402741/security/restricted-2026-10-28T04-34-26.347Z-fc13b121/portal.log",
+          "docs/engineering/TPA_LAUNCH_EXECUTED_RESULTS.json"
+        ],
+        "environment": "local synthetic QA; isolated loopback PostgreSQL and restricted web identity; Chromium desktop/tablet/phone",
+        "testedSha": "c0788f9; build input digest 6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+        "limitation": "Browser state/error/alert responses are mocked where noted by existing tests. Real member production actions, physical devices and assistive technology remain separate acceptance."
       }
     },
     {
@@ -16395,12 +16417,16 @@
         "E2E-11"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Actual HTTP acceptance checks all staff roles and restricted applicant visibility; integrated browser checks refresh signup/submission alerts without approval.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-28T04-15-28.357Z-7b46cc13/results.json",
+          ".local/launch-readiness/2026-10-28T04-33-02.962Z-46402741/security/restricted-2026-10-28T04-34-26.347Z-fc13b121/portal.log",
+          "docs/engineering/TPA_LAUNCH_EXECUTED_RESULTS.json"
+        ],
+        "environment": "local synthetic QA; isolated loopback PostgreSQL and restricted web identity; Chromium desktop/tablet/phone",
+        "testedSha": "c0788f9; build input digest 6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+        "limitation": "Browser state/error/alert responses are mocked where noted by existing tests. Real member production actions, physical devices and assistive technology remain separate acceptance."
       }
     },
     {
@@ -16462,12 +16488,16 @@
         "E2E-11"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Integrated portal suite: 45/45 desktop/tablet/phone checks pass, including permitted destinations, sidebar collapse, mobile focus, session isolation, slow-navigation retention and public-style isolation.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-28T04-15-28.357Z-7b46cc13/results.json",
+          ".local/launch-readiness/2026-10-28T04-33-02.962Z-46402741/security/restricted-2026-10-28T04-34-26.347Z-fc13b121/portal.log",
+          "docs/engineering/TPA_LAUNCH_EXECUTED_RESULTS.json"
+        ],
+        "environment": "local synthetic QA; isolated loopback PostgreSQL and restricted web identity; Chromium desktop/tablet/phone",
+        "testedSha": "c0788f9; build input digest 6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+        "limitation": "Browser state/error/alert responses are mocked where noted by existing tests. Real member production actions, physical devices and assistive technology remain separate acceptance."
       }
     },
     {

@@ -1,129 +1,130 @@
 # TPA launch health report
 
 Runs: 27–28 October 2026, Asia/Calcutta. **Production release recommendation: NOT READY.**
-The listed local critical workflows pass; the testing candidate has not been pushed,
-merged or deployed. Remaining acceptance boundaries below are explicit, not waived.
+The executed local critical workflows pass after the scoped repairs below. The testing
+candidate has not been pushed, merged into main or deployed by this task. Remaining
+acceptance gates are explicit; an inventory or local pass is not release approval.
 
 ## Candidate and preservation
 
-- Branch: `testing/launch-readiness`, worktree `D:/Downloads/Workspace/TPA/launch-readiness`.
-- Production reference/base: `295c74a65f32171a003bd754f29493bfe59aebd9`.
-- Runtime fixes are in `a001c09657944abc36ec58a20257031f6bd27b2c`;
-  diagnostic/preview and evidence integration is in `a38f9814d6bbef80d397c31bbe145ac9f7408063`.
-  Final static results and final report commit are recorded in the local final-candidate identity artifact.
-- Build identity checks compare the exact build ID and SHA-256 manifest of 347 build
-  inputs. Documentation/test-only commits do not imply a different runtime; a changed
-  build input refuses integration until web and worker builds succeed together.
-- All eight original worktrees, old branch/stash/tag identities, source/untracked
-  payloads and 1,845 existing evidence files are preserved. Private recovery storage:
-  `D:/Downloads/Workspace/TPA/.launch-recovery/20261027-launch`.
-  Git bundle and 120-entry payload archive verify; final source/evidence comparison
-  reports eight original trees, zero differences. No branch/worktree/stash cleanup.
+- Branch/worktree: `testing/launch-readiness`, `D:/Downloads/Workspace/TPA/launch-readiness`.
+- Original verified remote main/base: `295c74a65f32171a003bd754f29493bfe59aebd9`.
+  Main advanced during execution to `77d84f7f54b8feb7d039886817bca78f8fed4cb4`.
+  All eight intervening commits were reviewed and integrated locally in `2d90ed3`;
+  the individual dispositions and single payment-markup conflict are in decisions.
+- Final engineering implementation checkpoint: `0c56e13236804b5065a8a1f68d77637070449ce4`.
+  Final report commit/check results are recorded in `.local/launch-readiness/final-candidate.json`.
+  Build identity compares the exact Next BUILD_ID and **355 build-input hashes**;
+  source digest: `6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57`.
+  Report/test-tool changes do not imply a different runtime. Changed inputs reject integration.
+- All eight original worktrees, original branch/stash/tag identities, changed source/
+  untracked payloads and 1,845 existing evidence files remain preserved. Recovery:
+  `D:/Downloads/Workspace/TPA/.launch-recovery/20261027-launch`. Git bundle and
+  120-entry payload archive verify. Final original-tree comparison is recorded in
+  `preservation-check.json` there. No original checkout/reset/clean/retirement occurred.
+  Main's deliberate removal of three loading boundaries was integrated only into the
+  candidate; original files remain in their checkouts, recovery payloads and Git history.
 
 ## Actual validation
 
-Counts below are assertion executions or explicitly labelled scenario groups.
-Repeated suites are not summed into a misleading unique-feature total.
-[Executed-result index](TPA_LAUNCH_EXECUTED_RESULTS.json) retains scoped commands,
-revisions, initial failures and subsequent regression results.
+[Executed-result index](TPA_LAUNCH_EXECUTED_RESULTS.json) records exact commands,
+revisions, counts, original failures and focused regressions. Counts are executions
+or explicitly labelled scenario groups; repeated assertions are not unique features.
 
-| Check | Actual outcome and evidence |
+| Check | Current evidence and scope |
 |---|---|
-| Static/build | Lint, indexed structure, 119 unit tests, 9 runtime tests, web/worker builds and typecheck pass on the recorded runs. Final clean implementation run at `a38f981` passed all seven selected phases, 128/128 Node assertions, zero skips/failures; evidence: `.local/launch-readiness/2026-10-28T04-00-22.306Z-db620151/results.json`. |
-| Broad restricted core | 29 Node tests passed; browser run had 98 passes, 7 new-test selector failures, 36 skips. Both effective HTTP privacy regressions passed. Original nonzero result retained at `.local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/`. |
-| Auth regression | Corrected only the ambiguous error selector. 29 Node tests and 8 browser cases pass; 4 deliberate viewport duplicates skipped. Admin/member form login, wrong password, persistence, 7/30-day sessions, logout, expiry, holds, approval and authorization exercised. Evidence: `.local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/results.json`. |
-| Public interactions | Approved Paper v3 checker passes 12 states: five widths in light/dark plus two JavaScript-disabled states; fonts/images, links, focus, overflow, runtime errors and automated accessibility checked; zero submissions. The obsolete atlas selector failure is retained. |
-| Member lifecycle | Initial invalid-email fixture failure corrected; 19/19 database/HTTP tests pass. Evidence: `.local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/results.json`. |
-| Newsletter/accounts/invitations | Newsletter 12/12; account preservation 3/3; invitation transactions 3/3 including 202 recipients; invitation HTTP 2/2. Restricted newsletter rerun also 12/12 with the limited email identity and exact cleanup. No real member email. |
-| Import jobs | 5 Node tests and 3 browser viewport cases pass; independent synthetic database counts, resumable jobs, worker restart, correction lineage and zero invitations checked. Evidence: `.local/launch-readiness/2026-10-27T12-30-10.942Z-606ddcc3/results.json`. |
-| Website/CMS | Six scenario groups pass including actual admin save/reload/publish, draft privacy, resources, pagination, replacement preservation and three viewport/accessibility checks. Missing historical axe path was repaired to use the already locked package; original failure retained. |
-| Event flow | 14 scenario groups pass: additive migrations, last-seat concurrency, manual payments/refund history, reminders/retries/webhooks, real UI registration/verification, PNG/PDF/QR exports and attendance. Final run: `.local/launch-readiness/2026-10-27T12-37-04.911Z-91a77a1a/results.json`. |
-| Engagement/operations | Six engagement scenario groups and the full event-operations browser workflow pass: reviewed promotion, reminders, expenses, attendance/completion, protected resources/perks and mocked storage compensation. Evidence: `.local/launch-readiness/2026-10-27T12-32-06.636Z-86cd31b6/results.json` and retained engagement run. |
-| Database identities | Fresh and upgrade runs pass 3,906 table privilege comparisons and six denied migration attempts. Exact test database/role cleanup verified. Evidence: `.local/launch-readiness/security-role-run/role-acceptance.json`. |
-| In-built browser 202 rehearsal | Synthetic admin login; 202 selections across nine pages; 202 eligible/0 excluded; acknowledgment required; one confirmation queues exactly 202; reload does not duplicate; one existing credential remains. No worker/transport, real emails or real records; exact own database removed. Evidence: `.local/launch-readiness/interactive-browser-evidence.json` and `interactive-202-34a43262-4b52-4359-b659-131c1c823d02/results.json`. |
-| Linux container | BLOCKED: Docker daemon startup failed on a locked local socket. Portable PostgreSQL 17.6 provided separate loopback QA; no Docker reset was attempted. `.local/launch-readiness/container-acceptance.json` has no executed container checks. |
+| Static/build | Integrated 124 unit + 9 runtime assertions passed, alongside lint, structure, web/worker builds and typecheck. Final full static checks run against the committed report SHA; see the final-candidate artifact. |
+| Integrated full restricted core | 29 Node assertions pass; 148 browser cases pass, 2 theme-transition measurements fail, 36 skip. Both HTTP privacy regressions and actual six-role/ownership/revocation boundaries pass. Original result remains nonzero at `.local/launch-readiness/2026-10-28T04-15-28.357Z-7b46cc13/results.json`. |
+| Portal regression | **45/45 pass, zero skips** at `c0788f9`: all permitted staff/member destinations, desktop/tablet/phone, collapse, mobile focus, session isolation, slow-navigation retention, completion states, applicant alerts and public-style isolation. Theme checks await actual animation completion; 4.5 contrast threshold is unchanged. Nested evidence: `2026-10-28T04-33-02.962Z-46402741/security/restricted-2026-10-28T04-34-26.347Z-fc13b121/portal.log` beneath `.local/launch-readiness/`. |
+| Authentication | Real synthetic admin/member form sign-in, wrong password, logout, persistence, expiry, hold/approval and session isolation exercised. Earlier focused auth run: 29 Node + 8 browser pass, 4 intentional viewport duplicates skip; integrated core/portal rechecks retained. Live admin recovery and current authenticated traversal are separate below. |
+| Public interactions | Integrated checker passes 12 states: five widths/light-dark and two JavaScript-disabled states, fonts/images, navigation, focus, overflow, runtime errors and automated accessibility. Zero submissions. |
+| Member/accounts/newsletter | Integrated member lifecycle 19/19, account preservation 3/3, newsletter 12/12 pass. Isolated mail sink, synthetic credentials; no real member mail. |
+| Import jobs/invitations | Integrated imports 5 Node + 3 browser pass; invitation transactions 3/3 including 202 recipients, HTTP 2/2 pass. Resume/restart, correction lineage, hold/idempotency and credential preservation checked. |
+| Website/CMS | Six scenario groups pass at `0c56e13`: actual synthetic admin save/reload/publication, private drafts, resource bytes/replacement preservation, pagination, three viewport/accessibility checks. Final retest `.local/launch-readiness/2026-10-28T04-38-15.867Z-b9422ace/results.json`. Prior Copy/hidden-section selector failures retained. |
+| Events/payments | 14 groups pass on integrated portal: last-seat races, manual verification/refund history, immutable payee snapshots, reminder/retry/webhook rules, actual UI booking/verification, PNG/PDF/QR exports and attendance. Six payment-table states at 320/390/768/light-dark pass with readable actions, actual keyboard scroll, no page overflow, axe zero and cancelled confirmation causing zero writes. |
+| Engagement/operations | Six engagement groups and full operational journey pass: promotions, controlled reminders, expenses, ownership, private resources/perks, attendance, completion/reopening/badges, storage-failure compensation. Integrated retests: `.local/launch-readiness/2026-10-28T04-33-02.962Z-46402741/results.json`. Storage is mocked. |
+| Database/runtime identities | Fresh/upgrade runs: 3,906 privilege comparisons and six denied migration attempts pass; exact fixture/role cleanup verified. Integrated core/email runtime uses restricted identities. No migration/schema files changed in the intervening main commits; role evidence stays scoped to its original run. |
+| Built-in browser 202 rehearsal | Repeated on integrated portal: select 25/50/.../200/202 across nine pages, review 202 eligible/0 excluded, acknowledgment required, queue exactly 202, reload without duplicates. Database confirms one retained credential and 202 memberships. No email worker/provider. `.local/launch-readiness/interactive-browser-integrated.json`; exact owned database removed after verified snapshot. |
+| Linux container | **BLOCKED**: Docker daemon startup failed on a locked local socket. Portable PostgreSQL 17.6 provides separate loopback QA. No Docker reset; container report has zero executed checks. |
 
-The original 36 browser skips comprise 30 intentional viewport duplicates,
-three import cases subsequently executed separately, and three supplied-photo
-acceptance cases not executed. The first broad suite is **not** relabelled green;
-its seven fixture failures have an explicit focused passing retest. The scoped
-payment CSS change was rebuilt and exercised with the complete event flow and
-six table states rather than rerunning unrelated browser cases.
+The original 36 skips comprise 30 viewport duplicates, three imports subsequently
+run separately, and three supplied-photo acceptance cases not executed. The initial
+pre-integration 98-pass/7-selector-failure browser run is also retained. Neither broad
+run is relabelled green: corrected selectors and transition measurements have explicit
+passing regressions. The new portal stage initially had null outer assertion counts;
+its nested log contains 45 passes. The result index reconciles this transparently;
+`0c56e13` corrects future nested count extraction/artifact retention. No retry hides a failure.
 
-## Confirmed fixes
+## Confirmed fixes and preserved behavior
 
-- Next catch-all headers overrode private/token `no-referrer`. Scoped overrides
-  preserve shared headers and existing newsletter behavior; real HTTP regressions pass.
-- At 320px, long payment data squeezed Review payment to 44.609375px. One table
-  class and six scoped CSS rules preserve readable 131.453125px by 44px actions.
-  All six 320/390/768 light/dark states pass: keyboard scroll is positive, page
-  overflow false, axe violations zero, empty state works, dismissed confirmation
-  causes zero payment writes. Before/after evidence is retained under `.local/event-flow/`.
-- Test infrastructure repairs cover strict fixture typing, invalid synthetic email,
-  new-password fixture boundaries, missing test helper, stale atlas/axe paths,
-  browser channel selection, first-failure retention, accurate Node/Playwright/phase
-  counts, artifact provenance and fail-closed source/build correspondence.
-- No business workflow, applied migration, production role/grant, password policy,
-  member state, payment instruction or approved branding was replaced.
+- Scoped private/token response headers prevent the catch-all policy overriding
+  `no-referrer`; actual HTTP regressions pass and newsletter headers remain intact.
+- The 320px payment action originally collapsed to 44.609375px. The table-specific
+  minimum-width/nowrap fix is retained alongside main's loaded/empty panel states
+  and keyboard-focusable scroll region. Integrated six-state regression passes.
+- Test repairs cover invalid synthetic email/password fixtures, stale axe/atlas paths,
+  missing helper, actual current panel/select/disclosure controls, source/build identity,
+  accurate counts, first-failure retention and isolated portal credentials.
+- Theme failure was a 140ms background-transition sample at contrast 4.4308.
+  Awaiting animation completion passes all 45 portal cases with the existing 4.5
+  threshold and palette. No speculative visual change or relaxed assertion.
+- Current portal design, newsletter, public footer/branding, password compatibility,
+  invitation holds and separate email/profile/membership/payment/publication states
+  are retained. No new business workflow, applied migration or live role/config change.
 
 ## Production and actual browser traversal
 
-Production remains Railway `tpa-platform` / `tpa-web`, deployment
-`9fc00623-28c1-49e0-8768-3a8bd4ea6e8a`, provider SUCCESS. Historical release evidence
-associates it with main `295c74a`; provider metadata itself does not expose a SHA.
-Anonymous homepage/login/health returned 200; health ready/workers running;
-protected member/staff/private-document probes returned 401.
+The earlier live deployment `9fc00623-28c1-49e0-8768-3a8bd4ea6e8a` was replaced
+outside this task during execution. Final provider read-only status shows Railway
+`tpa-platform` / `tpa-web`, **`f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4` SUCCESS**,
+no pending work. Provider metadata exposes no source SHA; do not equate that deployment
+with this testing candidate. Evidence: `.local/launch-readiness/production-status-final.json`.
+Earlier anonymous homepage/login/health were 200/ready; protected probes 401.
 
-The live admin failure was reproduced as HTTP 401 and provider Invalid password.
-Read-only state showed an existing operator-approved admin, a password credential,
-and no invitation hold. The user expressly authorized one recovery email; provider
-receipt and delivery event confirm that one request. **The user set the password
-and signed in themselves.** No agent credential change or auth bypass occurred.
-The earlier redacted-field diagnostic is explicitly superseded and is not evidence
-that an account was absent.
+The actual admin failure was reproduced as HTTP 401 / Invalid password. Read-only
+state showed an existing operator-approved administrator and credential, without an
+invitation hold. The user expressly approved **one recovery email**; provider receipt
+and delivery event confirm the request. The user set the password and signed in.
+No agent credential change, auth bypass or additional recovery send occurred. The
+redacted-input diagnostic was superseded and never establishes an absent account.
 
-After login, the built-in browser traversed **all 16 live staff workspaces,
-18 views/subsections, all five reports, 11 footer destinations, and the admin's
-own profile/security**. Session persisted after reload. Reports and directories
-loaded; existing-profile portrait upload is enabled. The initial unsaved-new-profile
-warning cleared and is not a storage outage. Existing QA-labelled records/drafts
-were observed and preserved, never cleaned. No real record save, publication,
-payment, upload, invitation review/approval/release or member send was invoked.
-Evidence: `.local/launch-readiness/live-browser-traversal.json`.
+After reloading the **current deployment**, the built-in browser traversed **all 16
+staff workspaces, 18 views/subsections and all five report previews**. Session persisted.
+Report rows: account directory 200-preview limit, events 0, inquiries 1, content 1,
+newsletter 1. No exports, preset saves or operational writes. Earlier traversal also
+resolved 11 footer destinations and own profile/security. Existing-profile portrait
+upload is enabled; the unsaved-new-profile warning is not a storage outage. Existing
+QA-labelled records/drafts were preserved. Evidence:
+`.local/launch-readiness/live-browser-current-deployment.json` and earlier traversal.
 The in-app responsive override was clamped to 921px and reset; actual mobile/tablet
-geometry evidence comes from isolated Chromium, not that browser override.
+geometry evidence comes from isolated Chromium, not that override.
 
-**All 202 real member invitation holds remain present and unreleased; zero member
-invitation emails are queued/leased.** This was verified before/after the local
-rehearsal and live traversal with the dashboard's exact metric in READ ONLY
-transactions. Latest evidence:
-`.local/launch-readiness/invitation-preservation-2026-10-28T03-55-10.154Z/results.json`.
-There is currently **no approved invitation template**. Keep the existing admin-only
-save/preview/approve, recipient-review and confirm-send sequence. Synthetic tests
-prove a 202-recipient batch; they do not authorize releasing the real batch.
+**All 202 real invitations remain held/unreleased; zero invitation emails queued or
+leased. No approved invitation template currently exists.** Exact dashboard-metric
+READ ONLY counts after the deployment change: `.local/launch-readiness/invitation-preservation-2026-10-28T04-17-52.552Z/results.json`.
+Admin controls remain the existing template save/preview/approve and recipient review/
+confirmation sequence. Synthetic batch proof does not authorize releasing the real batch.
+The live dashboard still has 202 membership records needing status review; account
+activation and membership approval remain separate, with no auto-promotion.
 
-## Remaining gates and final recommendation
+## Remaining gates and recommendation
 
-- Testing candidate is not deployed; GitHub CI configuration was extended but its
-  hosted runs were not triggered because push is not authorized. A merge/local pass
-  is not live release evidence. Candidate-hosted validation follows separate approval.
-- Linux/non-root container acceptance remains blocked by Docker. Real member
-  activation/provider mailbox acceptance, supplied-photo sign-off, physical mobile
-  devices, assistive technology, capacity and full backup/restore acceptance remain
-  blocked or not tested at their individually recorded scopes.
-- The live dashboard has 202 membership statuses needing review; invitation/account
-  activation is separate from membership approval. No status was auto-promoted.
-- The register inventories every source route/workspace/API/worker and intended
-  capability, but does not claim every mapped QA edge case was executed. Its current
-  455 entries are **68 PASS, 2 FIXED AND RETESTED, 11 BLOCKED, 362 NOT TESTED/partial,
-  12 DEFERRED**. These are dispositions, not an assertion pass percentage.
-- No real member send, main merge, push, deployment, billing change, production
-  migration or destructive cleanup occurred. The only agent live side effect was
-  the separately approved single admin recovery request.
+- Docker/non-root container acceptance is blocked. Exact testing-candidate hosted/CI
+  acceptance is not executed: no push/deployment authorization was given for this task.
+- Real member/provider-mailbox acceptance, supplied portraits, physical devices,
+  assistive technology, capacity and full backup/restore operational acceptance remain
+  separately blocked/not tested. Local mocks/emulation do not close those gates.
+- The register inventories **458 entries**: 71 PASS, 2 FIXED AND RETESTED, 11 BLOCKED,
+  362 NOT TESTED/partial and 12 DEFERRED. Existing 591-case workbook remains untouched.
+  Every source route/workspace/API/worker is inventoried; these dispositions do not
+  claim every mapped QA edge case was executed or constitute a pass percentage.
+- No member send, push, main merge, deployment, billing change, production migration
+  or destructive cleanup was performed by this task. The single approved recovery
+  request is the explicit live-effect exception. Concurrent external changes are labelled.
 
-**NOT READY for production release until the outstanding release/acceptance gates
-are closed or explicitly resolved.** The testing branch is reviewable with repeatable
-commands, preserved evidence and honest limitations. See the three-column
-[register](TPA_LAUNCH_TEST_REGISTER.md), [plan](TPA_LAUNCH_TEST_PLAN.md) and
-[decisions](TPA_LAUNCH_DECISIONS.md). Raw timestamps are retained across tools;
-use their recorded environment/scope rather than inferring a single continuous run.
+**NOT READY for production release until remaining acceptance/release gates are
+closed or explicitly resolved.** The testing branch and retained evidence are reviewable.
+See the exact three-column [register](TPA_LAUNCH_TEST_REGISTER.md),
+[plan](TPA_LAUNCH_TEST_PLAN.md), [decisions](TPA_LAUNCH_DECISIONS.md), and
+[executed-result index](TPA_LAUNCH_EXECUTED_RESULTS.json). Raw timestamps remain
+unchanged across tools; interpret each result with its recorded environment and scope.

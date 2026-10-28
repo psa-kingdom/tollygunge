@@ -690,7 +690,781 @@
         }
       ]
     },
-    "final_static": {
+    "integrated_initial_static": {
+      "runId": "2026-10-28T04-12-49.054Z-c598ec62",
+      "branch": "testing/launch-readiness",
+      "commit": "be1cf902cc9ba6632e0d619e294deaa03cd12338",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-28T04:12:49.310Z",
+      "completed": "2026-10-28T04:14:34.524Z",
+      "phaseCounts": {
+        "PASS": 7,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 14
+      },
+      "testCounts": {
+        "node": {
+          "tests": 133,
+          "passed": 133,
+          "failed": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "summaries": 2
+        },
+        "playwright": null
+      },
+      "complete": true,
+      "buildId": "mobzleHOan_kaPcfht1Pz",
+      "countPolicy": "phaseCounts counts commands; testCounts separately counts parsed node:test and Playwright summaries. Null means no summary observed. Skipped/cancelled/flaky tests are never promoted to passes. Repeated tests in separate phases remain separate executions.",
+      "evidence": ".local/launch-readiness/2026-10-28T04-12-49.054Z-c598ec62/results.json",
+      "results": [
+        {
+          "stage": "lint",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 26077,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/eslint/bin/eslint.js",
+            "."
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        },
+        {
+          "stage": "structure",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 232,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/check-repository-structure.mjs"
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        },
+        {
+          "stage": "unit",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 8260,
+          "testCounts": {
+            "node": {
+              "tests": 124,
+              "passed": 124,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "--test",
+            "tests/*.test.ts"
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        },
+        {
+          "stage": "runtime",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 6074,
+          "testCounts": {
+            "node": {
+              "tests": 9,
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--test",
+            "tests/runtime-supervisor.test.mjs",
+            "tests/runtime-database-environment.test.mjs",
+            "tests/restricted-adapter.test.mjs"
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        },
+        {
+          "stage": "build",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 43729,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/next/dist/bin/next",
+            "build"
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        },
+        {
+          "stage": "worker-build",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 1182,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/build-worker.mjs"
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        },
+        {
+          "stage": "typecheck",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 19637,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        }
+      ],
+      "limitation": "Initial static run overlapped an encoding correction before browser execution. Clean d532 build supersedes its build; final committed candidate static run is required. Original metadata retained."
+    },
+    "integrated_clean_build": {
+      "runId": "2026-10-28T04-14-37.031Z-2556699b",
+      "branch": "testing/launch-readiness",
+      "commit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+      "dirty": true,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-28T04:14:37.277Z",
+      "completed": "2026-10-28T04:15:05.936Z",
+      "phaseCounts": {
+        "PASS": 3,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 18
+      },
+      "testCounts": {
+        "node": null,
+        "playwright": null
+      },
+      "complete": true,
+      "buildId": "pv5vEa1KTjz7T81aVcm2t",
+      "countPolicy": "phaseCounts counts commands; testCounts separately counts parsed node:test and Playwright summaries. Null means no summary observed. Skipped/cancelled/flaky tests are never promoted to passes. Repeated tests in separate phases remain separate executions.",
+      "evidence": ".local/launch-readiness/2026-10-28T04-14-37.031Z-2556699b/results.json",
+      "results": [
+        {
+          "stage": "build",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 19619,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/next/dist/bin/next",
+            "build"
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        },
+        {
+          "stage": "worker-build",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 631,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/build-worker.mjs"
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        },
+        {
+          "stage": "typecheck",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 8398,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "limitation": "",
+          "buildIdentity": null
+        }
+      ]
+    },
+    "integrated_broad_first": {
+      "runId": "2026-10-28T04-15-28.357Z-7b46cc13",
+      "branch": "testing/launch-readiness",
+      "commit": "e5bed445fa4e16eb52c02338ec5eff4eb0ef334a",
+      "dirty": true,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-28T04:15:28.608Z",
+      "completed": "2026-10-28T04:31:59.248Z",
+      "phaseCounts": {
+        "PASS": 7,
+        "FAIL": 4,
+        "BLOCKED": 0,
+        "NOT TESTED": 10
+      },
+      "testCounts": {
+        "node": {
+          "tests": 73,
+          "passed": 73,
+          "failed": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "summaries": 13
+        },
+        "playwright": {
+          "passed": 151,
+          "failed": 2,
+          "skipped": 36,
+          "flaky": 0,
+          "interrupted": 0,
+          "notRun": 0,
+          "summaryLines": 4
+        }
+      },
+      "complete": true,
+      "buildId": "pv5vEa1KTjz7T81aVcm2t",
+      "countPolicy": "phaseCounts counts commands; testCounts separately counts parsed node:test and Playwright summaries. Null means no summary observed. Skipped/cancelled/flaky tests are never promoted to passes. Repeated tests in separate phases remain separate executions.",
+      "evidence": ".local/launch-readiness/2026-10-28T04-15-28.357Z-7b46cc13/results.json",
+      "results": [
+        {
+          "stage": "newsletter",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 23726,
+          "testCounts": {
+            "node": {
+              "tests": 12,
+              "passed": 12,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/verify-public-newsletter.mjs"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "member",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 30126,
+          "testCounts": {
+            "node": {
+              "tests": 19,
+              "passed": 19,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 4
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-member-foundation.mts",
+            "--http"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "accounts",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 5122,
+          "testCounts": {
+            "node": {
+              "tests": 3,
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-approved-accounts.mts"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "import-jobs",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 73222,
+          "testCounts": {
+            "node": {
+              "tests": 5,
+              "passed": 5,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": {
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "flaky": 0,
+              "interrupted": 0,
+              "notRun": 0,
+              "summaryLines": 1
+            }
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-member-import-jobs.mts",
+            "--http"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "invitation-db",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 3845,
+          "testCounts": {
+            "node": {
+              "tests": 3,
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-invitation-release.mts"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "invitation-http",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 7730,
+          "testCounts": {
+            "node": {
+              "tests": 2,
+              "passed": 2,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-invitation-release.mts",
+            "--http"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "website",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 52515,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-website-control.mts",
+            "--browser"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "event-flow",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 54027,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-flow.mts",
+            "--payment-table"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "engagement",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 51737,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-engagement.mts"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "event-operations",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 34669,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-operational.mts",
+            "--browser"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "restricted",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 653693,
+          "testCounts": {
+            "node": {
+              "tests": 29,
+              "passed": 29,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 4
+            },
+            "playwright": {
+              "passed": 148,
+              "failed": 2,
+              "skipped": 36,
+              "flaky": 0,
+              "interrupted": 0,
+              "notRun": 0,
+              "summaryLines": 3
+            }
+          },
+          "command": [
+            "node",
+            "scripts/verify-phase7b.mjs",
+            "--only",
+            "email-runtime,core-browser"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-15-28.357Z-7b46cc13/accepted-build-identity.json"
+          }
+        }
+      ]
+    },
+    "integrated_focused_retests": {
+      "runId": "2026-10-28T04-33-02.962Z-46402741",
+      "branch": "testing/launch-readiness",
+      "commit": "c0788f93e2a2b1f028fc96578fe7f6a1ab0294f0",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-28T04:33:03.207Z",
+      "completed": "2026-10-28T04:37:04.143Z",
+      "phaseCounts": {
+        "PASS": 3,
+        "FAIL": 1,
+        "BLOCKED": 0,
+        "NOT TESTED": 18
+      },
+      "testCounts": {
+        "node": null,
+        "playwright": null
+      },
+      "complete": true,
+      "buildId": "pv5vEa1KTjz7T81aVcm2t",
+      "countPolicy": "phaseCounts counts commands; testCounts separately counts parsed node:test and Playwright summaries. Null means no summary observed. Skipped/cancelled/flaky tests are never promoted to passes. Repeated tests in separate phases remain separate executions.",
+      "evidence": ".local/launch-readiness/2026-10-28T04-33-02.962Z-46402741/results.json",
+      "results": [
+        {
+          "stage": "website",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 25408,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-website-control.mts",
+            "--browser"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-33-02.962Z-46402741/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "event-flow",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 34476,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-flow.mts",
+            "--payment-table"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-33-02.962Z-46402741/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "event-operations",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 22533,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-operational.mts",
+            "--browser"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-33-02.962Z-46402741/accepted-build-identity.json"
+          }
+        },
+        {
+          "stage": "portal",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 158408,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/verify-phase7b.mjs",
+            "--only",
+            "portal"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-33-02.962Z-46402741/accepted-build-identity.json"
+          }
+        }
+      ]
+    },
+    "integrated_cms_final": {
+      "runId": "2026-10-28T04-38-15.867Z-b9422ace",
+      "branch": "testing/launch-readiness",
+      "commit": "0c56e13236804b5065a8a1f68d77637070449ce4",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-28T04:38:16.110Z",
+      "completed": "2026-10-28T04:38:37.930Z",
+      "phaseCounts": {
+        "PASS": 1,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 21
+      },
+      "testCounts": {
+        "node": null,
+        "playwright": null
+      },
+      "complete": true,
+      "buildId": "pv5vEa1KTjz7T81aVcm2t",
+      "countPolicy": "phaseCounts counts commands; testCounts separately counts parsed node:test and Playwright summaries. Null means no summary observed. Skipped/cancelled/flaky tests are never promoted to passes. Repeated tests in separate phases remain separate executions.",
+      "evidence": ".local/launch-readiness/2026-10-28T04-38-15.867Z-b9422ace/results.json",
+      "results": [
+        {
+          "stage": "website",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 21713,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-website-control.mts",
+            "--browser"
+          ],
+          "limitation": "",
+          "buildIdentity": {
+            "buildId": "pv5vEa1KTjz7T81aVcm2t",
+            "inputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+            "builtCommit": "d532d51512487e0ee2caed9d45170218ac7800f4",
+            "manifest": "D:\\Downloads\\Workspace\\TPA\\launch-readiness\\.local\\launch-readiness\\2026-10-28T04-38-15.867Z-b9422ace/accepted-build-identity.json"
+          }
+        }
+      ]
+    },
+    "pre_integration_final_static": {
       "runId": "2026-10-28T04-00-22.306Z-db620151",
       "branch": "testing/launch-readiness",
       "commit": "a38f9814d6bbef80d397c31bbe145ac9f7408063",
@@ -928,7 +1702,7 @@
     "completed": "2026-10-27T12:10:29.059Z"
   },
   "productionInvitationPreservation": {
-    "observed": "2026-10-28T03:55:10.166Z",
+    "observed": "2026-10-28T04:17:52.554Z",
     "environment": "hosted database aggregate read-only",
     "expectedHeld": 202,
     "accountOrInvitationMutation": false,
@@ -998,5 +1772,385 @@
   },
   "finalStaticInvocation": "node scripts/verify-launch-readiness.mjs --static",
   "runtimeInputDigest": "b3437b5bfa7809a4ce210e4c2f9d6024a30e30140c915e204082a77368beaed5",
-  "evidencePolicy": "Sanitized bounded result index. Original private logs, traces, screenshots and first failures remain in ignored local evidence; overlapping runs are not unique-feature totals."
+  "evidencePolicy": "Sanitized bounded result index. Original private logs, traces, screenshots and first failures remain in ignored local evidence; overlapping runs are not unique-feature totals.",
+  "integratedRuntimeInputDigest": "6989db3dbb21bf74555ef359aa7f8584963ca9c5fe0242801a45c0e250623c57",
+  "integratedBuildInputCount": 355,
+  "integratedPortalRetest": {
+    "environment": "isolated synthetic PostgreSQL, restricted web identity and Chromium desktop/tablet/phone",
+    "result": "PASS",
+    "passed": 45,
+    "failed": 0,
+    "skipped": 0,
+    "testedSha": "c0788f9",
+    "evidence": ".local/launch-readiness/2026-10-28T04-33-02.962Z-46402741/security/restricted-2026-10-28T04-34-26.347Z-fc13b121/portal.log",
+    "countProvenance": "Parsed from nested portal log. The original outer run reported null assertion counts for the newly added stage; later 0c56e13 fixes future extraction/artifact reporting. Original raw report is unchanged.",
+    "initialFailure": "Integrated broad run: desktop/tablet sampled a 140ms background transition at 4.430805825433126. Await actual animation completion; unchanged 4.5 threshold passes all 45 portal cases. No palette change."
+  },
+  "productionStatusFinal": {
+    "observed": "2026-10-28T04:16:37.014Z",
+    "scope": "provider read-only; no deploy/configuration action by this task",
+    "project": "tpa-platform",
+    "environment": "production",
+    "web": [
+      {
+        "id": "082b9453-b4f1-400d-832b-106202447468",
+        "name": "tpa-web",
+        "latestDeployment": {
+          "id": "f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4",
+          "status": "SUCCESS",
+          "createdAt": "2026-10-27T23:05:54.546Z",
+          "url": null
+        }
+      }
+    ],
+    "pendingWorkCount": 0,
+    "commitHashExposed": false
+  },
+  "liveBrowserCurrentDeployment": {
+    "observed": "2026-10-28T04:32:51.832Z",
+    "deployment": "f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4",
+    "environment": "production authenticated built-in browser read-only; deployment changed outside this task",
+    "workspaces": [
+      {
+        "heading": "Members",
+        "loadError": false,
+        "path": "/admin/workspaces/members",
+        "workspace": "Members",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Verification",
+        "loadError": false,
+        "path": "/admin/workspaces/verification",
+        "workspace": "Verification",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Bulk onboarding",
+        "loadError": false,
+        "path": "/admin/workspaces/onboarding",
+        "workspace": "Bulk onboarding",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Inquiries",
+        "loadError": false,
+        "path": "/admin/workspaces/crm",
+        "workspace": "Inquiries",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Communications",
+        "loadError": false,
+        "path": "/admin/workspaces/communications",
+        "workspace": "Communications",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Events",
+        "loadError": false,
+        "path": "/admin/workspaces/events",
+        "workspace": "Events",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Flyers",
+        "loadError": false,
+        "path": "/admin/workspaces/flyers",
+        "workspace": "Flyers",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Historical imports",
+        "loadError": false,
+        "path": "/admin/workspaces/imports",
+        "workspace": "Historical imports",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Website settings",
+        "loadError": false,
+        "path": "/admin/workspaces/website",
+        "workspace": "Website settings",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Content",
+        "loadError": false,
+        "path": "/admin/workspaces/content",
+        "workspace": "Content",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Media library",
+        "loadError": false,
+        "path": "/admin/workspaces/media",
+        "workspace": "Media library",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Committees & people",
+        "loadError": false,
+        "path": "/admin/workspaces/governance",
+        "workspace": "Committees & people",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Payments",
+        "loadError": false,
+        "path": "/admin/workspaces/payments",
+        "workspace": "Payments",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Email settings",
+        "loadError": false,
+        "path": "/admin/workspaces/onboarding-email",
+        "workspace": "Email settings",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Reports",
+        "loadError": false,
+        "path": "/admin/workspaces/reports",
+        "workspace": "Reports",
+        "writesPerformed": false
+      },
+      {
+        "heading": "Staff access",
+        "loadError": false,
+        "path": "/admin/workspaces/access",
+        "workspace": "Staff access",
+        "writesPerformed": false
+      }
+    ],
+    "heldInvitations": 202,
+    "sessionRetained": true,
+    "operationalWritesPerformed": false,
+    "invitationReviewCreated": false,
+    "invitationSendInvoked": false,
+    "limitation": "16 workspaces, 18 views and all five report previews rechecked on current deployment; no exports or production operational writes. Footer traversal retained from earlier deployment; unchanged public routes tested locally.",
+    "subviews": [
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Review queue",
+        "workspace": "verification",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Requirements",
+        "workspace": "verification",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "History",
+        "workspace": "verification",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Shared inbox",
+        "workspace": "communications",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Campaigns",
+        "workspace": "communications",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Email templates",
+        "workspace": "communications",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Member invitations",
+        "workspace": "communications",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Delivery logs",
+        "workspace": "communications",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Website settings",
+        "workspace": "website",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Homepage",
+        "workspace": "website",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Important links",
+        "workspace": "website",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Downloads",
+        "workspace": "website",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Pages and insights",
+        "workspace": "content",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "Sources",
+        "workspace": "content",
+        "writesPerformed": false
+      },
+      {
+        "loadError": false,
+        "selected": true,
+        "tab": "People & reviews",
+        "workspace": "governance",
+        "writesPerformed": false
+      },
+      {
+        "workspace": "members",
+        "tab": "Account directory",
+        "selected": true,
+        "writesPerformed": false
+      },
+      {
+        "workspace": "members",
+        "tab": "Member register",
+        "selected": true,
+        "writesPerformed": false
+      },
+      {
+        "workspace": "governance",
+        "tab": "Groups & subgroups",
+        "selected": true,
+        "writesPerformed": false
+      }
+    ],
+    "reports": [
+      {
+        "exportInvoked": false,
+        "loadError": false,
+        "presetSaved": false,
+        "previewRows": "200",
+        "report": "Account directory"
+      },
+      {
+        "exportInvoked": false,
+        "loadError": false,
+        "presetSaved": false,
+        "previewRows": "0",
+        "report": "Events and attendance"
+      },
+      {
+        "exportInvoked": false,
+        "loadError": false,
+        "presetSaved": false,
+        "previewRows": "1",
+        "report": "Inquiry summary"
+      },
+      {
+        "exportInvoked": false,
+        "loadError": false,
+        "presetSaved": false,
+        "previewRows": "1",
+        "report": "Content totals"
+      },
+      {
+        "exportInvoked": false,
+        "loadError": false,
+        "presetSaved": false,
+        "previewRows": "1",
+        "report": "Newsletter totals"
+      }
+    ]
+  },
+  "local202IntegratedBrowser": {
+    "observed": "2026-10-28T04:23:12.241Z",
+    "environment": "local synthetic http://127.0.0.1:3185; integrated portal",
+    "testedSha": "e5bed44",
+    "selectedCounts": [
+      "Review invitations for 25 selected members",
+      "Review invitations for 50 selected members",
+      "Review invitations for 75 selected members",
+      "Review invitations for 100 selected members",
+      "Review invitations for 125 selected members",
+      "Review invitations for 150 selected members",
+      "Review invitations for 175 selected members",
+      "Review invitations for 200 selected members",
+      "Review invitations for 202 selected members"
+    ],
+    "reviewEligible": 202,
+    "excluded": 0,
+    "confirmDisabledBeforeAcknowledgment": true,
+    "queued": 202,
+    "reloadRetainsReview": true,
+    "confirmationButtonAfterSend": 0,
+    "realEmailsSent": 0,
+    "productionInvitationsChanged": false
+  },
+  "local202IntegratedFixture": {
+    "runId": "a5b09f1e-3e2d-4ad4-b1ff-374929164884",
+    "syntheticOnly": true,
+    "externalProviders": false,
+    "emailWorkerStarted": false,
+    "initialSnapshot": {
+      "held": 202,
+      "invitation_messages": 0,
+      "queued": 0,
+      "invitation_tokens": 0,
+      "confirmed_reviews": 0,
+      "credentials": 1,
+      "memberships": 202
+    },
+    "finalSnapshot": {
+      "held": 0,
+      "invitation_messages": 202,
+      "queued": 202,
+      "invitation_tokens": 202,
+      "confirmed_reviews": 1,
+      "credentials": 1,
+      "memberships": 202
+    },
+    "cleanup": true,
+    "remainingOwnDatabases": 0,
+    "cleanupMethod": "Exact coordinator cleanup after Windows interrupted preview parent; listener absent and zero connections verified. No unrelated database affected.",
+    "buildId": "pv5vEa1KTjz7T81aVcm2t",
+    "started": "2026-10-28T04:20:39.327Z",
+    "completed": "2026-10-28T04:24:28.417Z"
+  },
+  "finalCandidateIdentity": ".local/launch-readiness/final-candidate.json records the final report commit, exact final checks and matching runtime-input digest. Source/build equality is checked after report-only changes.",
+  "finalCommittedChecks": {
+    "invocation": "node scripts/verify-launch-readiness.mjs --static",
+    "identityArtifact": ".local/launch-readiness/final-candidate.json",
+    "policy": "Executed after final documentation commit. Its exact SHA and run path are written outside the commit to avoid a self-referential SHA. Historical runs are retained above."
+  }
 }
