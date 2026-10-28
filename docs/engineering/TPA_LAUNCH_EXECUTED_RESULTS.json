@@ -1,0 +1,1002 @@
+{
+  "classification": "Executed phases; do not sum repeated assertions into unique feature coverage",
+  "runs": {
+    "static_before_table": {
+      "runId": "2026-10-27T12-28-44.774Z-1d013945",
+      "branch": "testing/launch-readiness",
+      "commit": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:28:45.088Z",
+      "completed": "2026-10-27T12:29:40.459Z",
+      "phaseCounts": {
+        "PASS": 5,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 16
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-28-44.774Z-1d013945/results.json",
+      "results": [
+        {
+          "stage": "lint",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 32862,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/eslint/bin/eslint.js",
+            "."
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "structure",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 250,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/check-repository-structure.mjs"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "unit",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 8773,
+          "testCounts": {
+            "node": {
+              "tests": 119,
+              "passed": 119,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "--test",
+            "tests/*.test.ts"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "runtime",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 5753,
+          "testCounts": {
+            "node": {
+              "tests": 9,
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--test",
+            "tests/runtime-supervisor.test.mjs",
+            "tests/runtime-database-environment.test.mjs",
+            "tests/restricted-adapter.test.mjs"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "typecheck",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 7715,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "build_with_table": {
+      "runId": "2026-10-27T12-35-59.414Z-6bbb18e6",
+      "branch": "testing/launch-readiness",
+      "commit": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+      "dirty": true,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:35:59.665Z",
+      "completed": "2026-10-27T12:36:34.457Z",
+      "phaseCounts": {
+        "PASS": 3,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 18
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-35-59.414Z-6bbb18e6/results.json",
+      "results": [
+        {
+          "stage": "build",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 26965,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/next/dist/bin/next",
+            "build"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "worker-build",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 607,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/build-worker.mjs"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "typecheck",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 7208,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "auth_retest": {
+      "runId": "2026-10-27T12-28-13.347Z-b364fab4",
+      "branch": "testing/launch-readiness",
+      "commit": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:28:13.597Z",
+      "completed": "2026-10-27T12:30:01.649Z",
+      "phaseCounts": {
+        "PASS": 1,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 20
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/results.json",
+      "results": [
+        {
+          "stage": "auth",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 107937,
+          "testCounts": {
+            "node": {
+              "tests": 29,
+              "passed": 29,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 4
+            },
+            "playwright": {
+              "passed": 8,
+              "failed": 0,
+              "skipped": 4,
+              "flaky": 0,
+              "interrupted": 0,
+              "notRun": 0,
+              "summaryLines": 2
+            }
+          },
+          "command": [
+            "node",
+            "scripts/verify-phase7b.mjs",
+            "--only",
+            "auth"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "newsletter_accounts_invitation_db": {
+      "runId": "2026-10-27T12-20-21.041Z-3ad694b8",
+      "branch": "testing/launch-readiness",
+      "commit": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+      "dirty": true,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:20:21.528Z",
+      "completed": "2026-10-27T12:22:16.312Z",
+      "phaseCounts": {
+        "PASS": 3,
+        "FAIL": 1,
+        "BLOCKED": 0,
+        "NOT TESTED": 16
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/results.json",
+      "results": [
+        {
+          "stage": "newsletter",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 49503,
+          "testCounts": {
+            "node": {
+              "tests": 12,
+              "passed": 12,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/verify-public-newsletter.mjs"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "member",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 46898,
+          "testCounts": {
+            "node": {
+              "tests": 16,
+              "passed": 15,
+              "failed": 1,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 3
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-member-foundation.mts",
+            "--http"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "accounts",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 12681,
+          "testCounts": {
+            "node": {
+              "tests": 3,
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-approved-accounts.mts"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "invitation-db",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 5485,
+          "testCounts": {
+            "node": {
+              "tests": 3,
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-invitation-release.mts"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "member_retest": {
+      "runId": "2026-10-27T12-22-47.704Z-a66cc20f",
+      "branch": "testing/launch-readiness",
+      "commit": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+      "dirty": true,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:22:48.091Z",
+      "completed": "2026-10-27T12:23:44.179Z",
+      "phaseCounts": {
+        "PASS": 1,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 19
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/results.json",
+      "results": [
+        {
+          "stage": "member",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 55889,
+          "testCounts": {
+            "node": {
+              "tests": 19,
+              "passed": 19,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 4
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-member-foundation.mts",
+            "--http"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "invitation_http": {
+      "runId": "2026-10-27T12-28-35.291Z-f6bcc20c",
+      "branch": "testing/launch-readiness",
+      "commit": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:28:35.551Z",
+      "completed": "2026-10-27T12:28:43.876Z",
+      "phaseCounts": {
+        "PASS": 1,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 20
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-28-35.291Z-f6bcc20c/results.json",
+      "results": [
+        {
+          "stage": "invitation-http",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 8202,
+          "testCounts": {
+            "node": {
+              "tests": 2,
+              "passed": 2,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-invitation-release.mts",
+            "--http"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "import_engagement_initial_other_failures": {
+      "runId": "2026-10-27T12-30-10.942Z-606ddcc3",
+      "branch": "testing/launch-readiness",
+      "commit": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:30:11.175Z",
+      "completed": "2026-10-27T12:31:38.786Z",
+      "phaseCounts": {
+        "PASS": 2,
+        "FAIL": 3,
+        "BLOCKED": 0,
+        "NOT TESTED": 16
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-30-10.942Z-606ddcc3/results.json",
+      "results": [
+        {
+          "stage": "import-jobs",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 54322,
+          "testCounts": {
+            "node": {
+              "tests": 5,
+              "passed": 5,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": {
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0,
+              "flaky": 0,
+              "interrupted": 0,
+              "notRun": 0,
+              "summaryLines": 1
+            }
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-member-import-jobs.mts",
+            "--http"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "website",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 8347,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-website-control.mts",
+            "--browser"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "event-flow",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 711,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-flow.mts"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "engagement",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 16451,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-engagement.mts"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "event-operations",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 7663,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-operational.mts",
+            "--browser"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "website_events_operations_retest": {
+      "runId": "2026-10-27T12-32-06.636Z-86cd31b6",
+      "branch": "testing/launch-readiness",
+      "commit": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+      "dirty": true,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:32:06.885Z",
+      "completed": "2026-10-27T12:33:24.905Z",
+      "phaseCounts": {
+        "PASS": 3,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 18
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-32-06.636Z-86cd31b6/results.json",
+      "results": [
+        {
+          "stage": "website",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 24084,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-website-control.mts",
+            "--browser"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "event-flow",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 31620,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-flow.mts"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "event-operations",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 22197,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-operational.mts",
+            "--browser"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "payment_table_final": {
+      "runId": "2026-10-27T12-37-04.911Z-91a77a1a",
+      "branch": "testing/launch-readiness",
+      "commit": "a001c09657944abc36ec58a20257031f6bd27b2c",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:37:05.173Z",
+      "completed": "2026-10-27T12:37:59.258Z",
+      "phaseCounts": {
+        "PASS": 1,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 20
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-37-04.911Z-91a77a1a/results.json",
+      "results": [
+        {
+          "stage": "event-flow",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 53962,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "scripts/test-event-flow.mts",
+            "--payment-table"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "broad_first_run_retained": {
+      "runId": "2026-10-27T12-13-40.705Z-72101376",
+      "branch": "testing/launch-readiness",
+      "commit": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-27T12:13:40.947Z",
+      "completed": "2026-10-27T12:25:37.791Z",
+      "counts": {
+        "PASS": 0,
+        "FAIL": 1,
+        "BLOCKED": 0,
+        "NOT TESTED": 19
+      },
+      "evidence": ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/results.json",
+      "results": [
+        {
+          "stage": "restricted",
+          "result": "FAIL",
+          "code": 1,
+          "elapsedMs": 716147,
+          "testCounts": {},
+          "command": [
+            "node",
+            "scripts/verify-phase7b.mjs",
+            "--only",
+            "email-runtime,core-browser"
+          ],
+          "limitation": ""
+        }
+      ]
+    },
+    "final_static": {
+      "runId": "2026-10-28T04-00-22.306Z-db620151",
+      "branch": "testing/launch-readiness",
+      "commit": "a38f9814d6bbef80d397c31bbe145ac9f7408063",
+      "dirty": false,
+      "environment": "local synthetic QA only",
+      "started": "2026-10-28T04:00:22.550Z",
+      "completed": "2026-10-28T04:01:43.239Z",
+      "phaseCounts": {
+        "PASS": 7,
+        "FAIL": 0,
+        "BLOCKED": 0,
+        "NOT TESTED": 14
+      },
+      "testCounts": {
+        "node": {
+          "tests": 128,
+          "passed": 128,
+          "failed": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "summaries": 2
+        },
+        "playwright": null
+      },
+      "complete": true,
+      "buildId": "4-xptIFhhgFtQWxiZ9E23",
+      "countPolicy": "phaseCounts counts commands; testCounts separately counts parsed node:test and Playwright summaries. Null means no summary observed. Skipped/cancelled/flaky tests are never promoted to passes. Repeated tests in separate phases remain separate executions.",
+      "evidence": ".local/launch-readiness/2026-10-28T04-00-22.306Z-db620151/results.json",
+      "results": [
+        {
+          "stage": "lint",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 35116,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/eslint/bin/eslint.js",
+            "."
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "structure",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 256,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/check-repository-structure.mjs"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "unit",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 8173,
+          "testCounts": {
+            "node": {
+              "tests": 119,
+              "passed": 119,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--import",
+            "tsx",
+            "--test",
+            "tests/*.test.ts"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "runtime",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 6190,
+          "testCounts": {
+            "node": {
+              "tests": 9,
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "summaries": 1
+            },
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "--test",
+            "tests/runtime-supervisor.test.mjs",
+            "tests/runtime-database-environment.test.mjs",
+            "tests/restricted-adapter.test.mjs"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "build",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 24306,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/next/dist/bin/next",
+            "build"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "worker-build",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 638,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "scripts/build-worker.mjs"
+          ],
+          "limitation": ""
+        },
+        {
+          "stage": "typecheck",
+          "result": "PASS",
+          "code": 0,
+          "elapsedMs": 5993,
+          "testCounts": {
+            "node": null,
+            "playwright": null
+          },
+          "command": [
+            "node",
+            "node_modules/typescript/bin/tsc",
+            "--noEmit"
+          ],
+          "limitation": ""
+        }
+      ]
+    }
+  },
+  "restrictedRoles": {
+    "results": [
+      {
+        "mode": "fresh",
+        "passed": true,
+        "checks": [
+          {
+            "kind": "web",
+            "identityVerified": true,
+            "checkedTablePrivileges": 651,
+            "negativeStatementsDenied": 10,
+            "migrationDenied": true
+          },
+          {
+            "kind": "email",
+            "identityVerified": true,
+            "checkedTablePrivileges": 651,
+            "negativeStatementsDenied": 14,
+            "migrationDenied": true
+          },
+          {
+            "kind": "import",
+            "identityVerified": true,
+            "checkedTablePrivileges": 651,
+            "negativeStatementsDenied": 14,
+            "migrationDenied": true
+          }
+        ],
+        "migrationIdentitySeparate": true,
+        "migrationsRepeatable": true
+      },
+      {
+        "mode": "upgrade",
+        "passed": true,
+        "checks": [
+          {
+            "kind": "web",
+            "identityVerified": true,
+            "checkedTablePrivileges": 651,
+            "negativeStatementsDenied": 10,
+            "migrationDenied": true
+          },
+          {
+            "kind": "email",
+            "identityVerified": true,
+            "checkedTablePrivileges": 651,
+            "negativeStatementsDenied": 14,
+            "migrationDenied": true
+          },
+          {
+            "kind": "import",
+            "identityVerified": true,
+            "checkedTablePrivileges": 651,
+            "negativeStatementsDenied": 14,
+            "migrationDenied": true
+          }
+        ],
+        "migrationIdentitySeparate": true,
+        "migrationsRepeatable": true
+      }
+    ],
+    "cleanup": true,
+    "cleanupResults": [
+      {
+        "mode": "fresh",
+        "remainingDatabases": 0,
+        "remainingRoles": 0
+      },
+      {
+        "mode": "upgrade",
+        "remainingDatabases": 0,
+        "remainingRoles": 0
+      }
+    ],
+    "completed": "2026-10-27T12:10:29.059Z"
+  },
+  "productionInvitationPreservation": {
+    "observed": "2026-10-28T03:55:10.166Z",
+    "environment": "hosted database aggregate read-only",
+    "expectedHeld": 202,
+    "accountOrInvitationMutation": false,
+    "realEmailsSent": 0,
+    "personalDataExported": false,
+    "counts": {
+      "dashboard_held": 202,
+      "all_unreleased_holds": 202,
+      "queued_or_leased_invitation_mail": 0,
+      "approved_template_available": 0
+    },
+    "readOnlyTransactionVerified": true,
+    "result": "PASS",
+    "limitation": "Counts use the dashboard's exact held metric. Eligibility/template/review freshness and actual mailbox delivery are separate; no review or send action was invoked."
+  },
+  "liveBrowserTraversalSummary": {
+    "observed": "2026-10-27T18:07:52.445Z",
+    "environment": "production authenticated built-in browser read-only",
+    "adminSessionPersistedAfterReload": true,
+    "heldInvitations": 202,
+    "invitationTemplateGate": {
+      "noApprovedTemplate": true,
+      "approveEnabled": false,
+      "writesPerformed": false
+    },
+    "ownProfileViewed": true,
+    "ownSecurityViewed": true,
+    "productionDataWritesPerformed": false,
+    "invitationReviewCreated": false,
+    "invitationSendInvoked": false,
+    "credentialsChangedByAgent": false,
+    "exception": "One recovery email separately authorized by user; provider delivery verified. Password reset completed by user.",
+    "limitations": [
+      "No real member impersonation or production create/edit/send/payment/upload mutation.",
+      "Responsive in-app override was clamped to 921px and reset; mobile/tablet evidence comes from actual isolated Chromium viewports.",
+      "Content Edit/Preview tabs are hidden on desktop where both regions are visible; this was not a product failure."
+    ],
+    "counts": {
+      "staffWorkspaces": 16,
+      "subviews": 18,
+      "reportTypes": 5,
+      "footerDestinations": 11
+    }
+  },
+  "local202Browser": {
+    "environment": "local synthetic http://127.0.0.1:3185",
+    "selectedCounts": [
+      "Review invitations for 25 selected members",
+      "Review invitations for 50 selected members",
+      "Review invitations for 75 selected members",
+      "Review invitations for 100 selected members",
+      "Review invitations for 125 selected members",
+      "Review invitations for 150 selected members",
+      "Review invitations for 175 selected members",
+      "Review invitations for 200 selected members",
+      "Review invitations for 202 selected members"
+    ],
+    "reviewEligible": 202,
+    "excluded": 0,
+    "confirmDisabledBeforeAcknowledgement": true,
+    "queued": 202,
+    "reloadRetainsReview": true,
+    "confirmationButtonAfterSend": 0,
+    "realEmailsSent": 0,
+    "productionInvitationsChanged": false,
+    "observed": "2026-10-27T12:56:33.253Z"
+  },
+  "finalStaticInvocation": "node scripts/verify-launch-readiness.mjs --static",
+  "runtimeInputDigest": "b3437b5bfa7809a4ce210e4c2f9d6024a30e30140c915e204082a77368beaed5",
+  "evidencePolicy": "Sanitized bounded result index. Original private logs, traces, screenshots and first failures remain in ignored local evidence; overlapping runs are not unique-feature totals."
+}

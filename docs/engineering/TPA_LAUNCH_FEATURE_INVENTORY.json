@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-28T03:59:13.583Z",
+  "generatedAt": "2026-10-28T04:06:41.853Z",
   "branch": "testing/launch-readiness",
-  "sourceSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+  "sourceSha": "a38f9814d6bbef80d397c31bbe145ac9f7408063",
   "sourceWorkingTree": "Inventory describes current files; a HEAD SHA does not imply a clean tree or tested build.",
   "resultPolicy": "QA mappings identify candidate acceptance cases, not executed coverage. Each result records its own testedSha, environment, evidence and limitation. Broad suite success never automatically promotes mapped features.",
   "discoveryLimits": [
@@ -14617,11 +14617,13 @@
       "route": "/admin/workspaces/access",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -14670,11 +14672,13 @@
       "route": "/admin/workspaces/communications",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -14718,11 +14722,13 @@
       "route": "/admin/workspaces/content",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -14774,11 +14780,13 @@
       "route": "/admin/workspaces/crm",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -14868,11 +14876,13 @@
       "route": "/admin/workspaces/events",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -14962,11 +14972,13 @@
       "route": "/admin/workspaces/flyers",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15009,11 +15021,13 @@
       "route": "/admin/workspaces/governance",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15052,11 +15066,13 @@
       "route": "/admin/workspaces/imports",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15099,11 +15115,13 @@
       "route": "/admin/workspaces/media",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15185,11 +15203,13 @@
       "route": "/admin/workspaces/members",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15271,11 +15291,13 @@
       "route": "/admin/workspaces/onboarding",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15324,11 +15346,13 @@
       "route": "/admin/workspaces/onboarding-email",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15375,11 +15399,13 @@
       "route": "/admin/workspaces/payments",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15410,11 +15436,13 @@
       "route": "/admin/workspaces/reports",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15468,11 +15496,13 @@
       "route": "/admin/workspaces/verification",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15516,11 +15546,13 @@
       "route": "/admin/workspaces/website",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "PARTIAL: authenticated production browser traversal loaded this workspace without a visible load error. Related tabs/reports were inspected where available; no production save, publication, payment or send was invoked.",
+        "evidence": [
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "production authenticated administrator, built-in browser, read-only; candidate not deployed",
+        "testedSha": "production deployment 9fc00623-28c1-49e0-8768-3a8bd4ea6e8a; source SHA not exposed by provider",
+        "limitation": "Read-only traversal does not establish every control/dialog/error path or the complete combined-role contract. Synthetic workflow/authorization results are separately scoped in the executed-result index."
       }
     },
     {
@@ -15855,7 +15887,7 @@
       ],
       "result": {
         "status": "PASS",
-        "summary": "Local29 Node assertions and8 real-browser cases passed(4 viewport duplicates skipped). Production401 Invalid password was reproduced, a single recovery email was explicitly authorized and provider-delivered, and the user completed the reset. The authenticated live administrator subsequently traversed all16 staff workspaces and retained the session after reload. No authentication bypass or credential edit by the agent.",
+        "summary": "Local 29 Node assertions and 8 browser cases passed (4 viewport duplicates skipped). Live HTTP 401 Invalid password was reproduced. The user approved one recovery email, provider delivery was verified, and the user completed the reset. The authenticated admin traversed all 16 staff workspaces and retained the session after reload. No authentication bypass or agent credential edit.",
         "evidence": [
           ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
           ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/results.json",
@@ -15865,9 +15897,9 @@
           ".local/launch-readiness/live-login-diagnosis-2026-10-27T12-53-32.082Z/results.json",
           ".local/launch-readiness/live-browser-traversal.json"
         ],
-        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "environment": "Local synthetic QA at recorded SHA; separately production account diagnostics and authenticated browser traversal on deployment 9fc00623. One admin recovery request explicitly approved; no member invitation or operational data mutation.",
         "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
-        "limitation": "Real member login/credential changes were not exercised in production; synthetic member lifecycle tests supply local evidence. Existing roles, verification rules and202 member invitation holds unchanged.",
+        "limitation": "Local testedSha identifies the synthetic regression; live provider does not expose its source SHA. Real member login was not exercised in production. Existing verification rules and all 202 member invitation holds remain unchanged.",
         "executionHistory": [
           {
             "status": "FAIL",

@@ -151,3 +151,19 @@ screenshots and reports under existing ignored `.local/<run>` or
 Only current-run owned synthetic fixtures may be cleaned up within the isolated
 environment after evidence is preserved. Existing files, original worktrees,
 stashes, recovery bundles/tags, historical outputs and source documents remain.
+
+## Executed live-scope exception and local invitation rehearsal
+
+The user separately approved exactly one admin recovery email. It was requested
+once and its delivery receipt verified. The user changed the password and signed
+in themselves. Subsequent production traversal is read-only; this exception does
+not authorize another recovery message or releasing any of the 202 real invitations.
+All 202 remain held, with zero queued/leased invitation messages. There is currently
+no approved production invitation template; the existing admin sequence remains.
+
+The local rehearsal entrypoint is `node --import tsx scripts/preview-launch-isolated.mts`
+with the same verified loopback QA prerequisite as the runner. It creates only its
+own synthetic database, disables external transports/workers and removes only that
+owned database on shutdown. It was used for the actual built-in-browser 202-recipient
+review/acknowledgment/queue/reload rehearsal; no real email was sent. See the health
+report and executed-result index for results, exact evidence and acceptance limits.
