@@ -99,7 +99,9 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 900 }, javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto(base, { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "Enable JavaScript to continue.", exact: true })).toBeVisible();
+    await expect(page.getByText("Enable JavaScript to continue.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(page.locator("main h1")).toBeVisible();
     await expect(page.getByText("Loading your page…", { exact: true })).toBeHidden();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     results.push({ width, javaScript: false, explicitBrowserRequirement: true });
