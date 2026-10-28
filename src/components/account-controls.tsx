@@ -9,6 +9,7 @@ import {
 import Link from "./navigation-link";
 import { SignOut } from "./auth-controls";
 import { ReportIssueLink } from "./report-issue-link";
+import { PortalIcon } from "./portal-icon";
 
 function usePopoverPosition(
   open: boolean,
@@ -263,10 +264,28 @@ function AttentionBell() {
         {items.length > 0 && <span className="alert-dot">{items.length}</span>}
       </button>
       {open && (
-        <section className="attention-panel">
-          <h2>Needs attention</h2>
-          <p>Active workflow items</p>
-          <label>
+        <section className="attention-panel" aria-label="Notifications">
+          <header className="attention-panel-header">
+            <div>
+              <h2>
+                Notifications{" "}
+                <span className="attention-total">{items.length}</span>
+              </h2>
+              <p>Updates that need your attention</p>
+            </div>
+            <button
+              className="attention-close"
+              aria-label="Close notifications"
+              onClick={() => {
+                pinned.current = false;
+                setOpen(false);
+                trigger.current?.focus();
+              }}
+            >
+              <PortalIcon name="close" />
+            </button>
+          </header>
+          <label className="attention-category">
             Category
             <select
               value={category}
@@ -285,29 +304,53 @@ function AttentionBell() {
               ))}
             </select>
           </label>
-          {loading ? (
-            <p role="status">Loading attention items…</p>
-          ) : error ? (
-            <p role="alert">{error}</p>
-          ) : items.filter((x) => category === "All" || x.category === category)
-              .length ? (
-            items
-              .filter((x) => category === "All" || x.category === category)
-              .map((x) => (
-                <Link key={x.id} href={x.href}>
-                  <small>
-                    {x.category} · {x.priority}
-                  </small>
-                  <strong>{x.label}</strong>
-                </Link>
-              ))
-          ) : (
-            <p>
-              {category === "All"
-                ? "You’re up to date."
-                : "No active alerts in this category."}
-            </p>
-          )}
+          <div className="attention-panel-body" aria-live="polite">
+            {loading ? (
+              <p role="status">Loading attention items…</p>
+            ) : error ? (
+              <p role="alert">{error}</p>
+            ) : items.filter(
+                (x) => category === "All" || x.category === category,
+              ).length ? (
+              items
+                .filter((x) => category === "All" || x.category === category)
+                .map((x) => (
+                  <Link
+                    className="attention-item"
+                    key={x.id}
+                    href={x.href}
+                    onClick={() => {
+                      pinned.current = false;
+                      setOpen(false);
+                    }}
+                  >
+                    <small>
+                      {x.category} · {x.priority}
+                    </small>
+                    <strong>{x.label}</strong>
+                    <span className="attention-item-arrow" aria-hidden="true">
+                      →
+                    </span>
+                  </Link>
+                ))
+            ) : (
+              <div className="attention-empty">
+                <span className="attention-empty-icon">
+                  <PortalIcon name="shield" />
+                </span>
+                <h3>
+                  {category === "All"
+                    ? "You’re all caught up"
+                    : "Nothing in this category"}
+                </h3>
+                <p>
+                  {category === "All"
+                    ? "New updates and requests will appear here."
+                    : "Choose another category to see your other updates."}
+                </p>
+              </div>
+            )}
+          </div>
         </section>
       )}
     </div>

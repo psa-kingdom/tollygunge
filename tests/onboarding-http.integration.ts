@@ -135,6 +135,13 @@ test(
       });
       assert.equal(r.status, 200);
       const submission = await r.json();
+      const receipt = await get("/api/member/verification");
+      assert.equal(receipt.reviews[0].status, "pending");
+      assert.deepEqual(receipt.latestSubmission.details, draft.details);
+      assert.ok(receipt.latestSubmission.submittedAt);
+      assert.ok(receipt.latestSubmission.fields.length > 0);
+      assert.equal(receipt.reviews[0].snapshot, undefined);
+      assert.equal((await get("/api/member/verification", 2)).latestSubmission, null);
       const queue = await get("/api/staff/verification", 0),
         original = queue.policy;
       const fields = [

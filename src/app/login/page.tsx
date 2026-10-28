@@ -7,6 +7,7 @@ import { OnboardingSignIn } from "@/components/onboarding-auth";
 import { PasswordSignIn } from "@/components/password-controls";
 import { currentActor } from "@/lib/actor";
 import { redirect } from "next/navigation";
+import { AuthLayout } from "@/components/auth-layout";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Member sign-in",
@@ -31,15 +32,10 @@ export default async function Login({
     Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   return (
     <SiteShell>
-      <main id="main" className="page-content">
-        <span className="eyebrow">YOUR TPA ACCOUNT</span>
-        <h1>
-          {actor && switching ? "Sign in to another account." : "Welcome back."}
-        </h1>
-        <p>
-          Keep your profile and private documents together in your member space.
-        </p>
-        <section className="login-panel">
+      <AuthLayout
+        title={actor && switching ? "Switch accounts" : "Welcome back"}
+        description="Sign in to manage your profile, documents, and TPA activities."
+      >
           {actor && switching && (
             <p className="notice">
               You are currently signed in as <strong>{actor.email}</strong>.
@@ -51,28 +47,25 @@ export default async function Login({
               .
             </p>
           )}
-          <h2>Sign in securely</h2>
-          <p>
-            Sign in with your assigned account. A TPA account does not
-            automatically confer approved membership.
-          </p>
           {process.env.ONBOARDING_ENABLED === "true" ? (
             <OnboardingSignIn initialEmail={requestedEmail} returnTo={returnTo} />
           ) : (
             <PasswordSignIn enabled={authConfigured()} returnTo={returnTo} />
           )}
-          {process.env.ONBOARDING_ENABLED === "true" && (
-            <Link href={returnTo ? "/signup?returnTo="+encodeURIComponent(returnTo) : "/signup"}>Create an account</Link>
-          )}
-          <GoogleSignIn enabled={enabled} returnTo={returnTo} />
-          {!enabled && (
+          {enabled && <>
+            <div className="auth-divider">or</div>
+            <GoogleSignIn enabled={enabled} returnTo={returnTo} />
+          </>}
+          {!authConfigured() && process.env.ONBOARDING_ENABLED !== "true" && (
             <p className="notice">
-              Google sign-in is not available yet. Use your assigned account to
-              sign in.
+              Sign-in is temporarily unavailable. Please try again later.
             </p>
           )}
-        </section>
-      </main>
+          {process.env.ONBOARDING_ENABLED === "true" && (
+            <p className="auth-switch">New to TPA?{" "}<Link href={returnTo ? "/signup?returnTo="+encodeURIComponent(returnTo) : "/signup"}>Create an account</Link></p>
+          )}
+          <p className="auth-policy auth-membership-note">A TPA account is separate from approved membership.</p>
+      </AuthLayout>
     </SiteShell>
   );
 }

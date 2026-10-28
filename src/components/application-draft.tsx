@@ -17,6 +17,11 @@ import {
   type StructuredAddress,
 } from "@/domain/address";
 import { VerifyEmail } from "./onboarding-auth";
+import {
+  VerificationSubmitted,
+  verificationAnswer,
+  type SubmittedApplication,
+} from "./verification-submitted";
 type Draft = {
   version: number;
   updated_at?: string;
@@ -28,6 +33,7 @@ type Draft = {
   step: number;
 };
 type Status = {
+  latestSubmission?: SubmittedApplication | null;
   policy: { version: number; fields: VerificationField[] };
   email: string;
   emailVerified: boolean;
@@ -46,6 +52,9 @@ export function ApplicationDraft({
   initialStep?: number;
 }) {
   const router = useRouter();
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [editingSubmission, setEditingSubmission] = useState(false);
+  const [submitted, setSubmitted] = useState<SubmittedApplication | null>(null);
   const [draft, setDraft] = useState<Draft>({
       version: 0,
       plan: "Annual",
@@ -513,6 +522,32 @@ export function ApplicationDraft({
         status.emailVerified,
       )
     : [];
+  const completedSubmission = submitted ?? status?.latestSubmission;
+  if (
+    ready &&
+    status &&
+    completedSubmission &&
+    !editingSubmission &&
+    (submitted ||
+      status.reviews[0]?.status === "pending" ||
+      (status.reviews[0]?.status === "approved" && !status.updateRequested))
+  ) {
+    return (
+      <VerificationSubmitted
+        submission={completedSubmission}
+        fields={completedSubmission.fields ?? status.policy.fields}
+        reviewStatus={submitted ? "pending" : status.reviews[0]?.status}
+        successOpen={successOpen}
+        onDismiss={() => setSuccessOpen(false)}
+        onEdit={() => {
+          setEditingSubmission(true);
+          setMessage(
+            "Editing your saved draft. Submit it again to send updated details for review.",
+          );
+        }}
+      />
+    );
+  }
   return (
     <div className="member-journey">
       <p className="member-form-intro">
@@ -680,11 +715,7 @@ export function ApplicationDraft({
                 .map((f) => (
                   <div key={f.id}>
                     <dt>{f.label}</dt>
-                    <dd>
-                      {f.type === "document"
-                        ? "Document saved"
-                        : draft.details[f.id]}
-                    </dd>
+                    <dd>{verificationAnswer(f, draft.details[f.id])}</dd>
                   </div>
                 ))}
             </dl>
@@ -748,7 +779,20 @@ export function ApplicationDraft({
                   await api("/api/member/verification", {
                     version: current.current.version,
                   });
-                  setStatus(await api<Status>("/api/member/verification"));
+                  setSubmitted({
+                    ...current.current,
+                    details: { ...current.current.details },
+                    submittedAt: new Date().toISOString(),
+                  });
+                  setEditingSubmission(false);
+                  setSuccessOpen(true);
+                  // Submission has succeeded even if the follow-up refresh fails.
+                  void api<Status>("/api/member/verification")
+                    .then((fresh) => {
+                      setStatus(fresh);
+                      if (fresh.latestSubmission) setSubmitted(null);
+                    })
+                    .catch(() => {});
                   setMessage("Submitted for administrator review.");
                 } catch (e) {
                   setFieldErrors(e instanceof ApiError ? e.fieldErrors : {});

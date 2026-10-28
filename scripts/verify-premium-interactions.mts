@@ -99,7 +99,7 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 900 }, javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto(base, { waitUntil: "networkidle" });
-    await expect(page.getByText("Enable JavaScript for account features.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Enable JavaScript for account features.", { exact: true }).filter({ visible: true })).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
     await expect(page.locator("main h1")).toBeVisible();
     await expect(page.getByText("Loading your page…", { exact: true })).toBeHidden();

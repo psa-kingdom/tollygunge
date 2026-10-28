@@ -3,9 +3,13 @@ import { homeDefaults } from "@/domain/website-home";
 import Link from "./navigation-link";
 import { PublicInquiry } from "./public-inquiry";
 import { HomepageEventsView } from "./homepage-events-view";
+import { HomepageMotion } from "./homepage-motion";
+import motion from "./homepage-motion.module.css";
 
 export function HomeView({home,events,readOnly=false}: {home: typeof homeDefaults; media?: ReactNode; events?: ReactNode; readOnly?: boolean; brandMark?: string}) {
-  return <main id="main" className="premium-home paper-v3-home">
+  return <main id="main" className={`premium-home paper-v3-home ${motion.root}`}>
+    <noscript><style>{"body:has(.paper-v3-home) .no-script-notice,.paper-v3-home .public-inquiry,.paper-v3-home .newsletter-form{display:none!important}"}</style></noscript>
+    <HomepageMotion disabled={readOnly} />
     <section className="hero"><div className="hero-copy">
       <div className="eyebrow"><span className="gold-dot" />{home.copy.eyebrow01}</div>
       <h1><span>{home.copy.heroCopy02}</span><em>{home.copy.heroCopy03}</em><span>{home.copy.heroCopy04}</span></h1>
@@ -28,6 +32,7 @@ export function HomeView({home,events,readOnly=false}: {home: typeof homeDefault
       </div><p className="v3-membership-note">All applications follow TPA’s existing Professional membership rules and review process.</p>
     </div></section>
     <section className="section contact-intake" id="connect"><div className="v3-contact-copy"><span className="eyebrow">{home.copy.eyebrow50}</span><h2>{home.copy.section51 === "Start a conversation." ? <>Start a<br /><em>conversation.</em></> : home.copy.section51}</h2><p>{home.copy.section52}</p><div className="v3-contact-resources"><span className="eyebrow">{home.copy.eyebrow44}</span>{[[home.links.section09Href,home.copy.section47],[home.links.section10Href,home.copy.section48],[home.links.section11Href,home.copy.section49]].map(([href,label])=><Link key={href} href={href}>{label}<span aria-hidden="true">↗</span></Link>)}</div></div>
+      <noscript><p className="home-static-note"><strong>Enable JavaScript for account features.</strong>{" "}You can browse TPA without JavaScript. Enable it to send an inquiry or subscribe to updates.</p></noscript>
       {readOnly?<div className="inquiry-intake"><h3>Tell us what you have in mind.</h3><p>Inquiry submissions are disabled in preview.</p></div>:<PublicInquiry source="homepage" compact />}
     </section>
   </main>;

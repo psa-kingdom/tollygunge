@@ -55,11 +55,19 @@ export async function memberVerification(actor: Actor) {
   ).rows[0];
   const reviews = (
     await db.query(
-      "SELECT id,status,reason,created_at,reviewed_at,requirement_version,version FROM tpa.verification_submissions WHERE user_id=$1 ORDER BY created_at DESC LIMIT 20",
+      "SELECT s.id,s.status,s.reason,s.created_at,s.reviewed_at,s.requirement_version,s.version,s.snapshot,p.fields AS submitted_fields FROM tpa.verification_submissions s LEFT JOIN tpa.verification_policies p ON p.version=s.requirement_version WHERE s.user_id=$1 ORDER BY s.created_at DESC LIMIT 20",
       [actor.id],
     )
   ).rows;
+  const latestSubmission = reviews[0]?.snapshot
+    ? { ...reviews[0].snapshot, fields: reviews[0].submitted_fields ?? p.fields }
+    : null;
+  for (const review of reviews) {
+    delete review.snapshot;
+    delete review.submitted_fields;
+  }
   return {
+    latestSubmission,
     policy: p,
     emailVerified: !!user?.emailVerified,
     email: actor.email,
@@ -67,7 +75,12 @@ export async function memberVerification(actor: Actor) {
     updateRequested: !!person?.verification_update_requested,
     approvedVersion: person?.verification_version ?? null,
     reviews,
-    progress: verificationProgress(p.fields, draft?.details ?? {}, draft?.category ?? "Professional", !!user?.emailVerified),
+    progress: verificationProgress(
+      p.fields,
+      draft?.details ?? {},
+      draft?.category ?? "Professional",
+      !!user?.emailVerified,
+    ),
     missing: missingFields(
       p.fields,
       draft?.details ?? {},
@@ -99,7 +112,9 @@ export async function submitVerification(
   if (!draft || draft.version !== expected)
     throw new OperationError("Save the latest form before submitting.", 409);
   if (draft.category !== "Professional")
-    throw new OperationError("Save your draft as a professional application before submitting.");
+    throw new OperationError(
+      "Save your draft as a professional application before submitting.",
+    );
   const p = await policy(client);
   const answers = validateAnswers(draft.details, p.fields),
     missing = missingFields(
@@ -108,7 +123,7 @@ export async function submitVerification(
       draft.category,
       !!user.emailVerified,
     );
-  await validatePostalAddresses(answers,{},client,false);
+  await validatePostalAddresses(answers, {}, client, false);
   if (missing.length)
     throw new OperationError("Complete: " + missing.join(", "));
   for (const f of p.fields.filter(
@@ -238,7 +253,13 @@ export async function reviewVerification(
       ).length > 0;
     await client.query(
       "UPDATE tpa.people SET accepted=$2,draft=$2,accepted_verified=true,verification_version=$3,verification_update_requested=$4,version=version+1,status='verified',mobile_normalized=$5,updated_at=now() WHERE id=$1",
-      [r.person_id, r.person_snapshot, r.requirement_version, updateRequested, r.person_snapshot.mobile ?? r.person_snapshot.phone ?? null],
+      [
+        r.person_id,
+        r.person_snapshot,
+        r.requirement_version,
+        updateRequested,
+        r.person_snapshot.mobile ?? r.person_snapshot.phone ?? null,
+      ],
     );
     if (updateRequested) {
       const account = (

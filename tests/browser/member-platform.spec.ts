@@ -585,9 +585,14 @@ test("completed professional application submits for review without publication"
       exact: true,
     })
     .click();
-  await expect(
-    page.getByText("Submitted for administrator review.", { exact: true }),
-  ).toBeVisible();
+  const confirmation = page.getByRole("dialog", {
+    name: "Profile submitted successfully",
+  });
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole("button", { name: "View submitted details" }).click();
+  await expect(page.getByRole("heading", { name: "Your submitted profile" })).toBeVisible();
+  await expect(page.locator(".verification-summary-section").getByText("Ananya Mukherjee", { exact: true }).first()).toBeVisible();
+  await expect(page.locator(".member-form-card")).toBeHidden();
   const profile = await (
     await context.request.get("/api/member/profile")
   ).json();

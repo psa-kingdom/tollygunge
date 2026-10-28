@@ -871,13 +871,6 @@ td small {
     padding-left: calc((100vw - 1268px) / 2);
     padding-right: calc((100vw - 1268px) / 2);
   }
-  .site-footer.footer-complete { grid-template-columns:minmax(0,1fr); }
-  .footer-complete .footer-groups { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px; }
-  .footer-complete .footer-group h2 { font-size:16px; }
-  .footer-complete .footer-group ul { list-style:none;padding:0;margin:0; }
-  .footer-complete .footer-group a { display:inline-block;padding:9px 0;overflow-wrap:anywhere; }
-  .footer-complete .footer-bottom { gap:16px;flex-wrap:wrap; }
-  @media(max-width:540px){.footer-complete .footer-groups{grid-template-columns:minmax(0,1fr);gap:24px;}}
 }
 @media (max-width: 1100px) {
   .desktop-nav {

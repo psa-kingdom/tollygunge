@@ -1,0 +1,61 @@
+/* Existing TPA composition and motion tokens; interaction feedback stays local. */
+.root:global(.paper-v3-home) :global(.hero-copy) {
+  animation: none;
+}
+.root:global(.paper-v3-home) :global(.hero) {
+  position: relative;
+}
+.root :global([data-home-word]) {
+  display: inline-block;
+}
+.root :global(.button),
+.root :global(.text-link > span[aria-hidden="true"]),
+.root :global(.v3-contact-resources a > span[aria-hidden="true"]) {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .root[data-motion-input="pointer"] :global(.button) {
+    transition:
+      transform 150ms var(--ease-out),
+      background-color var(--motion-control) ease,
+      border-color var(--motion-control) ease;
+  }
+  .root[data-motion-input="pointer"] :global(.button:not(:disabled):active) {
+    transform: scale(0.97);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .root:not([data-motion-input="keyboard"])
+    :global(.text-link > span[aria-hidden="true"]),
+  .root:not([data-motion-input="keyboard"])
+    :global(.v3-contact-resources a > span[aria-hidden="true"]) {
+    transition: transform 150ms var(--ease-out);
+  }
+  .root:not([data-motion-input="keyboard"])
+    :global(.text-link:hover > span[aria-hidden="true"]),
+  .root:not([data-motion-input="keyboard"])
+    :global(.v3-contact-resources a:hover > span[aria-hidden="true"]) {
+    transform: translateX(2px);
+  }
+}
+
+.root[data-motion-input="keyboard"] :global(.button) {
+  transition: none;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root :global(.button),
+  .root :global(.text-link > span[aria-hidden="true"]),
+  .root :global(.v3-contact-resources a > span[aria-hidden="true"]) {
+    transform: none;
+  }
+}
+
+:global([dir="rtl"])
+  .root
+  :global(.text-link:hover > span[aria-hidden="true"]) {
+  transform: none;
+}
