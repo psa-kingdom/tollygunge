@@ -1,5 +1,15 @@
 # TPA launch validation decisions
 
+## V1 approved continuation — 28 October
+
+The user authorizes the gated release/consolidation sequence in `TPA_V1_RELEASE_CHECKLIST.md`, superseding earlier no-push/no-merge instructions within that sequence. Cleanup requires hosted acceptance, active owner/process review and verified private restoration. Preserve the dirty primary intact instead of resetting it.
+
+Reporting reuses inquiries/CRM: public Website issue normalizes to General plus an existing tag; member subject/message API stays unchanged. Preview/opt-in diagnostics contain version, route template, browser family and viewport only. Missing route context becomes `/other`. No schema migration, screenshots, separate ticket service or analytics tracker.
+
+Full PG18 backup/restore matches 92 tables, 978 constraints, 169 indexes and 2 extensions. Reject schema-filtered dumps missing extensions; reparse CHECK expressions in the restored engine to compare equivalent PG catalog formatting. Source transaction remains repeatable-read/read-only; credentials and data stay private outside Git.
+
+Each browser run owns its ignored output, retaining first failures. Runtime acceptance observes actual restart before asserting availability. Newsletter uses the dedicated guarded maintenance identity after build, without weakening production rejection. Keep valid 308 redirect, actual-use privacy copy and verified-only public schema. Search Console owner verification is post-launch. Draft one general announcement; never send without recipients/channel.
+
 ## Candidate and preservation
 
 - Base: verified remote `main` at

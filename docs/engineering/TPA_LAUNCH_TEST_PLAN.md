@@ -5,6 +5,14 @@ This candidate uses `testing/launch-readiness`, initially based on remote `main`
 report records the actual run, exact tested revision and remaining blockers.
 Preparing an inventory does not execute any case or establish launch readiness.
 
+## Approved v1 contract — 28 October
+
+Continue from `efd8085`, preserving later main changes by normal merge. The [finite release checklist](TPA_V1_RELEASE_CHECKLIST.md) records gates and all 20 public-site decisions. Push/PR/protection/normal merge/deployment are now authorized within those gates. Required jobs: verify, runtime-container, onboarding, launch-operations; repeat against the merged SHA and align testing by fast-forward. Preserve Railway resources, secrets, storage and holds.
+
+The consistent PG18 backup remains private and isolated; synthetic suites never inherit its credentials/data. Hosted acceptance uses only labelled `tollygungecacpestudycircle+launchqa@gmail.com`, max one verification and one recovery email, private owned test document, session retirement and credential/inbox browser handoff. No membership approval, public publication, payment or invitation release. Observe 15 minutes; application rollback preserves subsequent user data.
+
+After hosted acceptance only: verify recovery/restoration, review active owners/processes, retire allowlisted historical checkouts/branches, preserve dirty primary intact outside active workspace, establish clean canonical app/launch-readiness, and verify exactly two aligned local/origin branches and v1.0.0 tag. [Announcement draft](TPA_V1_ANNOUNCEMENT_DRAFT.md) is prepared only; sending requires recipients and channel.
+
 ## Coverage and existing acceptance guidance
 
 - [Feature inventory](TPA_LAUNCH_FEATURE_INVENTORY.json) discovers every current

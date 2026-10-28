@@ -1,5 +1,16 @@
 # TPA launch health report
 
+## V1 execution checkpoint — 28 October
+
+**NOT READY until release gates pass.** [PR #4](https://github.com/psa-kingdom/tollygunge/pull/4) contains the candidate; this checkpoint precedes merge/deployment. Older results below retain their original scope. Runtime adds integrated reporting, public discovery/privacy/breadcrumbs and version 1.0.0, with no business-state migration or redesign.
+
+- Private PG18 restore PASS: 92 tables, 978 constraints, 169 indexes, 2 extensions. Preservation captures nine worktrees with verified payloads/bundle outside active workspace: `D:/Downloads/Workspace/TPA-recovery/20261028-v1`.
+- Fresh static `f2580aa`: seven stages PASS, 127 unit + 9 runtime tests. Evidence `.local/launch-readiness/2026-10-28T06-39-28.457Z-af0c52c5/results.json`.
+- New v1 browser 9/9 PASS before transient-route fix; fresh Publishing save/reload/publication and nine responsive/accessibility views PASS after it. Full restricted rerun and Linux CI remain gates. Original failures and interrupted runs remain retained/nonzero.
+- Production read-only 06:37–06:38 UTC: 202 held invitations, zero queued/leased emails, no approved template; public/health/anonymous-denials PASS. This observes the prior live version, not candidate-deployment proof.
+- Main protection requires four checks/PR, no force-push/deletion and zero mandatory reviewers. Linux first failures identified a worker timing assertion and newsletter QA configuration; fixes preserve safety guards.
+- [Finite checklist](TPA_V1_RELEASE_CHECKLIST.md) tracks exact-SHA CI, hosted QA, observation and recoverable consolidation. Later exact-SHA/provider/hosted evidence belongs to the release proof bundle. No field-performance, physical-device or exhaustive-inventory claim follows from local checks.
+
 Runs: 27–28 October 2026, Asia/Calcutta. **Production release recommendation: NOT READY.**
 The executed local critical workflows pass after the scoped repairs below. The testing
 candidate has not been pushed, merged into main or deployed by this task. Remaining
