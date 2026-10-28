@@ -26,7 +26,7 @@
   discovered defects. Source discovery and QA mapping establish inventory, not
   execution or release acceptance. Do not invent missing workflows from disabled
   screens or stale documentation.
-- New credentials follow the existing 6â€“12 character contract; existing-password
+- New credentials follow the existing 6–12 character contract; existing-password
   inputs permit the established compatibility maximum. Confirm these from current
   code/tests when changing authentication, without replacing valid credentials.
 - Account creation, email verification, profile verification, membership approval,
@@ -186,19 +186,19 @@ current run results belong in the health report/register.
 
 | Commit | Selected or retained disposition |
 |---|---|
-| `bcd6941` â€” scoped database roles/worker credentials | Port runtime credential isolation, scoped-role/grant/rehearsal tooling and tests; adapt isolated runner, engagement/flow worker pools, email integration and member HTTP adapter. Preserve newer main CI and add required current launch checks. Do not copy historical environment values or provider configuration. |
-| `6fa0a7d` â€” readable payment tables | Initially select grant/worker-test plumbing only. Later targeted reproduction showed the current main payment action collapsing to 44.609375px at 320px/light. Selectively port the registration table class and six scoped min-width/nowrap CSS lines; preserve current footer CSS and design tokens. Rebuilt candidate `a001c09` passes the six-state focused regression with readable 131.453125px actions. |
-| `752fde7` â€” nested HTTP restricted identities | Port restricted-runtime adapter and adapter regression coverage, with current CI wiring. |
-| `0817e7b` â€” keyboard payment-table assertion | Later port the focused table helper after reproducing the action-width defect; repair its local axe dependency path. The helper checks real keyboard scroll, long content, readable actions, dialog focus/cancellation, empty state and automated accessibility at 320/390/768 in light/dark. Rebuilt six-state acceptance passes; retain the original failing screenshot/log. |
-| `362ac79` â€” Phase 7B security report | Retain historical report/source evidence; current decisions/health report document the new candidate. |
-| `1571f0f` â€” private document referrer protection | Port privacy header configuration, isolated runner support and private-download regression. |
-| `de3feae` â€” scoped hosted/provider acceptance | Retain historical Phase 7C evidence; do not represent prior hosted acceptance as this candidate's run. |
-| `d666047` â€” token/event resource referrer protection | Port the additional scoped headers and their regression coverage without changing auth/payment workflow contracts. |
-| `599a77e` â€” per-run public acceptance artifacts | Retain old Phase 7B orchestrator; current launch runner supplies its own run-specific retained evidence. |
-| `aee5db9` â€” historical source-document labels | Retain old documentation history; candidate documentation explicitly distinguishes historical and current evidence. |
-| `fbb5b9b` â€” exact verification-link contracts | Port private-download/verification regression and `verify-http-ci` integration adapted to current main. |
-| `5193400` â€” invalid token/browser confirmation distinctions | Port the refined regression assertions; preserve the distinction between server rejection, browser result and provider delivery. |
-| `9001466` â€” Phase 7D release-candidate report | Retain the historical report and blocker evidence; no carry-forward of old PASS/readiness claims. |
+| `bcd6941` — scoped database roles/worker credentials | Port runtime credential isolation, scoped-role/grant/rehearsal tooling and tests; adapt isolated runner, engagement/flow worker pools, email integration and member HTTP adapter. Preserve newer main CI and add required current launch checks. Do not copy historical environment values or provider configuration. |
+| `6fa0a7d` — readable payment tables | Initially select grant/worker-test plumbing only. Later targeted reproduction showed the current main payment action collapsing to 44.609375px at 320px/light. Selectively port the registration table class and six scoped min-width/nowrap CSS lines; preserve current footer CSS and design tokens. Rebuilt candidate `a001c09` passes the six-state focused regression with readable 131.453125px actions. |
+| `752fde7` — nested HTTP restricted identities | Port restricted-runtime adapter and adapter regression coverage, with current CI wiring. |
+| `0817e7b` — keyboard payment-table assertion | Later port the focused table helper after reproducing the action-width defect; repair its local axe dependency path. The helper checks real keyboard scroll, long content, readable actions, dialog focus/cancellation, empty state and automated accessibility at 320/390/768 in light/dark. Rebuilt six-state acceptance passes; retain the original failing screenshot/log. |
+| `362ac79` — Phase 7B security report | Retain historical report/source evidence; current decisions/health report document the new candidate. |
+| `1571f0f` — private document referrer protection | Port privacy header configuration, isolated runner support and private-download regression. |
+| `de3feae` — scoped hosted/provider acceptance | Retain historical Phase 7C evidence; do not represent prior hosted acceptance as this candidate's run. |
+| `d666047` — token/event resource referrer protection | Port the additional scoped headers and their regression coverage without changing auth/payment workflow contracts. |
+| `599a77e` — per-run public acceptance artifacts | Retain old Phase 7B orchestrator; current launch runner supplies its own run-specific retained evidence. |
+| `aee5db9` — historical source-document labels | Retain old documentation history; candidate documentation explicitly distinguishes historical and current evidence. |
+| `fbb5b9b` — exact verification-link contracts | Port private-download/verification regression and `verify-http-ci` integration adapted to current main. |
+| `5193400` — invalid token/browser confirmation distinctions | Port the refined regression assertions; preserve the distinction between server rejection, browser result and provider delivery. |
+| `9001466` — Phase 7D release-candidate report | Retain the historical report and blocker evidence; no carry-forward of old PASS/readiness claims. |
 
 No branch, stash, recovery tag, worktree, original file, retained screenshot or
 source document is removed to satisfy the two-branch target. Any future retirement
