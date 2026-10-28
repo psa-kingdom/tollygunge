@@ -60,7 +60,8 @@
 ## Evidence and external effects
 
 All mutation-heavy testing uses unique synthetic identities, disposable local
-databases and provider sinks/mocks. Production is read-only. Never send real
+databases and provider sinks/mocks. Production validation is read-only except for
+the single admin recovery email explicitly authorized later by the user below. Never send real
 member email, release invitations, publish QA events to real users, change payment
 instructions, create production accounts or mutate production data. Provider
 acceptance, signed delivery and actual inbox receipt are separate outcomes.
@@ -74,6 +75,44 @@ Record VERIFIED for demonstrated evidence, INFERRED for reasoned interpretation,
 and UNKNOWN/BLOCKED where access or execution is missing. Use the required result
 statuses in the register; attach evidence only to assertions actually executed.
 The coordinator decides the final recommendation from current candidate results.
+
+## Explicit admin recovery and invitation preservation
+
+The user reiterated that the 202 real member invitations must remain under the
+administrator's control, then explicitly authorized **one admin recovery email**.
+The agent submitted that one request through the built-in browser. The provider
+receipt has a delivery event; the user completed the password reset and signed
+in themselves. The agent never entered a new password, inspected a token, reset
+credentials directly, approved the invitation template or released member mail.
+
+The production login failure was reproduced as HTTP 401 with sanitized provider
+logs reporting Invalid password. Read-only account-state inspection established
+an existing operator-approved administrator, a credential, and no invitation
+hold. A browser-redacted-field diagnostic attempt is explicitly superseded; its
+zero-match result supports no conclusion about the actual account.
+
+Before and after the isolated 202-recipient test and after live traversal,
+read-only transactions verified **202 unreleased membership invitation holds and
+zero queued/leased invitation emails**. The live dashboard also shows 202 held.
+No approved invitation template currently exists. Preserve the existing sequence:
+the administrator saves/previews/approves a template, selects/reviews recipients,
+then explicitly confirms one batch. Do not silently make this an automatic send.
+The invitation/authentication business workflow files remain identical to main.
+
+The built-in browser independently exercised the same sequence using 202 local
+synthetic members: selection persisted across nine pages, review had 202 eligible
+and zero exclusions, confirmation was disabled before acknowledgment, one
+confirmation queued exactly 202 messages, and reload did not duplicate them.
+No worker or external transport ran. The exact test database was removed after
+aggregate evidence was captured; real member records were never fixtures.
+
+After the user's recovery, the live authenticated browser traversed all 16 staff
+workspaces, 18 views/subsections, five reports, eleven footer destinations, and
+the administrator's own profile/security. No record save, publication, payment,
+upload, invitation review/release or member-message send was invoked. The initial
+new-person portrait warning cleared for an existing loaded profile; it is not
+evidence of unavailable storage. The browser's responsive override was clamped
+to 921px and reset; real 320/390/768 responsive evidence is from isolated Chromium.
 
 ## Actual preservation evidence and overlay dispositions
 
@@ -148,9 +187,9 @@ current run results belong in the health report/register.
 | Commit | Selected or retained disposition |
 |---|---|
 | `bcd6941` — scoped database roles/worker credentials | Port runtime credential isolation, scoped-role/grant/rehearsal tooling and tests; adapt isolated runner, engagement/flow worker pools, email integration and member HTTP adapter. Preserve newer main CI and add required current launch checks. Do not copy historical environment values or provider configuration. |
-| `6fa0a7d` — readable payment tables | Select relevant grant/worker-test plumbing where required. **Payment-table UI/CSS and historical table acceptance are retained on the old branch, not ported.** Current main responsive implementation remains the candidate baseline. |
+| `6fa0a7d` — readable payment tables | Initially select grant/worker-test plumbing only. Later targeted reproduction showed the current main payment action collapsing to 44.609375px at 320px/light. Selectively port the registration table class and six scoped min-width/nowrap CSS lines; preserve current footer CSS and design tokens. Rebuilt candidate `a001c09` passes the six-state focused regression with readable 131.453125px actions. |
 | `752fde7` — nested HTTP restricted identities | Port restricted-runtime adapter and adapter regression coverage, with current CI wiring. |
-| `0817e7b` — keyboard payment-table assertion | Retain historical table acceptance helper on security branch; no claim that this helper or its UI change was ported. |
+| `0817e7b` — keyboard payment-table assertion | Later port the focused table helper after reproducing the action-width defect; repair its local axe dependency path. The helper checks real keyboard scroll, long content, readable actions, dialog focus/cancellation, empty state and automated accessibility at 320/390/768 in light/dark. Rebuilt six-state acceptance passes; retain the original failing screenshot/log. |
 | `362ac79` — Phase 7B security report | Retain historical report/source evidence; current decisions/health report document the new candidate. |
 | `1571f0f` — private document referrer protection | Port privacy header configuration, isolated runner support and private-download regression. |
 | `de3feae` — scoped hosted/provider acceptance | Retain historical Phase 7C evidence; do not represent prior hosted acceptance as this candidate's run. |
@@ -164,3 +203,37 @@ current run results belong in the health report/register.
 No branch, stash, recovery tag, worktree, original file, retained screenshot or
 source document is removed to satisfy the two-branch target. Any future retirement
 requires a fresh dependency/preservation review and applicable authorization.
+
+## Reproduced payment-table defect and design reference lock
+
+The dedicated `--payment-table` regression failed on the current main-derived
+candidate even though the older broad event suite passed. Original evidence:
+`.local/launch-readiness/2026-10-27T12-33-37.366Z-47ff6d39/event-flow.log` and
+`.local/event-flow/2026-10-27T12-33-39.425Z/payment-table-320-light-initial.png`.
+The actual Review payment button width was **44.609375px** against the focused
+minimum 110px assertion. This is a confirmed readable-action layout defect, not
+an authentication/payment-state root cause.
+
+Keep the approved TPA visual tokens, navigation, semantic table/region and existing
+horizontal scrolling. The minimal fix adds a table-specific class and scoped
+minimum widths/nowrap for key content/actions. Current footer styles remain
+unchanged. Refero Raise/Stripe style references and Acctual table screens provide
+composition/readability sanity checks only; no reference colors/fonts are copied.
+Vercel interface guidance informs long-content handling and visible keyboard focus.
+No page redesign or change to payment authorization, amounts or state transitions
+is part of this fix. Mark FIXED AND RETESTED only after the rebuilt six-state
+table regression passes; preserve the original failure regardless of retest.
+
+The rebuilt focused run is now verified at exact candidate
+`a001c09657944abc36ec58a20257031f6bd27b2c`:
+`.local/launch-readiness/2026-10-27T12-37-04.911Z-91a77a1a/results.json` and
+`.local/event-flow/2026-10-27T12-37-07.152Z/payment-table.json`.
+All six viewport/mode states retain **131.453125px wide, 44px high** actions,
+positive actual keyboard scroll, no page overflow, no automated axe violations,
+and dismissed confirmations with zero payment writes. The empty state passes.
+The complete event-flow run passes 14 scenario groups. These are local synthetic
+browser results, separate from human/physical-device and hosted acceptance.
+
+The final preservation recheck at
+`D:\Downloads\Workspace\TPA\.launch-recovery\20261027-launch\preservation-check.json`
+reports eight original worktrees, zero failures and `preserved: true`.

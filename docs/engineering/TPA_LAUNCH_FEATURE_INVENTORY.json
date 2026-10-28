@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-27T12:22:53.167Z",
+  "generatedAt": "2026-10-28T03:59:13.583Z",
   "branch": "testing/launch-readiness",
-  "sourceSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+  "sourceSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
   "sourceWorkingTree": "Inventory describes current files; a HEAD SHA does not imply a clean tree or tested build.",
   "resultPolicy": "QA mappings identify candidate acceptance cases, not executed coverage. Each result records its own testedSha, environment, evidence and limitation. Broad suite success never automatically promotes mapped features.",
   "discoveryLimits": [
@@ -19,16 +19,16 @@
     "RESOURCE": 2,
     "WORKSPACE": 16,
     "PUBLIC": 6,
-    "FEATURE": 32,
+    "FEATURE": 34,
     "WORKER": 4,
     "PLANNED": 12
   },
   "totals": {
-    "PASS": 0,
+    "PASS": 68,
     "FAIL": 0,
-    "FIXED AND RETESTED": 0,
-    "BLOCKED": 0,
-    "NOT TESTED": 441,
+    "FIXED AND RETESTED": 2,
+    "BLOCKED": 11,
+    "NOT TESTED": 362,
     "DEFERRED": 12
   },
   "features": [
@@ -545,11 +545,15 @@
       "steps": "Try below-minimum, boundary-valid and invalid-policy passwords using test accounts.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Server password boundaries passed after invalid-email fixture correction; browser pre-submit validation passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/member.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log",
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Full combined UI/server boundary and retained-input matrix has not yet been checked assertion-by-assertion. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -596,12 +600,15 @@
       "category": "C. Authentication",
       "steps": "Trigger verification once and open actual approved inbox, including junk folder.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Actual verification inbox receipt cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "No approved external test inbox send/receipt scope has been supplied; isolated sink tests cannot open the requested real inbox/junk folder."
       }
     },
     {
@@ -830,12 +837,14 @@
       "category": "C. Authentication",
       "steps": "Open member A verification link while signed in as member B.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Verification link opened signed-out and in unrelated staff B context; target identity explicit and current B session unchanged.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -856,12 +865,14 @@
       "category": "C. Authentication",
       "steps": "Open member A invitation while signed in as member B.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Invitation activation cold/warm-cache browser checks preserve unrelated B session and require explicit account-switch continuation.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -882,12 +893,14 @@
       "category": "C. Authentication",
       "steps": "Open member A reset while signed in as member B.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Reset A link opened while signed in as B; B session retained, reset applies to A, explicit new-credential login completes.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -909,11 +922,14 @@
       "steps": "Sign in using each assigned staff account and member A.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Corrected actual administrator/member form lifecycle now passes all8focused browser cases plus29node; initial7ambiguous-alert fixture failures retained.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Written case additionally asks each of six assigned staff accounts to sign in and inspect all permitted workspaces; focused actual-form tests cover administrator/member only, so this whole case remains incomplete."
       }
     },
     {
@@ -935,11 +951,13 @@
       "steps": "Use incorrect password and unknown synthetic email once each.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Wrong-password form returns401 with intended safe error; initial test locator then failed from Next announcer ambiguity.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Unknown-email once-per-contract and corrected browser assertion not yet fully verified. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -987,11 +1005,13 @@
       "steps": "Compare selected/unselected keep-signed-in behavior in a test browser restart.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Backend member30day/staff7day session duration assertions passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Selected versus unselected keep-signed-in across actual browser restart not executed. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1013,11 +1033,13 @@
       "steps": "Expire an isolated session, then use a stale page and API request.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Expired database session yields null session,401API and protected-navigation login redirect.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Written case additionally requires failed mutation persistence check; no such write assertion is attached yet. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1039,11 +1061,14 @@
       "steps": "Logout, use browser Back and reload protected pages/direct APIs.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Actual form login/logout now denies session/protected APIs and subsequent navigation after logout in focused admin/member tests.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Written Browser Back/cache behavior is not explicitly exercised by the corrected fixture; no full-case pass claimed."
       }
     },
     {
@@ -1064,12 +1089,15 @@
       "category": "C. Authentication",
       "steps": "Request reset for QA account and inspect actual approved inbox.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Actual password recovery inbox receipt cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "No approved external test inbox send/receipt scope; local recovery sink/link tests do not establish delivered inbox receipt."
       }
     },
     {
@@ -1090,12 +1118,14 @@
       "category": "C. Authentication",
       "steps": "Reset QA password, test old/new login and session policy.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Actual auth/database reset test rejects old password, accepts replacement and revokes earlier session.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1116,12 +1146,14 @@
       "category": "C. Authentication",
       "steps": "Open an expired isolated reset token.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Expired isolated password-reset token rejected400 without successful credential replacement.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1142,12 +1174,14 @@
       "category": "C. Authentication",
       "steps": "Reuse consumed QA reset link.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Consumed reset token cannot change credentials a second time; replacement login still succeeds.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1169,11 +1203,13 @@
       "steps": "Change password using correct and incorrect current password.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Backend correct/incorrect current-password handler paths asserted200/400.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Written persisted replacement after change and complete browser flow are not separately established. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1350,12 +1386,14 @@
       "category": "D. Application and verification",
       "steps": "Select state/district/city/postal values and change parent selections.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Postal hierarchy/parent reset, ambiguous PIN and missing lookup handling passed real-reference and mocked browser scenarios.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1376,12 +1414,14 @@
       "category": "D. Application and verification",
       "steps": "Enter a partial application, wait for save confirmation, reload.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Partial application values save, reload and remain draft; persisted value assertions passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1428,12 +1468,14 @@
       "category": "D. Application and verification",
       "steps": "Disconnect isolated browser during autosave; edit and reconnect.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Browser abort/offline/reconnect scenario reports unsaved state, recovers input, then persists after reconnection.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1480,12 +1522,14 @@
       "category": "D. Application and verification",
       "steps": "Edit the same QA application from two sessions/tabs.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Two actual browser tabs: winning saved value retained and stale tab explicitly rejected with reload/recovery action.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -1819,11 +1863,13 @@
       "steps": "Publish an isolated mandatory requirement after existing profile verification.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Versioned review/badge-retention server and browser checks passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Full requirement-publish-to-update-needed lifecycle not comprehensively mapped in this preliminary run. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -2754,12 +2800,14 @@
       "category": "G. Register and onboarding",
       "steps": "Stop/restart isolated import processing mid-batch.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Interrupted import processing restarts safely; reload/client disconnect retains progress and row lineage; no duplicate records/invitations.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-30-10.942Z-606ddcc3/import-jobs.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -2780,12 +2828,14 @@
       "category": "G. Register and onboarding",
       "steps": "Inspect imported QA held identity and mail/token tables before release.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Held approved account has no activation token/mail job before reviewed release; blocked recovery/verification/sign-in cannot bypass hold.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/accounts.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -2832,12 +2882,14 @@
       "category": "G. Register and onboarding",
       "steps": "Compare existing QA identity links and credential hashes before/after supported import.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Reviewed invitation/import replay retains credential/account/person links and does not merge unrelated identities.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/invitation-db.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -3066,12 +3118,14 @@
       "category": "H. Event creation and booking",
       "steps": "Open restricted event link signed out, sign in/signup as QA account.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Anonymous selected-event link continues through real password sign-in and signup without unrelated access.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3092,12 +3146,14 @@
       "category": "H. Event creation and booking",
       "steps": "Register QA member for a published available event.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Single paid/free synthetic reservation retains correct amount/payment status and confirmation queue association.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3248,12 +3304,14 @@
       "category": "H. Event creation and booking",
       "steps": "Submit two concurrent isolated registrations for one remaining seat.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Simultaneous last-seat requests preserve capacity; at most one eligible booking succeeds.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3352,12 +3410,14 @@
       "category": "I. Payments and financials",
       "steps": "Compare QA booking amount/payee/UPI/bank/QR/reference to selected snapshot.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Member booking resolves correct historical amount/payee/selected account instructions and QR revision.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3378,12 +3438,14 @@
       "category": "I. Payments and financials",
       "steps": "Submit synthetic reference on approved tagged booking.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Synthetic member reference submission remains pending/manual review until authorized finance action.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3404,12 +3466,14 @@
       "category": "I. Payments and financials",
       "steps": "Finance confirms a designated synthetic QA booking through UI.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Same-workshop browser staff payment verification updates paid history and synthetic confirmation delivery without transfer.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3560,12 +3624,14 @@
       "category": "I. Payments and financials",
       "steps": "Edit QA payment account and activate supported revision; inspect prior booking.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Payment-account configuration revisions preserve immutable historical payee instructions for existing booking.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3586,12 +3652,14 @@
       "category": "I. Payments and financials",
       "steps": "Cancel paid tagged registration.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Paid booking cancellation retains receipt/refund review history until explicit recorded full refund.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3612,12 +3680,14 @@
       "category": "I. Payments and financials",
       "steps": "Record synthetic QA refund through authorized workflow.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Authorized synthetic full-refund history and reconciled totals change without any external funds transfer.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3716,12 +3786,14 @@
       "category": "I. Payments and financials",
       "steps": "Independently sum QA receipts/refunds/non-voided expenses/pending bookings.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Independent expected sums reconcile receipts/full refunds/non-void expenses; pending amounts excluded from received revenue.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3768,12 +3840,14 @@
       "category": "I. Payments and financials",
       "steps": "Open financial/receipt API as event_operator without finance role.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Event operator lacking finance permission cannot retrieve detailed financials/expenses or write expense state.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3898,12 +3972,14 @@
       "category": "J. Event operations",
       "steps": "Apply supported bulk action to explicit QA selection.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Explicit bulk attendance selection applies only valid entries; version-conflict result visible and pagination/filtering checked.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3950,12 +4026,14 @@
       "category": "J. Event operations",
       "steps": "Enable isolated attendance milestone rule and compare eligible/absent members.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Enabled milestone projection counts verified actual historical attendance; absent rows/stale rule changes do not award.",
+        "evidence": [
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -3976,12 +4054,14 @@
       "category": "J. Event operations",
       "steps": "Complete eligible QA event and inspect badge eligibility.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Completion awards eligible event badge and correction/reopening revokes it before refinalization.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4002,12 +4082,14 @@
       "category": "J. Event operations",
       "steps": "Publish synthetic event resource with public eligibility.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Only intended published public resource streams anonymously; draft/archive/current eligibility guards applied.",
+        "evidence": [
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4028,12 +4110,14 @@
       "category": "J. Event operations",
       "steps": "Publish QA resource with configured member eligibility.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Configured member resource access allows eligible synthetic member and denies anonymous/unentitled identities.",
+        "evidence": [
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4054,12 +4138,14 @@
       "category": "J. Event operations",
       "steps": "Test resource eligibility with registered/cancelled/member-B fixtures.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Registration/cancellation/current member-resource entitlement rules are checked at direct access.",
+        "evidence": [
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4080,12 +4166,14 @@
       "category": "J. Event operations",
       "steps": "Test resource with present/absent attendees.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Actual attendance eligibility permits present confirmed member; absent/ineligible fixtures denied.",
+        "evidence": [
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4106,12 +4194,14 @@
       "category": "J. Event operations",
       "steps": "Change eligibility/cancel entitlement and retry direct file URL.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Cancellation/archive/resource version/eligibility changes are rechecked at direct stream access; stale access denied.",
+        "evidence": [
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4132,12 +4222,14 @@
       "category": "J. Event operations",
       "steps": "Grant perk to specific QA registration.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Manual perk grants enforce registration ownership and appear only in intended member history.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4158,12 +4250,14 @@
       "category": "J. Event operations",
       "steps": "Revoke same perk and retry member access.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Manual perk revocation appears in member history while prior audit state remains.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4210,12 +4304,14 @@
       "category": "J. Event operations",
       "steps": "Review and confirm promotion to approved test recipients only.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Administrator reviews promotion and confirms dispatch; mocked transport accepts one intended reviewed send for each of3eligible synthetic members.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4236,12 +4332,14 @@
       "category": "J. Event operations",
       "steps": "Attempt completion before end/final attendance/financial review using isolated fixture.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Completion rejects missing end/attendance/financial-review prerequisites; valid completion freezes operational writes.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4366,12 +4464,15 @@
       "category": "K. Transactional email",
       "steps": "Open approved inbox after a triggered QA message and complete link action on desktop.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Actual inbox and usable-link acceptance cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "No approved real external test inbox operation in this launch run; queue/provider mock acceptance cannot substitute for receipt."
       }
     },
     {
@@ -4392,12 +4493,15 @@
       "category": "K. Transactional email",
       "steps": "Open representative account and event links from real phone email client.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Real-phone email-client link continuation cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Physical phone/email-client human acceptance is unavailable to the automated local browser run."
       }
     },
     {
@@ -4444,12 +4548,14 @@
       "category": "K. Transactional email",
       "steps": "Configure supported offsets and pending-payment option on tagged event.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Supported reminder offsets/pending option persist and controlled scheduler exercises eligible due times.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4470,12 +4576,14 @@
       "category": "K. Transactional email",
       "steps": "Change booking/payment/event/schedule before due time.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Changed schedule/booking/payment/cancellation invalidates obsolete queued reminder and records skip reason.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4496,12 +4604,14 @@
       "category": "K. Transactional email",
       "steps": "Test earliest/latest offsets, catch-up expiry and after-event timing.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Three offsets, exact catch-up expiry and after-start/late-registration boundaries restrict reminder delivery.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4522,12 +4632,14 @@
       "category": "K. Transactional email",
       "steps": "Simulate transient provider failure/uncertain acceptance and restart.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Transient retry/quota pause/expired lease and bundled-worker restart preserve idempotency and accepted-message state.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -4548,12 +4660,14 @@
       "category": "K. Transactional email",
       "steps": "Cancel/rebook isolated member and advance due time.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Cancellation and rebooking invalidate old booking revision; only current eligible reminder can send.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -5380,12 +5494,14 @@
       "category": "M. CMS and settings",
       "steps": "Upload synthetic supported PDF to QA record, preview and publish.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Synthetic PDF publication exposes correct intended bytes only after explicit publish; anonymous/member settings management denied.",
+        "evidence": [
+          ".local/website-control/2026-10-27T12-32-08.750Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -5406,12 +5522,14 @@
       "category": "M. CMS and settings",
       "steps": "Replace QA PDF without publishing, then publish new version.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Replacement draft preserves old published PDF bytes until publish; old references retained.",
+        "evidence": [
+          ".local/website-control/2026-10-27T12-32-08.750Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Complete named contract executed in local synthetic fixtures; Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -5797,11 +5915,14 @@
       "steps": "Export same QA flyer and visually inspect all pages at normal zoom.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "1/2/3/6-speaker PDF files generated alongside PNG and member/public QR export assertions pass.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Written case requires independent visual inspection of every PDF page at normal zoom; file generation and image-based export assertions do not establish that human review."
       }
     },
     {
@@ -5822,12 +5943,15 @@
       "category": "N. People media flyers",
       "steps": "Scan QA public and member flyer QR with physical phone.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Physical-phone QR scanning cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Only browser/emulated or machine-decoded QR evidence can be produced in the current local run; required physical-phone operator acceptance is not supplied."
       }
     },
     {
@@ -6187,11 +6311,14 @@
       "steps": "Test all seven domain permissions against each single-role QA account using UI and direct API.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Six-role staffsearch/attention and baseline role API checks passed; scoped DB grants3906 comparisons passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "All seven domain permissions for every single-role UI/direct-API action is broader than attached selected assertions. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -6524,12 +6651,14 @@
       "category": "Q. Database and operations",
       "steps": "Inject controlled failure between isolated multi-table writes.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Injected invitation-hold/mail insertion failures roll back multi-table account/person/membership/token state; following savepoint row succeeds.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -6602,12 +6731,14 @@
       "category": "Q. Database and operations",
       "steps": "Apply candidate migrations to disposable database/approved isolated restore.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Candidate34 migrations applied to isolated database; repeat run and wrong-identity denial passed; fresh/upgrade role rehearsal preserves schema identities.",
+        "evidence": [
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Executed locally with synthetic identities/fixtures only; legacy live-tagged handoff steps are explicitly isolated by the launch plan. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -6629,11 +6760,14 @@
       "steps": "Run web/worker action suites under intended restricted isolated database credentials.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Fresh/upgrade web/email/import privilege checks and denial probes passed with exact owned-role cleanup.",
+        "evidence": [
+          ".local/launch-readiness/security-role-run/role-acceptance.json",
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Full final restricted web+worker business-action suite must finish; grant comparisons alone do not fulfill all action paths. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -6732,12 +6866,15 @@
       "category": "Q. Database and operations",
       "steps": "Restore approved backup into isolated restricted environment and reconcile rows/files.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Approved backup restore and measured recovery cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "No approved production backup/isolated restore package or owner RTO/RPO targets supplied; empty-schema migration rehearsal does not test restore."
       }
     },
     {
@@ -6758,12 +6895,15 @@
       "category": "Q. Database and operations",
       "steps": "Inspect restored queue with all external providers disabled before worker start.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Restore-time communications hold cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Depends on the approved restore rehearsal above; no restored queue was exercised. Current synthetic test providers are disabled but that is not restored-production-queue evidence."
       }
     },
     {
@@ -6810,12 +6950,15 @@
       "category": "R. UX and efficiency",
       "steps": "Run representative P0/P1 journeys on real Android Chrome and iPhone Safari where available.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Real Android/iPhone core journey matrix cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Current evidence is desktop Chromium viewport emulation. Required physical-device tester/access is not available within this automated launch run."
       }
     },
     {
@@ -6837,11 +6980,13 @@
       "steps": "Run core journeys on current available Chrome, Edge, Firefox and Safari with recorded versions.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Chromium desktop/tablet/phone projects executed; first browser result98pass36skip7fixturefail.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "This does not execute Chrome/Edge/Firefox/Safari current-version cross-browser acceptance. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -6862,12 +7007,15 @@
       "category": "R. UX and efficiency",
       "steps": "Complete signup/application/event booking and admin dialog using available screen reader.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Human screen-reader journey acceptance cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "No human assistive-technology session/acceptance supplied; keyboard and automated browser checks do not substitute for screen-reader use."
       }
     },
     {
@@ -6889,11 +7037,13 @@
       "steps": "Inspect console/failed requests during each core journey.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "First core retained expected outage failures, unexplained stream-closed logs, ambiguous alert fixture failures and obsolete public utility timeout.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "No clean all-core console/network claim until diagnosis and complete retest. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -6940,12 +7090,15 @@
       "category": "R. UX and efficiency",
       "steps": "On isolated deployment run capped 5/10/25/50-user stages with representative mix, telemetry and owner budget.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Hosted representative concurrent capacity cannot be completed within the authorized isolated automatic run.",
+        "evidence": [
+          "docs/engineering/TPA_LAUNCH_TEST_PLAN.md",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "No isolated deployed load target with approved budget/telemetry and capacity targets is supplied. Serial local fixtures and last-seat races cannot establish user-concurrency capacity."
       }
     },
     {
@@ -7068,11 +7221,15 @@
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Signup, verification, draft/save/submit/review assertions pass across separate local suites.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log",
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "One coherent new-member correction/resubmit/approval trace with all same-identity evidence is not yet attached. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -7091,11 +7248,15 @@
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Approved accounts, controlled invitation DB/HTTP and held-account browser/activation cases pass.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log",
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Separate fixture suites do not prove one complete import-review-release-actual-inbox-fresh-login trace. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -7136,12 +7297,14 @@
       ],
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Same workshop complete local UI chain passes: administrator configures/publishes; member books/submits reference; staff manually verifies; confirmation sink/history inspected.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Manual payment test uses synthetic reference and mail sink; actual bank verification/inbox receipt remains separate."
       }
     },
     {
@@ -7159,12 +7322,14 @@
       ],
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Same synthetic booking cancellation and explicit full-refund history/financial totals are exercised with preserved immutable receipt/refund evidence.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "No external transfer; local API/service journey only."
       }
     },
     {
@@ -7182,12 +7347,14 @@
       ],
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Controlled-clock reminders exercise payment/booking/event/schedule revisions, skipped obsolete jobs, quota/retry/restart and same-workshop one-time offset.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Synthetic sink/mocked transport only; no real members contacted."
       }
     },
     {
@@ -7206,11 +7373,15 @@
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Synthetic newsletter consent/token/worker lifecycle and durable campaign API assertions pass.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log",
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Full campaign UI review/dispatch/actual receipt/unsubscribe journey for the same record remains incomplete; real inbox gated. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -7229,11 +7400,15 @@
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Public inquiry intake, role isolation and operational CRM assertions pass.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log",
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Same-record assignment/follow-up/inbox reply/close/report chain not yet executed completely. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -7252,11 +7427,15 @@
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Editorial media/people/portrait publication and preview privacy assertions pass.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log",
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "One complete content/media/profile lifecycle trace plus byte-access checks for the same records remains incomplete. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -7274,12 +7453,14 @@
       ],
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Complete local operations/engagement member-benefits chain passes ownership, present/absent eligibility, resource bytes, perk grant/revoke, completion badge and current access.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Local mock storage/synthetic identities; physical-device and hosted resource delivery unverified."
       }
     },
     {
@@ -7298,11 +7479,15 @@
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Backend stale/revoked-session authorization and report/inbox access assertions pass.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log",
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Owned browser session role-revoke/retry/export/restore full sequence not yet attached as a complete journey. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -7321,11 +7506,15 @@
       "isolation": "Run the complete journey in an isolated candidate environment with synthetic identities; production remains read-only.",
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Transaction rollback/mail lease and retries pass locally; migrations and restricted-grant cleanup pass.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log",
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Approved backup restore and recovery timing/row-file reconciliation remain blocked, so the complete journey is not passed. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -15533,6 +15722,62 @@
       }
     },
     {
+      "id": "LR-FEATURE-8866982712",
+      "kind": "FEATURE",
+      "key": "live-invitations-preservation",
+      "title": "Production 202 invitation holds remain under administrator control",
+      "expected": "All 202 existing member invitation holds remain present and unreleased; validation does not queue/send/retry/revoke invitations, approve their template or change the administrator-controlled batch-release workflow.",
+      "sources": [
+        "scripts/verify-launch-invitation-holds.mts",
+        "src/lib/invitation-release.ts",
+        "src/components/invitation-release-review.tsx",
+        "src/components/invitation-template-editor.tsx"
+      ],
+      "qaIds": [
+        "QA-0095",
+        "QA-0096",
+        "QA-0097",
+        "QA-0098",
+        "QA-0099",
+        "QA-0100",
+        "QA-0101",
+        "QA-0102",
+        "QA-0103",
+        "QA-0104",
+        "QA-0105",
+        "QA-0106",
+        "QA-0107",
+        "QA-0108",
+        "QA-0166",
+        "QA-0167",
+        "QA-0168",
+        "QA-0169",
+        "QA-0170",
+        "QA-0171",
+        "QA-0172",
+        "QA-0173",
+        "QA-0174",
+        "QA-0175"
+      ],
+      "journeyIds": [
+        "E2E-02"
+      ],
+      "result": {
+        "status": "PASS",
+        "summary": "Production dashboard/browser and repeated READ ONLY aggregates confirm202 real holds and0 queued/leased member invitations. All16 live staff workspaces were traversed without operational saves/sends. A separate202-synthetic-recipient browser rehearsal selected nine pages, reviewed202/0excluded, queued one batch, survived reload without duplicates, and removed only its own database. One separately authorized admin recovery email does not release member invitations.",
+        "evidence": [
+          ".local/launch-readiness/invitation-preservation-2026-10-27T12-42-16.850Z/results.json",
+          ".local/launch-readiness/invitation-preservation-2026-10-28T03-55-10.154Z/results.json",
+          ".local/launch-readiness/live-browser-traversal.json",
+          ".local/launch-readiness/interactive-browser-evidence.json",
+          ".local/launch-readiness/interactive-202-34a43262-4b52-4359-b659-131c1c823d02/results.json"
+        ],
+        "environment": "hosted aggregate database read-only; source comparison against295c74a",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Live template remains unapproved. Administrator must perform existing template approval and recipient review before an intentional batch send. No production member invitation review/send was invoked."
+      }
+    },
+    {
       "id": "LR-FEATURE-b9d9062845",
       "kind": "FEATURE",
       "key": "authentication",
@@ -15609,12 +15854,32 @@
         "E2E-11"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Local29 Node assertions and8 real-browser cases passed(4 viewport duplicates skipped). Production401 Invalid password was reproduced, a single recovery email was explicitly authorized and provider-delivered, and the user completed the reset. The authenticated live administrator subsequently traversed all16 staff workspaces and retained the session after reload. No authentication bypass or credential edit by the agent.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/results.json",
+          ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/security/restricted-2026-10-27T12-28-14.076Z-27186c77/auth.log",
+          ".local/launch-readiness/live-login-diagnosis-2026-10-27T12-48-01.786Z/results.json",
+          ".local/launch-readiness/live-login-sanitized.json",
+          ".local/launch-readiness/live-login-diagnosis-2026-10-27T12-53-32.082Z/results.json",
+          ".local/launch-readiness/live-browser-traversal.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Real member login/credential changes were not exercised in production; synthetic member lifecycle tests supply local evidence. Existing roles, verification rules and202 member invitation holds unchanged.",
+        "executionHistory": [
+          {
+            "status": "FAIL",
+            "evidence": ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+            "summary": "7 new browser fixture assertions collided with Next route announcer; actual product error text was present."
+          },
+          {
+            "status": "PASS",
+            "evidence": ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/results.json",
+            "summary": "29node+8PW pass;4 intentional viewport-independent skips after selector correction."
+          }
+        ]
       }
     },
     {
@@ -15657,12 +15922,28 @@
       ],
       "baselineFinding": "Coordinator-confirmed root cause: the Next.js catch-all Referrer-Policy overrode handler-level private/token response policy. Candidate adds scoped header overrides; attach executed regression evidence before marking fixed.",
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "FIXED AND RETESTED",
+        "summary": "Confirmed source defect: shared Next.js catch-all Referrer-Policy overrode handler privacy. Scoped no-referrer rules now pass both actual HTTP regressions in the otherwise failing first core run: unauthorized private document plus invalid token/event-resource/verification and newsletter cases; public health policy remains unchanged.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          "tests/private-download-headers.integration.ts",
+          "next.config.mjs"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Representative unauthorized/invalid-token response paths are verified; this is not proof of every authorized download, external-token journey or production deployment.",
+        "regressionEvidence": ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+        "executionHistory": [
+          {
+            "status": "CONFIRMED SOURCE DEFECT",
+            "summary": "Catch-all shared header overrode handler privacy."
+          },
+          {
+            "status": "PASS",
+            "evidence": ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+            "summary": "Both named privacy regression tests passed inside baseline API12/12."
+          }
+        ]
       }
     },
     {
@@ -15702,12 +15983,89 @@
         "E2E-12"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Guarded static run1d64603 passed lint, structure,119 unit assertions and9 runtime assertions; safety tests cover dedicated-QA target rejection, environment blanking and phase/test-summary counts. Per-run original failures and artifacts retained; recovery bundle/payload evidence and copied-file hashes are documented. Final preservation recheck confirms 8 original worktrees,zero failures and preserved:true.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-28-44.774Z-1d013945/results.json",
+          "tests/launch-test-safety.test.ts",
+          "docs/engineering/TPA_LAUNCH_DECISIONS.md",
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          "../.launch-recovery/20261027-launch/preservation-check.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Broad business suites remain independently incomplete; preserving evidence and passing guard tests does not imply product readiness. Private recovery baseline is intentionally outside Git."
+      }
+    },
+    {
+      "id": "LR-FEATURE-62b3a68557",
+      "kind": "FEATURE",
+      "key": "payment-table",
+      "title": "Readable and keyboard-scrollable registration payment table",
+      "expected": "Long member/event text at 320/390/768 widths in light/dark preserves readable Review payment actions, semantic table/region focus, actual keyboard horizontal scrolling, no page overflow, dismissed confirmation without writes and the empty state.",
+      "sources": [
+        "src/components/registration-payments.tsx",
+        "src/app/globals.css",
+        "tests/helpers/payment-table-acceptance.ts"
+      ],
+      "qaIds": [
+        "QA-0128",
+        "QA-0129",
+        "QA-0130",
+        "QA-0131",
+        "QA-0132",
+        "QA-0133",
+        "QA-0134",
+        "QA-0135",
+        "QA-0136",
+        "QA-0137",
+        "QA-0138",
+        "QA-0139",
+        "QA-0140",
+        "QA-0141",
+        "QA-0142",
+        "QA-0143",
+        "QA-0144",
+        "QA-0261",
+        "QA-0262",
+        "QA-0263",
+        "QA-0264",
+        "QA-0265",
+        "QA-0266",
+        "QA-0267",
+        "QA-0268",
+        "QA-0269",
+        "QA-0270"
+      ],
+      "journeyIds": [
+        "E2E-04"
+      ],
+      "baselineFinding": "Reproduced defect: at 320px/light with long member/event text, Review payment action collapsed to 44.609375px. Original screenshot and failing regression are retained. Candidate selectively ports table class/min-width/nowrap with existing scrolling; rebuilt targeted regression is required before marking fixed.",
+      "result": {
+        "status": "FIXED AND RETESTED",
+        "summary": "Confirmed baseline defect: Review payment collapsed to44.609375 px at 320px/light. Minimal table class+6 scoped CSS lines ported from 6fa0a7d; existing semantics/footer/tokens retained. Rebuilt clean a001c09 passes6states: action width131.453125 px,height 44px, positive actual keyboard scroll, no page overflow/axe violations, focused dismissed confirmations with 0 writes and empty state.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-33-37.366Z-47ff6d39/event-flow.log",
+          ".local/event-flow/2026-10-27T12-33-39.425Z/payment-table-320-light-initial.png",
+          ".local/launch-readiness/2026-10-27T12-37-04.911Z-91a77a1a/results.json",
+          ".local/event-flow/2026-10-27T12-37-07.152Z/payment-table.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Local Chromium emulation at320/390/768 in light/dark; no real payment write or physical-device/human acceptance implied.",
+        "regressionEvidence": ".local/event-flow/2026-10-27T12-37-07.152Z/payment-table.json",
+        "executionHistory": [
+          {
+            "status": "FAIL",
+            "evidence": ".local/launch-readiness/2026-10-27T12-33-37.366Z-47ff6d39/event-flow.log",
+            "summary": "Readable action width44.609375px below110px assertion."
+          },
+          {
+            "status": "PASS",
+            "evidence": ".local/event-flow/2026-10-27T12-37-07.152Z/payment-table.json",
+            "summary": "6states,131.453125px wide/44px high, keyboard scroll positive, overflowfalse, axe0, confirmationwrites0."
+          }
+        ]
       }
     },
     {
@@ -15745,12 +16103,28 @@
       ],
       "journeyIds": [],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "First footer/logo/keyboard/responsive regressions passed, but legacy public utility timed out looking for removed atlas markup. Adapted approved-Paper-v3 checker passes12 light/dark/responsive/JS-disabled states with zero writes; current approved tokens/assets/navigation retained.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/security/restricted-2026-10-27T12-28-14.076Z-27186c77/public-interactions/results.json",
+          "docs/engineering/TPA_LAUNCH_DECISIONS.md"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Evidence covers approved current branding/public layout and shared-shell regressions in local Chromium; it does not establish full human usability or all external links/providers. Original obsolete-atlas failure is retained.",
+        "executionHistory": [
+          {
+            "status": "FAIL",
+            "evidence": ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+            "summary": "Legacy harness expected removed .kolkata-hero-art img."
+          },
+          {
+            "status": "PASS",
+            "evidence": ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/security/restricted-2026-10-27T12-28-14.076Z-27186c77/public-interactions/results.json",
+            "summary": "12 approved-Paper-v3 states, no writes."
+          }
+        ]
       }
     },
     {
@@ -15777,12 +16151,15 @@
       ],
       "journeyIds": [],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Appearance browser scenario passed on desktop/tablet/phone: persist mode, synchronize tabs, follow system preference and preserve public layouts; logo matrix also passed320/390/768/1440 light/dark in desktop project.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          "tests/browser/workspace-ux.spec.ts"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Automated Chromium/viewport emulation only; additional themes remain deferred and human/physical-device acceptance is not established. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -15872,11 +16249,14 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Backend onboarding, held-account browser and member-dashboard checks passed independent email/profile/membership/publication behavior.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/accounts.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Not every supported lifecycle transition and payment/publication combination has a complete current-run journey. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -15908,11 +16288,14 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Fresh/upgrade restricted-role rehearsals passed3906 table privilege comparisons and deny probes with exact owned database/role cleanup. Core server suites passed six-role staff search/attention, ownership/revocation and scoped report/inbox checks.",
+        "evidence": [
+          ".local/launch-readiness/security-role-run/role-acceptance.json",
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Privilege comparisons are not3906 business journeys; full role-by-action UI+API matrix and final restricted core rerun remain incomplete. Role report lacks embedded Git SHA; coordinator source association is8ad candidate."
       }
     },
     {
@@ -15968,11 +16351,14 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Application/verification HTTP suites and browser save/reload, structured postal addresses, offline recovery, stale-tab rejection and badge retention passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "All conditional fields, evidence format/boundary combinations and complete reviewed lifecycle are not yet fully mapped/executed. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -16007,11 +16393,15 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Initial member HTTP run failed a boundary-signup expectation because generated email fixture was invalid (400 vs200); corrected fixture rerun passed19/19 assertions. Existing register search/detail/transaction/preservation checks passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/member.log",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/results.json",
+          ".local/launch-readiness/2026-10-27T12-22-47.704Z-a66cc20f/member.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "This was a test fixture correction; no runtime login/member contract defect is claimed. Full directory filter/create/edit UI matrix remains incomplete. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -16059,12 +16449,16 @@
         "E2E-12"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Earlier core skipped3 dedicated job browser cases; separate import stage passes5node+3 browser assertions. Independent DB reconciliation326members/unique numbers/emails, zero linked accounts/invitations/mail; interrupted worker resumes safely, disconnected client/reload restores progress, correction source-row lineage retained and exact test database removed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-30-10.942Z-606ddcc3/results.json",
+          ".local/launch-readiness/2026-10-27T12-30-10.942Z-606ddcc3/import-jobs.log",
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Synthetic isolated import fixtures only; original real-source corrections/held invitations remain untouched. Core3 skipped import cases are covered by this separate stage, not retroactively changed to passes."
       }
     },
     {
@@ -16158,12 +16552,20 @@
         "E2E-02"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Approved-account3/3, controlled invitation DB3/3, invitation HTTP2/2, held-account browser and corrected actual-form hold checks pass. Review/template expiry, exact-recipient atomic queueing, replay, credential preservation and rollback behavior retain explicit release boundaries. Built-in browser additionally proved202-synthetic-recipient selection/review/acknowledgment/confirmation/reload with exactly202 queued and no external worker.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/accounts.log",
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/invitation-db.log",
+          ".local/launch-readiness/2026-10-27T12-28-35.291Z-f6bcc20c/results.json",
+          ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/results.json",
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/interactive-browser-evidence.json",
+          ".local/launch-readiness/interactive-202-34a43262-4b52-4359-b659-131c1c823d02/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Local DB/API/browser contracts are verified; actual approved mailbox receipt and production release remain separately blocked/not authorized. Some earlier fixture runs recorded8ad34e3 dirty overlays; later HTTP/auth records clean 1d64603."
       }
     },
     {
@@ -16203,12 +16605,16 @@
         "E2E-05"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Full event flow now passes14 scenario groups on clean a001c09, including draft visibility, dates/window/capacity, paid registration, duplicate/stale actions, last-seat race, cancellation/rebooking, browser editor and attendance.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-37-04.911Z-91a77a1a/results.json",
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -16244,12 +16650,16 @@
         "E2E-04"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Event flow and operations pass selected bank/UPI/QR instructions, manual reservation amounts and immutable historical payee/account revision checks; current shared display/activation browser regression also passed.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json",
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -16286,12 +16696,15 @@
         "E2E-05"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Same-workshop UI reservation/reference/authorized manual verification and immutable payee/payment/refund history pass; no member reference auto-paid claim and no real transfer.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -16348,12 +16761,15 @@
         "E2E-05"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Operations16 groups include independently reconciled receipts/full refunds/expense totals, expense edits/voiding and event-operator denial of finance details/expense writes.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json",
+          ".local/launch-readiness/2026-10-27T12-32-06.636Z-86cd31b6/event-operations.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -16394,12 +16810,15 @@
         "E2E-10"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Operations16 groups pass bulk per-row attendance conflicts/filtering, correction history, finalization/completion prerequisites, freeze, audited reopening and completion-badge revocation/refinalization.",
+        "evidence": [
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json",
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -16464,12 +16883,15 @@
         "E2E-10"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Engagement6groups+operations16groups pass audience-specific resource rules, actual mock-storage bytes, A/B/refunded/pending/anonymous denial, badges and manual perk grant/revoke/history.",
+        "evidence": [
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -16519,12 +16941,15 @@
         "E2E-06"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Controlled-clock event flow and same-workshop operations pass revision/payment/booking/cancellation eligibility,3offsets/exact catch-up expiry, worker restart and one configured confirmed reminder.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -16594,12 +17019,15 @@
         "E2E-07"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Engagement and same-workshop UI operations pass approved audience/version eligibility, concurrency/deduplication, consent/suppression exclusion, replay denial and mocked transport acceptance for 3 eligible synthetic members.",
+        "evidence": [
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -16632,11 +17060,13 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Baseline public inquiry intake and operational CRM tests passed; newsletter/browser inquiry compact and optional-field flows passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Complete same-record inquiry assignment/follow-up/reply/closure/report journey remains incomplete; actual external correspondence prohibited."
       }
     },
     {
@@ -16669,11 +17099,14 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Durable campaigns/mail retry/lease/event ordering and signed inbox/delivery role/revocation assertions passed in local backend suites.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/newsletter.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Not all transactional kinds, reminder/promotional eligibility and uncertain provider acceptance paths have current dedicated event/runtime acceptance. Actual provider/inbox results remain separate."
       }
     },
     {
@@ -16715,11 +17148,14 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Baseline12API and durable email tests passed campaign revisions/consent, large audience rejection, inbox/delivery authorization, stale writes, revoked sessions and verified webhooks.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/newsletter.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Complete campaign UI dispatch/unsubscribe/reply lifecycle with actual approved inbox remains incomplete/blocked."
       }
     },
     {
@@ -16768,12 +17204,16 @@
         "E2E-07"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Newsletter stage passed12 node assertions including nested consent/token/quota/retry/suppression cases. Public browser newsletter tests also passed at all three projects: no account creation, confirmation, unsubscribe, failure input retention and staff public-audience selection.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/results.json",
+          ".local/launch-readiness/2026-10-27T12-20-21.041Z-3ad694b8/newsletter.log",
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Synthetic transport and local Chromium only; actual provider acceptance/inbox receipt remains a separate blocked gate. First restricted core recorded clean8ad34e3. Subsequent newsletter/member/account/invitation-DB runs recorded8ad34e3 with dirty test-fixture overlays; later fixture updates were committed as1d64603. Evidence is local only, not hosted or actual-inbox acceptance."
       }
     },
     {
@@ -16809,11 +17249,13 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Baseline editorial HTTP and browser publication/preview snapshot checks passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Full rich-editor formatting/limits/publish/withdraw/conflict and every settings surface are not comprehensively exercised in this run."
       }
     },
     {
@@ -16847,12 +17289,28 @@
         "E2E-09"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Initial website stage failed from obsolete .local/technical-qa axe dependency path. After harness path correction, isolated website run passes6groups and9 responsive staff views with zero axe violations: homepage/copy publication, canonical people links/counts, biography/archive/restore, ordered links and PDF publish/withdraw/replacement byte preservation.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-30-10.942Z-606ddcc3/website.log",
+          ".local/launch-readiness/2026-10-27T12-32-06.636Z-86cd31b6/results.json",
+          ".local/website-control/2026-10-27T12-32-08.750Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "The dependency-path failure was test tooling, not a website runtime defect. Approved current footer behavior remains separately covered by core/footer/public checks. Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance.",
+        "executionHistory": [
+          {
+            "status": "FAIL",
+            "evidence": ".local/launch-readiness/2026-10-27T12-30-10.942Z-606ddcc3/website.log",
+            "summary": "Harness could not find axe under obsolete private dependency path."
+          },
+          {
+            "status": "PASS",
+            "evidence": ".local/website-control/2026-10-27T12-32-08.750Z/acceptance.json",
+            "summary": "6 scenario groups+9 responsive views after path correction."
+          }
+        ]
       }
     },
     {
@@ -16887,11 +17345,14 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Core review/editorial media/portrait privacy tests pass; website6groups additionally validate old committee profiles/canonical links beyond200people, biography overrides, archive preserving membership and private restoration.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/website-control/2026-10-27T12-32-08.750Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Three supplied-committee-photograph browser cases remain skipped because that source-content fixture is not enabled. Synthetic publication checks do not prove supplied real-photo acceptance. Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -16924,12 +17385,16 @@
         "E2E-03"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Event flow passes1/2/3/6-speaker PNG/PDF exports/long text/responsive builder and public/member QR destinations; engagement/operations pass variant conflicts/freshness/private export authorization.",
+        "evidence": [
+          ".local/event-flow/2026-10-27T12-37-07.152Z/acceptance.json",
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance. Physical-phone QR scanning and manual independent all-page PDF inspection remain separate incomplete cases."
       }
     },
     {
@@ -16962,11 +17427,13 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Baseline API report suite passed scoped presets/safe workbooks/editorial source review; staff navigation/search role tests passed.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Complete filter/date-boundary/export equivalence/revoked preset UI matrix is not fully mapped to assertions yet."
       }
     },
     {
@@ -17026,12 +17493,16 @@
         "E2E-12"
       ],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "PASS",
+        "summary": "Engagement/operations pass actual local-mock upload/download byte equality, all resource audiences, finance isolation, archive/conflict/current entitlement checks and storage failure compensation; baseline private evidence/media/portrait privacy tests also pass.",
+        "evidence": [
+          ".local/event-engagement/2026-10-27T12-31-16.762Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json",
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Underlying build gBpTD-VD8U9maFJ9LNGKP was based on 1d64603; website/event-flow(no table flag)/operations rerun metadata records dirty harness-only dependency/helper corrections. Final payment-table/event-flow run records clean a001c09. Local mock/sink evidence is not actual provider receipt, hosted deployment or physical-device acceptance."
       }
     },
     {
@@ -17076,11 +17547,14 @@
       ],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "All34 migrations applied in isolated core; repeatability/wrong-identity rejection passed. Fresh/upgrade restricted role rehearsals and rollback constraints passed with cleanup.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/security-role-run/role-acceptance.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL and mail sink/mocked providers; Chromium viewport emulation where browser assertions executed; production unchanged",
+        "testedSha": "8ad34e30ad76323ce7c1756f938cbc9ca0891894",
+        "limitation": "Approved production backup restore, row/file reconciliation and measured RTO/RPO acceptance remain blocked; hosted migration ledger not queried."
       }
     },
     {
@@ -17108,11 +17582,17 @@
       "journeyIds": [],
       "result": {
         "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "summary": "Core responsive/keyboard/theme/long-field/zoom checks passed; approved public checker12states zero writes; website9views and operations3width automated axe scans report no violations. Focused long-content payment table now passes6light/dark states with keyboard scroll and cancellation focus.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-13-40.705Z-72101376/security/restricted-2026-10-27T12-13-41.185Z-6c48ab27/core-browser.log",
+          ".local/launch-readiness/2026-10-27T12-28-13.347Z-b364fab4/security/restricted-2026-10-27T12-28-14.076Z-27186c77/public-interactions/results.json",
+          ".local/website-control/2026-10-27T12-32-08.750Z/acceptance.json",
+          ".local/event-operational/2026-10-27T12-33-04.575Z/acceptance.json",
+          ".local/event-flow/2026-10-27T12-37-07.152Z/payment-table.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "a001c09657944abc36ec58a20257031f6bd27b2c",
+        "limitation": "Overall human screen-reader/physical-device acceptance and every product surface remain incomplete. Initial36core skips reconcile to30viewport-independent duplicates+3import cases subsequently passed separately+3supplied-photo cases still unexecuted."
       }
     },
     {
@@ -17150,12 +17630,17 @@
       ],
       "journeyIds": [],
       "result": {
-        "status": "NOT TESTED",
-        "summary": "Inventory established; behavioral execution not recorded for this feature.",
-        "evidence": [],
-        "environment": null,
-        "testedSha": null,
-        "limitation": "Source inspection is not runtime acceptance."
+        "status": "BLOCKED",
+        "summary": "Local static/build/test/health evidence is retained, but actual packaged-container acceptance attempt could not run because Docker engine was unavailable. Container report records zero checks and cleanup true; coordinator confirmed no container QA fixtures created.",
+        "evidence": [
+          ".local/launch-readiness/2026-10-27T12-28-44.774Z-1d013945/results.json",
+          ".local/launch-readiness/2026-10-27T12-27-19.162Z-b62a9bb2/results.json",
+          ".local/launch-readiness/container-acceptance.json",
+          ".local/launch-readiness/production-readonly-2026-10-27T12-10-34.607Z/results.json"
+        ],
+        "environment": "local synthetic QA; disposable loopback PostgreSQL, isolated mail sink/mock transport/object storage, Chromium browser emulation; no production writes or real payment transfers",
+        "testedSha": "1d64603723d64b82e3a62907a475f66f0b8e2fff",
+        "limitation": "Docker engine access is required for real image/packaged-runtime acceptance; none passed. Candidate has not been deployed; production anonymous readiness does not establish current hosted login or authenticated workflows."
       }
     },
     {
