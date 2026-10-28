@@ -109,7 +109,7 @@ test("verification links show their own account for signed-out visitors and an u
     );
     await expect(
       staffPage.getByRole("heading", {
-        name: "Sign in to another account.",
+        name: "Switch accounts",
         exact: true,
       }),
     ).toBeVisible();
@@ -162,7 +162,7 @@ test("verification links show their own account for signed-out visitors and an u
       .click();
     await expect(
       staffPage.getByRole("heading", {
-        name: "Sign in to another account.",
+        name: "Switch accounts",
         exact: true,
       }),
     ).toBeVisible();
@@ -364,7 +364,7 @@ test(`invitation activation offers explicit sign-in when another staff account i
       .click();
     await expect(
       page.getByRole("heading", {
-        name: "Sign in to another account.",
+        name: "Switch accounts",
         exact: true,
       }),
     ).toBeVisible();
@@ -829,4 +829,5 @@ test("member dashboard separates verification states and keeps the editor off th
     await page.unroute("**/api/member/verification");
   }
 });
+
 
