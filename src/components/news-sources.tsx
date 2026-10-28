@@ -1,4 +1,5 @@
 "use client";
+import { WorkspacePanel, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
 type Source = {
@@ -168,7 +169,7 @@ export function NewsSources() {
     }
   }
   return (
-    <>
+    <WorkspacePanel>
       <p className="notice">
         Sources prepare future editorial collection. Approval does not fetch
         feeds, schedule jobs or publish news. Approved sources return to draft
@@ -185,7 +186,7 @@ export function NewsSources() {
         </button>
       </div>
       {!sources.length && (
-        <p>No sources yet. Add an editorial source for administrator review.</p>
+        <WorkspaceEmptyState compact icon="file" title="No sources yet" description="Add an editorial source below for administrator review. Approval does not fetch or publish content." />
       )}
       <div className="action-row">
         {sources.map((source) => (
@@ -303,6 +304,6 @@ export function NewsSources() {
           ))}
         </section>
       )}
-    </>
+    </WorkspacePanel>
   );
 }

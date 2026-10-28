@@ -5,6 +5,7 @@ import { eventLink, type Speaker } from "@/domain/event-flow";
 import { api } from "./operations-client";
 import { renderFlyer } from "@/lib/flyer-canvas";
 import NextImage from "next/image";
+import { WorkspaceEmptyState, WorkspaceSteps } from "./workspace-ui";
 type Variant={id:string;event_id:string;name:string;headline:string;presentation:{accent:string};status:string;version:number};
 type Event = {
   id: string;
@@ -29,6 +30,7 @@ export function FlyerBuilder() {
     [message, setMessage] = useState("Loading events…"),
     [busy, setBusy] = useState(false);
   const [variants,setVariants]=useState<Variant[]>([]),[variant,setVariant]=useState<Variant|null>(null),[variantName,setVariantName]=useState('Standard flyer'),[headline,setHeadline]=useState(''),[accent,setAccent]=useState('gold'),[generatedAt,setGeneratedAt]=useState('');
+  const [loaded, setLoaded] = useState(false);
   useEffect(()=>{let active=true;if(event?.id) api<Variant[]>(`/api/staff/flyer-variants?eventId=${event.id}`).then(rows=>{if(active)setVariants(rows);}).catch(e=>{if(active)setMessage(e.message);});return()=>{active=false;};},[event?.id]);
   function chooseVariant(row:Variant|null) {setVariant(row);setVariantName(row?.name??'Standard flyer');setHeadline(row?.headline??'');setAccent(row?.presentation.accent??'gold');setImage('');}
   async function checkFresh() {
@@ -50,7 +52,8 @@ export function FlyerBuilder() {
         }
       })
       .then(() => setMessage(""))
-      .catch((e) => setMessage(e.message));
+      .catch((e) => setMessage(e.message))
+      .finally(() => setLoaded(true));
   }, []);
   async function generate() {
     if (!event) return;
@@ -75,8 +78,12 @@ export function FlyerBuilder() {
       setBusy(false);
     }
   }
+  if (!loaded) return <p role="status">Loading events…</p>;
+  if (!events.length && !message) return <WorkspaceEmptyState icon="image" title="Create an event before designing its flyer" description="Flyers use the event title, speakers, venue and registration details. Save an event draft first, then return here to prepare its flyer." actionLabel="Create an event" href="/admin/workspaces/events" />;
   return (
-    <div className="operations-layout">
+    <>
+    <WorkspaceSteps steps={["Choose event", "Prepare content", "Preview & export"]} current={!event ? 0 : image ? 2 : 1} />
+    <div className="operations-layout flyer-workspace">
       <section>
         <h2>Event flyer</h2>
         <p>
@@ -121,7 +128,7 @@ export function FlyerBuilder() {
             {variant?.status==='published'&&<a className="text-link" href={`/flyers/${variant.id}`}>Open shared flyer →</a>}
           </fieldset>}
           {events.length === 0 && <p>Create an event to prepare its flyer.</p>}
-          <fieldset disabled={busy}><legend>Event speakers</legend><EventSpeakers speakers={speakers} onChange={(rows) => { setSpeakers(rows); setImage(""); }} /></fieldset>
+          {event && <><fieldset disabled={busy}><legend>Event speakers</legend><EventSpeakers speakers={speakers} onChange={(rows) => { setSpeakers(rows); setImage(""); }} /></fieldset>
           <p>Saving updates the shared speaker list on event details and future flyers.</p>
           <div className="action-row">
             <button className="button" disabled={busy || !event || !speakers.length}>
@@ -173,6 +180,7 @@ export function FlyerBuilder() {
               Save event speakers
             </button>
           </div>
+          </>}
         </form>
         <p role="status">{message}</p>
         {image && (
@@ -235,11 +243,10 @@ export function FlyerBuilder() {
             unoptimized
           />
         ) : (
-          <p className="notice">
-            Generate a preview to inspect the flyer before exporting.
-          </p>
+          <WorkspaceEmptyState icon="image" title="Your flyer preview" description={event ? "Prepare the event content, then generate a preview to inspect the layout and registration QR before exporting." : "Choose an event to begin. Its content and speaker details will be used in the flyer."} />
         )}
       </section>
     </div>
+    </>
   );
 }

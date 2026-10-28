@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { WorkspacePanel, WorkspaceSteps, WorkspaceEmptyState } from "./workspace-ui";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { api } from "./operations-client";
 import { MemberImportJobProgress } from "./member-import-job-progress";
 type Row = {
@@ -177,9 +178,12 @@ export function BulkOnboarding() {
       setMessage((e as Error).message);
     }
   }
+  const workbookInput = useRef<HTMLInputElement>(null);
   return (
-    <section>
-      <h2>Import members or accounts</h2>
+    <section className="bulk-onboarding-workspace">
+      <WorkspaceSteps steps={["Choose workbook", "Map & validate", "Review records", "Commit & track"]} current={preview?.committed_at ? 3 : preview ? 2 : headers.length ? 1 : 0} />
+      <div className="workspace-import-layout">
+      <WorkspacePanel title="Prepare your import" description="Choose the import type, download its template and upload your completed workbook." id="bulk-import-upload">
       <label>
         Import mode
         <select
@@ -209,23 +213,24 @@ export function BulkOnboarding() {
         Existing accounts are skipped. No passwords or verification badges can
         be imported.
       </p>
-      <div className="action-row">
-        <a
+      <div className="action-row workspace-template-actions">
+        <a className="button secondary"
           href={`/api/staff/onboarding-import?template=csv&mode=${mode}`}
           download
         >
           CSV template
         </a>
-        <a
+        <a className="button secondary"
           href={`/api/staff/onboarding-import?template=xlsx&mode=${mode}`}
           download
         >
           XLSX template
         </a>
       </div>
-      <label>
+      <label className="workspace-upload-field">
         CSV/XLSX (5 MB, 1,000 users)
         <input
+          ref={workbookInput}
           type="file"
           accept=".csv,.xlsx"
           onChange={(e) => {
@@ -238,7 +243,7 @@ export function BulkOnboarding() {
         />
       </label>
       <button
-        className="button secondary"
+        className="button"
         disabled={busy || !file}
         onClick={() => void read()}
       >
@@ -246,6 +251,10 @@ export function BulkOnboarding() {
           ? "Validate member workbook"
           : "Read columns"}
       </button>
+      </WorkspacePanel>
+      <WorkspacePanel title="Before you begin" className="workspace-help-panel"><ul className="workspace-guidance-list"><li><strong>Start with the right template</strong><span>The workbook format depends on the import mode.</span></li><li><strong>Validate before committing</strong><span>Review matched identities, duplicates and corrections before importing.</span></li><li><strong>Review invitations separately</strong><span>New account invitations remain held until recipients and the email are approved.</span></li></ul></WorkspacePanel>
+      </div>
+      <div className="workspace-import-review" hidden={!headers.length && !preview && !results.length}>
       {headers.length > 0 && (
         <>
           <div className="form-grid">
@@ -537,7 +546,9 @@ export function BulkOnboarding() {
             Review / retry failed records
           </button>
         )}
-      <h3>Recent batches</h3>
+      </div>
+      <WorkspacePanel title="Recent batches" description="Reopen a saved batch to review its progress and results.">
+      {!batches.length && <WorkspaceEmptyState compact icon="upload" title="No import batches yet" description="Choose a workbook above to start your first validation preview." actionLabel="Choose workbook" onAction={() => workbookInput.current?.click()} />}
       {batches.map((batch) => (
         <p key={batch.id}>
           <button
@@ -550,6 +561,7 @@ export function BulkOnboarding() {
           </button>
         </p>
       ))}
+      </WorkspacePanel>
       <p role="status">{message}</p>
     </section>
   );
@@ -590,19 +602,22 @@ export function OnboardingEmailSettings() {
     }
   }
   return (
-    <>
-      <h2>Test recipients</h2>
+    <div className="email-settings-workspace">
+      <WorkspacePanel id="email-test-recipients" title="Approved test recipients">
       <p>
         Delivery configuration:{" "}
-        {data?.configured
+        {data === null ? "Loading setup…" : data.configured
           ? "Configured; mailbox acceptance remains separate"
           : "Provider setup required"}
         . Test messages use harmless login links; normal user messages keep
         their own recipients.
       </p>
+      <div className="email-settings-controls">
       <label>
         Controlled inboxes (one per line)
         <textarea
+          rows={4}
+          placeholder="name@example.com"
           value={recipients}
           onChange={(e) => setRecipients(e.target.value)}
         />
@@ -621,6 +636,10 @@ export function OnboardingEmailSettings() {
       >
         Save recipients
       </button>
+      </div>
+      </WorkspacePanel>
+      <WorkspacePanel title="Send a test message" description="Select the transactional template to test with an approved recipient.">
+      <div className="email-settings-controls">
       <label>
         Test template
         <select value={kind} onChange={(e) => setKind(e.target.value)}>
@@ -631,16 +650,25 @@ export function OnboardingEmailSettings() {
           )}
         </select>
       </label>
+      <div className="email-test-recipient-list">
       {data?.settings.test_recipients.map((r) => (
+        <div className="email-test-recipient" key={r}>
+        <span>{r}</span>
         <button
-          key={r}
+          aria-label={`Send test to ${r}`}
           className="button secondary"
           onClick={() => void run({ action: "test", recipient: r, kind })}
         >
-          Send test to {r}
+          Send test
         </button>
+        </div>
       ))}
-      <h2>Transactional delivery history</h2>
+      </div>
+      </div>
+      {data && !data.settings.test_recipients.length && <WorkspaceEmptyState compact icon="mail" title="Add a test recipient first" description="Save an approved email address above before sending a template test." actionLabel="Add test recipients" href="#email-test-recipients" />}
+      </WorkspacePanel>
+      <WorkspacePanel title="Transactional delivery history">
+      {data && !data.mail.length && <WorkspaceEmptyState compact icon="mail" title="No transactional deliveries yet" description="Queued invitations and template tests will appear here with their delivery status." />}
       <button className="button secondary" onClick={() => void load()}>
         Refresh status
       </button>
@@ -678,7 +706,8 @@ export function OnboardingEmailSettings() {
           )}
         </article>
       ))}
+      </WorkspacePanel>
       <p role="status">{message}</p>
-    </>
+    </div>
   );
 }

@@ -415,15 +415,19 @@ test(
         page.getByRole("heading", { name: "Edit person", exact: true }),
       ).toHaveCount(0);
       await expect(
-        page.getByRole("link", { name: "Continue your details", exact: true }),
+        page.getByRole("link", { name: /^Go to Membership & professional details/ }),
       ).toBeVisible();
       await page.screenshot({
         path: info.outputPath("member-dashboard-unverified.png"),
         fullPage: true,
       });
       await page
-        .getByRole("link", { name: "Continue your details", exact: true })
+        .getByRole("link", { name: /^Go to Membership & professional details/ })
         .click();
+      await expect(page).toHaveURL(/\/member\/application\?step=0$/);
+      // The dashboard link pins its requested step. Test saved-step restoration
+      // through the normal resume URL, without that explicit step override.
+      await page.goto("/member/application");
       await page.getByLabel("Qualification *").fill("Test qualification");
       await expect(page.getByRole("status").last()).toHaveText("Saved");
       await page.reload();
@@ -542,7 +546,7 @@ test(
         .toBeTruthy();
       await page.goto("/member");
       await expect(
-        page.getByRole("link", { name: "Continue your details", exact: true }),
+        page.getByRole("link", { name: /^Go to / }),
       ).toBeVisible();
       await expect(
         page.getByText("Email: Verified", { exact: true }),
@@ -550,7 +554,7 @@ test(
       await expect(
         page.getByText("Loading your profile…", { exact: true }),
       ).toHaveCount(0);
-      const header = await page.locator(".account-header").boundingBox(),
+      const header = await page.locator(".portal-topbar").boundingBox(),
         main = await page.locator("main").boundingBox();
       expect(header!.y + header!.height).toBeLessThanOrEqual(main!.y + 1);
       await page.screenshot({
@@ -676,7 +680,7 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
     .click();
   await expect(page).toHaveURL(/\/member$/);
   await page
-    .getByRole("link", { name: "Continue your details", exact: true })
+    .getByRole("link", { name: /^Go to Membership & professional details/ })
     .click();
   const qualification = page.getByLabel("Qualification *");
   await qualification.fill("Server baseline");
@@ -776,12 +780,17 @@ test("member dashboard separates verification states and keeps the editor off th
     },
   ];
   for (const [index, state] of states.entries()) {
+    const remaining = index > 2 ? [] : [
+      { id: "photograph", label: "Photograph", step: 3, href: "/member/application?step=3" },
+      ...(index === 0 ? [{ id: "email", label: "Verify your account email", step: -1, href: "/member#verification-email-action" }] : []),
+    ];
     await page.route("**/api/member/verification", (route) =>
       route.fulfill({
         json: {
           email,
           emailVerified: index > 0,
           missing: index > 2 ? [] : ["Photograph"],
+          progress: { total: 2, completed: 2 - remaining.length, percent: (2 - remaining.length) * 50, remaining },
           ...state,
         },
       }),
@@ -801,11 +810,18 @@ test("member dashboard separates verification states and keeps the editor off th
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBeTruthy();
+    const mobileMenu = page.getByRole("button", { name: /Member navigation/ });
+    if (page.viewportSize()!.width <= 800) await mobileMenu.click();
     await page.getByRole("link", { name: "Overview", exact: true }).focus();
     await page.keyboard.press("Tab");
     await expect(
       page.getByRole("link", { name: "Verification", exact: true }),
     ).toBeFocused();
+    if (page.viewportSize()!.width <= 800) {
+      await page.keyboard.press("Escape");
+      await expect(mobileMenu).toBeFocused();
+      await expect(page.getByRole("navigation", { name: "Account navigation" })).toBeHidden();
+    }
     await page.screenshot({
       path: info.outputPath(`dashboard-state-${index}.png`),
       fullPage: true,

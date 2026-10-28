@@ -8,6 +8,7 @@ import {
   initialFields,
   validateAnswers,
   missingFields,
+  verificationProgress,
   requirementUpdateNeeded,
   type VerificationField,
 } from "@/domain/verification";
@@ -66,6 +67,7 @@ export async function memberVerification(actor: Actor) {
     updateRequested: !!person?.verification_update_requested,
     approvedVersion: person?.verification_version ?? null,
     reviews,
+    progress: verificationProgress(p.fields, draft?.details ?? {}, draft?.category ?? "Professional", !!user?.emailVerified),
     missing: missingFields(
       p.fields,
       draft?.details ?? {},

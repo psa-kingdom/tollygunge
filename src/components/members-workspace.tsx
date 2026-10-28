@@ -44,7 +44,9 @@ export function MembersWorkspace({
 }: {
   canManage?: boolean;
 }) {
-  const recordId = useSearchParams().get("id");
+  const searchParams = useSearchParams();
+  const recordId = searchParams.get("id");
+  const requestedView = searchParams.get("view");
   const [selection, setSelection] = useState<{
     recordId: string | null;
     view: "register" | "accounts";
@@ -52,12 +54,12 @@ export function MembersWorkspace({
   const view =
     selection?.recordId === recordId
       ? selection.view
-      : recordId
+      : recordId || requestedView === "accounts"
         ? "accounts"
         : "register";
   return (
     <>
-      <div className="action-row">
+      <div className="action-row member-directory-tabs" role="group" aria-label="Member views">
         <button
           className="button secondary"
           onClick={() => setSelection({ recordId, view: "register" })}

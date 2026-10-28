@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "./operations-client";
 import { useEmailEditGuard } from "./email-edit-guard";
@@ -209,9 +210,9 @@ export function EmailInbox({
         </button>
       </div>
       <p role="status">{message}</p>
-      <div className="operations-layout">
+      <div className={`operations-layout ${!entries.length && !busy ? "is-empty" : ""}`}>
         <aside className="record-list">
-          {!entries.length && !busy && <p>No conversations match.</p>}
+          {!entries.length && !busy && <WorkspaceEmptyState compact icon="mail" title="No conversations match" description="Try another subject, sender or status." />}
           {entries.map((x) => (
             <button
               key={x.id}
@@ -490,7 +491,7 @@ export function EmailInbox({
               </form>
             </>
           ) : (
-            <p>Select a conversation to read messages and prepare a reply.</p>
+            <WorkspaceEmptyState icon="mail" title={!entries.length ? "No conversations to show" : "Select a conversation"} description={!entries.length ? "Incoming conversations will appear here. Refresh the inbox or adjust the filters to check for messages." : "Choose a conversation to read its messages, assign an owner and prepare a reply."} actionLabel="Refresh inbox" onAction={() => void load()} />
           )}
         </section>
       </div>

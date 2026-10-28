@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useEffect, useCallback } from "react";
 import { api } from "./operations-client";
 import { inquiryStatuses } from "@/domain/inquiries";
@@ -224,68 +225,10 @@ export function CrmWorkspace() {
           </select>
         </label>
       </form>
-      <div className="crm-result-bar">
-        <span>
-          {loading
-            ? "Loading…"
-            : `${data.total} matching ${data.total === 1 ? "inquiry" : "inquiries"}`}
-        </span>
-        <div>
-          <button
-            type="button"
-            disabled={busy || loading || page === 1}
-            onClick={() => {
-              if (discard()) {
-                setLoading(true);
-                setPage(page - 1);
-                setSelected(null);
-                setDirty(false);
-              }
-            }}
-          >
-            Previous
-          </button>
-          <span>Page {page}</span>
-          <button
-            type="button"
-            disabled={busy || loading || page * data.pageSize >= data.total}
-            onClick={() => {
-              if (discard()) {
-                setLoading(true);
-                setPage(page + 1);
-                setSelected(null);
-                setDirty(false);
-              }
-            }}
-          >
-            Next
-          </button>
-        </div>
-        <button
-          type="button"
-          disabled={busy || loading}
-          onClick={async () => {
-            if (!discard()) return;
-            setLoading(true);
-            try {
-              setData(await api<Data>(path()));
-              setSelected(null);
-              setDirty(false);
-              setMessage("Inquiries refreshed.");
-            } catch (e) {
-              setMessage(e instanceof Error ? e.message : "Refresh failed.");
-            } finally {
-              setLoading(false);
-            }
-          }}
-        >
-          Refresh
-        </button>
-      </div>
-      <div className="operations-layout crm-layout">
+      <div className={`operations-layout crm-layout ${!loading && !data.records.length ? "is-empty" : ""}`}>
         <aside className="record-list" aria-label="Inquiry results">
           {!loading && data.records.length === 0 && (
-            <p>No inquiries match these filters.</p>
+            <WorkspaceEmptyState compact icon="message" title="No inquiries match" description="Adjust the search, status or follow-up filters." />
           )}
           {data.records.map((row) => (
             <button
@@ -522,17 +465,68 @@ export function CrmWorkspace() {
               </details>
             </>
           ) : (
-            <div className="crm-empty">
-              <h2>A clear path to follow-up.</h2>
-              <p>
-                Select an inquiry to review the contact details, update its
-                status or organize it with tags. Notes and tags are private to
-                authorized staff.
-              </p>
-            </div>
+            <WorkspaceEmptyState icon="message" title={data.records.length ? "Select an inquiry" : "No inquiries match these filters"} description={data.records.length ? "Choose a conversation to review the contact details, assign an owner and track follow-up. Notes and tags stay private to staff." : "Try a broader search or reset the filters to see all inquiries."} actionLabel="Reset filters" onAction={() => { if (discard()) { setQuery(""); setSearch(""); setFilter("all"); setFocus("all"); setTag(""); setPage(1); setSelected(null); setLoading(Boolean(search || filter !== "all" || focus !== "all" || tag || page !== 1)); } }} />
           )}
           <p role="status">{message}</p>
         </section>
+      </div>
+      <div className="crm-result-bar">
+        <span>
+          {loading
+            ? "Loading…"
+            : `${data.total} matching ${data.total === 1 ? "inquiry" : "inquiries"}`}
+        </span>
+        <div>
+          <button
+            type="button"
+            disabled={busy || loading || page === 1}
+            onClick={() => {
+              if (discard()) {
+                setLoading(true);
+                setPage(page - 1);
+                setSelected(null);
+                setDirty(false);
+              }
+            }}
+          >
+            Previous
+          </button>
+          <span>Page {page}</span>
+          <button
+            type="button"
+            disabled={busy || loading || page * data.pageSize >= data.total}
+            onClick={() => {
+              if (discard()) {
+                setLoading(true);
+                setPage(page + 1);
+                setSelected(null);
+                setDirty(false);
+              }
+            }}
+          >
+            Next
+          </button>
+        </div>
+        <button
+          type="button"
+          disabled={busy || loading}
+          onClick={async () => {
+            if (!discard()) return;
+            setLoading(true);
+            try {
+              setData(await api<Data>(path()));
+              setSelected(null);
+              setDirty(false);
+              setMessage("Inquiries refreshed.");
+            } catch (e) {
+              setMessage(e instanceof Error ? e.message : "Refresh failed.");
+            } finally {
+              setLoading(false);
+            }
+          }}
+        >
+          Refresh
+        </button>
       </div>
     </>
   );

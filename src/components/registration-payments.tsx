@@ -1,4 +1,5 @@
 "use client";
+import { WorkspacePanel, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState } from "react";
 import { eventTime } from "@/domain/event-flow";
 import { api } from "./operations-client";
@@ -24,6 +25,7 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
     [note, setNote] = useState(""),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   async function load(state: string) {
     setRows(
       await api<Payment[]>("/api/staff/registration-payments?status=" + state+(eventId?"&eventId="+eventId:"")),
@@ -37,23 +39,24 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
       })
       .catch((e) => {
         if (active) setMessage(e.message);
-      });
+      }).finally(() => { if (active) setLoaded(true); });
     return () => {
       active = false;
     };
   }, [filter,eventId]);
   return (
-    <section>
-      <h2>Registration payments</h2>
+    <WorkspacePanel title="Registration payments" className="registration-payments">
       <p>
         Payments are manually verified. Confirm only after checking the bank or
         payment record. A refund status records a refund already performed.
       </p>
+      <div className="payment-results-toolbar">
       <label>
         Payment status{" "}
         <select
           value={filter}
           onChange={(e) => {
+            setLoaded(false);
             setFilter(e.target.value);
             setSelected(undefined);
           }}
@@ -65,9 +68,11 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
           )}
         </select>
       </label>
-      <p>{rows.length} records shown (up to 250)</p>
-      <div className="table-scroll" role="region" aria-label="Registration payments">
-        <table className="operations-table registration-payments-table" tabIndex={0} aria-label="Registration payments">
+      <p>{loaded ? `${rows.length} records shown (up to 250)` : "Loading paymentsâ€¦"}</p>
+      </div>
+      {loaded && !rows.length && !message && <WorkspaceEmptyState icon="wallet" title="No payments match this status" description="Payment references submitted for event registrations will appear here for review." actionLabel={filter === "all" ? "Refresh payments" : "View all statuses"} onAction={() => {if (filter === "all") void load(filter).catch(e => setMessage(e.message)); else setFilter("all");}} />}
+      {!!rows.length && <div className="table-scroll" role="region" tabIndex={0} aria-label="Registration payments">
+        <table className="operations-table registration-payments-table" aria-label="Registration payments">
           <thead>
             <tr>
               <th>Member</th>
@@ -78,16 +83,17 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
             </tr>
           </thead>
           <tbody>
+
             {rows.map((r) => (
               <tr key={r.id}>
                 <td>
                   {r.name}
                   <small>
-                    {r.email} · {r.membership_number}
+                    {r.email} Â· {r.membership_number}
                   </small>
                 </td>
                 <td>{r.title}</td>
-                <td>₹{(r.fee_paise / 100).toFixed(2)}</td>
+                <td>â‚¹{(r.fee_paise / 100).toFixed(2)}</td>
                 <td>{r.payment_status}</td>
                 <td>
                   <button
@@ -107,8 +113,8 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
             ))}
           </tbody>
         </table>
-      </div>
-      {!rows.length && <p>No payments match this status.</p>}
+      </div>}
+
       {selected && (
         <form
           className="member-settings"
@@ -116,7 +122,7 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
             e.preventDefault();
             if (
               !window.confirm(
-                `Record ${status} for ${selected.name}, ₹${(selected.fee_paise / 100).toFixed(2)}?`,
+                `Record ${status} for ${selected.name}, â‚¹${(selected.fee_paise / 100).toFixed(2)}?`,
               )
             )
               return;
@@ -141,9 +147,9 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
           }}
         >
           <h3>
-            Verify {selected.name} · {selected.title}
+            Verify {selected.name} Â· {selected.title}
           </h3>
-          <p>Registration identifier: <strong>{selected.id}</strong> · ₹{(selected.fee_paise/100).toFixed(2)}</p>
+          <p>Registration identifier: <strong>{selected.id}</strong> Â· â‚¹{(selected.fee_paise/100).toFixed(2)}</p>
           <p>
             Current state: {selected.payment_status}. {selected.payment_note}
           </p>
@@ -177,13 +183,13 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
               onChange={(e) => setNote(e.target.value)}
             />
           </label>
-          <details><summary>Payment history ({selected.history?.length ?? 0})</summary>{selected.history?.map((h,i) => <p key={i}>{eventTime(h.created_at)} · {h.from_status ? h.from_status+" → " : ""}{h.to_status} · {h.reference} · {h.note}</p>)}</details>
+          <details><summary>Payment history ({selected.history?.length ?? 0})</summary>{selected.history?.map((h,i) => <p key={i}>{eventTime(h.created_at)} Â· {h.from_status ? h.from_status+" â†’ " : ""}{h.to_status} Â· {h.reference} Â· {h.note}</p>)}</details>
           <button className="button" disabled={busy || ["cancelled","refunded"].includes(selected.payment_status)}>
             Confirm status change
           </button>
         </form>
       )}
       <p role={eventId?"alert":"status"}>{message}</p>
-    </section>
+    </WorkspacePanel>
   );
 }

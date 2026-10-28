@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { api } from "./operations-client";
@@ -110,6 +111,7 @@ export function PaymentDetailsManager() {
           >
             New payment details
           </button>
+          {!records.length && !message && <WorkspaceEmptyState compact icon="wallet" title="No payment instructions yet" description="Prepare a bank or UPI record in the editor, then review it before activation." />}
           {records.map((r) => (
             <button
               key={r.id}

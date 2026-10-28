@@ -63,8 +63,8 @@ export function MemberEvents() {
         configured.
       </p>
       {loadState === "loading" && <LoadingScreen />}
-      {loadState === "error" && <FallbackPanel kind="unavailable" retry={() => { void loadEvents(); }} />}
-      {loadState === "ready" && events.length === 0 && <FallbackPanel kind="emptyEvents" />}
+      {loadState === "error" && <FallbackPanel compact kind="unavailable" retry={() => { void loadEvents(); }} />}
+      {loadState === "ready" && events.length === 0 && <FallbackPanel compact kind="emptyEvents" />}
       <label>Event period<select value={period} onChange={e=>setPeriod(e.target.value)}><option value="all">All events and history</option><option value="upcoming">Upcoming and live events</option><option value="past">Past events and attendance history</option></select></label>
       {[...events].filter(e=>e.id===requestedEvent || period==="all" || (period==="past"?new Date(e.ends_at)<=new Date():new Date(e.ends_at)>new Date()))
         .sort(

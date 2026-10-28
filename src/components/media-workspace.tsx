@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { api } from "./operations-client";
@@ -82,12 +83,12 @@ export function MediaWorkspace() {
         publish them to Resources → Media. Upload only images you have
         permission to publish. Application documents are excluded.
       </p>
-      <p>
+      <details className="workspace-notice-disclosure"><summary>Publication and image replacement</summary><p>
         Published assets appear in Resources. The landing page uses the text-led Paper v3 design.
         Save changes, then publish to update public descriptions. Image
         files are retained as separate assets; upload a new image and withdraw
         the old one to replace a photograph.
-      </p>
+      </p></details>
       {library && !library.uploadEnabled && (
         <p className="notice">
           Uploads await managed production storage configuration.
@@ -96,7 +97,7 @@ export function MediaWorkspace() {
       <div className="operations-layout">
         <aside className="record-list">
           <button
-            className="button secondary"
+            className="button"
             disabled={busy}
             onClick={() => {
               setSelected(undefined);
@@ -124,7 +125,7 @@ export function MediaWorkspace() {
               </small>
             </button>
           ))}
-          {library && !library.assets.length && <p>No editorial images yet.</p>}
+          {library && !library.assets.length && <WorkspaceEmptyState compact icon="image" title="No editorial images yet" description="Uploaded images will appear here for editing and publication." />}
           {library?.assets.length === 100 && (
             <p>Showing the latest 100 assets.</p>
           )}

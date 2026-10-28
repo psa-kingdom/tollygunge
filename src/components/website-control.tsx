@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState, type ReactNode } from "react";
 import { TpaLogo } from "./tpa-logo";
 import { api } from "./operations-client";
@@ -223,23 +224,17 @@ export function WebsiteControl() {
           </button>
         ))}
       </div>
-      <div className="action-row">
-        <Link prefetch={false} href="/admin/workspaces/content">
-          Pages and articles →
-        </Link>
-        <Link prefetch={false} href="/admin/workspaces/governance">
-          People and committees →
-        </Link>
-        <Link prefetch={false} href="/admin/workspaces/media">
-          Media library →
-        </Link>
-        <Link prefetch={false} href="/admin/workspaces/events">
-          Events →
-        </Link>
-        <Link prefetch={false} href="/admin/workspaces/flyers">
-          Flyers →
-        </Link>
-      </div>
+      <details className="website-workspace-directory">
+        <summary>Manage other website content</summary>
+        <p>These shortcuts open separate staff workspaces. Use the tabs above for website settings, homepage settings, links and downloads.</p>
+        <nav className="workspace-related-links" aria-label="Other website content workspaces">
+          <Link prefetch={false} href="/admin/workspaces/content"><strong>Pages and articles →</strong><span>Edit page text, insights and news summaries.</span></Link>
+          <Link prefetch={false} href="/admin/workspaces/governance"><strong>People and committees →</strong><span>Manage profiles, committee members and their publication.</span></Link>
+          <Link prefetch={false} href="/admin/workspaces/media"><strong>Media library →</strong><span>Upload and manage website images and files.</span></Link>
+          <Link prefetch={false} href="/admin/workspaces/events"><strong>Events →</strong><span>Create events and manage registrations.</span></Link>
+          <Link prefetch={false} href="/admin/workspaces/flyers"><strong>Flyers →</strong><span>Prepare event flyers and export them.</span></Link>
+        </nav>
+      </details>
       <section
         role="tabpanel"
         id="website-control-panel"
@@ -262,6 +257,7 @@ function SettingsEditor({
   settingKey: SettingsKey;
   onDirty: (v: boolean) => void;
 }) {
+  const [editingGroup, setEditingGroup] = useState("general-0");
   const [row, setRow] = useState<Setting>(),
     [draft, setDraft] = useState<Tree>(websiteDefaults[settingKey] as Tree),
     [message, setMessage] = useState("Loading…"),
@@ -341,8 +337,14 @@ function SettingsEditor({
     ) : (
       <SharedPreview body={draft as SharedSettings} />
     );
+  const draftFields = draft as Record<string, Tree>;
+  const generalFields = Object.entries(draftFields).filter(([, value]) => typeof value === "string");
+  const generalGroups = Array.from({ length: Math.ceil(generalFields.length / 4) }, (_, i) => `general-${i}`);
+  const settingGroups = [...generalGroups, ...Object.keys(draftFields).filter(key => typeof draftFields[key] !== "string")];
+  const activeGroup = settingGroups.includes(editingGroup) ? editingGroup : settingGroups[0];
+  const visibleFields = activeGroup?.startsWith("general-") ? Object.fromEntries(generalFields.slice(Number(activeGroup.split("-")[1]) * 4, Number(activeGroup.split("-")[1]) * 4 + 4)) : { [activeGroup]: draftFields[activeGroup] };
   return (
-    <div className="content-editor-columns">
+    <div className="content-editor-columns website-settings-editor">
       <form
         className="member-settings"
         onSubmit={(e) => {
@@ -370,7 +372,7 @@ function SettingsEditor({
             next.footer.groups=structuredClone(footerGroups(next.footer));
             return next as Tree;
           })}>Customize footer link groups</button>}
-          <TreeFields value={draft} onChange={change} logos={logos} />
+          <label className="website-group-selector">Settings group<select value={activeGroup} onChange={e => setEditingGroup(e.target.value)}>{settingGroups.map(key => <option key={key} value={key}>{key.startsWith("general-") ? ["Brand & identity", "Page titles & descriptions", "Account & contact labels"][Number(key.split("-")[1])] || `General settings ${Number(key.split("-")[1]) + 1}` : words(key)}</option>)}</select></label>
           <div className="action-row">
             <button className="button" disabled={!!validation}>
               Save draft
@@ -392,6 +394,8 @@ function SettingsEditor({
               Withdraw settings
             </button>
           </div>
+          <TreeFields value={visibleFields} onChange={change} logos={logos} />
+
         </fieldset>
         <p role="status">{validation || message}</p>
         <details>
@@ -571,6 +575,7 @@ function ResourceEditor({
           >
             New {kind === "link" ? "link" : "download"}
           </button>
+          {!rows.length && !message && <WorkspaceEmptyState compact icon="file" title={kind === "link" ? "No important links yet" : "No downloads yet"} description="Create a resource draft in the editor, then review it before publication." />}
           {rows.map((r) => (
             <button key={r.id} onClick={() => guard(() => select(r))}>
               <strong>{r.draft.title}</strong>

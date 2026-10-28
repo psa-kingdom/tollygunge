@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { PortalIcon } from "./portal-icon";
 type Result = {
   id: string;
   group: string;
@@ -67,7 +68,7 @@ export function WorkspaceSearch() {
         className="search-entry"
         onClick={() => setOpen(true)}
       >
-        Search workspace <kbd>Ctrl / ⌘ K</kbd>
+        <PortalIcon name="search" /><span>Search workspace</span> <kbd>Ctrl / ⌘ K</kbd>
       </button>
       <dialog
         className="command-dialog"

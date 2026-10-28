@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { homeDefaults } from "@/domain/website-home";
-import Link from "next/link";
+import Link from "./navigation-link";
 import { PublicInquiry } from "./public-inquiry";
 import { HomepageEventsView } from "./homepage-events-view";
 

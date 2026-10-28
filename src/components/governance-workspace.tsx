@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState, useRef } from "react";
 import { api } from "./operations-client";
 import { PersonEditor } from "./person-editor";
@@ -177,6 +178,7 @@ export function GovernanceWorkspace() {
               >
                 New person
               </button>
+              {!data.records.length && <WorkspaceEmptyState compact icon="people" title="No people match" description="Change the search or view filter to find a profile." />}
               {data.records.map((p) => (
                   <button
                     key={p.id}
@@ -231,6 +233,7 @@ export function GovernanceWorkspace() {
             >
               New group
             </button>
+            {!data.groups.length && <WorkspaceEmptyState compact icon="people" title="No groups yet" description="Create a committee or group using the editor." />}
             {data.groups.map((g) => (
               <button
                 key={g.id}

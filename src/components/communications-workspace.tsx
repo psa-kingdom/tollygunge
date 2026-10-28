@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { WorkspaceEmptyState } from "./workspace-ui";
+import { useState, useEffect, useRef } from "react";
 import { api } from "./operations-client";
 import { CampaignWorkspace } from "./campaign-workspace";
 import { EmailInbox } from "./email-inbox";
@@ -16,6 +16,9 @@ type Template = {
 };
 const empty: Template = { version: 0, name: "", subject: "", body: "" };
 export function CommunicationsWorkspace({canManageInvitations=false}:{canManageInvitations?:boolean}) {
+  const deliveryDialog = useRef<HTMLDialogElement>(null);
+  const [deliveryEnabled, setDeliveryEnabled] = useState<boolean | null>(null);
+  const [detailsError, setDetailsError] = useState(false);
   const tabs = ["inbox", "campaigns", "templates", "invitations", "delivery"] as const;
   const [view, setView] = useState<(typeof tabs)[number]>("inbox");
   const [inboxDirty, setInboxDirty] = useState(false),
@@ -38,7 +41,7 @@ export function CommunicationsWorkspace({canManageInvitations=false}:{canManageI
       JSON.stringify(form) !== JSON.stringify(savedTemplate),
   );
   useEffect(() => {
-    api<{ templates: Template[]; optedIn: number; recoveryEnabled: boolean }>(
+    api<{ templates: Template[]; optedIn: number; recoveryEnabled: boolean; deliveryEnabled: boolean }>(
       "/api/staff/communications",
     )
       .then((data) => {
@@ -55,29 +58,14 @@ export function CommunicationsWorkspace({canManageInvitations=false}:{canManageI
         setTemplates(data.templates);
         setOptedIn(data.optedIn);
         setRecoveryEnabled(data.recoveryEnabled);
+        setDeliveryEnabled(data.deliveryEnabled);
         setMessage("");
       })
-      .catch((e) => setMessage(e.message));
+      .catch((e) => { setDetailsError(true); setMessage(e.message); });
   }, []);
   return (
-    <>
-      <div className="notice">
-        {recoveryEnabled === null
-          ? "Checking recovery configuration. "
-          : recoveryEnabled
-            ? "Password recovery email is enabled. "
-            : "Password recovery email awaits sender setup. "}
-        Review saved campaigns before dispatch. Delivery is tracked separately;
-        consent and preferences are rechecked before each send. Official
-        WhatsApp remains gated.
-      </div>
-      <p>
-        {optedIn} accounts currently consent to the newsletter. Campaign
-        delivery will recheck consent before each send.
-      </p>
-      <Link href="/admin/workspaces/crm">
-        Open CRM inquiries and follow-ups →
-      </Link>
+    <section className="communications-workspace">
+      <div className="communications-toolbar">
       <div
         className="workspace-tabs"
         role="tablist"
@@ -126,6 +114,39 @@ export function CommunicationsWorkspace({canManageInvitations=false}:{canManageI
           </button>
         ))}
       </div>
+      <button type="button" className="button secondary" aria-haspopup="dialog" onClick={() => deliveryDialog.current?.showModal()}>
+        Delivery details
+      </button>
+      </div>
+      <dialog ref={deliveryDialog} className="communications-details-dialog" aria-labelledby="delivery-details-title" aria-describedby="delivery-details-description">
+        <header>
+          <div>
+            <h2 id="delivery-details-title">Delivery details</h2>
+            <p id="delivery-details-description">Email setup, newsletter subscribers and sending rules.</p>
+          </div>
+          <button type="button" className="button secondary" autoFocus onClick={() => deliveryDialog.current?.close()}>Close</button>
+        </header>
+        {detailsError ? <p role="status">Delivery details could not be loaded. Refresh the page to try again.</p> : <>
+          <section>
+            <h3>Email setup</h3>
+            <dl>
+              <div><dt>Campaign sending</dt><dd>{deliveryEnabled === null ? "Checking setup…" : deliveryEnabled ? "Enabled" : "Not enabled"}</dd></div>
+              <div><dt>Password-reset emails</dt><dd>{recoveryEnabled === null ? "Checking setup…" : recoveryEnabled ? "Configured" : "Sender setup needed"}</dd></div>
+            </dl>
+            {(deliveryEnabled === false || recoveryEnabled === false) && <p>Ask your technical administrator to complete the email setup for the services marked above. You can still prepare and save campaign drafts.</p>}
+          </section>
+          <section>
+            <h3>Newsletter subscribers</h3>
+            <p>{deliveryEnabled === null ? "Loading subscriber count…" : <><strong>{optedIn}</strong> {optedIn === 1 ? "account has" : "accounts have"} opted in to the newsletter.</>}</p>
+            <p>To receive a campaign, subscribers also need a verified email address and optional emails turned on. Consent and preferences are checked again before every send.</p>
+          </section>
+          <section>
+            <h3>Before sending</h3>
+            <p>Review the saved campaign and its audience before dispatch. Follow each message’s delivery status in the Delivery logs tab.</p>
+            <p>Official WhatsApp sending is not enabled.</p>
+          </section>
+        </>}
+      </dialog>
       <div
         id="communications-templates-panel"
         role="tabpanel"
@@ -135,7 +156,7 @@ export function CommunicationsWorkspace({canManageInvitations=false}:{canManageI
         <div className="operations-layout">
           <aside className="record-list">
             <button
-              className="button secondary"
+              className="button"
               disabled={busy}
               onClick={() =>
                 templateGuard.proceed(() => {
@@ -146,6 +167,7 @@ export function CommunicationsWorkspace({canManageInvitations=false}:{canManageI
             >
               New template
             </button>
+            {!templates.length && <WorkspaceEmptyState compact icon="mail" title="No saved templates" description="Create a reusable email draft in the editor. Saving a template does not send it." />}
             {templates.map((t) => (
               <button
                 key={t.id}
@@ -274,6 +296,6 @@ export function CommunicationsWorkspace({canManageInvitations=false}:{canManageI
       <div id="communications-invitations-panel" role="tabpanel" aria-labelledby="communications-invitations-tab" hidden={view!=='invitations'}>{canManageInvitations?<InvitationTemplateEditor onDirtyChange={setInvitationDirty} />:<p>Only administrators can configure and approve member invitations.</p>}</div>
       {guard.dialog}
       {templateGuard.dialog}
-    </>
+    </section>
   );
 }

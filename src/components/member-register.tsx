@@ -2,9 +2,11 @@
 import { MemberEditor } from "./member-editor";
 import Link from "next/link";
 import {useSearchParams} from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "./operations-client";
 import {InvitationReleaseReview} from "./invitation-release-review";
+import { PortalIcon } from "./portal-icon";
+import { WorkspaceEmptyState } from "./workspace-ui";
 type Member = {
   person_id: string;
   membership_version: number;
@@ -47,39 +49,44 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
     [invitation, setInvitation] = useState("all"),
     [message, setMessage] = useState(""),
     [selected, setSelected] = useState<Member>();
-  async function load(offset = 0) {
+  async function load(offset = 0, filters = { q, status, invitation }) {
+    const request = ++requestSerial.current;
     try {
-      setData(
-        await api<Register>(
+      const result = await api<Register>(
           "/api/staff/members?view=register&q=" +
-            encodeURIComponent(q) +
+            encodeURIComponent(filters.q) +
             "&status=" +
-            status +
+            filters.status +
             "&offset=" +
-            offset+"&invitation="+invitation+(personId?"&id="+encodeURIComponent(personId):""),
-        ),
-      );
+            offset+"&invitation="+filters.invitation+(personId?"&id="+encodeURIComponent(personId):""),
+        );
+      if (request !== requestSerial.current) return;
+      setData(result);
       setMessage("");
     } catch (e) {
-      setMessage((e as Error).message);
+      if (request === requestSerial.current) setMessage((e as Error).message);
     }
   }
+  const requestSerial = useRef(0);
   useEffect(() => {
+    let active = true;
+    const request = ++requestSerial.current;
     const held=new URLSearchParams(location.search).get("invitation")==="held";
     void api<Register>("/api/staff/members?view=register&invitation="+(held?"held":"all")+(personId?"&id="+encodeURIComponent(personId):""))
-      .then(result=>{setInvitation(held?'held':'all');setData(result);if(personId)setSelected(result.rows[0]);})
-      .catch((e) => setMessage(e.message));
+      .then(result=>{if(!active || request !== requestSerial.current)return;setInvitation(held?'held':'all');setData(result);if(personId)setSelected(result.rows[0]);})
+      .catch((e) => {if(active && request === requestSerial.current)setMessage(e.message);});
+    return () => { active = false; };
   }, [personId]);
   return (
-    <section>
-      <h2>Member register</h2>
+    <section className="member-register-workspace">
+      <h2 className="sr-only">Member register</h2>
       {personId && <Link href="/admin/workspaces/members">View all members →</Link>}
       <p>
         Professional members, including people who have no login account.
         Membership and reviewed-profile status are recorded separately.
       </p>
       <form
-        className="action-row"
+        className="action-row member-register-filters"
         onSubmit={(e) => {
           e.preventDefault();
           void load();
@@ -113,18 +120,23 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
           Search register
         </button>
       </form>
-      <p>{data?.total ?? 0} members</p>
-      <div className="action-row">
+      <div className="member-register-resultbar">
+      <p>{data ? `${data.total} members` : "Loading members…"}</p>
         <Link className="button secondary" href="/admin/workspaces/onboarding">
           Import / retry member records
         </Link>
       </div>
+      <div className="member-register-bulk">
       <InvitationReleaseReview personIds={chosen} canManage={canManage} onComplete={()=>{void load();setChosen([]);}} />
       <button className="button secondary" disabled={!canManage || busy} onClick={()=>setChosen(old=>[...new Set([...old,...(data?.rows??[]).filter(m=>m.user_id && !['accepted','active account'].includes(m.invitation_status)).map(m=>m.person_id)])])}>Select eligible accounts on this page</button>
-      <div className="directory-list">
+      </div>
+      <div className="table-wrap member-register-table" role="region" aria-label="Member register records" tabIndex={0}>
+        <table className="operations-table">
+          <thead><tr><th scope="col"><span className="sr-only">Select member</span></th><th scope="col">Member</th><th scope="col">Membership no.</th><th scope="col">Status</th><th scope="col">Account</th></tr></thead>
+          <tbody>
         {data?.rows.map((m) => (
-          <div key={m.person_id}>
-            <label>
+          <tr key={m.person_id} className={selected?.person_id === m.person_id ? "is-selected" : ""}>
+            <td><label className="member-register-select">
               <input
                 type="checkbox"
                 disabled={!canManage || busy || !m.user_id || ["accepted","active account"].includes(m.invitation_status)}
@@ -137,19 +149,27 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
                   )
                 }
               />
-              Select {m.person.name}
-            </label>
+              <span className="sr-only">Select {m.person.name}</span>
+            </label></td>
+            <td>
             <button
               type="button"
-              className="button secondary"
-              key={m.person_id}
+              className="link-button member-record-button"
+              aria-label={`${m.person.name} · ${m.membership_number} · ${m.user_id ? "Account linked" : "No account"}`}
               onClick={() => setSelected(m)}
             >
-              {m.person.name} · {m.membership_number} ·{" "}
-              {m.user_id ? "Account linked" : "No account"}
+              <span className="member-record-identity"><strong>{m.person.name}</strong><small>{m.email || "No email recorded"}</small></span>
+              <PortalIcon name="chevron" />
             </button>
-          </div>
+            </td>
+            <td>{m.membership_number}</td>
+            <td><span className={`member-register-status ${m.status === "active" ? "is-active" : ""}`}>{m.status || "Not recorded"}</span></td>
+            <td><span className="member-register-account">{m.user_id ? "Account linked" : "No account"}</span></td>
+          </tr>
         ))}
+          {data && !data.rows.length && <tr><td colSpan={5} className="member-register-empty"><WorkspaceEmptyState icon="people" title="No members match these filters" description="Try another search or reset the filters to browse the member register." actionLabel="Reset member filters" onAction={() => {setQ("");setStatus("all");setInvitation("all");void load(0,{q:"",status:"all",invitation:"all"});}} /></td></tr>}
+          </tbody>
+        </table>
       </div>
       {data && (
         <div className="action-row">
@@ -168,7 +188,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
         </div>
       )}
       {selected && (
-        <section aria-label="Member details">
+        <section className="member-register-detail" aria-label="Member details">
           <h3>{selected.person.name}</h3>
           <dl>
             <dt>Membership number</dt>

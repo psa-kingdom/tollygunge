@@ -13,7 +13,7 @@ export async function verifyPaymentTable(browser:Browser,base:string,cookie:stri
    await page.screenshot({path:`${dir}/payment-table-${width}-${colorScheme}-initial.png`,fullPage:true});
    const button=table.getByRole('button',{name:'Review payment',exact:true}).first();
    const box=await button.boundingBox();expect(box?.width,'Payment action must remain readable').toBeGreaterThanOrEqual(110);expect(box?.height,'Action must not wrap into a vertical column').toBeLessThanOrEqual(80);
-   await table.focus();await region.evaluate(e=>{e.scrollLeft=0;});await page.keyboard.press('ArrowRight');await expect(table).toBeFocused();
+   await region.focus();await region.evaluate(e=>{e.scrollLeft=0;});await page.keyboard.press('ArrowRight');await expect(region).toBeFocused();
    const geometry=await region.evaluate(e=>({scroll:e.scrollWidth,client:e.clientWidth,pageOverflow:document.documentElement.scrollWidth>innerWidth+1}));expect(geometry.pageOverflow).toBe(false);if(width<768)expect(geometry.scroll).toBeGreaterThan(geometry.client);
    if(geometry.scroll>geometry.client)await expect.poll(()=>region.evaluate(e=>e.scrollLeft)).toBeGreaterThan(0);
    const keyboardScrollLeft=await region.evaluate(e=>e.scrollLeft);
@@ -25,7 +25,7 @@ export async function verifyPaymentTable(browser:Browser,base:string,cookie:stri
    await page.screenshot({path:`${dir}/payment-table-${width}-${colorScheme}.png`,fullPage:true});states.push({width,colorScheme,...geometry,keyboardScrollLeft,actionWidth:box!.width,actionHeight:box!.height,confirmationDismissed:true,accessibility});
   }
   const counts=(await db.query('SELECT payment_status,count(*) FROM tpa.event_registrations GROUP BY payment_status')).rows;
-  const empty=['pending','paid','failed','refunded','cancelled'].find(s=>!counts.some(r=>r.payment_status===s));expect(empty,'Fixture must retain an empty payment status').toBeTruthy();await page.getByRole('region',{name:'Registration payments',exact:true}).locator('..').getByRole('combobox').first().selectOption(empty!);await expect(page.getByText('No payments match this status.',{exact:true})).toBeVisible();
+  const empty=['pending','paid','failed','refunded','cancelled'].find(s=>!counts.some(r=>r.payment_status===s));expect(empty,'Fixture must retain an empty payment status').toBeTruthy();await page.getByRole('combobox',{name:'Payment status',exact:true}).selectOption(empty!);await expect(page.getByRole('heading',{name:'No payments match this status',exact:true})).toBeVisible();
   return {states,emptyStateVerified:true,confirmationWrites:0};
  }finally{await context.close();}
 }

@@ -1,0 +1,6 @@
+.placeholder { padding:20px 0; min-height:120px; }
+.placeholder div { display:grid; gap:12px; }
+.placeholder div span { display:block; height:14px; border-radius:4px; background:var(--line,#dfe5ed); }
+.placeholder div span:first-child { width:38%; height:22px; }
+.placeholder div span:last-child { width:72%; }
+.label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }

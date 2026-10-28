@@ -1,4 +1,5 @@
 "use client";
+import { WorkspacePanel, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
 import type { StaffRole } from "@/domain/access";
@@ -46,6 +47,7 @@ export function StaffAccess() {
   }, []);
   return (
     <>
+      <WorkspacePanel title="Find an account" description="Search for a verified account, then inspect its current responsibilities before making changes.">
       <p>
         Assign responsibilities to existing verified accounts. Changing roles
         signs that account out everywhere. Account access and association
@@ -83,6 +85,7 @@ export function StaffAccess() {
           Search accounts
         </button>
       </form>
+      </WorkspacePanel>
       <div className="operations-layout">
         <aside className="record-list" aria-label="Accounts">
           {directory?.people.map((person) => (
@@ -105,7 +108,7 @@ export function StaffAccess() {
             </button>
           ))}
           {directory && !directory.people.length && (
-            <p>No matching accounts.</p>
+            <WorkspaceEmptyState compact icon="people" title="No matching accounts" description="Try a different name or email address." />
           )}
           {directory?.limited && (
             <p>Showing the first 50 accounts. Refine your search.</p>
@@ -198,13 +201,12 @@ export function StaffAccess() {
               </button>
             </form>
           ) : (
-            <p>Select an account to inspect its responsibilities.</p>
+            <WorkspaceEmptyState icon="shield" title="Select an account" description="Choose an account from the results to inspect its current responsibilities and permitted access changes." />
           )}
         </section>
       </div>
       <p role="status">{message}</p>
-      <section className="content-section">
-        <h2>Administrative activity</h2>
+      <WorkspacePanel title="Administrative activity" className="content-section">
         <p>
           Recent consequential actions. Private document contents and
           credentials are excluded.
@@ -238,7 +240,7 @@ export function StaffAccess() {
             </table>
           </div>
         ) : (
-          <p>No recorded actions.</p>
+          <WorkspaceEmptyState compact icon="shield" title="No recorded actions" description="Staff access changes and other administrative actions will appear here." />
         )}
         <div className="action-row">
           <button
@@ -285,7 +287,7 @@ export function StaffAccess() {
             Older actions
           </button>
         </div>
-      </section>
+      </WorkspacePanel>
     </>
   );
 }

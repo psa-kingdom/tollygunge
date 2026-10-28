@@ -39,9 +39,11 @@ type Status = {
 export function ApplicationDraft({
   name,
   userId,
+  initialStep,
 }: {
   name: string;
   userId: string;
+  initialStep?: number;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<Draft>({
@@ -50,7 +52,7 @@ export function ApplicationDraft({
       category: "Professional",
       details: { fullName: name },
       documentIds: [],
-      step: 0,
+      step: initialStep ?? 0,
     }),
     [status, setStatus] = useState<Status | null>(null),
     [message, setMessage] = useState("Loading your saved form…"),
@@ -84,7 +86,7 @@ export function ApplicationDraft({
           current.current = {
             ...saved,
             category: "Professional",
-            step: saved.step ?? 0,
+            step: initialStep ?? saved.step ?? 0,
           };
           if (saved.category !== "Professional") {
             dirty.current = true;
@@ -126,7 +128,7 @@ export function ApplicationDraft({
       active = false;
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [key]);
+  }, [key, initialStep]);
   async function save(): Promise<boolean> {
     if (saving.current) {
       if (!(await saving.current)) return false;

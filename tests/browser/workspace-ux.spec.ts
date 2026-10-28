@@ -356,19 +356,36 @@ test("verification reasons belong to one record and corrections preserve an exis
   }
 });
 
-test("empty payment roster is keyboard accessible at responsive widths", async ({ page, context }, info) => {
+test("payment roster empty states and populated tables are keyboard accessible at responsive widths", async ({ page, context }, info) => {
   const externalFonts: string[] = [];
   page.on("request", request => {
     if (/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(request.url())) externalFonts.push(request.url());
   });
   await staff(context);
-  await page.route("**/api/staff/registration-payments?*", route => route.fulfill({ json: [] }));
+  let populated = false;
+  await page.route("**/api/staff/registration-payments?*", route => route.fulfill({ json: populated ? [{ id: "synthetic-payment", version: 1, name: "Synthetic Member", email: "member@example.invalid", title: "Synthetic event", fee_paise: 10000, payment_status: "pending", payment_reference: "", payment_note: "", history: [] }] : [] }));
   const widths = info.project.name === "desktop" ? [1440, 1280] : info.project.name === "tablet" ? [768] : [320, 390];
   for (const width of widths) {
+    populated = false;
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/admin/workspaces/payments");
     await expect(page.getByText("0 records shown (up to 250)")).toBeVisible();
     const table = page.getByRole("table", { name: "Registration payments", exact: true });
+    await expect(table).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "No payments match this status", exact: true })).toBeVisible();
+    const filter = page.getByRole("combobox", { name: "Payment status", exact: true });
+    await filter.focus();
+    await page.keyboard.press("Tab");
+    const allStatuses = page.getByRole("button", { name: "View all statuses", exact: true });
+    await expect(allStatuses).toBeFocused();
+    await allStatuses.press("Enter");
+    await expect(filter).toHaveValue("all");
+    await expect(page.getByRole("button", { name: "Refresh payments", exact: true })).toBeVisible();
+    await noOverflow(page);
+    await page.screenshot({ path: info.outputPath(`empty-payments-${width}.png`), fullPage: true });
+    populated = true;
+    await filter.selectOption("pending");
+    await expect(table).toBeVisible();
     // Keep short column names readable rather than breaking their letters to fit.
     const headerLines = await table.locator("th").evaluateAll(headers => headers.map(header => {
       const range = document.createRange();
@@ -376,15 +393,18 @@ test("empty payment roster is keyboard accessible at responsive widths", async (
       return range.getClientRects().length;
     }));
     expect(headerLines.every(lines => lines === 1)).toBe(true);
-    await page.getByRole("combobox", { name: "Payment status", exact: true }).focus();
+    const scrollRegion = page.locator(".registration-payments .table-scroll");
+    await expect(scrollRegion).toHaveAttribute("role", "region");
+    await expect(scrollRegion).toHaveAttribute("aria-label", "Registration payments");
+    await filter.focus();
     await page.keyboard.press("Tab");
-    await expect(table).toBeFocused();
-    if (await table.evaluate(el => el.scrollWidth > el.clientWidth)) {
-      await table.press("ArrowRight");
-      await expect.poll(() => table.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
+    await expect(scrollRegion).toBeFocused();
+    if (await scrollRegion.evaluate(el => el.scrollWidth > el.clientWidth)) {
+      await scrollRegion.press("ArrowRight");
+      await expect.poll(() => scrollRegion.evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
     }
     await noOverflow(page);
-    await page.screenshot({ path: info.outputPath(`empty-payments-${width}.png`), fullPage: true });
+    await page.screenshot({ path: info.outputPath(`populated-payments-${width}.png`), fullPage: true });
   }
   expect(externalFonts).toEqual([]);
 });

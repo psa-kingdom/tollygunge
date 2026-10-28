@@ -8,7 +8,10 @@ export const metadata = {
   title: "Your verification details",
   robots: { index: false, follow: false },
 };
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ step?: string }> }) {
+  const query = await searchParams;
+  const requestedStep = Number(query.step);
+  const initialStep = Number.isInteger(requestedStep) && requestedStep >= 0 && requestedStep <= 4 ? requestedStep : undefined;
   const actor = await currentActor();
   if (!actor) redirect("/login");
   return (
@@ -16,7 +19,7 @@ export default async function Page() {
       <main id="main" className="member-content member-application">
         <Link href="/member">← Your member space</Link>
         <h1>Your verification details</h1>
-        <ApplicationDraft name={actor.name} userId={actor.id} />
+        <ApplicationDraft name={actor.name} userId={actor.id} initialStep={initialStep} />
       </main>
     </SiteShell>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import { EventOperations } from "./event-operations";
 import { defaultReminders, disabledReminders, istInput, istInstant, eventTime, type Speaker, type ReminderSettings } from "@/domain/event-flow";
 import { EventSpeakers } from "./event-speakers";
@@ -76,6 +77,7 @@ export function EventManager({
     [busy, setBusy] = useState(false),
     [attendeeFilter, setAttendeeFilter] = useState("all"),
     [attendeeSearch, setAttendeeSearch] = useState("");
+  const [editing, setEditing] = useState(false), [loaded, setLoaded] = useState(false);
   const [attendeePage,setAttendeePage]=useState(1),[outcomeFilter,setOutcomeFilter]=useState("all"),[paymentFilter,setPaymentFilter]=useState("all");
   const [accounts,setAccounts]=useState<{id:string;details:{label:string;payee:string}}[]>([]);
   useEffect(()=>{void api<{records: typeof accounts}>("/api/member/payment-details").then(d=>setAccounts(d.records));},[]);
@@ -86,6 +88,7 @@ export function EventManager({
   }
   const select = useCallback(async (row: EventRow | null) => {
     if(row) row=(await api<EventRow[]>(`/api/staff/events?id=${row.id}`))[0];
+    setEditing(true);
     setSelected(row);
     setForm(
       row
@@ -133,7 +136,8 @@ export function EventManager({
         if (row) void select(row);
       })
       .then(() => setMessage(""))
-      .catch((e) => setMessage(e.message));
+      .catch((e) => setMessage(e.message))
+      .finally(() => setLoaded(true));
   }, [select]);
   async function action(action: string) {
     setBusy(true);
@@ -210,10 +214,13 @@ export function EventManager({
         speakers: selected.speakers ?? [],
         reminders: selected.reminders ?? disabledReminders,
       });
+  if (!loaded) return <p role="status">Loading events…</p>;
+  if (!editing && !events.length) return <WorkspaceEmptyState icon="calendar" title={message ? "Events could not be loaded" : "Your events start here"} description={message || "Create your first event, save its details as a draft, then review it before publishing."} actionLabel={message ? "Retry loading events" : "New event"} onAction={() => { if (message) void load().then(() => setMessage("")).catch(e => setMessage(e.message)); else void select(null); }} />;
   return (
-    <div className="operations-layout">
-      <aside className="record-list">
-        <button className="button secondary" onClick={() => void select(null)}>
+    <div className={`operations-layout event-workspace ${!events.length ? "is-creating-first" : ""}`}>
+      <aside className="record-list workspace-records" aria-label="Event library">
+        <div className="workspace-list-heading"><h2>Event library</h2><span>{events.length}</span></div>
+        <button className="button" onClick={() => void select(null)}>
           New event
         </button>
         {events.length === 0 && <p>No events yet.</p>}
@@ -230,7 +237,8 @@ export function EventManager({
           </button>
         ))}
       </aside>
-      <section>
+      <section className="workspace-editor" aria-label="Event editor">
+        {editing ? <>
         <h2>{selected ? selected.title : "Create event"}</h2>
         {selected && <EventOperations event={selected} attendees={attendees} canFinance={canVerifyPayments} canPromote={canPromote} refresh={async()=>{const rows=await api<EventRow[]>(`/api/staff/events?id=${selected.id}`);await select(rows[0]);await load();}}/>}
         {selected?.status === "published" && (
@@ -248,6 +256,7 @@ export function EventManager({
           Save a draft, review the details, then publish. Paid registrations
           require manual payment verification.
         </p>
+        <nav className="workspace-section-nav" aria-label="Event form sections"><a href="#event-basics">Event details</a><a href="#event-booking">Booking & payment</a><a href="#event-speakers">Speakers</a><a href="#event-reminders">Reminders</a></nav>
         <form id="event-details"
           className="member-settings"
           onSubmit={(e) => {
@@ -255,7 +264,7 @@ export function EventManager({
             void action("save");
           }}
         >
-          <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)}>
+          <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)} id="event-basics">
             <legend>Event details</legend>
             <label>
               Title
@@ -309,7 +318,7 @@ export function EventManager({
               </label>
             </div>
             </fieldset>
-            <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)}><legend>Booking</legend>
+            <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)} id="event-booking"><legend>Booking</legend>
             <label>
               Capacity
               <input
@@ -391,12 +400,13 @@ export function EventManager({
                 }
               />
             </label>
+                    <label>Event payment accounts<select multiple value={form.paymentAccountIds} disabled={busy||!!selected?.completed_at||selected?.status==='published'} onChange={e=>setForm({...form,paymentAccountIds:Array.from(e.target.selectedOptions).map(o=>o.value)})}>{accounts.map(a=><option key={a.id} value={a.id}>{a.details.label} · {a.details.payee}</option>)}</select></label>
           </fieldset>
-          <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)}><legend>Speakers</legend>
+          <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)} id="event-speakers"><legend>Speakers</legend>
             <EventSpeakers speakers={form.speakers} onChange={(speakers) => setForm({...form,speakers})} />
           </fieldset>
-          <label>Event payment accounts<select multiple value={form.paymentAccountIds} disabled={busy||!!selected?.completed_at||selected?.status==='published'} onChange={e=>setForm({...form,paymentAccountIds:Array.from(e.target.selectedOptions).map(o=>o.value)})}>{accounts.map(a=><option key={a.id} value={a.id}>{a.details.label} · {a.details.payee}</option>)}</select></label>
-          <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)}><legend>Pre-event reminders</legend>
+
+          <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)} id="event-reminders"><legend>Pre-event reminders</legend>
             <label><input type="checkbox" checked={form.reminders.enabled} onChange={(e) => setForm({...form,reminders:{...form.reminders,enabled:e.target.checked}})} /> Send automatic reminders</label>
             <p>Times are minutes before the event starts. Choose up to three different times from 15 to 10,080 minutes.</p>
             {form.reminders.offsets.map((offset,i) => <div className="action-row" key={i}>
@@ -406,7 +416,7 @@ export function EventManager({
             <button type="button" className="button secondary" disabled={form.reminders.offsets.length>=3} onClick={() => setForm({...form,reminders:{...form.reminders,offsets:[...form.reminders.offsets,[60,1440,10080].find((n) => !form.reminders.offsets.includes(n))!]}})}>Add reminder</button>
             <label><input type="checkbox" checked={form.reminders.includePending} onChange={(e) => setForm({...form,reminders:{...form.reminders,includePending:e.target.checked}})} /> Send a separate payment-pending message to reserved attendees</label>
           </fieldset>
-          <div className="action-row">
+          <div className="action-row workspace-savebar">
             {(!selected || selected.status !== "cancelled") && (
               <button className="button" disabled={busy || !!selected?.completed_at || !!selected?.archived_at}>
                 {selected?.status === "published"
@@ -623,6 +633,7 @@ export function EventManager({
           </details>)}
         </section>}
         <p role="status">{message}</p>
+        </> : <WorkspaceEmptyState icon="calendar" title="Select an event" description="Choose an event to manage its details, registrations and attendance, or create a new event." actionLabel="New event" onAction={() => void select(null)} />}
       </section>
     </div>
   );

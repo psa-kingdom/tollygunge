@@ -1,4 +1,5 @@
 "use client";
+import { WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useEffect, useCallback } from "react";
 import { api } from "./operations-client";
 export type EmailReadiness = {
@@ -123,7 +124,7 @@ export function EmailDeliveries() {
       </div>
       <p role="status">{message}</p>
       {data && !data.entries.length && (
-        <p>No email jobs match these filters.</p>
+        <WorkspaceEmptyState icon="mail" title="No email jobs match these filters" description="Delivery attempts will appear here after messages are queued. Adjust the status filter or refresh to check again." actionLabel="Refresh delivery" onAction={() => void load()} />
       )}
       <div className="table-scroll" role="region" aria-label="Email delivery records" tabIndex={0}>
         <table>
