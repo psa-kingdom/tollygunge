@@ -29,7 +29,7 @@ const storage=createServer(async(req,res)=>{const key=req.url!.split('?')[0];if(
 await new Promise<void>(r=>storage.listen(0,'127.0.0.1',r));const storagePort=(storage.address() as {port:number}).port;
 const shim=resolve(dir,'storage-shim.cjs');await writeFile(shim,`const https=require('node:https'),http=require('node:http');const original=https.request;https.request=function(options,callback){if((options.hostname??options.host)?.endsWith('.r2.cloudflarestorage.com'))return http.request({...options,hostname:'127.0.0.1',host:undefined,port:${storagePort},protocol:'http:',agent:undefined},callback);return original.apply(this,arguments);};`);
 const root=new Pool(databaseOptions()),db=new Pool({...databaseOptions(env),max:5});let workerDb:Pool=db;let created=false,server:ReturnType<typeof spawn>|undefined,browser:Awaited<ReturnType<typeof chromium.launch>>|undefined;
-const evidence={passed:false,buildId:(await readFile('.next/BUILD_ID','utf8')).trim(),syntheticOnly:true,externalEmails:0,externalStorageWrites:0,scenarios:[] as string[],screenshots:[] as string[],browserErrors:[] as string[]};
+const evidence={passed:false,cleanup:false,buildId:(await readFile('.next/BUILD_ID','utf8')).trim(),syntheticOnly:true,externalEmails:0,externalStorageWrites:0,scenarios:[] as string[],screenshots:[] as string[],browserErrors:[] as string[]};
 const users:string[]=[],cookies:string[]=[];
 function pass(s:string){evidence.scenarios.push(s);console.log('PASS: '+s);}
 async function unavailableFlyer(id:string,title:string,actor?:number) {
@@ -127,5 +127,18 @@ try {
  }
  assert.deepEqual(evidence.browserErrors,[]);pass('Desktop/tablet/phone flyer freshness, resource editor, member journey, keyboard focus and responsive layouts');evidence.passed=true;
 }finally{
- await writeFile(dir+'/acceptance.json',JSON.stringify(evidence,null,2));await browser?.close();if(server&&server.exitCode===null){const exit=new Promise(r=>server!.once('exit',r));server.kill();await exit;}if(workerDb!==db)await workerDb.end();await db.end();if(created)await root.query(`DROP DATABASE IF EXISTS ${database} WITH (FORCE)`);await root.end();await new Promise<void>((r,reject)=>storage.close(err=>err?reject(err):r()));console.log('Evidence: '+dir);
+ try{
+  await browser?.close();if(server&&server.exitCode===null){const exit=new Promise(r=>server!.once('exit',r));server.kill();await exit;}if(workerDb!==db)await workerDb.end();await db.end();
+  if(created){
+   let connections=0;
+   for(let attempt=0;attempt<100;attempt++){
+    connections=(await root.query('SELECT count(*)::int n FROM pg_stat_activity WHERE datname=$1',[database])).rows[0].n;
+    if(connections===0)break;
+    await new Promise(resolve=>setTimeout(resolve,50));
+   }
+   assert.equal(connections,0,'Owned engagement connections must close before database retirement');
+   await root.query(`DROP DATABASE IF EXISTS ${database}`);
+  }
+  evidence.cleanup=true;
+ }finally{await root.end();await new Promise<void>((r,reject)=>storage.close(err=>err?reject(err):r()));await writeFile(dir+'/acceptance.json',JSON.stringify(evidence,null,2));console.log('Evidence: '+dir);}
 }

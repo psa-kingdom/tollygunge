@@ -7,6 +7,8 @@ Preparing an inventory does not execute any case or establish launch readiness.
 
 ## Approved v1 contract — 28 October
 
+Execution continuation: PR4/main exact-SHA checks passed; PR5 must pass before normal merge. CI now runs candidate checks on PRs and exact-commit checks on main, avoiding cancelled duplicate push checks. Two Railway upload snapshots failed before build; reviewed pinned-source fallback is staged and awaits the provider approval gate. Preserve the prior healthy app. Do not create/send QA mail or retire anything until the required hosted candidate is available.
+
 Continue from `efd8085`, preserving later main changes by normal merge. The [finite release checklist](TPA_V1_RELEASE_CHECKLIST.md) records gates and all 20 public-site decisions. Push/PR/protection/normal merge/deployment are now authorized within those gates. Required jobs: verify, runtime-container, onboarding, launch-operations; repeat against the merged SHA and align testing by fast-forward. Preserve Railway resources, secrets, storage and holds.
 
 The consistent PG18 backup remains private and isolated; synthetic suites never inherit its credentials/data. Hosted acceptance uses only labelled `tollygungecacpestudycircle+launchqa@gmail.com`, max one verification and one recovery email, private owned test document, session retirement and credential/inbox browser handoff. No membership approval, public publication, payment or invitation release. Observe 15 minutes; application rollback preserves subsequent user data.

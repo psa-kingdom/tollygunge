@@ -2,6 +2,10 @@
 
 ## V1 approved continuation — 28 October
 
+PR4 merged as `676e275`, with all four exact-SHA main checks passing. PR5 addresses acceptance tooling only. Linux exposed the same unsafe FORCE-drop cleanup pattern in permission and engagement fixtures; require zero owned backends and use normal DROP, retaining cleanup failure separately. Duplicate cancelled push/PR jobs blocked branch policy despite a green PR; run PR checks once and keep all four main jobs after merge. No bypass or administrator merge override.
+
+Two upload snapshots failed at Railway before build. The fallback stages only repo/branch/commitSha on the existing production service, pinned to the already checked GitHub commit; no automatic deployment on future pushes. Global staged-change review found exactly those three non-destructive fields, no secrets/resources. The apply tool rejected approval, so keep the patch pending and ask for the required approval rather than bypassing the gate through another interface. Prior production remains healthy. Cleanup stays gated on hosted acceptance.
+
 The user authorizes the gated release/consolidation sequence in `TPA_V1_RELEASE_CHECKLIST.md`, superseding earlier no-push/no-merge instructions within that sequence. Cleanup requires hosted acceptance, active owner/process review and verified private restoration. Preserve the dirty primary intact instead of resetting it.
 
 Reporting reuses inquiries/CRM: public Website issue normalizes to General plus an existing tag; member subject/message API stays unchanged. Preview/opt-in diagnostics contain version, route template, browser family and viewport only. Missing route context becomes `/other`. No schema migration, screenshots, separate ticket service or analytics tracker.

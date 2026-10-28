@@ -11,9 +11,9 @@ Target: 28 October 2026. This is a finite gate record, not a claim that all inve
 | v1 browser cases | 9/9 PASS at 06:37 UTC: public metadata/privacy/404/share image and actual public/member issue reporting. Repeat with final runtime. |
 | Publishing | PASS after transient null pathname guard: actual save/reload/publication and nine responsive/accessibility views at `.local/website-control/2026-10-28T06-41-45.157Z`. Original failures remain retained. |
 | Other local baseline | Newsletter, member, accounts, imports, invitations, events and manual payments passed at recorded scope. The interrupted full browser run is FAIL, not a baseline pass; full rerun required. |
-| Required CI | PENDING: `verify`, `runtime-container`, `onboarding`, `launch-operations`. |
-| Merge and exact SHA CI | PENDING: normal merge, align testing by fast-forward, all four checks against resulting SHA. |
-| Hosted acceptance | PENDING: clean SHA deployment, labelled QA member, max one verification/recovery email, private own document, public/admin/Publishing/metadata checks, QA session retirement. |
+| Required CI | PASS on PR4 candidate `e181eb0` and merged main `676e2752f4781ff265ba30d71fdce12480105988`: all four jobs. Runs 40647830810 and 40649383107. PR5 corrects Linux fixture retirement and duplicate cancelled checks; its final gates remain required. |
+| Merge and exact SHA CI | PR4 merged normally as `676e275`; testing was fast-forwarded to it. PR5 is a tooling-only follow-up; final branch alignment awaits its normal merge and exact-SHA CI. |
+| Hosted acceptance | BLOCKED: two upload deployments failed at Railway SNAPSHOT_CODE before build. Prior deployment remains healthy. Reviewed production patch `3e17706d-8efc-4b34-8dc5-2430dc27927e` pins existing service to verified GitHub main SHA `676e275`; applying it was rejected by Railway's approval gate. User approval requested. No QA account or QA emails yet. |
 | Observation and rollback | PENDING: 15 minutes. Critical failure redeploys previous verified app; retain subsequent user data. |
 | Archive and consolidation | PENDING until hosted acceptance: verified recovery/restoration, owner/process review, allowlisted retirement, clean canonical checkouts, exactly two aligned local/origin branches and v1.0.0 tag. |
 
@@ -35,7 +35,9 @@ Target: 28 October 2026. This is a finite gate record, not a claim that all inve
 19. `/privacy` explains actual information use, role access, service providers and contact procedures without invented retention/compliance claims.
 20. Existing consent, duplicate protection, persistence and CRM remain; issue topic maps to backward-compatible General + website-issue tag, no migration or API contract change.
 
-Physical devices, future features and search indexing remain distinct from browser emulation and executed v1 acceptance. No unexecuted inventory item becomes PASS by association.
+Physical devices, future features and search indexing remain distinct from browser emulation and executed v1 acceptance. No unexecuted inventory item becomes PASS by association. Actual Chrome native 200% zoom passed eight prior-live public/sign-in destinations, each one H1/no horizontal overflow at 429 CSS px; restored 100%. This does not establish candidate deployment or private member zoom acceptance.
+
+Private archive restoration rehearsed: 39,963 source/evidence/config files match hashes, including 270 configuration/credential-related files. Original eight-worktree recheck at 09:45 UTC reports zero failures. No retirement or recursive cache deletion has occurred.
 
 ## Laboratory performance checkpoint
 

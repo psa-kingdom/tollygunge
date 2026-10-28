@@ -16,7 +16,16 @@ try{for(const mode of ['fresh','upgrade']){
   const checks=await verifyRoles(env);results.push({mode,passed:true,checks,migrationIdentitySeparate:true,migrationsRepeatable:true});
  }finally{
   if(created){
-   await root.query(`DROP DATABASE ${q(name)} WITH (FORCE)`);
+   // All owned pools have ended. Wait for their backends to disconnect instead
+   // of force-terminating closing clients and racing idle pool error delivery.
+   let connections=0;
+   for(let attempt=0;attempt<100;attempt++){
+    connections=(await root.query('SELECT count(*)::int n FROM pg_stat_activity WHERE datname=$1',[name])).rows[0].n;
+    if(connections===0)break;
+    await new Promise(resolve=>setTimeout(resolve,50));
+   }
+   assert.equal(connections,0,'Owned fixture connections must close before database retirement');
+   await root.query(`DROP DATABASE ${q(name)}`);
    for(const role of Object.values(roles)){if((await root.query('SELECT 1 FROM pg_roles WHERE rolname=$1',[role])).rowCount)await root.query(`DROP ROLE ${q(role)}`);}
    const databases=(await root.query('SELECT count(*)::int n FROM pg_database WHERE datname=$1',[name])).rows[0].n;
    const remainingRoles=(await root.query('SELECT count(*)::int n FROM pg_roles WHERE rolname=ANY($1::text[])',[Object.values(roles)])).rows[0].n;
