@@ -34,7 +34,7 @@ const browserOnly = process.argv.includes("--browser-only");
 const grepIndex = process.argv.indexOf("--browser-grep");
 assert.ok(grepIndex < 0 || process.argv[grepIndex + 1], "Supply a browser grep expression");
 const fileIndex = process.argv.indexOf("--browser-file");
-assert.ok(fileIndex < 0 || process.argv[fileIndex + 1] === "tests/browser/portal-design.spec.ts", "Only the existing portal acceptance file is supported here.");
+assert.ok(fileIndex < 0 || ["tests/browser/portal-design.spec.ts", "tests/browser/launch-v1.spec.ts"].includes(process.argv[fileIndex + 1]), "Only declared portal/release acceptance files are supported here.");
 let server, outageServer;
 async function run(label, args) {
   const start = performance.now();

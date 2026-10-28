@@ -48,7 +48,9 @@ async function fingerprint(pool: Pool) {
   const tables = (await pool.query("SELECT schemaname,tablename FROM pg_tables WHERE schemaname IN ('public','tpa') ORDER BY schemaname,tablename")).rows as {schemaname:string;tablename:string}[];
   const counts = tables.length ? (await pool.query(tables.map(t => `SELECT '${t.schemaname}.${t.tablename.replaceAll("'", "''")}' AS name,count(*)::text AS count FROM ${quote(t.schemaname)}.${quote(t.tablename)}`).join(" UNION ALL ") + " ORDER BY name")).rows : [];
   const constraints = (await pool.query("SELECT n.nspname AS schema,t.relname AS table,c.conname AS name,c.contype AS type,c.convalidated AS validated,pg_get_constraintdef(c.oid) AS definition FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname IN ('public','tpa') ORDER BY n.nspname,t.relname,c.conname")).rows;
-  return { counts, constraints };
+  const extensions = (await pool.query("SELECT extname,extversion FROM pg_extension ORDER BY extname")).rows;
+  const indexes = (await pool.query("SELECT schemaname,tablename,indexname,indexdef FROM pg_indexes WHERE schemaname IN ('public','tpa') ORDER BY schemaname,tablename,indexname")).rows;
+  return { counts, constraints, extensions, indexes };
 }
 const production = new Pool({ ...databaseOptions(source), max: 1, options: "-c default_transaction_read_only=on -c statement_timeout=120000" });
 let started = false, created = false;
@@ -66,7 +68,9 @@ try {
   const caFile = join(output, "database-ca.pem"); await writeFile(caFile, ca);
   const env = { ...system, PGHOST: tlsHost, PGHOSTADDR: (await lookup(url.hostname)).address, PGPORT: url.port || "5432", PGUSER: decodeURIComponent(url.username), PGPASSWORD: decodeURIComponent(url.password), PGDATABASE: decodeURIComponent(url.pathname.slice(1)), PGSSLMODE: "verify-full", PGSSLROOTCERT: caFile, PGCONNECT_TIMEOUT: "20" };
   const dump = join(output, "production.dump");
-  await native("pg_dump", ["--format=custom", "--no-owner", "--no-acl", "--schema=public", "--schema=tpa", "--snapshot=" + snapshot, "--file=" + dump], env);
+  // Dump the complete database: schema-filtered dumps omit extension objects
+  // such as pg_trgm, whose operator classes are required by application indexes.
+  await native("pg_dump", ["--format=custom", "--no-owner", "--no-acl", "--snapshot=" + snapshot, "--file=" + dump], env);
   await production.query("COMMIT");
   report.dumpSha256 = createHash("sha256").update(await readFile(dump)).digest("hex");
   await writeFile(join(output, "source-fingerprint.json"), JSON.stringify(expected, null, 2));
@@ -84,6 +88,7 @@ try {
   const actual = await fingerprint(restored);
   assert.deepEqual(actual, expected, "Restored table counts and constraints must exactly match the consistent source snapshot.");
   report.tablesVerified = expected.counts.length; report.constraintsVerified = expected.constraints.length;
+  report.indexesVerified = expected.indexes.length; report.extensionsVerified = expected.extensions.length;
   report.productionVersionMajor = 18; report.restoreVersionMajor = 18; report.passed = true;
 } catch (error) {
   report.failure = error instanceof assert.AssertionError ? error.message : "Backup/restore prerequisite failed; private logs retained.";

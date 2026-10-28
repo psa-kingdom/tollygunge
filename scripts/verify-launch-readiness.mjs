@@ -16,6 +16,7 @@ const stages = [
   { id: "core", group: "integration", args: ["scripts/verify-launch-isolated.mjs", "--fallback-outage", "--public-interactions"] },
   { id: "auth", group: "integration", args: ["scripts/verify-phase7b.mjs", "--only", "auth"] },
   { id: "portal", group: "integration", args: ["scripts/verify-phase7b.mjs", "--only", "portal"] },
+  { id: "v1", group: "integration", args: ["scripts/verify-phase7b.mjs", "--only", "v1"] },
   { id: "newsletter", group: "integration", args: ["scripts/verify-public-newsletter.mjs"] },
   { id: "member", group: "integration", args: ["--import", "tsx", "scripts/test-member-foundation.mts", "--http"] },
   { id: "accounts", group: "integration", args: ["--import", "tsx", "scripts/test-approved-accounts.mts"] },
@@ -150,9 +151,9 @@ for (const stage of selected) {
   await writeFile(logPath, log);
   const summarySources = [logPath];
   let summaryText = log;
-  if (["restricted", "auth", "portal"].includes(stage.id) && result !== "BLOCKED") {
+  if (["restricted", "auth", "portal", "v1"].includes(stage.id) && result !== "BLOCKED") {
     for (const path of await filesUnder(output + "/security")) {
-      if (!/(?:^|[\\/])(?:core-browser|email-runtime|auth|portal)\.log$/.test(path)) continue;
+      if (!/(?:^|[\\/])(?:core-browser|email-runtime|auth|portal|v1)\.log$/.test(path)) continue;
       summarySources.push(path);
       summaryText += "\n" + await readFile(path, "utf8");
     }
@@ -161,7 +162,7 @@ for (const stage of selected) {
   const artifactFiles = [];
   // Shared report directories may contain prior evidence. Copy only regular files
   // changed during an actually executed browser-capable stage, retaining provenance.
-  const browserStages = new Set(["core", "auth", "portal", "import-jobs", "website", "event-flow", "engagement", "event-operations", "restricted"]);
+  const browserStages = new Set(["core", "auth", "portal", "v1", "import-jobs", "website", "event-flow", "engagement", "event-operations", "restricted"]);
   if (result !== "BLOCKED" && browserStages.has(stage.id)) for (const artifact of ["test-results", "playwright-report"]) {
     for (const source of await filesUnder(resolve(artifact))) {
       const metadata = await stat(source);

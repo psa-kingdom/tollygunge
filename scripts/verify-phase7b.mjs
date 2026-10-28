@@ -15,6 +15,7 @@ const stages = [
   ["core-browser", ["scripts/verify-launch-isolated.mjs", "--fallback-outage", "--public-interactions"]],
   ["auth", ["scripts/verify-launch-isolated.mjs", "--browser-grep", "actual .* form login|expired database session|unverified staff require", "--fallback-outage", "--public-interactions"]],
   ["portal", ["scripts/verify-launch-isolated.mjs", "--browser-only", "--browser-file", "tests/browser/portal-design.spec.ts"]],
+  ["v1", ["scripts/verify-launch-isolated.mjs", "--browser-only", "--browser-file", "tests/browser/launch-v1.spec.ts"]],
   ["newsletter", ["scripts/verify-public-newsletter.mjs"]],
   ["member-foundation", ["--import", "tsx", "scripts/test-member-foundation.mts", "--http"]],
   ["approved-accounts", ["--import", "tsx", "scripts/test-approved-accounts.mts"]],
@@ -75,7 +76,7 @@ try {
     let log = "";
     const start = Date.now();
     const code = await new Promise((done, reject) => {
-      const child = spawn(process.execPath, ["--import", "./tests/helpers/restricted-runtime.mjs", ...stageArgs], { env, stdio: ["ignore", "pipe", "pipe"] });
+      const child = spawn(process.execPath, ["--import", "./tests/helpers/restricted-runtime.mjs", ...stageArgs], { env: label === "v1" ? { ...env, TPA_ISOLATED_PORT: "3188" } : env, stdio: ["ignore", "pipe", "pipe"] });
       child.stdout.on("data", chunk => { log += chunk; });
       child.stderr.on("data", chunk => { log += chunk; });
       child.once("error", reject); child.once("close", done);
