@@ -15,7 +15,7 @@ export async function operationalBrowserJourney({browser,base,cookies,db,dir,req
  const staff=await staffContext.newPage(),member=await memberContext.newPage(),errors:string[]=[];
  for(const page of [staff,member])page.on('pageerror',e=>errors.push(e.message));
  const title='UI Operational Workshop';
- await staff.goto(base+'/admin/workspaces/events');await staff.getByRole('button',{name:'New event',exact:true}).click();
+ await staff.goto(base+'/admin/workspaces/events');await staff.getByRole('complementary',{name:'Event library',exact:true}).getByRole('button',{name:'New event',exact:true}).click();
  await staff.getByLabel('Title',{exact:true}).fill(title);await staff.getByLabel('Description',{exact:true}).fill('A practical workshop with a presentation, photos, report and member follow-up.');
  await staff.getByLabel('Venue / joining instructions').fill('TPA Test Auditorium');
  await staff.getByLabel('Starts (IST)').fill(istInput(new Date(Date.now()+2*86400000).toISOString()));await staff.getByLabel('Ends (IST)').fill(istInput(new Date(Date.now()+2*86400000+3600000).toISOString()));
