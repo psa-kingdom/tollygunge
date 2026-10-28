@@ -15,6 +15,7 @@ const stages = [
   { id: "typecheck", group: "static", args: ["node_modules/typescript/bin/tsc", "--noEmit"] },
   { id: "core", group: "integration", args: ["scripts/verify-launch-isolated.mjs", "--fallback-outage", "--public-interactions"] },
   { id: "auth", group: "integration", args: ["scripts/verify-phase7b.mjs", "--only", "auth"] },
+  { id: "portal", group: "integration", args: ["scripts/verify-phase7b.mjs", "--only", "portal"] },
   { id: "newsletter", group: "integration", args: ["scripts/verify-public-newsletter.mjs"] },
   { id: "member", group: "integration", args: ["--import", "tsx", "scripts/test-member-foundation.mts", "--http"] },
   { id: "accounts", group: "integration", args: ["--import", "tsx", "scripts/test-approved-accounts.mts"] },

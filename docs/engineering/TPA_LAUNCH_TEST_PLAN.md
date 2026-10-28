@@ -161,7 +161,7 @@ not authorize another recovery message or releasing any of the 202 real invitati
 All 202 remain held, with zero queued/leased invitation messages. There is currently
 no approved production invitation template; the existing admin sequence remains.
 
-The local rehearsal entrypoint is `node --import tsx scripts/preview-launch-isolated.mts`
+The local rehearsal entrypoint is `node --conditions=react-server --import tsx scripts/preview-launch-isolated.mts`
 with the same verified loopback QA prerequisite as the runner. It creates only its
 own synthetic database, disables external transports/workers and removes only that
 owned database on shutdown. It was used for the actual built-in-browser 202-recipient

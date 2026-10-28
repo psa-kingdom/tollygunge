@@ -14,6 +14,7 @@ const stages = [
   ["email-runtime", ["scripts/security/verify-email-role-runtime.mjs"]],
   ["core-browser", ["scripts/verify-launch-isolated.mjs", "--fallback-outage", "--public-interactions"]],
   ["auth", ["scripts/verify-launch-isolated.mjs", "--browser-grep", "actual .* form login|expired database session|unverified staff require", "--fallback-outage", "--public-interactions"]],
+  ["portal", ["scripts/verify-launch-isolated.mjs", "--browser-only", "--browser-file", "tests/browser/portal-design.spec.ts"]],
   ["newsletter", ["scripts/verify-public-newsletter.mjs"]],
   ["member-foundation", ["--import", "tsx", "scripts/test-member-foundation.mts", "--http"]],
   ["approved-accounts", ["--import", "tsx", "scripts/test-approved-accounts.mts"]],

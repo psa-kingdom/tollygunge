@@ -47,6 +47,22 @@
 
 ## Safe additions and deferred backlog
 
+Priority means sequencing, not permission to enable a feature or send messages.
+P0 release gates come first; P1 operational acceptance follows; P2/P3 product work
+requires separately agreed requirements.
+
+| Priority | Remaining item | Acceptance / boundary |
+|---|---|---|
+| P0 | Container and exact candidate hosted acceptance | Restore Docker without resetting data; run non-root/container checks. Push/deployment requires separate authorization. |
+| P0 | Preserve and deliberately release the real 202 when the administrator decides | Currently held, zero queued, no approved template. Administrator must review existing template/recipient safeguards; agent never sends the batch. |
+| P1 | Provider/member activation and operational recovery | Verify approved mailbox journeys, restore drill, capacity and support procedures in their authorized environments. |
+| P1 | Human usability/accessibility and supplied portraits | Physical devices, assistive technology and actual association content sign-off; automated emulation is partial evidence. |
+| P2 | Membership/renewal, learning-award and certificate policy | Obtain authoritative business rules before adding automation; keep separate membership/profile/payment/publication states. |
+| P2 | Google, WhatsApp and attributed news enablement | Provider/security/editorial decisions and isolated acceptance before activation. |
+| P3 | Diagnostic dashboard, reusable speakers, additional themes and editor collaboration | Future backlog only; retain working current interfaces and engineering evidence first. |
+| Deferred | Gateway, partial refunds/accounting and historical import commit | Explicitly outside current launch scope or intentionally inactive; no speculative implementation. |
+| Deferred | Branch/worktree/evidence retirement | No cleanup until dependency and recovery review with applicable authorization. |
+
 | Addition | Disposition |
 |---|---|
 | Repeatable source inventory, stable feature/QA/journey mapping | In scope; new engineering script and evidence-backed three-column register |

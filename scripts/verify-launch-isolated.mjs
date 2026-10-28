@@ -33,6 +33,8 @@ for (const file of [".env", ".env.local", ".env.production", ".env.production.lo
 const browserOnly = process.argv.includes("--browser-only");
 const grepIndex = process.argv.indexOf("--browser-grep");
 assert.ok(grepIndex < 0 || process.argv[grepIndex + 1], "Supply a browser grep expression");
+const fileIndex = process.argv.indexOf("--browser-file");
+assert.ok(fileIndex < 0 || process.argv[fileIndex + 1] === "tests/browser/portal-design.spec.ts", "Only the existing portal acceptance file is supported here.");
 let server, outageServer;
 async function run(label, args) {
   const start = performance.now();
@@ -83,7 +85,7 @@ try {
       TPA_UI_ADMIN_EMAIL: "portal-admin@example.invalid", TPA_UI_ADMIN_PASSWORD: "Launch!1234",
       TPA_UI_MEMBER_EMAIL: "portal-member@example.invalid", TPA_UI_MEMBER_PASSWORD: "Launch!1234",
     });
-    const code = await run("browser", ["node_modules/@playwright/test/cli.js", "test", ...(grepIndex < 0 ? [] : ["--grep", process.argv[grepIndex + 1]])]);
+    const code = await run("browser", ["node_modules/@playwright/test/cli.js", "test", ...(fileIndex < 0 ? [] : [process.argv[fileIndex + 1]]), ...(grepIndex < 0 ? [] : ["--grep", process.argv[grepIndex + 1]])]);
     // Preserve the first result; the outer runner archives traces before another stage.
     if (code !== 0) console.error("Browser acceptance failed; no automatic retry was run.");
   }

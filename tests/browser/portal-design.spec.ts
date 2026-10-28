@@ -57,6 +57,12 @@ async function primaryActionContrast(page: Page) {
 }
 
 async function dashboardTextContrast(page: Page) {
+  // Theme changes transition tile surfaces for 140ms. Measure the completed
+  // colors rather than an intermediate frame with the new text and old surface.
+  await page.locator('.member-service-tile').evaluateAll(async elements => {
+    await Promise.all(elements.flatMap(element => element.getAnimations()
+      .map(animation => animation.finished.catch(() => undefined))));
+  });
   const ratios = await page.locator('.profile-completion :is(strong, p, summary), .service-metrics :is(strong, .metric-label), .attention-row :is(span, small), .member-service-tile :is(h3, p)').evaluateAll(elements => elements.filter(el => (el as HTMLElement).offsetHeight > 0).map(el => {
     const luminance = (color: string) => {
       const rgb = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(channel => {
@@ -67,9 +73,11 @@ async function dashboardTextContrast(page: Page) {
     };
     let surface: Element | null = el;
     while (surface && getComputedStyle(surface).backgroundColor === 'rgba(0, 0, 0, 0)') surface = surface.parentElement;
-    const foreground = luminance(getComputedStyle(el).color);
-    const background = luminance(surface ? getComputedStyle(surface).backgroundColor : 'rgb(255, 255, 255)');
-    return { text: el.textContent?.slice(0, 60), ratio: (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05) };
+    const color = getComputedStyle(el).color;
+    const backgroundColor = surface ? getComputedStyle(surface).backgroundColor : 'rgb(255, 255, 255)';
+    const foreground = luminance(color);
+    const background = luminance(backgroundColor);
+    return { text: el.textContent?.slice(0, 60), color, backgroundColor, mode: document.documentElement.dataset.colorMode, ratio: (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05) };
   }));
   expect(ratios.filter(value => value.ratio < 4.5)).toEqual([]);
 }
