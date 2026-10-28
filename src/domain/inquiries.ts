@@ -6,6 +6,7 @@ export const inquiryTopics = [
   "Events",
   "Partnership",
   "Professional collaboration",
+  "Website issue",
 ] as const;
 export function inquiryTags(value: unknown) {
   if (!Array.isArray(value) || value.length > 8)
@@ -59,7 +60,8 @@ export function publicInquiry(value: unknown) {
     location: text(input.location ?? "", "City", 120),
     subject: text(input.subject, "Subject", 160, 3),
     message: text(input.message, "Message", 4000, 10),
-    topic,
+    topic: topic === "Website issue" ? "General" : topic,
+    ...(topic === "Website issue" ? { websiteIssue: true } : {}),
     preference,
     source,
   };

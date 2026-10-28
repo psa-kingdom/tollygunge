@@ -127,4 +127,3 @@ test("one smooth-scroll owner cleans up when leaving the homepage", async ({
   await expect(page).not.toHaveURL(/\/$/);
   await expect(page.locator("html")).not.toHaveClass(/lenis/);
 });
-

@@ -1,0 +1,8 @@
+import assert from'node:assert/strict';import{Pool}from'pg';import{randomUUID}from'node:crypto';import{spawnSync}from'node:child_process';import{quoteIdentifier as q}from'./database-permissions.mjs';import{localIdentity}from'./rehearse-roles.mjs';
+const u=new URL(process.env.DATABASE_URL||'');assert.equal(u.protocol,'postgresql:');assert.equal(u.hostname,'127.0.0.1');assert.equal(u.port,'55439');assert.equal(u.pathname,'/postgres');assert.ok(['tpa_qa','postgres'].includes(u.username));
+assert.ok(!u.search&&!u.hash,'Connection options are forbidden in local acceptance');
+const root=new Pool({connectionString:u.href,ssl:false}),name='tpa_security_test_'+randomUUID().replaceAll('-','');u.pathname='/'+name;
+const env={...process.env,DATABASE_URL:u.href,DATABASE_SSL:'false',TPA_DATABASE_NAME:name,TPA_MAIL_SINK:'true',ONBOARDING_ENABLED:'false',EMAIL_OPERATIONS_ENABLED:'false',EVENT_REMINDERS_ENABLED:'false',EVENT_PROMOTIONS_ENABLED:'false',MEMBER_IMPORT_WORKER_ENABLED:'false'};
+const {roles}=localIdentity(env);let created=false;
+try{await root.query(`CREATE DATABASE ${q(name)}`);created=true;for(const args of [['scripts/migrate.mjs'],['--import','./tests/helpers/restricted-runtime.mjs','--import','tsx','scripts/verify-email-runtime.mjs']]){const r=spawnSync(process.execPath,args,{env,encoding:'utf8',timeout:90000,maxBuffer:8*1024*1024});assert.equal(r.status,0,'Restricted email runtime failed: '+String(r.stderr).slice(0,1000));console.log(String(r.stdout).trim());}}
+finally{try{if(created){await root.query(`DROP DATABASE ${q(name)} WITH (FORCE)`);for(const role of Object.values(roles))if((await root.query('SELECT 1 FROM pg_roles WHERE rolname=$1',[role])).rowCount)await root.query(`DROP ROLE ${q(role)}`);}}finally{await root.end();}}

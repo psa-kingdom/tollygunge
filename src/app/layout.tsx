@@ -7,11 +7,13 @@ import "lenis/dist/lenis.css";
 import { appearanceBootstrap } from "@/domain/appearance";
 import {publishedSettings} from '@/lib/website-content';
 import { sharedDefaults } from '@/domain/website-settings';
+import { siteOrigin } from '@/domain/public-metadata';
 export const dynamic='force-dynamic';
 export async function generateMetadata():Promise<Metadata> {
   // Metadata must not prevent the independent error/404 shell from rendering.
   const settings=await publishedSettings('shared').catch(() => sharedDefaults);
   return {
+  metadataBase: new URL(siteOrigin),
   title: {
     default: settings.defaultTitle,
     template: `%s | ${settings.titleSuffix}`,
@@ -34,7 +36,7 @@ export default function RootLayout({
           <style>{".tpa-loading { display: none; }"}</style>
           <section className="no-script-notice" aria-labelledby="no-script-title">
             <p className="eyebrow">Tollygunge Professional Association</p>
-            <h1 id="no-script-title">Enable JavaScript to continue.</h1>
+            <p id="no-script-title"><strong>Enable JavaScript for account features.</strong></p>
             <p>Turn on JavaScript in your browser, then reload this page to browse TPA and use the member portal.</p>
           </section>
         </noscript>

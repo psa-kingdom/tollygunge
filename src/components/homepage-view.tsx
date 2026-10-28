@@ -32,7 +32,7 @@ export function HomeView({home,events,readOnly=false}: {home: typeof homeDefault
       </div><p className="v3-membership-note">All applications follow TPA’s existing Professional membership rules and review process.</p>
     </div></section>
     <section className="section contact-intake" id="connect"><div className="v3-contact-copy"><span className="eyebrow">{home.copy.eyebrow50}</span><h2>{home.copy.section51 === "Start a conversation." ? <>Start a<br /><em>conversation.</em></> : home.copy.section51}</h2><p>{home.copy.section52}</p><div className="v3-contact-resources"><span className="eyebrow">{home.copy.eyebrow44}</span>{[[home.links.section09Href,home.copy.section47],[home.links.section10Href,home.copy.section48],[home.links.section11Href,home.copy.section49]].map(([href,label])=><Link key={href} href={href}>{label}<span aria-hidden="true">↗</span></Link>)}</div></div>
-      <noscript><p className="home-static-note">You can browse TPA without JavaScript. Enable it to send an inquiry or subscribe to updates.</p></noscript>
+      <noscript><p className="home-static-note"><strong>Enable JavaScript for account features.</strong>{" "}You can browse TPA without JavaScript. Enable it to send an inquiry or subscribe to updates.</p></noscript>
       {readOnly?<div className="inquiry-intake"><h3>Tell us what you have in mind.</h3><p>Inquiry submissions are disabled in preview.</p></div>:<PublicInquiry source="homepage" compact />}
     </section>
   </main>;

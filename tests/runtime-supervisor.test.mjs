@@ -78,12 +78,20 @@ test("real worker crash and restart preserve HTTP availability; web crash termin
     let output = "";
     child.stdout.on("data", data => { output += data; });
     child.stderr.on("data", () => {});
-    const until = async predicate => { for (let n=0;n<100;n++) { if(predicate())return; await new Promise(resolve=>setTimeout(resolve,100)); } throw Error("Runtime fixture timed out"); };
+    const until = async predicate => { for (let n=0;n<100;n++) { if(await predicate())return; await new Promise(resolve=>setTimeout(resolve,100)); } throw Error("Runtime fixture timed out"); };
     await until(() => /TEST_PORT=(\d+)/.test(output));
     const url = "http://127.0.0.1:" + output.match(/TEST_PORT=(\d+)/)[1];
     assert.equal((await fetch(url)).status, 200);
-    const health = JSON.parse(await (await import("node:fs/promises")).readFile(join(tmpdir(), `tpa-runtime-health-test-${process.pid}.json`), "utf8"));
+    let health;
+    // HTTP readiness and worker exit are independent OS events. Observe the
+    // actual restart state instead of assuming the crash happened before fetch.
+    await until(async () => {
+      try { health = JSON.parse(await (await import("node:fs/promises")).readFile(join(tmpdir(), `tpa-runtime-health-test-${process.pid}.json`), "utf8")); }
+      catch (error) { if (error.code === "ENOENT" || error instanceof SyntaxError) return false; throw error; }
+      return health.workers.email === "restarting";
+    });
     assert.equal(health.workers.email, "restarting");
+    assert.equal((await fetch(url)).status, 200);
     await until(() => output.split("TEST_EMAIL_START").length >= 3);
     assert.equal((await fetch(url)).status, 200);
     await fetch(url + "/exit");

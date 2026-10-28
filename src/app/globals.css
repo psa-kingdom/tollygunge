@@ -1186,6 +1186,12 @@ button:disabled {
 .operations-table th,.operations-table td {padding:14px;border-bottom:1px solid var(--line);vertical-align:top;}
 .operations-table th {font-weight:600;color:var(--muted);}
 .operations-table[tabindex] th {white-space:nowrap;}
+.registration-payments-table {min-width:720px;}
+.registration-payments-table td:first-child {min-width:160px;}
+.registration-payments-table td:nth-child(2) {min-width:200px;}
+.registration-payments-table td:nth-child(3),.registration-payments-table td:nth-child(4) {white-space:nowrap;}
+.registration-payments-table td:last-child {min-width:144px;}
+.registration-payments-table td:last-child button {white-space:nowrap;}
 .prose-text {white-space:pre-wrap;overflow-wrap:anywhere;}
 .flyer-preview {width:100%;height:auto;border:1px solid var(--line);border-radius:8px;}
 @media(max-width:800px){.operations-layout{grid-template-columns:minmax(0,1fr);}.record-list{max-height:300px;overflow:auto;}}
@@ -2747,3 +2753,15 @@ html[data-color-mode="dark"] .button:not(.secondary):not(.gold):not(.danger):hov
   button, a, summary, input, select, textarea, .member-service-tile { transition: none !important; }
   .member-page-heading,.member-welcome,.workspace-main>h1,.login-panel,.public-information .page-heading-copy { animation:none; }
 }
+
+/* Small support additions reuse the public and portal design tokens. */
+.footer-utility {display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center;border-top:1px solid var(--line);padding-top:16px;margin-top:16px;font-size:12px;color:var(--muted);}
+.footer-utility a {display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px;}
+.footer-utility span {margin-left:auto;}
+.issue-context {min-width:0;border:1px solid var(--line);border-radius:var(--radius-control);padding:16px;margin-block:16px;}
+.issue-context-preview {white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:13px;padding:12px;background:var(--surface-muted);border-radius:var(--radius-control);}
+.public-breadcrumbs {font-size:13px;color:var(--muted);margin-bottom:16px;}
+.public-breadcrumbs ol {display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0;}
+.public-breadcrumbs li {display:inline-flex;align-items:center;gap:8px;max-width:100%;overflow-wrap:anywhere;}
+.public-breadcrumbs li+li::before {content:"/";color:var(--muted);}
+.public-breadcrumbs a {display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px;}

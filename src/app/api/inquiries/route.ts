@@ -82,6 +82,7 @@ export async function POST(request: Request) {
           hash,
         ],
       );
+      if (input.websiteIssue) await client.query("UPDATE tpa.inquiries SET tags=ARRAY['website-issue'] WHERE id=$1", [id]);
       await client.query(
         "INSERT INTO tpa.audit_events(actor_user_id,action,entity_id) VALUES($1,'inquiry.public_created',$2)",
         [actor?.id ?? null, id],

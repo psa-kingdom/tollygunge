@@ -918,6 +918,11 @@ html[data-color-mode="dark"]
 }
 
 /* Secondary text actions reveal their underline only on interaction. */
+.public-shell .site-footer.footer-complete .footer-utility {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: -24px 0 0;
+}
 .public-shell a.text-link,
 .public-shell .public-information .public-section-body a.text-link {
   position: relative;
