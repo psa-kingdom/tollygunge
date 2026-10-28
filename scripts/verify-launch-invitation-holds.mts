@@ -27,7 +27,7 @@ try{
    (SELECT count(*)::int FROM tpa.onboarding_mail WHERE kind='invitation' AND status IN ('queued','leased')) AS queued_or_leased_invitation_mail,
    (SELECT count(*)::int FROM tpa.invitation_template_state WHERE singleton AND approved_id IS NOT NULL) AS approved_template_available`)).rows[0];
   report.counts=counts;report.readOnlyTransactionVerified=true;
-  report.result=counts.dashboard_held===202?"PASS":"FAIL";
+  report.result=counts.dashboard_held===202 && counts.all_unreleased_holds===202 && counts.queued_or_leased_invitation_mail===0?"PASS":"FAIL";
   report.limitation="Counts use the dashboard's exact held metric. Eligibility/template/review freshness and actual mailbox delivery are separate; no review or send action was invoked.";
  }finally{await client.query("ROLLBACK");client.release();}
 }catch(error){report.result="BLOCKED";report.errorCode=(error as {code?:string}).code||"connection-or-schema-check";report.limitation="Read-only aggregate verification could not complete; no credential or database error detail emitted.";}
