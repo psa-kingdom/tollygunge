@@ -5,6 +5,8 @@ import { publicMetadata, safeJsonLd } from "../src/domain/public-metadata";
 import { publicInquiry } from "../src/domain/inquiries";
 
 test("issue diagnostics exclude tokens, search terms, identities and full user agents", () => {
+  assert.equal(diagnosticRoute(null), "/other");
+  assert.equal(diagnosticRoute(undefined), "/other");
   assert.equal(diagnosticRoute("/events/04b53e70-31fd-4e4b-b738-b606ff1560aa?token=secret#private"), "/events/[id]");
   assert.equal(diagnosticRoute("/resources/private-slug?email=private@example.invalid"), "/resources/[slug]");
   assert.equal(diagnosticRoute("https://external.example/private"), "/other");

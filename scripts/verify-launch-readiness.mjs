@@ -111,7 +111,7 @@ for (const stage of selected) {
   else if (script && !(await readFile(script).then(() => true).catch(() => false))) log = "Required stage entrypoint or dependencies unavailable.";
   else {
     console.log(`START ${stage.id}; log: ${logPath}`);
-    const stageEnv = { ...env, ...stage.env };
+    const stageEnv = { ...env, ...stage.env, TPA_BROWSER_ARTIFACT_DIR: resolve(output, stage.id, "browser") };
     if (stage.id === "build") {
       const previous = await readFile(buildIdentityPath, "utf8").catch(() => null);
       if (previous !== null) await writeFile(output + "/build-identity-before.json", previous);
@@ -162,7 +162,7 @@ for (const stage of selected) {
   const artifactFiles = [];
   // Shared report directories may contain prior evidence. Copy only regular files
   // changed during an actually executed browser-capable stage, retaining provenance.
-  const browserStages = new Set(["core", "auth", "portal", "v1", "import-jobs", "website", "event-flow", "engagement", "event-operations", "restricted"]);
+  const browserStages = new Set(["import-jobs"]);
   if (result !== "BLOCKED" && browserStages.has(stage.id)) for (const artifact of ["test-results", "playwright-report"]) {
     for (const source of await filesUnder(resolve(artifact))) {
       const metadata = await stat(source);

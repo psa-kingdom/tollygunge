@@ -7,14 +7,14 @@ test.beforeEach(() => test.skip(!process.env.TPA_DATABASE_NAME?.startsWith("tpa_
 test("public release metadata, robots, privacy and meaningful single headings are present", async ({page, request}) => {
   for (const path of ["/", "/about", "/governance", "/membership", "/events", "/resources", "/contact", "/privacy"]) {
     await page.goto(path); await expect(page.getByRole("heading", {level:1})).toHaveCount(1);
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://tpassociation.org" + (path === "/" ? "/" : path));
+    expect(new URL((await page.locator('link[rel="canonical"]').getAttribute("href"))!).href).toBe(new URL(path,"https://tpassociation.org").href);
     expect((await page.locator('meta[name="description"]').getAttribute("content"))!.length).toBeGreaterThan(20);
-    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", "https://tpassociation.org" + path);
+    expect(new URL((await page.locator('meta[property="og:url"]').getAttribute("content"))!).href).toBe(new URL(path,"https://tpassociation.org").href);
   }
   expect((await request.get("/robots.txt")).status()).toBe(200);
   expect(await (await request.get("/robots.txt")).text()).toContain("Sitemap: https://tpassociation.org/sitemap.xml");
   const sitemap = await (await request.get("/sitemap.xml")).text();
-  expect(sitemap).toContain("https://tpassociation.org/privacy"); expect(sitemap).not.toMatch(/\/member|\/admin|token=/);
+  expect(sitemap).toContain("https://tpassociation.org/privacy"); expect(sitemap).not.toMatch(/\/(?:member|admin)(?:\/|<)|token=/);
   const image = await request.get("/opengraph-image"); expect(image.status()).toBe(200); expect(image.headers()["content-type"]).toContain("image/png");
   const schema = await (await request.get("/")).text(); expect(schema).toContain('"@type":"Organization"');
   expect((await request.get("/unavailable-synthetic-page")).status()).toBe(404);
@@ -26,7 +26,7 @@ test("public issue reporting saves one CRM-tagged inquiry and previews only opte
   const form = page.locator("form.public-inquiry");
   await form.getByLabel("Full name", {exact:true}).fill("Synthetic issue reporter");
   await form.getByLabel("Email address", {exact:true}).fill(email);
-  await form.getByLabel("Issue details", {exact:true}).fill("Expected an available action. The action did not finish. Steps: open the page, select the action, observe the result.");
+  await form.getByRole("textbox", {name:"Issue details",exact:true}).fill("Expected an available action. The action did not finish. Steps: open the page, select the action, observe the result.");
   await form.getByRole("button", {name:"Preview technical context",exact:true}).click();
   const preview = form.locator(".issue-context-preview"); await expect(preview).toContainText("Page: /member/application"); await expect(preview).not.toContainText("DO-NOT-SEND");
   const optIn = form.getByRole("checkbox",{name:"Include this technical context with my report",exact:true}); await expect(optIn).not.toBeChecked(); await optIn.check();
@@ -51,7 +51,7 @@ test("member issue reports retain existing status tracking and are tagged for st
   await page.getByRole("dialog",{name:"Account settings",exact:true}).getByRole("link",{name:"Report an issue",exact:true}).click();
   const subject="Synthetic member issue " + randomUUID().slice(0,8);
   await page.getByLabel("Subject",{exact:true}).fill(subject);
-  await page.getByLabel("Issue details",{exact:true}).fill("Expected the action to finish. Actual result: an error was shown. Steps: sign in, open the feature and choose its action.");
+  await page.getByRole("textbox",{name:"Issue details",exact:true}).fill("Expected the action to finish. Actual result: an error was shown. Steps: sign in, open the feature and choose its action.");
   await page.getByRole("button",{name:"Send issue report",exact:true}).click();
   await expect(page.getByRole("status")).toContainText("Inquiry saved. Reference:");
   await expect(page.getByRole("heading",{name:"[Website issue] "+subject,exact:true})).toBeVisible();

@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Pool } from "pg";
 import { assertQaRoot, syntheticEnvironment } from "./launch-test-safety.mjs";
@@ -73,19 +73,18 @@ async function cleanup() {
 await save();
 try {
   for (const [label, stageArgs] of selected) {
+    const browserArtifacts = resolve(output, label, "browser");
+    const stageEnv = { ...env, TPA_BROWSER_ARTIFACT_DIR: browserArtifacts, TPA_ISOLATED_OUTPUT: output + "/" + label + "-results.json", ...(label === "v1" ? { TPA_ISOLATED_PORT: "3188" } : {}) };
     let log = "";
     const start = Date.now();
     const code = await new Promise((done, reject) => {
-      const child = spawn(process.execPath, ["--import", "./tests/helpers/restricted-runtime.mjs", ...stageArgs], { env: label === "v1" ? { ...env, TPA_ISOLATED_PORT: "3188" } : env, stdio: ["ignore", "pipe", "pipe"] });
+      const child = spawn(process.execPath, ["--import", "./tests/helpers/restricted-runtime.mjs", ...stageArgs], { env: stageEnv, stdio: ["ignore", "pipe", "pipe"] });
       child.stdout.on("data", chunk => { log += chunk; });
       child.stderr.on("data", chunk => { log += chunk; });
       child.once("error", reject); child.once("close", done);
     });
     await writeFile(output + "/" + label + ".log", log);
-    report.results.push({ label, code, elapsedMs: Date.now() - start });
-    for (const artifact of ["test-results", "playwright-report"])
-      try { await cp(artifact, output + "/" + label + "/" + artifact, { recursive: true }); }
-      catch (error) { if (error.code !== "ENOENT") throw error; }
+    report.results.push({ label, code, browserArtifacts, elapsedMs: Date.now() - start });
     await save();
     console.log(JSON.stringify(report.results.at(-1)));
   }

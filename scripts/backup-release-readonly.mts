@@ -24,6 +24,8 @@ assert.ok(!["127.0.0.1", "localhost"].includes(url.hostname));
 const bin = resolve(option("--tools"));
 const output = join(archive, "production-backup-" + randomUUID());
 await mkdir(output);
+const reuse = args.includes("--restore-existing") ? resolve(option("--restore-existing")) : null;
+if (reuse) assert.equal(dirname(reuse), archive, "Only an existing private snapshot in this recovery archive may be reused.");
 const cluster = join(output, "restore-cluster");
 assert.ok(!existsSync(cluster), "A restore cluster must be new.");
 const report: Record<string, unknown> = { started: new Date().toISOString(), sourceReadOnly: true, appWorkersStarted: false, transportInvoked: false, passed: false, cleanup: false };
@@ -50,28 +52,57 @@ async function fingerprint(pool: Pool) {
   const constraints = (await pool.query("SELECT n.nspname AS schema,t.relname AS table,c.conname AS name,c.contype AS type,c.convalidated AS validated,pg_get_constraintdef(c.oid) AS definition FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname IN ('public','tpa') ORDER BY n.nspname,t.relname,c.conname")).rows;
   const extensions = (await pool.query("SELECT extname,extversion FROM pg_extension ORDER BY extname")).rows;
   const indexes = (await pool.query("SELECT schemaname,tablename,indexname,indexdef FROM pg_indexes WHERE schemaname IN ('public','tpa') ORDER BY schemaname,tablename,indexname")).rows;
+  counts.sort((a,b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
   return { counts, constraints, extensions, indexes };
+}
+async function normalizedChecks(pool: Pool, rows: Awaited<ReturnType<typeof fingerprint>>["constraints"]) {
+  const normalized = [];
+  for (const row of rows) {
+    if (row.type !== "c") { normalized.push(row); continue; }
+    // Reparse both catalogs on the restored PG18 engine. Older upgraded parse
+    // trees can deparse equivalent AND expressions with different parentheses.
+    await pool.query(`CREATE TEMP TABLE tpa_restore_check_probe (LIKE ${quote(row.schema)}.${quote(row.table)})`);
+    try {
+      await pool.query(`ALTER TABLE tpa_restore_check_probe ADD CONSTRAINT restore_check ${row.definition}`);
+      const definition = (await pool.query("SELECT pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conrelid='pg_temp.tpa_restore_check_probe'::regclass AND conname='restore_check'")).rows[0].definition;
+      normalized.push({ ...row, definition });
+    } finally { await pool.query("DROP TABLE tpa_restore_check_probe"); }
+  }
+  return normalized;
 }
 const production = new Pool({ ...databaseOptions(source), max: 1, options: "-c default_transaction_read_only=on -c statement_timeout=120000" });
 let started = false, created = false;
 const database = "tpa_restore_" + randomUUID().replaceAll("-", "");
 let maintenance: Pool | undefined, restored: Pool | undefined;
+let sourceTransaction = false;
 try {
   assert.match(await native("pg_dump", ["--version"]), /PostgreSQL\) 18\./);
+  let expected: Awaited<ReturnType<typeof fingerprint>>;
+  const dump = join(output, "production.dump");
+  if (reuse) {
+    const previous = JSON.parse(await readFile(join(reuse, "results.json"), "utf8"));
+    const bytes = await readFile(join(reuse, "production.dump"));
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), previous.dumpSha256);
+    expected = JSON.parse(await readFile(join(reuse, "source-fingerprint.json"), "utf8"));
+    assert.ok(Array.isArray(expected.extensions) && Array.isArray(expected.indexes));
+    await writeFile(dump, bytes); report.reusedSnapshot = reuse;
+  } else {
   assert.equal(Math.floor(Number((await production.query("SHOW server_version_num")).rows[0].server_version_num) / 10000), 18);
   await production.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+  sourceTransaction = true;
   assert.equal((await production.query("SHOW transaction_read_only")).rows[0].transaction_read_only, "on");
   const snapshot = (await production.query("SELECT pg_export_snapshot() AS id")).rows[0].id;
-  const expected = await fingerprint(production);
+  expected = await fingerprint(production);
   const tlsHost = source.DATABASE_TLS_SERVERNAME || url.hostname;
   const ca = source.DATABASE_CA_PEM || await readFile(source.DATABASE_CA_FILE, "utf8");
   const caFile = join(output, "database-ca.pem"); await writeFile(caFile, ca);
   const env = { ...system, PGHOST: tlsHost, PGHOSTADDR: (await lookup(url.hostname)).address, PGPORT: url.port || "5432", PGUSER: decodeURIComponent(url.username), PGPASSWORD: decodeURIComponent(url.password), PGDATABASE: decodeURIComponent(url.pathname.slice(1)), PGSSLMODE: "verify-full", PGSSLROOTCERT: caFile, PGCONNECT_TIMEOUT: "20" };
-  const dump = join(output, "production.dump");
   // Dump the complete database: schema-filtered dumps omit extension objects
   // such as pg_trgm, whose operator classes are required by application indexes.
   await native("pg_dump", ["--format=custom", "--no-owner", "--no-acl", "--snapshot=" + snapshot, "--file=" + dump], env);
   await production.query("COMMIT");
+  sourceTransaction = false;
+  }
   report.dumpSha256 = createHash("sha256").update(await readFile(dump)).digest("hex");
   await writeFile(join(output, "source-fingerprint.json"), JSON.stringify(expected, null, 2));
   await native("initdb", ["-D", cluster, "-U", "tpa_restore", "-A", "trust", "--encoding=UTF8", "--no-locale"]);
@@ -80,12 +111,15 @@ try {
   await maintenance.query("CREATE DATABASE " + quote(database)); created = true;
   restored = new Pool({ connectionString: `postgresql://tpa_restore@127.0.0.1:55448/${database}`, ssl: false, max: 1 });
   assert.equal((await restored.query("SELECT count(*)::int n FROM pg_tables WHERE schemaname IN ('public','tpa')")).rows[0].n, 0);
-  // PG18 dumps include CREATE SCHEMA public; remove only the empty default in
-  // this newly created, UUID-owned rehearsal database before replaying it.
-  await restored.query("DROP SCHEMA public");
+  // A complete dump uses the standard public schema already present in a new
+  // database. Schema-filtered dumps have different dependencies and are not used.
   const restoreEnv = { ...system, PGHOST: "127.0.0.1", PGPORT: "55448", PGUSER: "tpa_restore", PGDATABASE: database, PGSSLMODE: "disable" };
   await native("pg_restore", ["--exit-on-error", "--no-owner", "--no-acl", "--dbname=" + database, dump], restoreEnv);
   const actual = await fingerprint(restored);
+  // Collation-dependent UNION ordering is not a data difference.
+  expected.counts.sort((a,b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  expected.constraints = await normalizedChecks(restored, expected.constraints);
+  actual.constraints = await normalizedChecks(restored, actual.constraints);
   assert.deepEqual(actual, expected, "Restored table counts and constraints must exactly match the consistent source snapshot.");
   report.tablesVerified = expected.counts.length; report.constraintsVerified = expected.constraints.length;
   report.indexesVerified = expected.indexes.length; report.extensionsVerified = expected.extensions.length;
@@ -94,7 +128,7 @@ try {
   report.failure = error instanceof assert.AssertionError ? error.message : "Backup/restore prerequisite failed; private logs retained.";
   process.exitCode = 1;
 } finally {
-  await production.query("ROLLBACK").catch(() => {}); await production.end();
+  if (sourceTransaction) await production.query("ROLLBACK").catch(() => {}); await production.end();
   await restored?.end();
   if (created) await maintenance!.query("DROP DATABASE " + quote(database));
   await maintenance?.end();

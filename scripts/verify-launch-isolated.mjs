@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { resolve, relative, isAbsolute } from "node:path";
 import pg from "pg";
 const url = new URL(process.env.DATABASE_URL || "");
 assert.equal(url.hostname, "127.0.0.1"); assert.equal(url.port, "55439");
@@ -10,6 +11,9 @@ const root = new pg.Pool({ connectionString: url.href, ssl: false });
 const port = Number(process.env.TPA_ISOLATED_PORT || 3145);
 assert.ok(Number.isInteger(port) && port >= 3145 && port <= 3199);
 const name = "tpa_onboarding_test_member_" + randomUUID().replaceAll("-", "");
+const browserArtifacts = resolve(process.env.TPA_BROWSER_ARTIFACT_DIR || `.local/launch-gate/browser-${name}`);
+const artifactRelative = relative(resolve(".local"), browserArtifacts);
+assert.ok(artifactRelative && !artifactRelative.startsWith("..") && !isAbsolute(artifactRelative), "Browser artifacts must belong to this worktree's ignored .local directory.");
 url.pathname = "/" + name;
 const env = { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot,
   TEMP: process.env.TEMP, TMP: process.env.TMP, USERPROFILE: process.env.USERPROFILE,
@@ -20,6 +24,7 @@ const env = { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot,
   TPA_RESTRICTED_ROLE_TESTS:process.env.TPA_RESTRICTED_ROLE_TESTS,TPA_ROLE_EVIDENCE_DIR:process.env.TPA_ROLE_EVIDENCE_DIR,
   RESEND_WEBHOOK_SECRET: "whsec_" + Buffer.from("synthetic-disposable-secret").toString("base64") };
 const results = [];
+env.PLAYWRIGHT_HTML_OUTPUT_DIR = resolve(browserArtifacts, "playwright-report");
 // Next also reads local dotenv files. Explicitly blank keys not deliberately
 // configured above so a disposable run cannot inherit hosted provider access.
 for (const file of [".env", ".env.local", ".env.production", ".env.production.local"]) {
@@ -85,7 +90,7 @@ try {
       TPA_UI_ADMIN_EMAIL: "portal-admin@example.invalid", TPA_UI_ADMIN_PASSWORD: "Launch!1234",
       TPA_UI_MEMBER_EMAIL: "portal-member@example.invalid", TPA_UI_MEMBER_PASSWORD: "Launch!1234",
     });
-    const code = await run("browser", ["node_modules/@playwright/test/cli.js", "test", ...(fileIndex < 0 ? [] : [process.argv[fileIndex + 1]]), ...(grepIndex < 0 ? [] : ["--grep", process.argv[grepIndex + 1]])]);
+    const code = await run("browser", ["node_modules/@playwright/test/cli.js", "test", "--output", resolve(browserArtifacts, "test-results"), ...(fileIndex < 0 ? [] : [process.argv[fileIndex + 1]]), ...(grepIndex < 0 ? [] : ["--grep", process.argv[grepIndex + 1]])]);
     // Preserve the first result; the outer runner archives traces before another stage.
     if (code !== 0) console.error("Browser acceptance failed; no automatic retry was run.");
   }
@@ -118,6 +123,6 @@ try {
   assert.equal((await root.query("SELECT count(*)::int n FROM pg_database WHERE datname=$1", [name])).rows[0].n, 0);
   await root.end();
   await mkdir(".local/launch-gate", { recursive: true });
-  await writeFile(process.env.TPA_ISOLATED_OUTPUT || ".local/launch-gate/isolated-results.json", JSON.stringify({ results, cleanup: true, externalProviders: false, completed: new Date().toISOString() }, null, 2));
+  await writeFile(process.env.TPA_ISOLATED_OUTPUT || ".local/launch-gate/isolated-results.json", JSON.stringify({ results, browserArtifacts, cleanup: true, externalProviders: false, completed: new Date().toISOString() }, null, 2));
 }
 if (results.some(result => result.code !== 0)) process.exitCode = 1;

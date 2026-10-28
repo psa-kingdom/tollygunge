@@ -5,7 +5,7 @@ import { mkdir, readFile, writeFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createServer, type Server } from "node:http";
 import { Pool } from "pg";
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect, type Page } from "@playwright/test";
 import { sharedDefaults } from "../src/domain/website-settings";
 import { homeDefaults } from "../src/domain/website-home";
 import { personBody } from "../src/domain/people";
@@ -65,10 +65,12 @@ Object.assign(env, {
 let server: ReturnType<typeof spawn> | undefined,
   storage: Server | undefined,
   browser: Awaited<ReturnType<typeof chromium.launch>> | undefined,
+  diagnosticPage: Page | undefined,
   created = false;
 const cookies: string[] = [],
   ids: string[] = [],
   scenarios: string[] = [],
+  browserErrors: string[] = [],
   views: unknown[] = [];
 function pass(s: string) {
   scenarios.push(s);
@@ -602,8 +604,11 @@ try {
       },
     ]);
     const p = await context.newPage();
+    diagnosticPage = p;
     const errors: string[] = [];
     p.on("pageerror", (e) => errors.push(e.message));
+    p.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
+    p.on("pageerror", (e) => browserErrors.push(e.message));
     const axe = resolve("node_modules/axe-core/axe.min.js");
     for (const width of [1440, 768, 390]) {
       await p.setViewportSize({ width, height: 1000 });
@@ -660,6 +665,7 @@ try {
       p.getByRole("textbox", { name: /Biography heading/ }),
     ).toHaveValue("Career and contribution");
     await p.goto(base + "/admin/workspaces/website");
+    await expect(p).toHaveURL(base + "/admin/workspaces/website");
     await p.getByRole("tab", { name: "Homepage", exact: true }).click();
     await p.getByRole("combobox", { name: "Settings group", exact: true }).selectOption("copy");
     await p.locator("summary").filter({ hasText: /^Copy$/ }).click();
@@ -711,6 +717,12 @@ try {
     ),
   );
   console.log("Evidence: " + dir);
+} catch (error) {
+  if (diagnosticPage && !diagnosticPage.isClosed()) {
+    await diagnosticPage.screenshot({ path: dir + "/first-failure.png", fullPage: true }).catch(() => {});
+    await writeFile(dir + "/first-failure.json", JSON.stringify({ url: diagnosticPage.url(), body: await diagnosticPage.locator("body").innerText().catch(() => ""), browserErrors, error: String(error), syntheticOnly: true }, null, 2));
+  }
+  throw error;
 } finally {
   await browser?.close();
   if (server) {
