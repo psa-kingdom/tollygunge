@@ -150,9 +150,9 @@ for (const stage of selected) {
   await writeFile(logPath, log);
   const summarySources = [logPath];
   let summaryText = log;
-  if (["restricted", "auth"].includes(stage.id) && result !== "BLOCKED") {
+  if (["restricted", "auth", "portal"].includes(stage.id) && result !== "BLOCKED") {
     for (const path of await filesUnder(output + "/security")) {
-      if (!/(?:^|[\\/])(?:core-browser|email-runtime|auth)\.log$/.test(path)) continue;
+      if (!/(?:^|[\\/])(?:core-browser|email-runtime|auth|portal)\.log$/.test(path)) continue;
       summarySources.push(path);
       summaryText += "\n" + await readFile(path, "utf8");
     }
@@ -161,7 +161,7 @@ for (const stage of selected) {
   const artifactFiles = [];
   // Shared report directories may contain prior evidence. Copy only regular files
   // changed during an actually executed browser-capable stage, retaining provenance.
-  const browserStages = new Set(["core", "auth", "import-jobs", "website", "event-flow", "engagement", "event-operations", "restricted"]);
+  const browserStages = new Set(["core", "auth", "portal", "import-jobs", "website", "event-flow", "engagement", "event-operations", "restricted"]);
   if (result !== "BLOCKED" && browserStages.has(stage.id)) for (const artifact of ["test-results", "playwright-report"]) {
     for (const source of await filesUnder(resolve(artifact))) {
       const metadata = await stat(source);
