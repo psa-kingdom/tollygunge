@@ -74,9 +74,13 @@ try {
   await native("pg_ctl", ["-D", cluster, "-l", join(output, "restore-server.log"), "-o", "-h 127.0.0.1 -p 55448", "-w", "start"]); started = true;
   maintenance = new Pool({ connectionString: "postgresql://tpa_restore@127.0.0.1:55448/postgres", ssl: false, max: 1 });
   await maintenance.query("CREATE DATABASE " + quote(database)); created = true;
+  restored = new Pool({ connectionString: `postgresql://tpa_restore@127.0.0.1:55448/${database}`, ssl: false, max: 1 });
+  assert.equal((await restored.query("SELECT count(*)::int n FROM pg_tables WHERE schemaname IN ('public','tpa')")).rows[0].n, 0);
+  // PG18 dumps include CREATE SCHEMA public; remove only the empty default in
+  // this newly created, UUID-owned rehearsal database before replaying it.
+  await restored.query("DROP SCHEMA public");
   const restoreEnv = { ...system, PGHOST: "127.0.0.1", PGPORT: "55448", PGUSER: "tpa_restore", PGDATABASE: database, PGSSLMODE: "disable" };
   await native("pg_restore", ["--exit-on-error", "--no-owner", "--no-acl", "--dbname=" + database, dump], restoreEnv);
-  restored = new Pool({ connectionString: `postgresql://tpa_restore@127.0.0.1:55448/${database}`, ssl: false, max: 1 });
   const actual = await fingerprint(restored);
   assert.deepEqual(actual, expected, "Restored table counts and constraints must exactly match the consistent source snapshot.");
   report.tablesVerified = expected.counts.length; report.constraintsVerified = expected.constraints.length;
