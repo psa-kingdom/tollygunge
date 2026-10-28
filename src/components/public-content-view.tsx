@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { PageReveals } from "./page-reveals";
 import { PublicInquiry } from "./public-inquiry";
+import { PublicBreadcrumbs } from "./public-breadcrumbs";
 import {
   PublicGovernance,
   type PublicGovernanceEntry,
@@ -212,9 +213,10 @@ export function PublicContentView({
     </main>
   );
 }
-export function ArticleContentView({ body }: { body: ContentBody }) {
+export function ArticleContentView({ body, breadcrumbs = false }: { body: ContentBody; breadcrumbs?: boolean }) {
   return (
     <main id="main" className="page-content">
+      {breadcrumbs && <PublicBreadcrumbs section="Resources" href="/resources" title={body.title} />}
       <span className="eyebrow">TPA RESOURCES</span>
       <h1
         className={

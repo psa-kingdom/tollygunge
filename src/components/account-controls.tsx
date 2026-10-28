@@ -8,6 +8,7 @@ import {
 } from "react";
 import Link from "./navigation-link";
 import { SignOut } from "./auth-controls";
+import { ReportIssueLink } from "./report-issue-link";
 
 function usePopoverPosition(
   open: boolean,
@@ -137,6 +138,7 @@ export function AccountControls({
                 <small>{actor.email}</small>
                 <Link href="/account/profile">Your profile</Link>
                 <Link href="/member/security">Account security</Link>
+                <ReportIssueLink member />
                 <Link href={actor.roles.length ? "/admin" : "/member"}>
                   {actor.roles.length ? "Staff workspace" : "Member portal"}
                 </Link>
