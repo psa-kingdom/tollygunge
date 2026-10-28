@@ -663,3 +663,88 @@ for (const role of ["ADMIN", "MEMBER"] as const) {
     await expect.poll(width).toBe(232);
   });
 }
+
+test("member event layout separates attendance, guidance and event filtering", async ({ page }, info) => {
+  await signIn(page, "MEMBER");
+  await page.route("**/api/member/event-journey", route => route.fulfill({ json: { attendanceCount: 0, badges: [], resources: [] } }));
+  await page.route("**/api/member/events", route => route.fulfill({ json: [] }));
+  await page.goto("/member/events");
+  await expect(page.getByRole("heading", { name: "Your event journey" })).toBeVisible();
+  await expect(page.getByText("No milestone badges yet", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Event period")).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Registration and attendance information" })).toBeVisible();
+  await layoutFits(page);
+  await page.screenshot({ path: info.outputPath("member-events-refined.png"), fullPage: true });
+  await page.setViewportSize({ width: 320, height: 740 });
+  await layoutFits(page);
+  await expect(page.getByLabel("Event period")).toBeVisible();
+});
+
+test("member notifications have readable controls, category states and keyboard dismissal", async ({ page }, info) => {
+  await signIn(page, "MEMBER");
+  let items: { id: string; label: string; href: string; category: string; priority: string; count: number }[] = [];
+  await page.route("**/api/attention", route => route.fulfill({ json: { items } }));
+  await page.goto("/member");
+  const bell = page.getByRole("button", { name: /Notifications:/ });
+  await bell.focus(); await page.keyboard.press("Enter");
+  const panel = page.getByRole("region", { name: "Notifications", exact: true });
+  await expect(panel.getByText("You’re all caught up")).toBeVisible();
+  expect(await panel.getByLabel("Category").evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(40);
+  await page.screenshot({ path: info.outputPath("notifications-refined.png") });
+  await page.keyboard.press("Escape"); await expect(panel).toBeHidden(); await expect(bell).toBeFocused();
+  items = [{ id: "fixture", label: "Review your saved profile details", href: "/member/application", category: "Verification", priority: "Normal", count: 1 }];
+  await page.keyboard.press("Enter");
+  await expect(panel.getByRole("link", { name: /Review your saved profile details/ })).toBeVisible();
+  await panel.getByLabel("Category").selectOption("Account");
+  await expect(panel.getByText("Nothing in this category")).toBeVisible();
+  await panel.getByRole("button", { name: "Close notifications" }).click();
+  await expect(bell).toBeFocused();
+  await layoutFits(page);
+});
+
+test("profile submission confirms success, preserves the submitted copy and keeps failed attempts editable", async ({ page }, info) => {
+  await signIn(page, "MEMBER");
+  const fields = [
+    { id: "fullName", label: "Full name", type: "text", step: 0, required: true, visible: true, categories: ["Professional"] },
+    { id: "contributions", label: "Areas of interest", type: "multiselect", step: 2, required: false, visible: true, categories: ["Professional"], options: ["Mentoring", "Learning"] },
+    { id: "declaration", label: "Declaration", type: "checkbox", step: 4, required: true, visible: true, categories: ["Professional"] },
+  ];
+  const draft = { version: 1, plan: "Annual", category: "Professional", details: { fullName: "Synthetic Test Member", contributions: '["Mentoring","Learning"]', declaration: "true" }, documentIds: [], step: 4 };
+  const snapshot = { ...structuredClone(draft), submittedAt: "2026-10-28T10:00:00Z" };
+  let submitted = false, fail = true;
+  await page.route("**/api/member/application", route => route.fulfill({ json: draft }));
+  await page.route("**/api/member/verification", route => {
+    if (route.request().method() === "POST") {
+      if (fail) return route.fulfill({ status: 409, json: { error: "Please reload your latest draft." } });
+      submitted = true;
+      return route.fulfill({ json: { submitted: true, id: "synthetic" } });
+    }
+    return route.fulfill({ json: { policy: { version: 1, fields }, email: "portal-member@example.invalid", emailVerified: true, verified: false, updateRequested: false, missing: [], reviews: submitted ? [{ status: "pending", reason: "", created_at: "2026-10-28T10:00:00Z" }] : [], latestSubmission: submitted ? snapshot : null } });
+  });
+  await page.goto("/member/application");
+  const submit = page.getByRole("button", { name: "Submit for profile verification", exact: true });
+  await expect(submit).toBeEnabled(); await submit.click();
+  await expect(page.getByRole("status").filter({ hasText: "Please reload your latest draft" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toBeHidden(); await expect(submit).toBeEnabled();
+  fail = false; await submit.click();
+  const dialog = page.getByRole("dialog", { name: "Profile submitted successfully" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "View submitted details" })).toBeFocused();
+  await dialog.getByRole("button").click();
+  await expect(page.getByRole("heading", { name: "Your submitted profile" })).toBeFocused();
+  await expect(page.locator(".verification-summary-section").getByText("Confirmed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Mentoring, Learning", { exact: true })).toBeVisible();
+  await expect(page.locator(".member-form-card")).toBeHidden();
+  await layoutFits(page);
+  await page.screenshot({ path: info.outputPath("profile-submitted-refined.png"), fullPage: true });
+  // A subsequently saved draft must not replace the immutable submission receipt.
+  draft.details.fullName = "Later draft name";
+  await page.reload();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByText("Synthetic Test Member", { exact: true })).toBeVisible();
+  await expect(page.getByText("Later draft name", { exact: true })).toBeHidden();
+  await expect(page.getByRole("button", { name: "Edit saved details" })).toBeVisible();
+  await page.getByRole("button", { name: "Edit saved details" }).click();
+  await expect(page.locator(".member-form-card")).toBeVisible();
+  await expect(submit).toBeEnabled();
+});
