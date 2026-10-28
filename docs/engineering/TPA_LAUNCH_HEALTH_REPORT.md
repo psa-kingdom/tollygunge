@@ -1,5 +1,15 @@
 # TPA launch health report
 
+## Current release gate — 28 October, 09:50 UTC checkpoint
+
+**Hosted v1 release remains NOT READY.** Code release PR4 merged normally as `676e2752f4781ff265ba30d71fdce12480105988`; all four exact-SHA jobs passed in run 40649383107. PR5 contains acceptance-tool corrections only: eliminate duplicate cancelled push/PR checks and wait for fixture backends before database retirement. A later Linux engagement run passed all six product scenarios but failed teardown; the teardown correction needs its final CI result. Runtime source remains the already verified v1 application.
+
+Fresh local full core: **159 browser PASS, 36 explicit skips, 29 Node PASS** in `2026-10-28T06-41-43.162Z-478d6ffc`. Composite stays FAIL because its separate no-JavaScript assertion was stale. The affected retest `.local/launch-readiness/public-retest-2/results.json` passes all selected backend/HTTP phases and 12 public interaction states. Expanded Publishing acceptance `2026-10-28T07-02-17.807Z-b3805581` passes eight groups, including actual Content and Media publication controls plus 16 responsive/accessibility views across all four workspaces down to 320px.
+
+Railway upload attempts `1f4355da-4ad7-4640-879e-95836970bb56` and `845b1145-307c-4fca-baa0-33de0c997747` failed at **SNAPSHOT_CODE**, before build/runtime. Prior live deployment `f2665e96-5ee1-4aeb-ae98-3e9cc447f2c4` remains healthy. A scoped three-field source pin to verified GitHub main `676e275` is staged in patch `3e17706d-8efc-4b34-8dc5-2430dc27927e`; resources/secrets/storage/holds unchanged. Railway's approval gate rejected applying it; approval was requested. No QA member/email, candidate hosted acceptance, observation, tag or cleanup is claimed.
+
+Restoration rehearsal verifies **39,963 files**, including 270 configuration/credential-related files. Archive SHA256 `7495fb0828e4f8d4f841c06772047c8c3b385f191d6bb204515bceedc9ef9b8e`; private `originals-preacceptance.tar` and restoration manifest remain outside active workspace. All eight originals rechecked unchanged at 09:45 UTC. Native Chrome 200% passed eight prior-live public/sign-in pages with one H1 and no horizontal overflow; zoom restored to 100%. Candidate hosted/private member evidence remains separate.
+
 ## V1 execution checkpoint — 28 October
 
 **NOT READY until release gates pass.** [PR #4](https://github.com/psa-kingdom/tollygunge/pull/4) contains the candidate; this checkpoint precedes merge/deployment. Older results below retain their original scope. Runtime adds integrated reporting, public discovery/privacy/breadcrumbs and version 1.0.0, with no business-state migration or redesign.
