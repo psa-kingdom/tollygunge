@@ -78,6 +78,11 @@ try {
   // in this disposable database before browser fixtures expecting initialFields.
   await run("browser-policy-fixture", ["--import", "tsx", "--input-type=module", "-e", "import {Pool} from 'pg';import {initialFields} from './src/domain/verification.ts';const p=new Pool({connectionString:process.env.DATABASE_URL,ssl:false});try{await p.query('INSERT INTO tpa.verification_policies(version,fields) SELECT coalesce(max(version),0)+1,$1::jsonb FROM tpa.verification_policies',[JSON.stringify(initialFields)]);}finally{await p.end();}"]);
   if (!process.argv.includes("--skip-browser")) {
+    assert.equal(await run("portal-browser-fixtures", ["--import", "tsx", "scripts/provision-launch-browser.mts"]), 0);
+    Object.assign(env, {
+      TPA_UI_ADMIN_EMAIL: "portal-admin@example.invalid", TPA_UI_ADMIN_PASSWORD: "Launch!1234",
+      TPA_UI_MEMBER_EMAIL: "portal-member@example.invalid", TPA_UI_MEMBER_PASSWORD: "Launch!1234",
+    });
     const code = await run("browser", ["node_modules/@playwright/test/cli.js", "test", ...(grepIndex < 0 ? [] : ["--grep", process.argv[grepIndex + 1]])]);
     // Preserve the first result; the outer runner archives traces before another stage.
     if (code !== 0) console.error("Browser acceptance failed; no automatic retry was run.");
