@@ -662,6 +662,7 @@ try {
     await p.goto(base + "/admin/workspaces/website");
     await p.getByRole("tab", { name: "Homepage", exact: true }).click();
     await p.getByRole("combobox", { name: "Settings group", exact: true }).selectOption("copy");
+    await p.locator("summary").filter({ hasText: /^Copy$/ }).click();
     const title = p.getByRole("textbox", {
       name: "Hero · Heading line 1",
       exact: true,
@@ -673,6 +674,7 @@ try {
     await p.reload();
     await p.getByRole("tab", { name: "Homepage", exact: true }).click();
     await p.getByRole("combobox", { name: "Settings group", exact: true }).selectOption("copy");
+    await p.locator("summary").filter({ hasText: /^Copy$/ }).click();
     await expect(title).toHaveValue("UI managed homepage");
     await p
       .getByRole("button", { name: "Publish saved draft", exact: true })
