@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ProfilePreview, ProfileInspector } from "./profile-preview";
+import { CopyValue, StatusBadge } from "./portal-values";
 import { api } from "./operations-client";
 import { MemberRegister } from "./member-register";
 import { useSearchParams } from "next/navigation";
@@ -47,34 +49,9 @@ export function MembersWorkspace({
   const searchParams = useSearchParams();
   const recordId = searchParams.get("id");
   const requestedView = searchParams.get("view");
-  const [selection, setSelection] = useState<{
-    recordId: string | null;
-    view: "register" | "accounts";
-  }>();
-  const view =
-    selection?.recordId === recordId
-      ? selection.view
-      : recordId || requestedView === "accounts"
-        ? "accounts"
-        : "register";
+  const view = recordId || requestedView === "accounts" ? "accounts" : "register";
   return (
     <>
-      <div className="action-row member-directory-tabs" role="group" aria-label="Member views">
-        <button
-          className="button secondary"
-          onClick={() => setSelection({ recordId, view: "register" })}
-          aria-pressed={view === "register"}
-        >
-          Member register
-        </button>
-        <button
-          className="button secondary"
-          onClick={() => setSelection({ recordId, view: "accounts" })}
-          aria-pressed={view === "accounts"}
-        >
-          Account directory
-        </button>
-      </div>
       {view === "register" ? (
         <MemberRegister canManage={canManage} />
       ) : (
@@ -94,6 +71,7 @@ function AccountDirectory() {
     [message, setMessage] = useState("Loading accounts…");
   const serial = useRef(0);
   const previewHeading = useRef<HTMLHeadingElement>(null);
+  const selectedTrigger = useRef<HTMLButtonElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (selected) previewHeading.current?.focus();
@@ -156,6 +134,7 @@ function AccountDirectory() {
     };
   }, []);
   async function preview(person: Person) {
+    const attempt = ++serial.current;
     setBusy(true);
     setMessage("");
     setSelected(undefined);
@@ -163,25 +142,17 @@ function AccountDirectory() {
       const result = await api<Directory>(
         `/api/staff/members?id=${encodeURIComponent(person.id)}`,
       );
+      if (attempt !== serial.current) return;
       const current = result.rows[0];
+      if (!current) throw Error("This account is no longer available.");
       setSelected(current);
       setViewed((old) =>
         [current, ...old.filter((item) => item.id !== current.id)].slice(0, 5),
       );
     } catch (error) {
-      setMessage((error as Error).message);
+      if (attempt === serial.current) setMessage((error as Error).message);
     } finally {
-      setBusy(false);
-    }
-  }
-  async function copy(value: string, label: string) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setMessage(`${label} copied.`);
-    } catch {
-      setMessage(
-        `Copy unavailable. Select the ${label.toLowerCase()} below and copy it manually.`,
-      );
+      if (attempt === serial.current) setBusy(false);
     }
   }
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -350,42 +321,24 @@ function AccountDirectory() {
       <div className="directory-layout">
         <section aria-label="Account results" className="record-list">
           {directory?.rows.map((person) => (
-            <button
-              disabled={busy}
-              aria-pressed={person.id === selected?.id}
-              key={person.id}
-              onClick={() => void preview(person)}
-            >
-              <strong>{person.name}</strong>
-              <span>{person.email}</span>
-              <small>
-                {person.organization || "Organization not supplied"} ·{" "}
-                {person.email_verified ? "Verified email" : "Unverified email"}{" "}
-                · Profile: {person.profile_review}
-                {person.staff_account ? " · Staff account" : ""}
-              </small>
-            </button>
+            <div className="directory-record" key={person.id}>
+              <ProfilePreview key={JSON.stringify(filters)} profile={{name: person.name, email: person.email, phone: person.phone, number: person.membership_number, organization: person.organization, emailVerified: person.email_verified, profileVerified: person.profile_review === "verified"}} disabled={Boolean(selected)} selected={selected?.id === person.id} onPin={trigger => {selectedTrigger.current = trigger; void preview(person);}} />
+              <div className="member-record-contact"><CopyValue value={person.email} /></div>
+              <small>{person.organization || "Organization not supplied"} · <StatusBadge tone={person.email_verified ? "success" : "pending"}>{person.email_verified ? "Email verified" : "Email unverified"}</StatusBadge> · Profile: {person.profile_review}{person.staff_account ? " · Staff account" : ""}</small>
+            </div>
           ))}
           {directory && !directory.rows.length && (
             <p>No accounts match these filters.</p>
           )}
         </section>
-        <aside className="directory-preview" aria-label="Quick profile preview">
+        {selected && <ProfileInspector returnFocus={selectedTrigger} label={`${selected.name} account details`} onClose={() => setSelected(undefined)}><aside className="directory-preview" aria-label="Quick profile preview">
           {selected ? (
             <>
               <div className="action-row">
                 <h2 ref={previewHeading} tabIndex={-1}>
                   {selected.name}
                 </h2>
-                <button
-                  className="button secondary"
-                  onClick={() => {
-                    setSelected(undefined);
-                    searchInput.current?.focus();
-                  }}
-                >
-                  Close preview
-                </button>
+
               </div>
               <p>
                 {selected.staff_account ? "Staff account" : "Account"} ·{" "}
@@ -406,24 +359,11 @@ function AccountDirectory() {
               <dl className="contact-details">
                 <div>
                   <dt>Email</dt>
-                  <dd>{selected.email}</dd>
-                  <button
-                    className="button secondary"
-                    onClick={() => void copy(selected.email, "Email")}
-                  >
-                    Copy email
-                  </button>
+                  <dd><CopyValue value={selected.email} /></dd>
                 </div>
                 <div>
                   <dt>Mobile / phone</dt>
-                  <dd>{selected.phone || "Not supplied"}</dd>
-                  <button
-                    className="button secondary"
-                    disabled={!selected.phone}
-                    onClick={() => void copy(selected.phone, "Phone")}
-                  >
-                    Copy phone
-                  </button>
+                  <dd><CopyValue value={selected.phone} /></dd>
                 </div>
                 {[
                   ["Organization", selected.organization],
@@ -455,7 +395,7 @@ function AccountDirectory() {
               <p>Select an account to view contact and professional details.</p>
             </>
           )}
-        </aside>
+        </aside></ProfileInspector>}
       </div>
       <p role="status" aria-live="polite">
         {message}

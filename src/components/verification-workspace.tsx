@@ -139,7 +139,7 @@ export function VerificationWorkspace() {
               })
             }
           >
-            {t}
+            {t === "Review queue" ? "Profile reviews" : t}
           </button>
         ))}
       </div>

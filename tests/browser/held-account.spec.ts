@@ -106,10 +106,15 @@ test("held account is visible, activates only after release, and retains private
     ).json();
     expect(restored.mode).toBe("approved-accounts");
     expect(restored.results[0].emailStatus).toBe("held");
+    async function openHeldMember() {
+      await page.getByLabel("Search members", {exact:true}).fill(user);
+      const searched = page.waitForResponse(response => response.url().includes("/api/staff/members?view=register&q=" + user));
+      await page.getByRole("button", {name:"Search register",exact:true}).click();
+      expect((await searched).status()).toBe(200);
+      await page.getByRole("row").filter({hasText:user}).getByRole("button", {name:"Open Held browser member details",exact:true}).click();
+    }
     await page.goto("/admin/workspaces/members");
-    await page
-      .getByRole("button", { name: `Held browser member · ${user} · Account linked`, exact: true })
-      .click();
+    await openHeldMember();
     const details = page.getByRole("region", { name: "Member details" });
     await expect(
       details.getByText("Required after activation", { exact: true }),
@@ -129,14 +134,17 @@ test("held account is visible, activates only after release, and retains private
     );
     expect(noRelease.status()).toBe(409);
     for (const path of ["request-password-reset", "send-verification-email"]) {
-      expect(
-        (
-          await context.request.post(origin + "/api/auth/" + path, {
-            headers: { origin },
-            data: { email },
-          })
-        ).status(),
-      ).toBe(200);
+      const request = () => context.request.post(origin + "/api/auth/" + path, {
+        headers: { origin }, data: { email },
+      });
+      let response = await request();
+      if (response.status() === 429) {
+        const seconds = Number(response.headers()["retry-after"]) || 60;
+        console.log(`Respecting held-account ${path} rate limit (${seconds}s).`);
+        await page.waitForTimeout(seconds * 1000 + 100);
+        response = await request();
+      }
+      expect(response.status()).toBe(200);
     }
     expect(
       (
@@ -159,7 +167,7 @@ test("held account is visible, activates only after release, and retains private
       fullPage: true,
     });
     await page.goto('/admin/workspaces/communications?invitationTemplate=1');
-    await page.getByLabel('Invitation subject',{exact:true}).fill('Reviewed member invitation '+info.project.name);
+    await page.getByLabel('Invitation subject',{exact:true}).fill('Reviewed member invitation '+info.project.name+' '+batch.slice(0,8));
     await page.getByLabel('Invitation body',{exact:true}).fill('Hello {{member_name}},\n\n{{setup_link}}\n\nThis link expires in {{expiry}}.\n{{association_name}}');
     await page.getByRole('button',{name:'Save invitation draft',exact:true}).click();
     await expect(page.getByText('New draft saved. Invitation sending is blocked until approval.',{exact:false})).toBeVisible();
@@ -171,7 +179,7 @@ test("held account is visible, activates only after release, and retains private
     await page.goto('/admin');
     await page.getByRole('link',{name:/Invitations held/}).click();
     await expect(page.getByRole('combobox',{name:'Invitations',exact:true})).toHaveValue('held');
-    await page.getByRole('button',{name:`Held browser member · ${user} · Account linked`,exact:true}).click();
+    await openHeldMember();
     await page.getByRole('button',{name:'Review this member invitation',exact:true}).click();
     await page.getByRole('button',{name:'Review invitations for 1 selected members',exact:true}).click();
     await expect(page.getByRole('heading',{name:'Invitation recipient review',exact:true})).toBeVisible();

@@ -1,6 +1,6 @@
+import { PortalSubsections } from "@/components/portal-subsections";
 import { eventReturnPath } from "@/domain/event-flow";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { currentActor } from "@/lib/actor";
 import { AccountShell as SiteShell } from "@/components/site-shell";
 import { MemberEvents } from "@/components/member-events";
@@ -16,8 +16,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   return (
     <SiteShell>
       <main id="main" className="page-content">
-        <Link href="/member">← Your member space</Link>
         <h1>Events & attendance</h1>
+        <PortalSubsections />
         <MemberEvents />
       </main>
     </SiteShell>

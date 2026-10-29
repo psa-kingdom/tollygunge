@@ -52,6 +52,9 @@ try {
  const log=openSync(dir+'/server.log','w');server=spawn(process.execPath,['--require',shim,'node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port',new URL(base).port],{env,stdio:['ignore',log,log]});closeSync(log);
  let ready=false;for(let i=0;i<60;i++){if(server.exitCode!==null)throw Error('Server exited');try{if((await fetch(base+'/api/health')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready);
  const e=await event(),privateEvent=await event('members'),past=await event('public',true),draft=await event();await db.query("UPDATE tpa.events SET status='draft' WHERE id=$1",[draft.id]);
+ // An explicitly open fixture window avoids relying on API/database/client clocks
+ // agreeing to the millisecond immediately after promotion approval.
+ await db.query("UPDATE tpa.events SET registration_starts_at=now()-interval '1 minute' WHERE id=$1",[e.id]);
  assert.ok((await api('/api/staff/flyers?id='+draft.id)).some((row:{id:string})=>row.id===draft.id));
  const draftVariant=await api('/api/staff/flyer-variants',{eventId:draft.id,eventVersion:draft.version,name:'Draft preview',headline:'Coming soon',presentation:{accent:'gold'},status:'draft'});
  await api('/api/staff/flyer-variants',{...draftVariant,eventId:draft.id,eventVersion:draft.version,status:'published'},0,409);await unavailableFlyer(draftVariant.id,draft.title);

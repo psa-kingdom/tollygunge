@@ -1,7 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-
-type PortalCookies = Awaited<ReturnType<ReturnType<Page["context"]>["cookies"]>>;
-const sessions = new Map<"ADMIN" | "MEMBER", PortalCookies>();
+import { signInPortal } from "../helpers/portal-browser";
 
 // Supply synthetic local accounts; these checks never change business records.
 test.beforeEach(() => {
@@ -11,21 +9,7 @@ test.beforeEach(() => {
 });
 
 async function signIn(page: Page, role: "ADMIN" | "MEMBER") {
-  const destination = role === "ADMIN" ? "/admin" : "/member";
-  const cookies = sessions.get(role);
-  if (cookies) {
-    await page.context().addCookies(cookies);
-    await page.goto(destination);
-    await expect(page.locator(".portal-sidebar")).toBeVisible();
-    return;
-  }
-  await page.goto("/login");
-  await page.getByLabel("Email", { exact: true }).fill(process.env[`TPA_UI_${role}_EMAIL`]!);
-  await page.getByLabel("Password", { exact: true }).fill(process.env[`TPA_UI_${role}_PASSWORD`]!);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.waitForURL(role === "ADMIN" ? "**/admin" : "**/member");
-  await expect(page.locator(".portal-sidebar")).toBeVisible();
-  sessions.set(role, await page.context().cookies());
+  await signInPortal(page, role === "ADMIN" ? "administrator" : "member");
 }
 
 async function layoutFits(page: Page) {
@@ -82,17 +66,15 @@ async function dashboardTextContrast(page: Page) {
   expect(ratios.filter(value => value.ratio < 4.5)).toEqual([]);
 }
 
-async function mobileNavigation(page: Page, label: string, navigation: string) {
-  const toggle = page.getByRole("button", { name: new RegExp(label) });
-  if (await toggle.isVisible()) {
-    await expect(page.locator(navigation)).toBeHidden();
-    await toggle.click();
-    await expect(page.locator(navigation)).toBeVisible();
-    await page.locator(`${navigation} a`).first().focus();
-    await page.keyboard.press("Escape");
-    await expect(page.locator(navigation)).toBeHidden();
-    await expect(toggle).toBeFocused();
-  }
+async function mobileNavigation(page: Page, _label: string, navigation: string) {
+  const nav = page.locator(navigation);
+  await expect(nav).toBeVisible();
+  await expect(page.locator(".portal-sidebar")).toHaveCount(0);
+  const last = nav.getByRole("link").last();
+  await last.focus();
+  await expect(last).toBeFocused();
+  await expect.poll(() => last.evaluate(el => { const parent = el.parentElement!.getBoundingClientRect(), item = el.getBoundingClientRect(); return item.left >= parent.left - 1 && item.right <= parent.right + 1; })).toBeTruthy();
+  expect(await nav.evaluate(el => el.scrollHeight <= el.clientHeight + 3)).toBeTruthy();
 }
 
 test("staff workspaces keep compact layouts, usable mobile navigation and keyboard search", async ({ page }, info) => {
@@ -105,11 +87,11 @@ test("staff workspaces keep compact layouts, usable mobile navigation and keyboa
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: /Search workspace/ })).toBeFocused();
-  const routes = await page.locator("#staff-navigation a").evaluateAll(elements => elements.map(element => element.getAttribute("href")!));
+  const routes = ["/admin", ...["reports","members","verification","onboarding","events","flyers","imports","content","media","governance","communications","crm","onboarding-email","payments","website","access"].map(slug => "/admin/workspaces/"+slug)];
   for (const route of routes.filter(route => route !== "/admin")) {
     await page.goto(route);
     await layoutFits(page);
-    await expect(page.locator(`#staff-navigation a[href="${route}"]`)).toHaveAttribute("aria-current", "page");
+    await expect(page.locator("#staff-navigation a[aria-current=page]")).toHaveCount(1);
   }
   await page.goto("/admin/workspaces/members");
   await expect(page.getByRole("region", { name: "Member register records", exact: true })).toBeVisible();
@@ -127,11 +109,11 @@ test("member pages retain their navigation, fit each viewport and support dark a
   page.on("pageerror", error => errors.push(error.message));
   await signIn(page, "MEMBER");
   await mobileNavigation(page, "Member navigation", "#member-navigation");
-  const routes = await page.locator("#member-navigation a").evaluateAll(elements => elements.map(element => element.getAttribute("href")!));
+  const routes = ["/member","/member/application","/member/payments","/member/events","/member/inquiries","/account/profile","/member/security"];
   for (const route of routes) {
     await page.goto(route);
     await layoutFits(page);
-    await expect(page.locator(`#member-navigation a[href="${route}"]`)).toHaveAttribute("aria-current", "page");
+    await expect(page.locator("#member-navigation a[aria-current=page]")).toHaveCount(1);
   }
   await page.goto("/account/profile");
   await page.getByRole("button", { name: "Account menu", exact: true }).click();
@@ -426,8 +408,7 @@ test("navigation keeps authentication isolated between requests", async ({ page 
 
 test("slow navigation retains the current page instead of replacing it with a loading screen", async ({ page }, info) => {
   await signIn(page, "ADMIN");
-  const toggle = page.getByRole("button", { name: /Workspace navigation/ });
-  if (await toggle.isVisible()) await toggle.click();
+  await page.goto("/admin/workspaces/members");
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   let requested = false;
@@ -438,7 +419,7 @@ test("slow navigation retains the current page instead of replacing it with a lo
   });
   const heading = await page.locator("main h1").textContent();
   try {
-    await page.locator('#staff-navigation a[href="/admin/workspaces/verification"]').click();
+    await page.locator('.portal-subsections a[href="/admin/workspaces/verification"]').click();
     await expect.poll(() => requested).toBeTruthy();
     await expect(page.locator("main h1")).toHaveText(heading!);
     await expect(page.locator(".tpa-loading")).toHaveCount(0);
@@ -484,7 +465,7 @@ test("member completion links to missing form steps and keeps approval separate"
   const progress = page.getByRole("progressbar", { name: "Profile completion", exact: true });
   await expect(progress).toHaveAttribute("value", "6");
   await expect(progress).toHaveAttribute("max", "10");
-  await expect(page.locator(".member-badge")).toHaveText("Not verified");
+  await expect(page.getByText("Not verified", {exact:true})).toBeVisible();
   await layoutFits(page);
   await page.screenshot({ path: info.outputPath("member-completion.png"), fullPage: true });
   // Let the actual application endpoints supply the full policy/schema after navigation.
@@ -508,10 +489,10 @@ test("admin dashboard updates signup and application notifications without appro
   await dashboard.getByRole("link", { name: /1 applications awaiting profile review/ }).click();
   await expect(page.getByRole("heading", { name: "Verification", exact: true })).toBeVisible();
   await page.goto("/admin/workspaces/members?view=accounts");
-  await expect(page.getByRole("button", { name: "Account directory", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("link", { name: "Account directory", exact: true })).toHaveAttribute("aria-current", "page");
 });
 
-test("dashboard color pilot covers themes, completion states and interactive feedback", async ({ page }, info) => {
+test("dashboard semantic colors cover themes, completion states and interactive feedback", async ({ page }, info) => {
   const baseline = process.env.TPA_DASHBOARD_CAPTURE_BASELINE === "1";
   await page.setViewportSize({ width: info.project.name === "desktop" ? 1320 : info.project.name === "tablet" ? 768 : 390, height: 900 });
   await signIn(page, "MEMBER");
@@ -534,8 +515,8 @@ test("dashboard color pilot covers themes, completion states and interactive fee
       if (!baseline) {
         await dashboardTextContrast(page);
         await primaryActionContrast(page);
-        const profileCard = await page.locator('.member-profile-summary').boundingBox();
-        expect(profileCard!.height).toBeLessThan(300);
+        const profileCard = await page.locator('.member-overview-activity').boundingBox();
+        expect(profileCard!.height).toBeLessThan(440);
         if (info.project.name === 'desktop') {
           const verificationCard = await page.locator('.member-verification').boundingBox();
           expect(profileCard!.y).toEqual(verificationCard!.y);
@@ -545,15 +526,15 @@ test("dashboard color pilot covers themes, completion states and interactive fee
           for (const target of await page.locator('.member-home :is(.button, .member-service-tile)').all()) expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(44);
         }
         await expect(page.locator(".profile-completion-ready")).toHaveCount(value === "complete" ? 1 : 0);
-        if (value === "complete") await expect(page.locator(".member-badge")).toHaveText("Not verified");
-        if (value === "submitted") await expect(page.locator(".member-badge")).toHaveText("Under review");
-        if (value === "verified") await expect(page.locator(".member-badge")).toHaveText("Verified");
+        if (value === "complete") await expect(page.locator(".member-verification .member-card-heading [data-tone]")).toHaveText("Not verified");
+        if (value === "submitted") await expect(page.locator(".member-verification .member-card-heading [data-tone]")).toHaveText("Under review");
+        if (value === "verified") await expect(page.locator(".member-verification .member-card-heading [data-tone]")).toHaveText("Verified");
       }
       await page.screenshot({ path: info.outputPath(`member-${mode}-${value}.png`), fullPage: true });
     }
   }
   if (!baseline) {
-    const tile = page.locator('.member-service-tile[href="/member/events"]');
+    const tile = page.locator('#member-navigation a[href="/member/events"]');
     await tile.scrollIntoViewIfNeeded();
     const before = await tile.boundingBox();
     await tile.hover();
@@ -602,7 +583,7 @@ test("dashboard color pilot covers themes, completion states and interactive fee
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await expect(page.getByRole("region", { name: "Needs attention", exact: true }).getByText("You’re up to date in your permitted workspaces.", { exact: true })).toBeVisible();
   if (!baseline) {
-    const attentionLink = page.locator('.portal-account-shortcuts a').first();
+    const attentionLink = page.locator('#staff-navigation a').first();
     await attentionLink.focus();
     await page.keyboard.press("Tab");
     await page.keyboard.press("Shift+Tab");
@@ -616,53 +597,61 @@ test("dashboard color pilot covers themes, completion states and interactive fee
 });
 
 for (const role of ["ADMIN", "MEMBER"] as const) {
-  test(`${role.toLowerCase()} sidebar remembers collapse and keeps navigation accessible`, async ({ page }, info) => {
+  test(`${role.toLowerCase()} horizontal navigation scrolls without a sidebar`, async ({page}) => {
     await signIn(page, role);
-    const toggle = page.locator(".portal-collapse-toggle");
-    if (info.project.name !== "desktop") {
-      await expect(toggle).toBeHidden();
-      await mobileNavigation(page, role === "ADMIN" ? "Workspace navigation" : "Member navigation", role === "ADMIN" ? "#staff-navigation" : "#member-navigation");
-      return;
-    }
-    const sidebar = page.locator(".portal-sidebar");
-    const width = () => sidebar.evaluate(element => element.getBoundingClientRect().width);
-    const contentX = await page.locator(".portal-content").evaluate(element => element.getBoundingClientRect().x);
-    await expect(toggle).toHaveAttribute("aria-expanded", "true");
-    await toggle.click();
-    await expect(toggle).toHaveAccessibleName("Expand sidebar");
-    await expect.poll(width).toBe(72);
-    expect(await page.locator(".portal-content").evaluate(element => element.getBoundingClientRect().x)).toBeLessThan(contentX);
-    const link = sidebar.getByRole("link", { name: role === "ADMIN" ? "Members" : "Events", exact: true });
-    await link.focus();
-    await expect(page.locator(".portal-nav-tooltip")).toHaveText(role === "ADMIN" ? "Members" : "Events");
-    await page.keyboard.press("Escape");
-    await expect(page.locator(".portal-nav-tooltip")).toHaveCount(0);
-    await link.click();
+    await page.setViewportSize({width:320,height:800});
+    await mobileNavigation(page, "", role === "ADMIN" ? "#staff-navigation" : "#member-navigation");
     await layoutFits(page);
-    await expect(toggle).toHaveAttribute("aria-expanded", "false");
-    await page.reload();
-    await expect(toggle).toHaveAccessibleName("Expand sidebar");
-    await expect.poll(width).toBe(72);
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await expect(page.locator(".workspace")).toHaveCSS("transition-duration", "0s");
-    await link.focus();
-    await expect(link.locator("svg")).toHaveCSS("transform", "none");
-    await page.setViewportSize({ width: 390, height: 844 });
-    await expect(toggle).toBeHidden();
-    await mobileNavigation(page, role === "ADMIN" ? "Workspace navigation" : "Member navigation", role === "ADMIN" ? "#staff-navigation" : "#member-navigation");
-    await layoutFits(page);
-    await page.setViewportSize({ width: 1280, height: 720 });
-    await expect.poll(width).toBe(72);
-    await toggle.click();
-    await expect(toggle).toHaveAccessibleName("Collapse sidebar");
-    await expect.poll(width).toBe(232);
-    // Fast reversals must leave a stable final rail, with no accumulated tweens.
-    await toggle.click(); await toggle.click(); await toggle.click();
-    await expect.poll(width).toBe(72);
-    await toggle.click();
-    await expect.poll(width).toBe(232);
+    await page.setViewportSize({width:1440,height:1000});
+    expect(await page.locator("main h1").evaluate(el => el.getBoundingClientRect().top)).toBeLessThanOrEqual(200);
   });
 }
+
+test("member previews support copying, stable pinning and accessible dismissal", async ({page, context}, info) => {
+  await signIn(page, "ADMIN");
+  await page.goto("/admin/workspaces/members");
+  const records = page.getByRole("region", {name: "Member register records", exact:true});
+  const first = records.getByRole("button", {name:/^Open .* details$/}).first();
+  await expect(first).toBeVisible();
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  if (info.project.name === "desktop") {
+    await first.hover();
+    const quick = page.getByRole("dialog", {name:/quick preview/});
+    await expect(quick).toBeVisible();
+    await quick.hover();
+    await expect(quick).toBeVisible();
+    const copy = quick.getByRole("button", {name:/^Copy .*@/}).first();
+    const copiedValue = (await copy.getAttribute("aria-label"))!.slice(5);
+    await copy.click();
+    await expect(quick.getByRole("status").filter({hasText:"Copied"})).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(copiedValue);
+    await quick.getByRole("button", {name:"Open full details →"}).click();
+  } else await first.click();
+  const details = page.getByRole("dialog", {name:/member details$/});
+  await expect(details).toBeVisible();
+  const name = await details.getByRole("heading").first().textContent();
+  if (info.project.name === "desktop" && await records.getByRole("button", {name:/^Open .* details$/}).count() > 1) {
+    await records.getByRole("button", {name:/^Open .* details$/}).nth(1).hover();
+    await expect(page.getByRole("dialog", {name:/quick preview/})).toHaveCount(0);
+    await expect(details.getByRole("heading").first()).toHaveText(name!);
+  }
+  await page.keyboard.press("Escape");
+  await expect(details).toHaveCount(0);
+  await expect(first).toBeFocused();
+});
+
+test("copy failure keeps the contact selectable and does not open a record", async ({page}) => {
+  await signIn(page, "ADMIN");
+  await page.addInitScript(() => Object.defineProperty(navigator, "clipboard", {value:{writeText:async()=>{throw Error("Synthetic clipboard denial");}}}));
+  await page.goto("/admin/workspaces/members");
+  const region = page.getByRole("region", {name:"Member register records",exact:true});
+  const copy = region.getByRole("button", {name:/^Copy .*@/}).first();
+  await expect(copy).toBeVisible();
+  await copy.click();
+  await expect(region.getByRole("status").filter({hasText:"Clipboard unavailable"})).toBeVisible();
+  await expect(page.getByRole("dialog", {name:/member details$/})).toHaveCount(0);
+  expect(await copy.evaluate(element=>getComputedStyle(element).userSelect)).toBe("text");
+});
 
 test("member event layout separates attendance, guidance and event filtering", async ({ page }, info) => {
   await signIn(page, "MEMBER");

@@ -1,3 +1,4 @@
+import { AuthLayout } from "@/components/auth-layout";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { SiteShell } from "@/components/site-shell";
@@ -25,15 +26,7 @@ export default async function EmailVerification() {
     result?.email?.toLowerCase() === actor?.email.toLowerCase();
   return (
     <SiteShell>
-      <main id="main" className="page-content">
-        <span className="eyebrow">YOUR TPA ACCOUNT</span>
-        <h1>
-          {result?.status === "verified"
-            ? "Email verified."
-            : result?.status === "expired"
-              ? "Verification link expired."
-              : "Check your verification link."}
-        </h1>
+      <AuthLayout portalReview title={result?.status === "verified" ? "Email verified." : result?.status === "expired" ? "Verification link expired." : "Check your verification link."} description="Email verification keeps your TPA account secure.">
         <section className="login-panel">
           {result?.status === "verified" ? (
             <>
@@ -91,7 +84,7 @@ export default async function EmailVerification() {
             </>
           )}
         </section>
-      </main>
+      </AuthLayout>
     </SiteShell>
   );
 }

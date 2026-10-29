@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue, StatusBadge } from "./portal-values";
 import { WorkspacePanel, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState } from "react";
 import { eventTime } from "@/domain/event-flow";
@@ -89,12 +90,12 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
                 <td>
                   {r.name}
                   <small>
-                    {r.email} · {r.membership_number}
+                    <CopyValue value={r.email} /> · <CopyValue value={r.membership_number} label="membership number" />
                   </small>
                 </td>
                 <td>{r.title}</td>
                 <td>₹{(r.fee_paise / 100).toFixed(2)}</td>
-                <td>{r.payment_status}</td>
+                <td><StatusBadge tone={r.payment_status === "paid" ? "success" : ["rejected", "failed"].includes(r.payment_status) ? "error" : r.payment_status === "pending" ? "pending" : "neutral"}>{r.payment_status}</StatusBadge></td>
                 <td>
                   <button
                     onClick={() => {
@@ -149,7 +150,7 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
           <h3>
             Verify {selected.name} · {selected.title}
           </h3>
-          <p>Registration identifier: <strong>{selected.id}</strong> · ₹{(selected.fee_paise/100).toFixed(2)}</p>
+          <p>Registration identifier: <CopyValue value={selected.id} label="registration identifier" /> · ₹{(selected.fee_paise/100).toFixed(2)}</p>
           <p>
             Current state: {selected.payment_status}. {selected.payment_note}
           </p>
@@ -183,7 +184,7 @@ export function RegistrationPayments({eventId,onSaved}:{eventId?:string;onSaved?
               onChange={(e) => setNote(e.target.value)}
             />
           </label>
-          <details><summary>Payment history ({selected.history?.length ?? 0})</summary>{selected.history?.map((h,i) => <p key={i}>{eventTime(h.created_at)} · {h.from_status ? h.from_status+" → " : ""}{h.to_status} · {h.reference} · {h.note}</p>)}</details>
+          <details><summary>Payment history ({selected.history?.length ?? 0})</summary>{selected.history?.map((h,i) => <p key={i}>{eventTime(h.created_at)} · {h.from_status ? h.from_status+" → " : ""}{h.to_status} · <CopyValue value={h.reference} label="payment reference" /> · {h.note}</p>)}</details>
           <button className="button" disabled={busy || ["cancelled","refunded"].includes(selected.payment_status)}>
             Confirm status change
           </button>

@@ -1,3 +1,4 @@
+import { AuthLayout } from "@/components/auth-layout";
 import { SiteShell } from "@/components/site-shell";
 import { PasswordResetLanding } from "@/components/password-controls";
 export const metadata = {
@@ -8,12 +9,9 @@ export const metadata = {
 export default function Page() {
   return (
     <SiteShell>
-      <main id="main" className="page-content">
-        <section className="login-panel">
-          <h1>Choose a new password</h1>
+      <AuthLayout portalReview title="Choose a new password" description="Use your recovery link to secure your account.">
           <PasswordResetLanding />
-        </section>
-      </main>
+      </AuthLayout>
     </SiteShell>
   );
 }

@@ -33,7 +33,7 @@ export function WorkspacePageHeading({ workspace, title }: { workspace: string; 
 export function WorkspacePanel({ title, description, children, actions, className = "", id }: {
   title?: string; description?: string; children: ReactNode; actions?: ReactNode; className?: string; id?: string;
 }) {
-  return <section id={id} className={`${styles.panel} workspace-panel ${className}`}>
+  return <section id={id} className={`${styles.panel} workspace-panel ${className}`} data-portal-primary>
     {(title || actions) && <div className={styles.panelHeading}>
       <div>{title && <h2>{title}</h2>}{description && <p>{description}</p>}</div>{actions}
     </div>}

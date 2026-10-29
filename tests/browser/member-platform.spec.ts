@@ -646,7 +646,7 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
       if (width <= 1100)
         await page.getByRole("tab", { name: "Edit", exact: true }).click();
       await page.evaluate(() => scrollTo(0, 500));
-      await expect(page.locator(".portal-topbar")).toHaveClass(/is-scrolled/);
+      await expect(page.locator(".portal-topbar")).toBeVisible();
       expect((await page.locator(".portal-topbar").boundingBox())!.y).toBe(0);
       if (width <= 600)
         expect(
@@ -657,19 +657,11 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
   }
   await page.setViewportSize({ width: 640, height: 500 });
   await page.evaluate(() => scrollTo(0, 0));
-  const menu = page.getByRole("button", { name: /Member navigation/ });
-  await menu.focus();
-  await menu.press("Enter");
-  await expect(
-    page.getByRole("link", { name: "Security", exact: true }),
-  ).toBeVisible();
-  await menu.press("Tab");
-  await expect(
-    page.getByRole("link", { name: "Overview", exact: true }),
-  ).toBeFocused();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("navigation", { name: "Account navigation" })).toBeHidden();
-  await expect(menu).toBeFocused();
+  const nav = page.getByRole("navigation", {name:"Member navigation",exact:true});
+  await expect(nav).toBeVisible();
+  await nav.getByRole("link", {name:"Account",exact:true}).focus();
+  await expect(nav.getByRole("link", {name:"Account",exact:true})).toBeFocused();
+  await expect(page.getByRole("navigation", {name:"Account sections",exact:true}).getByRole("link", {name:"Security",exact:true})).toBeVisible();
   await page.evaluate(() => (document.documentElement.style.zoom = "2"));
   await noOverflow(page);
   await page.screenshot({

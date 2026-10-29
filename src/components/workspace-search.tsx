@@ -66,6 +66,7 @@ export function WorkspaceSearch() {
       <button
         ref={trigger}
         className="search-entry"
+        aria-label="Search workspace"
         onClick={() => setOpen(true)}
       >
         <PortalIcon name="search" /><span>Search workspace</span> <kbd>Ctrl / ⌘ K</kbd>

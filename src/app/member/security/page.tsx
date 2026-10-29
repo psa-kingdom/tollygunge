@@ -1,3 +1,4 @@
+import { PortalSubsections } from "@/components/portal-subsections";
 import { redirect } from "next/navigation";
 import { currentActor } from "@/lib/actor";
 import { AccountShell as SiteShell } from "@/components/site-shell";
@@ -15,6 +16,7 @@ export default async function Page() {
       <main id="main" className="page-content">
         <section className="login-panel">
           <h1>Account security</h1>
+        <PortalSubsections />
           <PasswordUpdate signedIn />
           <p>
             <Link href="/member">Back to your account</Link>

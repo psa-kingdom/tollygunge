@@ -796,12 +796,12 @@ test("member dashboard separates verification states and keeps the editor off th
       }),
     );
     await page.goto("/member");
-    await expect(page.locator(".member-badge")).toHaveText(state.label);
+    await expect(page.locator(".member-verification .member-card-heading [data-tone]")).toHaveText(state.label);
     await expect(
       page.getByRole("heading", { name: "Edit person", exact: true }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("link", { name: "Manage profile", exact: false }),
+      page.getByRole("link", { name: "Your profile", exact: true }),
     ).toBeVisible();
     if (state.reviews[0]?.reason)
       await expect(page.getByText(state.reviews[0].reason)).toBeVisible();
@@ -810,18 +810,10 @@ test("member dashboard separates verification states and keeps the editor off th
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBeTruthy();
-    const mobileMenu = page.getByRole("button", { name: /Member navigation/ });
-    if (page.viewportSize()!.width <= 800) await mobileMenu.click();
-    await page.getByRole("link", { name: "Overview", exact: true }).focus();
+    await page.getByRole("navigation", {name:"Member navigation",exact:true}).getByRole("link", { name: "Overview", exact: true }).focus();
     await page.keyboard.press("Tab");
-    await expect(
-      page.getByRole("link", { name: "Verification", exact: true }),
-    ).toBeFocused();
-    if (page.viewportSize()!.width <= 800) {
-      await page.keyboard.press("Escape");
-      await expect(mobileMenu).toBeFocused();
-      await expect(page.getByRole("navigation", { name: "Account navigation" })).toBeHidden();
-    }
+    await expect(page.getByRole("link", { name: "Membership", exact: true })).toBeFocused();
+    await expect(page.getByRole("navigation", {name:"Member navigation",exact:true})).toBeVisible();
     await page.screenshot({
       path: info.outputPath(`dashboard-state-${index}.png`),
       fullPage: true,

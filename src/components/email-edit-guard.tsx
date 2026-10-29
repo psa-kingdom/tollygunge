@@ -1,8 +1,18 @@
 "use client";
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 export function useEmailEditGuard(dirty: boolean, navigation = true) {
   const [pending, setPending] = useState<(() => void) | null>(null);
   const title = useId();
+  const trigger = useRef<HTMLElement | null>(null);
+  const request = (work: () => void) => {
+    trigger.current = document.activeElement as HTMLElement | null;
+    setPending(() => work);
+  };
+  useEffect(() => {
+    if (!pending) return;
+    const original = trigger.current;
+    return () => { if (original?.isConnected) original.focus(); };
+  }, [pending]);
   useEffect(() => {
     if (!dirty || !navigation) return;
     const unload = (e: BeforeUnloadEvent) => {
@@ -21,6 +31,7 @@ export function useEmailEditGuard(dirty: boolean, navigation = true) {
       )
         return;
       e.preventDefault();
+      trigger.current = document.activeElement as HTMLElement | null;
       setPending(() => () => location.assign(link.href));
     };
     window.addEventListener("beforeunload", unload);
@@ -31,7 +42,7 @@ export function useEmailEditGuard(dirty: boolean, navigation = true) {
     };
   }, [dirty, navigation]);
   return {
-    proceed: (work: () => void) => (dirty ? setPending(() => work) : work()),
+    proceed: (work: () => void) => (dirty ? request(work) : work()),
     dialog: pending ? (
       <div className="email-dialog-backdrop">
         <section
@@ -40,7 +51,7 @@ export function useEmailEditGuard(dirty: boolean, navigation = true) {
           aria-labelledby={title}
           className="email-dialog"
           onKeyDown={(e) => {
-            if (e.key === "Escape") setPending(null);
+            if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setPending(null); }
             if (e.key === "Tab") {
               const buttons = Array.from(
                 e.currentTarget.querySelectorAll("button"),
@@ -59,7 +70,7 @@ export function useEmailEditGuard(dirty: boolean, navigation = true) {
           }}
         >
           <h2 id={title}>Discard unsaved changes?</h2>
-          <p>Your saved draft will remain available.</p>
+          <p>Changes made since your last save will be discarded.</p>
           <button
             className="button secondary"
             autoFocus

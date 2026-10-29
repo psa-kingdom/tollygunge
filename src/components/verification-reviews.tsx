@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue } from "./portal-values";
 import { useEffect, useState, useRef } from "react";
 import { verificationSteps } from "@/domain/verification";
 import { WorkspaceEmptyState } from "./workspace-ui";
@@ -121,7 +122,7 @@ export function VerificationReviews({
               choose("");
             }}
           >
-            Review queue
+            Applications
           </button>
           <button
             aria-pressed={view === "verified"}
@@ -131,7 +132,7 @@ export function VerificationReviews({
               choose("");
             }}
           >
-            Verified accounts
+            Verified profiles
           </button>
         </div>
         <label>
@@ -182,16 +183,15 @@ export function VerificationReviews({
         >
           {(view === "reviews" ? records?.reviews : records?.verified)?.map(
             (r) => (
-              <button
-                key={r.id}
-                className={selected === r.id ? "selected" : ""}
+              <div className="portal-person-record" key={r.id}><button
+                className={`link-button portal-person-trigger ${selected === r.id ? "selected" : ""}`}
+                aria-pressed={selected === r.id}
                 onClick={(e) => {
                   lastRecord.current = e.currentTarget;
                   choose(r.id);
                 }}
               >
                 <strong>{r.name}</strong>
-                <small>{r.email}</small>
                 <span>
                   {"status" in r
                     ? r.status
@@ -199,7 +199,7 @@ export function VerificationReviews({
                       ? "Verified · Update requested"
                       : "Verified"}
                 </span>
-              </button>
+              </button><CopyValue value={r.email} /></div>
             ),
           )}
           {records &&
@@ -245,7 +245,7 @@ export function VerificationReviews({
                 {review.name}
               </h2>
               <p>
-                {review.email} · {review.status} · Requirements v
+                <CopyValue value={review.email} /> · {review.status} · Requirements v
                 {review.requirement_version}
               </p>
               {review.accepted_verified && (
@@ -286,7 +286,7 @@ export function VerificationReviews({
               <h2 tabIndex={-1} ref={detailHeading}>
                 {person.name}
               </h2>
-              <p>{person.email}</p>
+              <p><CopyValue value={person.email} /></p>
               <p>
                 {person.verification_version
                   ? `Approved requirements v${person.verification_version}`

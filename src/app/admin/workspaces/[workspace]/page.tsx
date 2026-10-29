@@ -1,3 +1,5 @@
+import { StatusBadge } from "@/components/portal-values";
+import { PortalSubsections } from "@/components/portal-subsections";
 import { PaymentsWorkspace } from "@/components/payments-workspace";
 import { VerificationWorkspace } from "@/components/verification-workspace";
 import {
@@ -22,6 +24,7 @@ import { staffWorkspaceLabel } from "@/domain/staff-navigation";
 import { MembersWorkspace } from "@/components/members-workspace";
 import { WorkspacePageHeading } from "@/components/workspace-ui";
 import {WebsiteControl} from '@/components/website-control';
+import review from "@/components/portal-review.module.css";
 const permissions: Record<string, Permission> = {
   verification: "members:review",
   onboarding: "staff:manage",
@@ -70,9 +73,10 @@ export default async function Workspace({
   )
     notFound();
   return (
-    <main id="main" className="workspace-main workspace-page">
-      <Link href="/admin">← Staff workspace</Link>
-      <WorkspacePageHeading workspace={workspace} title={staffWorkspaceLabel(workspace)} />
+    <main id="main" className={`workspace-main workspace-page ${workspace === "members" ? review.review : ""}`}>
+      <div className="portal-page-intro"><WorkspacePageHeading workspace={workspace} title={staffWorkspaceLabel(workspace)} />
+      <PortalSubsections /></div>
+      {['communications','onboarding-email'].includes(workspace) && process.env.TPA_MAIL_SINK === 'true' && <p className="portal-delivery-state"><StatusBadge tone="testing">Mail sink</StatusBadge> Messages are captured locally; external delivery is disabled in this environment.</p>}
       <div className="workspace-body" data-workspace={workspace}>
       {workspace==='website'?<WebsiteControl/>:workspace === "verification" ? (
         <VerificationWorkspace />

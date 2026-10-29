@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue } from "./portal-values";
 import { WorkspacePanel, WorkspaceSteps, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { api } from "./operations-client";
@@ -653,7 +654,7 @@ export function OnboardingEmailSettings() {
       <div className="email-test-recipient-list">
       {data?.settings.test_recipients.map((r) => (
         <div className="email-test-recipient" key={r}>
-        <span>{r}</span>
+        <CopyValue value={r} />
         <button
           aria-label={`Send test to ${r}`}
           className="button secondary"

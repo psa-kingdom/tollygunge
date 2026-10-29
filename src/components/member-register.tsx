@@ -5,8 +5,10 @@ import {useSearchParams} from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { api } from "./operations-client";
 import {InvitationReleaseReview} from "./invitation-release-review";
-import { PortalIcon } from "./portal-icon";
+import { ProfilePreview, ProfileInspector } from "./profile-preview";
+import { CopyValue, StatusBadge } from "./portal-values";
 import { WorkspaceEmptyState } from "./workspace-ui";
+import { useEmailEditGuard } from "./email-edit-guard";
 type Member = {
   person_id: string;
   membership_version: number;
@@ -41,6 +43,9 @@ type Register = {
 };
 export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
   const personId=useSearchParams().get("personId");
+  const [editorDirty, setEditorDirty] = useState(false);
+  const editorGuard = useEmailEditGuard(editorDirty);
+  const closeDetails = () => editorGuard.proceed(() => { setEditorDirty(false); setSelected(undefined); });
   const [data, setData] = useState<Register>(),
     [q, setQ] = useState(""),
     [status, setStatus] = useState("all"),
@@ -49,7 +54,11 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
     [invitation, setInvitation] = useState("all"),
     [message, setMessage] = useState(""),
     [selected, setSelected] = useState<Member>();
-  async function load(offset = 0, filters = { q, status, invitation }) {
+  async function load(offset = 0, filters = { q, status, invitation }, discard = false) {
+    if (editorDirty && !discard) {
+      editorGuard.proceed(() => { setEditorDirty(false); setSelected(undefined); void load(offset, filters, true); });
+      return;
+    }
     const request = ++requestSerial.current;
     try {
       const result = await api<Register>(
@@ -62,12 +71,18 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
         );
       if (request !== requestSerial.current) return;
       setData(result);
+      setSelected(current => current && result.rows.some(row => row.person_id === current.person_id) ? current : undefined);
       setMessage("");
     } catch (e) {
       if (request === requestSerial.current) setMessage((e as Error).message);
     }
   }
   const requestSerial = useRef(0);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  const selectedButton = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (selected) detailHeading.current?.focus();
+  }, [selected]);
   useEffect(() => {
     let active = true;
     const request = ++requestSerial.current;
@@ -78,7 +93,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
     return () => { active = false; };
   }, [personId]);
   return (
-    <section className="member-register-workspace">
+    <section className="member-register-workspace" data-portal-primary>
       <h2 className="sr-only">Member register</h2>
       {personId && <Link href="/admin/workspaces/members">View all members →</Link>}
       <p>
@@ -122,14 +137,15 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
       </form>
       <div className="member-register-resultbar">
       <p>{data ? `${data.total} members` : "Loading members…"}</p>
-        <Link className="button secondary" href="/admin/workspaces/onboarding">
+        {canManage && <Link className="button secondary" href="/admin/workspaces/onboarding">
           Import / retry member records
-        </Link>
+        </Link>}
       </div>
       <div className="member-register-bulk">
       <InvitationReleaseReview personIds={chosen} canManage={canManage} onComplete={()=>{void load();setChosen([]);}} />
       <button className="button secondary" disabled={!canManage || busy} onClick={()=>setChosen(old=>[...new Set([...old,...(data?.rows??[]).filter(m=>m.user_id && !['accepted','active account'].includes(m.invitation_status)).map(m=>m.person_id)])])}>Select eligible accounts on this page</button>
       </div>
+      <div className="profile-results-layout"><div>
       <div className="table-wrap member-register-table" role="region" aria-label="Member register records" tabIndex={0}>
         <table className="operations-table">
           <thead><tr><th scope="col"><span className="sr-only">Select member</span></th><th scope="col">Member</th><th scope="col">Membership no.</th><th scope="col">Status</th><th scope="col">Account</th></tr></thead>
@@ -152,18 +168,11 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
               <span className="sr-only">Select {m.person.name}</span>
             </label></td>
             <td>
-            <button
-              type="button"
-              className="link-button member-record-button"
-              aria-label={`${m.person.name} · ${m.membership_number} · ${m.user_id ? "Account linked" : "No account"}`}
-              onClick={() => setSelected(m)}
-            >
-              <span className="member-record-identity"><strong>{m.person.name}</strong><small>{m.email || "No email recorded"}</small></span>
-              <PortalIcon name="chevron" />
-            </button>
+            <ProfilePreview key={q+status+invitation} profile={{name: m.person.name, email: m.email, phone: m.mobile, number: m.membership_number, organization: m.person.organization, emailVerified: m.email_verified, profileVerified: m.professional_verified, membershipStatus: m.status}} disabled={Boolean(selected)} selected={selected?.person_id === m.person_id} onPin={trigger => editorGuard.proceed(() => { selectedButton.current = trigger; setEditorDirty(false); setSelected(m); })} />
+            <div className="member-record-contact"><CopyValue value={m.email} /></div>
             </td>
-            <td>{m.membership_number}</td>
-            <td><span className={`member-register-status ${m.status === "active" ? "is-active" : ""}`}>{m.status || "Not recorded"}</span></td>
+            <td><CopyValue value={m.membership_number} label="membership number" /></td>
+            <td><StatusBadge tone={m.status === "active" ? "active" : m.status === "suspended" ? "error" : "neutral"}>{m.status || "Not recorded"}</StatusBadge></td>
             <td><span className="member-register-account">{m.user_id ? "Account linked" : "No account"}</span></td>
           </tr>
         ))}
@@ -187,16 +196,18 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
           </button>
         </div>
       )}
-      {selected && (
-        <section className="member-register-detail" aria-label="Member details">
-          <h3>{selected.person.name}</h3>
+      </div>{selected && (
+        <ProfileInspector returnFocus={selectedButton} label={`${selected.person.name} member details`} onClose={closeDetails}>{editorGuard.dialog}<section id="member-register-detail" className="member-register-detail" aria-label="Member details">
+          <div className="member-detail-heading">
+            <h3 ref={detailHeading} tabIndex={-1}>{selected.person.name}</h3>
+          </div>
           <dl>
             <dt>Membership number</dt>
-            <dd>{selected.membership_number}</dd>
+            <dd><CopyValue value={selected.membership_number} label="membership number" /></dd>
             <dt>Email</dt>
-            <dd>{selected.email}</dd>
+            <dd><CopyValue value={selected.email} /></dd>
             <dt>Mobile</dt>
-            <dd>{selected.mobile || "Not supplied"}</dd>
+            <dd><CopyValue value={selected.mobile} /></dd>
             <dt>Organization</dt>
             <dd>{selected.person.organization || "Not supplied"}</dd>
             <dt>Designation</dt>
@@ -229,12 +240,12 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
             </dd>
           </dl>
           <div className="action-row">
-            <button className="button secondary" disabled={!canManage || busy || !selected.user_id || ["accepted","active account"].includes(selected.invitation_status)} onClick={()=>{setChosen([selected.person_id]);setSelected(undefined);}}>Review this member invitation</button>
+            <button className="button secondary" disabled={!canManage || busy || editorDirty || !selected.user_id || ["accepted","active account"].includes(selected.invitation_status)} onClick={()=>{setChosen([selected.person_id]);setSelected(undefined);}}>Review this member invitation</button>
             <label>
               Membership status
               <select
                 value={selected.status || "unknown"}
-                disabled={!canManage || busy}
+                disabled={!canManage || busy || editorDirty}
                 onChange={async (e) => {
                   const next = e.target.value;
                   if (
@@ -274,8 +285,10 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
             <MemberEditor
               key={selected.person_id + selected.person_version}
               member={selected}
+              onDirtyChange={setEditorDirty}
               onSaved={() => {
-                void load();
+                setEditorDirty(false);
+                void load(0, {q,status,invitation}, true);
                 setSelected(undefined);
               }}
             />
@@ -311,8 +324,8 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
           >
             Open profile
           </Link>
-        </section>
-      )}
+        </section></ProfileInspector>
+      )}</div>
       <p role="status">{message}</p>
     </section>
   );

@@ -1,5 +1,5 @@
-/* Portal reference lock: Open Collective navy/white; Linear navigation and
-   compact toolbars. Emil motion: feedback only, named properties, reduced motion.
+/* Portal reference lock: Crazy Hands horizontal navigation, grouped forms and
+   compact working lists. Motion: feedback only, named properties, reduced motion.
    This local class is attached only to authenticated portal shells. */
 .portal {
   --navy: #122b4a;
@@ -619,52 +619,6 @@
 @media print {
   .portal:global(.workspace) { display: block; }
   .portal :global(:is(.portal-sidebar, .portal-topbar)) { display: none; }
-}
-
-/* Desktop navigation rail. Width changes must reflow the adjacent workspace. */
-.portal :global(.portal-nav-label) { white-space: nowrap; }
-.portal :global(.portal-collapse-toggle) {
-  display: flex; align-items: center; gap: 10px; min-height: 36px; flex-shrink: 0;
-  margin-top: 8px; padding: 8px 10px; border: 0; border-radius: 6px;
-  background: transparent; color: var(--muted); font-size: 12px; text-align: left;
-}
-.portal :global(.portal-collapse-toggle:hover) { background: var(--portal-hover); color: var(--ink); }
-.portal :global(.portal-nav-tooltip) {
-  position: fixed; z-index: 100; pointer-events: none; padding: 8px 12px;
-  border: 1px solid var(--line); border-radius: 6px; background: var(--surface);
-  color: var(--ink); font-size: 12px; line-height: 1.5; box-shadow: var(--shadow-popover);
-}
-@media (min-width: 801px) {
-  .portal:global(.workspace) { transition: grid-template-columns 240ms var(--portal-ease); }
-  .portal :global(.portal-sidebar .brand) { flex-shrink: 0; }
-  .portal :global(.portal-sidebar .brand > span:first-child) { flex-shrink: 0; }
-  .portal :global(.portal-sidebar :is(.brand-name, .portal-nav-label)) { transition: opacity 120ms ease; }
-  .portal[data-sidebar-collapsed="true"]:global(.workspace) { grid-template-columns: 72px minmax(0, 1fr); }
-  .portal[data-sidebar-collapsed="true"] :global(.portal-sidebar) { padding-inline: 12px; }
-  .portal[data-sidebar-collapsed="true"] :global(.portal-sidebar .brand) { padding-inline: 3px; }
-  .portal[data-sidebar-collapsed="true"] :global(.portal-sidebar :is(.brand-name, .portal-nav-label)) {
-    width: 0; opacity: 0; overflow: hidden; flex: 0 0 0;
-  }
-  .portal[data-sidebar-collapsed="true"] :global(.portal-workspace-label) {
-    height: 1px; overflow: hidden; color: transparent; margin: 20px 8px 16px; background: var(--line);
-  }
-  .portal[data-sidebar-collapsed="true"] :global(.portal-sidebar nav h2) {
-    height: 1px; padding: 0; margin: 12px 8px; overflow: hidden; color: transparent; background: var(--line);
-  }
-  .portal[data-sidebar-collapsed="true"] :global(.portal-sidebar nav section:first-child h2) { margin-top: 0; }
-  .portal[data-sidebar-collapsed="true"] :global(.portal-sidebar nav section) { margin-bottom: 12px; }
-  .portal[data-sidebar-collapsed="true"] :global(.portal-sidebar nav a) {
-    position: relative; justify-content: center; gap: 0; min-height: 40px; padding-inline: 0;
-  }
-  .portal[data-sidebar-collapsed="true"] :global(.nav-current-dot) { position: absolute; right: 4px; margin: 0; }
-  .portal[data-sidebar-collapsed="true"] :global(:is(.portal-collapse-toggle, .portal-public-link)) { justify-content: center; gap: 0; padding-inline: 0; }
-  .portal[data-sidebar-collapsed="true"] :global(.portal-collapse-toggle svg) { transform: rotate(180deg); }
-}
-@media (max-width: 800px) {
-  .portal :global(:is(.portal-collapse-toggle, .portal-nav-tooltip)) { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .portal:global(.workspace), .portal :global(.portal-sidebar :is(.brand-name, .portal-nav-label)) { transition: none; }
 }
 
 /* Dashboard pilot: decorative accents never carry approval or alert status. */

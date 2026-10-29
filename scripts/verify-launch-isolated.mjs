@@ -19,7 +19,7 @@ const env = { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot,
   TEMP: process.env.TEMP, TMP: process.env.TMP, USERPROFILE: process.env.USERPROFILE,
   DATABASE_URL: url.href, DATABASE_SSL: "false", TPA_DATABASE_NAME: name,
   BETTER_AUTH_URL: `http://127.0.0.1:${port}`, BETTER_AUTH_SECRET: "synthetic-launch-isolated-secret-32-characters",
-  ONBOARDING_ENABLED: "true", TPA_MAIL_SINK: "true", TPA_BROWSER_CHANNEL: process.env.TPA_BROWSER_CHANNEL ?? "",
+  ONBOARDING_ENABLED: "true", TPA_MAIL_SINK: "true", TPA_DEPLOYMENT_ENV: "testing", TPA_BROWSER_CHANNEL: process.env.TPA_BROWSER_CHANNEL ?? "",
   TPA_TEST_URL: `http://127.0.0.1:${port}`, TPA_PRIVATE_HEADER_TEST_URL: `http://127.0.0.1:${port}`, TPA_DESIGN_QA_OUTPUT: process.env.TPA_DESIGN_QA_OUTPUT, TPA_TEST_STORAGE: "false", TPA_TEST_EXPECT_STORAGE_DISABLED: "true",
   TPA_RESTRICTED_ROLE_TESTS:process.env.TPA_RESTRICTED_ROLE_TESTS,TPA_ROLE_EVIDENCE_DIR:process.env.TPA_ROLE_EVIDENCE_DIR,
   RESEND_WEBHOOK_SECRET: "whsec_" + Buffer.from("synthetic-disposable-secret").toString("base64") };
@@ -39,7 +39,7 @@ const browserOnly = process.argv.includes("--browser-only");
 const grepIndex = process.argv.indexOf("--browser-grep");
 assert.ok(grepIndex < 0 || process.argv[grepIndex + 1], "Supply a browser grep expression");
 const fileIndex = process.argv.indexOf("--browser-file");
-assert.ok(fileIndex < 0 || ["tests/browser/portal-design.spec.ts", "tests/browser/launch-v1.spec.ts"].includes(process.argv[fileIndex + 1]), "Only declared portal/release acceptance files are supported here.");
+assert.ok(fileIndex < 0 || ["tests/browser/portal-design.spec.ts", "tests/browser/portal-acceptance.spec.ts", "portal-(design|acceptance).spec.ts", "tests/browser/launch-v1.spec.ts"].includes(process.argv[fileIndex + 1]), "Only declared portal/release acceptance files are supported here.");
 let server, outageServer;
 async function run(label, args) {
   const start = performance.now();

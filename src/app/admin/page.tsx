@@ -1,3 +1,4 @@
+import { PortalSubsections } from "@/components/portal-subsections";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { currentActor } from "@/lib/actor";
@@ -7,6 +8,7 @@ import { operationalOverview } from "@/lib/operational-overview";
 import { DashboardAttention } from "@/components/dashboard-attention";
 import { PortalIcon } from "@/components/portal-icon";
 import { dashboardMetricPresentation } from "@/domain/dashboard-presentation";
+import { portalActivityLabel } from "@/domain/portal-presentation";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Staff workspace",
@@ -23,14 +25,14 @@ export default async function Admin() {
     .filter((x) => x.href !== "/admin").length;
   return (
     <main id="main" className="workspace-main portal-overview">
-      <header className="portal-page-heading">
-      <span className="eyebrow">TPA / STAFF</span>
+      <div className="portal-page-intro"><header className="portal-page-heading">
       <h1>Welcome, {actor.name}.</h1>
       <p>
         What needs your attention today? Review a record, take action, and
         confirm the outcome.
       </p>
       </header>
+      <PortalSubsections /></div>
       <div className="service-shortcuts service-metrics">
         {overview.metrics.map((m) => (
           <Link key={m.label} href={m.href} data-count={m.count} data-tone={dashboardMetricPresentation(m.label, m.count).tone}>
@@ -47,7 +49,7 @@ export default async function Admin() {
           <ul className="portal-activity-list">
           {overview.activity.map((a, index) => (
             <li key={index}>
-              <div><strong>{a.name || "System"}</strong><span> · {a.action.replaceAll(".", " ").replaceAll("_", " ")}</span></div>
+              <div><strong>{a.name || "System"}</strong><span> · {portalActivityLabel(a.action)}</span></div>
               <time dateTime={new Date(a.created_at).toISOString()}>{new Date(a.created_at).toLocaleString("en-IN", {
                 timeZone: "Asia/Kolkata",
                 day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
@@ -57,11 +59,7 @@ export default async function Admin() {
           </ul>
         </section>
       )}
-      <p>
-        <Link className="text-link" href="/preview/admin">
-          Explore the labelled design preview →
-        </Link>
-      </p>
+
     </main>
   );
 }

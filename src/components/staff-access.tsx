@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue } from "./portal-values";
 import { WorkspacePanel, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
@@ -89,8 +90,9 @@ export function StaffAccess() {
       <div className="operations-layout">
         <aside className="record-list" aria-label="Accounts">
           {directory?.people.map((person) => (
-            <button
-              key={person.id}
+            <div className="portal-person-record" key={person.id}><button
+              className="link-button portal-person-trigger"
+              aria-pressed={selected?.id === person.id}
               disabled={busy}
               onClick={() => {
                 setSelected(person);
@@ -99,13 +101,12 @@ export function StaffAccess() {
               }}
             >
               <strong>{person.name}</strong>
-              <small>{person.email}</small>
               <small>
                 {person.roles.length
                   ? person.roles.map((r) => r.replaceAll("_", " ")).join(", ")
                   : "No staff roles"}
               </small>
-            </button>
+            </button><CopyValue value={person.email} /></div>
           ))}
           {directory && !directory.people.length && (
             <WorkspaceEmptyState compact icon="people" title="No matching accounts" description="Try a different name or email address." />
@@ -151,7 +152,7 @@ export function StaffAccess() {
               }}
             >
               <h2>{selected.name}</h2>
-              <p>{selected.email}</p>
+              <p><CopyValue value={selected.email} /></p>
               {selected.id === directory?.actorId && (
                 <p className="notice">
                   Another administrator must change your access.

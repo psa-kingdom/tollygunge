@@ -128,7 +128,7 @@ test("logo reserves space, retains accessible links on failure and respects publ
     ).toBe("contain");
     await page.goto("/admin");
     await expect(
-      page.locator(".staff-sidebar img[data-tpa-logo]"),
+      page.locator(".portal-topbar img[data-tpa-logo]"),
     ).toHaveAttribute("src", "/design/tpa-logo.png");
     await page.goto("/missing/phase8b-logo");
     await page.keyboard.press("Tab");

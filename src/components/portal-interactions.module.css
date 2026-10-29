@@ -1,0 +1,273 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 5px;
+  padding: 3px 7px;
+  font:
+    600 10px/1.5 "TPA Jakarta",
+    sans-serif;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  color: #526074;
+  background: #edf0f5;
+  white-space: nowrap;
+}
+.badge::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badge[data-tone="success"] {
+  color: #17613b;
+  background: #e4f5e9;
+}
+.badge[data-tone="active"] {
+  color: #08645d;
+  background: #dff4ef;
+}
+.badge[data-tone="testing"] {
+  color: #6941aa;
+  background: #f0e9fb;
+}
+.badge[data-tone="pending"] {
+  color: #815211;
+  background: #fff1d5;
+}
+.badge[data-tone="error"] {
+  color: #a22f42;
+  background: #fde8ed;
+}
+.copyGroup {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 28px;
+  border: 0;
+  border-radius: 4px;
+  padding: 1px 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: copy;
+  user-select: text;
+}
+.copy span {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  min-width: 0;
+}
+.copy svg {
+  opacity: 0.45;
+  flex-shrink: 0;
+  transition: opacity 140ms;
+}
+.copy:hover svg,
+.copy:focus-visible svg {
+  opacity: 1;
+}
+.copyMessage {
+  color: var(--muted, #526074);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.copyMessage:empty {
+  display: none;
+}
+.quickCard,
+.inspector {
+  --ink: #182b45;
+  --surface: #fff;
+  --muted: #526074;
+  --line: #d5dfea;
+  color: var(--ink);
+  background: var(--surface);
+  font:
+    400 13px/1.55 "TPA Jakarta",
+    sans-serif;
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 50px #0d234526;
+  border-radius: 12px;
+  padding: 18px;
+  overflow-wrap: anywhere;
+}
+.quickCard {
+  z-index: 110;
+  width: min(320px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  animation: appear 180ms ease-out;
+}
+.quickCard p {
+  margin: 6px 0;
+  color: var(--muted);
+}
+.quickCard > .copyGroup {
+  display: flex;
+}
+.quickCard > button {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 40px;
+  border-radius: 7px;
+  background: #2455b6;
+  color: #fff;
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.previewHeading,
+.inspectorBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.previewHeading strong {
+  flex: 1;
+}
+.previewHeading > span {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  background: #e9effc;
+  color: #2455b6;
+  flex-shrink: 0;
+}
+.previewHeading button,
+.inspectorBar button {
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--surface);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 20px;
+  cursor: pointer;
+}
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.inspector {
+  position: fixed;
+  inset: 12px 12px 12px auto;
+  width: min(520px, calc(100vw - 24px));
+  max-width: none;
+  height: calc(100dvh - 24px);
+  max-height: none;
+  margin: 0;
+  overflow-y: auto;
+  z-index: 100;
+  animation: appear 200ms ease-out;
+}
+.inspector::backdrop {
+  background: #0e203b77;
+  backdrop-filter: blur(2px);
+}
+.inspectorBar {
+  position: sticky;
+  top: -18px;
+  margin: -18px -18px 16px;
+  padding: 12px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  justify-content: space-between;
+  z-index: 2;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.inspector button,
+.inspector input,
+.inspector select {
+  font: inherit;
+}
+:global(html[data-color-mode="dark"]) .badge {
+  color: #c3cedd;
+  background: #303d50;
+}
+:global(html[data-color-mode="dark"]) .badge[data-tone="success"] {
+  color: #9de0b9;
+  background: #173d30;
+}
+:global(html[data-color-mode="dark"]) .badge[data-tone="active"] {
+  color: #97ded5;
+  background: #173c3d;
+}
+:global(html[data-color-mode="dark"]) .badge[data-tone="testing"] {
+  color: #d4b7ff;
+  background: #382956;
+}
+:global(html[data-color-mode="dark"]) .badge[data-tone="pending"] {
+  color: #f2d18a;
+  background: #42351e;
+}
+:global(html[data-color-mode="dark"]) .badge[data-tone="error"] {
+  color: #ffb3bb;
+  background: #47232f;
+}
+:global(html[data-color-mode="dark"]) :is(.quickCard, .inspector) {
+  --ink: #e6edf7;
+  --surface: #172234;
+  --muted: #a4b3c8;
+  --line: #42516a;
+}
+@media (min-width: 1280px) {
+  .inspector {
+    position: sticky;
+    inset: auto;
+    top: 116px;
+    width: 100%;
+    height: auto;
+    max-height: calc(100dvh - 132px);
+    box-shadow: 0 3px 15px #0d23450a;
+  }
+}
+@media (max-width: 600px) {
+  .copy {
+    min-height: 38px;
+  }
+  .previewHeading button,
+  .inspectorBar button {
+    width: 44px;
+    height: 44px;
+  }
+}
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quickCard,
+  .inspector {
+    animation: none;
+  }
+  .copy svg {
+    transition: none;
+  }
+}
