@@ -210,19 +210,30 @@ export function ProfileInspector({
     const originalTrigger = returnFocus?.current ?? first.current;
     const media = matchMedia("(min-width: 1280px)");
     const sync = () => {
+      const surface = dialog.current;
+      if (!surface) return;
+      const focused = document.activeElement instanceof HTMLElement && surface.contains(document.activeElement) ? document.activeElement : null;
+      const scrollTop = surface.scrollTop;
       if (media.matches) {
-        dialog.current?.close();
-        dialog.current?.setAttribute("open", "");
+        surface.close();
+        surface.setAttribute("open", "");
       } else {
-        dialog.current?.close();
-        dialog.current?.showModal();
+        surface.close();
+        surface.showModal();
       }
-      dialog.current?.querySelector<HTMLElement>("h2,h3,button")?.focus();
+      (focused ?? surface.querySelector<HTMLElement>("h2,h3") ?? surface.querySelector<HTMLElement>("button"))?.focus({preventScroll:true});
+      surface.scrollTop = scrollTop;
     };
     sync();
     media.addEventListener("change", sync);
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        const surface = dialog.current;
+        const modal = Array.from(document.querySelectorAll<HTMLDialogElement>("dialog:modal")).at(-1);
+        if (!surface || modal && modal !== surface) return;
+        // Header popovers and nested guards dismiss before the pinned record.
+        const otherSurface = Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"],[role="alertdialog"]')).some(other => other !== surface && other.getClientRects().length > 0);
+        if (otherSurface) return;
         event.preventDefault();
         close.current();
       }
@@ -241,6 +252,8 @@ export function ProfileInspector({
       aria-label={label}
       onCancel={(event) => {
         event.preventDefault();
+        if (event.target !== event.currentTarget) return;
+        if (dialog.current?.querySelector('[role="alertdialog"]')) return;
         onClose();
       }}
     >

@@ -1,5 +1,9 @@
 # TPA horizontal portals — client review
 
+Historical checkpoint report. The user subsequently authorized final audit,
+merge and live release after validation; see
+[final release acceptance](PORTAL_RELEASE_ACCEPTANCE.md) for the current gate.
+
 This revision implements the approved horizontal Crazy Hands direction on
 `feature/crazy-hands-portal-ux`, preserving the first checkpoint `bd7d0ef` in
 Git history. Review both completed local portals before authorizing a merge or
@@ -127,8 +131,7 @@ For repeatable portal checks in this existing disposable environment:
 
 ```powershell
 node .local/portal-review/run.mjs node_modules/@playwright/test/cli.js test tests/browser/portal-design.spec.ts
-node --import tsx .local/portal-review/check-horizontal.mjs --matrix-only
-node --import tsx .local/portal-review/check-horizontal.mjs --interactions-only
+node .local/portal-review/run.mjs node_modules/@playwright/test/cli.js test tests/browser/portal-acceptance.spec.ts --project desktop
 ```
 
 The client approval decision is the appearance and usability of the completed

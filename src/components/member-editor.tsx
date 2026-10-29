@@ -23,9 +23,11 @@ type Editable = {
 export function MemberEditor({
   member,
   onSaved,
+  onDirtyChange,
 }: {
   member: Editable;
   onSaved: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [form, setForm] = useState({
       prefix: member.person.prefix || "",
@@ -46,6 +48,7 @@ export function MemberEditor({
       <summary>Edit member contact and professional details</summary>
       <form
         className="member-settings"
+        onChange={() => onDirtyChange?.(true)}
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
@@ -58,6 +61,7 @@ export function MemberEditor({
               member: form,
             });
             setMessage("Member details saved.");
+            onDirtyChange?.(false);
             onSaved();
           } catch (e) {
             setMessage((e as Error).message);

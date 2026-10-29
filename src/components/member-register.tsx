@@ -8,6 +8,7 @@ import {InvitationReleaseReview} from "./invitation-release-review";
 import { ProfilePreview, ProfileInspector } from "./profile-preview";
 import { CopyValue, StatusBadge } from "./portal-values";
 import { WorkspaceEmptyState } from "./workspace-ui";
+import { useEmailEditGuard } from "./email-edit-guard";
 type Member = {
   person_id: string;
   membership_version: number;
@@ -42,6 +43,9 @@ type Register = {
 };
 export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
   const personId=useSearchParams().get("personId");
+  const [editorDirty, setEditorDirty] = useState(false);
+  const editorGuard = useEmailEditGuard(editorDirty);
+  const closeDetails = () => editorGuard.proceed(() => { setEditorDirty(false); setSelected(undefined); });
   const [data, setData] = useState<Register>(),
     [q, setQ] = useState(""),
     [status, setStatus] = useState("all"),
@@ -50,7 +54,11 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
     [invitation, setInvitation] = useState("all"),
     [message, setMessage] = useState(""),
     [selected, setSelected] = useState<Member>();
-  async function load(offset = 0, filters = { q, status, invitation }) {
+  async function load(offset = 0, filters = { q, status, invitation }, discard = false) {
+    if (editorDirty && !discard) {
+      editorGuard.proceed(() => { setEditorDirty(false); setSelected(undefined); void load(offset, filters, true); });
+      return;
+    }
     const request = ++requestSerial.current;
     try {
       const result = await api<Register>(
@@ -85,7 +93,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
     return () => { active = false; };
   }, [personId]);
   return (
-    <section className="member-register-workspace">
+    <section className="member-register-workspace" data-portal-primary>
       <h2 className="sr-only">Member register</h2>
       {personId && <Link href="/admin/workspaces/members">View all members →</Link>}
       <p>
@@ -160,7 +168,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
               <span className="sr-only">Select {m.person.name}</span>
             </label></td>
             <td>
-            <ProfilePreview key={q+status+invitation} profile={{name: m.person.name, email: m.email, phone: m.mobile, number: m.membership_number, organization: m.person.organization, emailVerified: m.email_verified, profileVerified: m.professional_verified, membershipStatus: m.status}} disabled={Boolean(selected)} selected={selected?.person_id === m.person_id} onPin={trigger => { selectedButton.current = trigger; setSelected(m); }} />
+            <ProfilePreview key={q+status+invitation} profile={{name: m.person.name, email: m.email, phone: m.mobile, number: m.membership_number, organization: m.person.organization, emailVerified: m.email_verified, profileVerified: m.professional_verified, membershipStatus: m.status}} disabled={Boolean(selected)} selected={selected?.person_id === m.person_id} onPin={trigger => editorGuard.proceed(() => { selectedButton.current = trigger; setEditorDirty(false); setSelected(m); })} />
             <div className="member-record-contact"><CopyValue value={m.email} /></div>
             </td>
             <td><CopyValue value={m.membership_number} label="membership number" /></td>
@@ -189,7 +197,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
         </div>
       )}
       </div>{selected && (
-        <ProfileInspector returnFocus={selectedButton} label={`${selected.person.name} member details`} onClose={() => setSelected(undefined)}><section id="member-register-detail" className="member-register-detail" aria-label="Member details">
+        <ProfileInspector returnFocus={selectedButton} label={`${selected.person.name} member details`} onClose={closeDetails}>{editorGuard.dialog}<section id="member-register-detail" className="member-register-detail" aria-label="Member details">
           <div className="member-detail-heading">
             <h3 ref={detailHeading} tabIndex={-1}>{selected.person.name}</h3>
           </div>
@@ -232,12 +240,12 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
             </dd>
           </dl>
           <div className="action-row">
-            <button className="button secondary" disabled={!canManage || busy || !selected.user_id || ["accepted","active account"].includes(selected.invitation_status)} onClick={()=>{setChosen([selected.person_id]);setSelected(undefined);}}>Review this member invitation</button>
+            <button className="button secondary" disabled={!canManage || busy || editorDirty || !selected.user_id || ["accepted","active account"].includes(selected.invitation_status)} onClick={()=>{setChosen([selected.person_id]);setSelected(undefined);}}>Review this member invitation</button>
             <label>
               Membership status
               <select
                 value={selected.status || "unknown"}
-                disabled={!canManage || busy}
+                disabled={!canManage || busy || editorDirty}
                 onChange={async (e) => {
                   const next = e.target.value;
                   if (
@@ -277,8 +285,10 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
             <MemberEditor
               key={selected.person_id + selected.person_version}
               member={selected}
+              onDirtyChange={setEditorDirty}
               onSaved={() => {
-                void load();
+                setEditorDirty(false);
+                void load(0, {q,status,invitation}, true);
                 setSelected(undefined);
               }}
             />

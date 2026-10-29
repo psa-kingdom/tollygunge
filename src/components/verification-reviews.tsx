@@ -122,7 +122,7 @@ export function VerificationReviews({
               choose("");
             }}
           >
-            Review queue
+            Applications
           </button>
           <button
             aria-pressed={view === "verified"}
@@ -132,7 +132,7 @@ export function VerificationReviews({
               choose("");
             }}
           >
-            Verified accounts
+            Verified profiles
           </button>
         </div>
         <label>

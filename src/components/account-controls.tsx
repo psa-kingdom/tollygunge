@@ -10,7 +10,7 @@ import Link from "./navigation-link";
 import { SignOut } from "./auth-controls";
 import { ReportIssueLink } from "./report-issue-link";
 import { PortalIcon } from "./portal-icon";
-import { autoUpdate, flip, offset, safePolygon, shift, useFloating, useFocus, useHover, useInteractions } from "@floating-ui/react";
+import { autoUpdate, flip, offset, safePolygon, shift, useDismiss, useFloating, useFocus, useHover, useInteractions } from "@floating-ui/react";
 import { CopyValue } from "./portal-values";
 
 function usePopoverPosition(
@@ -96,17 +96,24 @@ export function AccountControls({
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const pinned = useRef(false);
-  const {refs: {setReference, setFloating}, floatingStyles, context} = useFloating({ open, onOpenChange: value => { if (!pinned.current) setOpen(value); }, placement: "bottom-end", strategy: "fixed", middleware: [offset(10), flip(), shift({padding:12})], whileElementsMounted: autoUpdate });
+  const {refs: {setReference, setFloating}, floatingStyles, context} = useFloating({ open, onOpenChange: (value, _event, reason) => {
+    if (!value && (reason === "escape-key" || reason === "outside-press")) {
+      pinned.current = false;
+      setOpen(false);
+      if (reason === "escape-key") trigger.current?.focus();
+    } else if (!pinned.current) setOpen(value);
+  }, placement: "bottom-end", strategy: "fixed", middleware: [offset(10), flip(), shift({padding:12})], whileElementsMounted: autoUpdate });
   const hover = useHover(context, { enabled: portal, delay: {open:180,close:100}, handleClose: safePolygon({buffer:6}), mouseOnly:true });
   const focus = useFocus(context, {enabled:portal});
-  const {getReferenceProps,getFloatingProps} = useInteractions([hover,focus]);
+  const floatingDismiss = useDismiss(context, {enabled:portal});
+  const {getReferenceProps,getFloatingProps} = useInteractions([hover,focus,floatingDismiss]);
   useEffect(() => {
     if (!open) return;
     const dismiss = (e: PointerEvent) => {
       if (!root.current?.contains(e.target as Node)) { pinned.current = false; setOpen(false); }
     };
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !portal) {
         pinned.current = false;
         setOpen(false);
         trigger.current?.focus();
@@ -118,7 +125,7 @@ export function AccountControls({
       document.removeEventListener("pointerdown", dismiss);
       document.removeEventListener("keydown", key);
     };
-  }, [open]);
+  }, [open, portal]);
   return (
     <div className="account-controls">
       {actor && <AttentionBell />}

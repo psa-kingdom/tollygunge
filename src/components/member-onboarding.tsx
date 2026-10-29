@@ -47,7 +47,7 @@ export function MemberOnboarding({
           : "Not verified";
   return (
     <section
-      className="member-card member-verification"
+      className="member-card member-verification" data-portal-primary
       aria-labelledby="verification-title"
     >
       <div className="member-card-heading">

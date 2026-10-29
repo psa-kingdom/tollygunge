@@ -8,6 +8,7 @@ import { operationalOverview } from "@/lib/operational-overview";
 import { DashboardAttention } from "@/components/dashboard-attention";
 import { PortalIcon } from "@/components/portal-icon";
 import { dashboardMetricPresentation } from "@/domain/dashboard-presentation";
+import { portalActivityLabel } from "@/domain/portal-presentation";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Staff workspace",
@@ -48,7 +49,7 @@ export default async function Admin() {
           <ul className="portal-activity-list">
           {overview.activity.map((a, index) => (
             <li key={index}>
-              <div><strong>{a.name || "System"}</strong><span> · {a.action.replaceAll(".", " ").replaceAll("_", " ")}</span></div>
+              <div><strong>{a.name || "System"}</strong><span> · {portalActivityLabel(a.action)}</span></div>
               <time dateTime={new Date(a.created_at).toISOString()}>{new Date(a.created_at).toLocaleString("en-IN", {
                 timeZone: "Asia/Kolkata",
                 day: "numeric", month: "short", hour: "numeric", minute: "2-digit",

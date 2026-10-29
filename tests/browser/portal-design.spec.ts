@@ -1,8 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { readFile } from "node:fs/promises";
-
-type PortalCookies = Awaited<ReturnType<ReturnType<Page["context"]>["cookies"]>>;
-const sessions = new Map<"ADMIN" | "MEMBER", PortalCookies>();
+import { signInPortal } from "../helpers/portal-browser";
 
 // Supply synthetic local accounts; these checks never change business records.
 test.beforeEach(() => {
@@ -12,25 +9,7 @@ test.beforeEach(() => {
 });
 
 async function signIn(page: Page, role: "ADMIN" | "MEMBER") {
-  const destination = role === "ADMIN" ? "/admin" : "/member";
-  if (!sessions.size && process.env.TPA_BROWSER_SESSION_FILE) {
-    const saved = JSON.parse(await readFile(process.env.TPA_BROWSER_SESSION_FILE, "utf8"));
-    for (const kind of ["ADMIN", "MEMBER"] as const) if (saved[kind]) sessions.set(kind, saved[kind]);
-  }
-  const cookies = sessions.get(role);
-  if (cookies) {
-    await page.context().addCookies(cookies);
-    await page.goto(destination);
-    await expect(page.locator(".portal-navigation")).toBeVisible();
-    return;
-  }
-  await page.goto("/login");
-  await page.getByLabel("Email", { exact: true }).fill(process.env[`TPA_UI_${role}_EMAIL`]!);
-  await page.getByLabel("Password", { exact: true }).fill(process.env[`TPA_UI_${role}_PASSWORD`]!);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.waitForURL(role === "ADMIN" ? "**/admin" : "**/member");
-  await expect(page.locator(".portal-navigation")).toBeVisible();
-  sessions.set(role, await page.context().cookies());
+  await signInPortal(page, role === "ADMIN" ? "administrator" : "member");
 }
 
 async function layoutFits(page: Page) {
@@ -642,8 +621,10 @@ test("member previews support copying, stable pinning and accessible dismissal",
     await quick.hover();
     await expect(quick).toBeVisible();
     const copy = quick.getByRole("button", {name:/^Copy .*@/}).first();
+    const copiedValue = (await copy.getAttribute("aria-label"))!.slice(5);
     await copy.click();
     await expect(quick.getByRole("status").filter({hasText:"Copied"})).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(copiedValue);
     await quick.getByRole("button", {name:"Open full details →"}).click();
   } else await first.click();
   const details = page.getByRole("dialog", {name:/member details$/});

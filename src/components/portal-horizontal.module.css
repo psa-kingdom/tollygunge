@@ -566,3 +566,19 @@
 .horizontal.horizontal :global(.portal-person-trigger) { display: grid; width: 100%; gap: 4px; padding: 0; margin: 0 0 4px; border: 0; background: transparent; color: var(--ink); text-align: left; font: inherit; }
 .horizontal :global(.portal-person-record:has([aria-pressed="true"])) { background: var(--portal-active); }
 .horizontal :global(.portal-person-trigger small) { color: var(--muted); }
+
+/* TPA overview: operational totals support the next event action rather than filling a card. */
+.horizontal.horizontal :global(.member-activity-counts) { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 0 0 16px; }
+.horizontal :global(.member-activity-counts > div) { display: flex; flex-direction: column-reverse; align-items: flex-start; justify-content: flex-end; padding: 8px 0; gap: 2px; }
+.horizontal :global(.member-upcoming-events) { list-style: none; padding: 0; margin: 8px 0 16px; }
+.horizontal :global(.member-upcoming-events li) { display: grid; gap: 7px; padding: 12px 0; border-top: 1px solid var(--line); }
+.horizontal :global(.member-upcoming-events strong) { display: block; overflow-wrap: anywhere; font-size: 13px; }
+.horizontal :global(.member-upcoming-events time) { color: var(--muted); font-size: 12px; }
+.horizontal :global(.member-upcoming-events a) { width: fit-content; padding: 4px 0; font-size: 12px; font-weight: 600; }
+.horizontal :global(.member-upcoming-events [data-tone]) { justify-self: start; max-width: 100%; white-space: normal; }
+.horizontal.horizontal :global(.member-home > header) { margin-bottom: 0; }
+.horizontal.horizontal :global(.member-home) { row-gap: 12px; }
+.horizontal :global(.verification-intro) { margin: 0 0 10px; font-size: 12px; }
+.horizontal.horizontal :global(.verification-intro + .workspace-tabs) { margin: 8px 0 12px; }
+.horizontal :global(.portal-inspector) { overscroll-behavior: contain; }
+@media(max-width:600px) { .horizontal.horizontal :global(.member-activity-counts) { gap: 8px; } .horizontal :global(.member-activity-counts dt) { font-size: 11px; } }
