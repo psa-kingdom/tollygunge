@@ -1,0 +1,568 @@
+/* Crazy Hands reference: compact utility header, horizontal section pills,
+   working lists and an adjacent inspector. Scoped to authenticated TPA portals. */
+.horizontal.horizontal:global(.workspace) {
+  display: block;
+  --page-gutter: clamp(16px, 2.3vw, 32px);
+  --member-header-offset: 100px;
+  --space-section: 16px;
+}
+.horizontal.horizontal :global(.portal-content) {
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
+.horizontal.horizontal :global(.portal-topbar) {
+  height: 58px;
+  min-height: 58px;
+  padding-block: 6px;
+  gap: 12px;
+  z-index: 70;
+}
+.horizontal :global(.portal-brand-row) {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.horizontal :global(.portal-brand-row .brand) {
+  gap: 8px;
+  min-width: 0;
+}
+.horizontal :global(.portal-brand-row .brand > span:first-child) {
+  width: 32px;
+  height: 38px;
+}
+.horizontal :global(.portal-brand-row .brand-name) {
+  font:
+    600 9px/1.5 "TPA Jakarta",
+    sans-serif;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.horizontal.horizontal :global(.portal-utilities) {
+  gap: 12px;
+}
+.horizontal :global(.portal-navigation) {
+  position: sticky;
+  top: 58px;
+  z-index: 60;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 5px;
+  height: 44px;
+  padding: 4px var(--page-gutter);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scroll-padding-inline: 16px;
+}
+.horizontal :global(:is(.portal-navigation, .portal-subsections) a) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 6px 15px;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 550;
+  text-decoration: none;
+  transition:
+    background-color 140ms,
+    color 140ms;
+}
+.horizontal :global(:is(.portal-navigation, .portal-subsections) a:hover) {
+  background: var(--portal-hover);
+  color: var(--ink);
+}
+.horizontal
+  :global(:is(.portal-navigation, .portal-subsections) a[aria-current="page"]) {
+  background: var(--portal-active);
+  color: var(--accent-text);
+  font-weight: 650;
+}
+.horizontal :global(.portal-subsections) {
+  display: flex;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px;
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+}
+.horizontal :global(.portal-subsections a) {
+  min-height: 30px;
+  font-size: 11px;
+  padding: 5px 11px;
+}
+.horizontal.horizontal
+  :global(
+    .portal-content > :is(.workspace-main, .page-content, .member-content)
+  ) {
+  max-width: 1680px;
+  padding: 16px var(--page-gutter) 36px;
+}
+.horizontal.horizontal
+  :global(:is(.workspace-main, .member-content, .page-content) h1) {
+  font-size: clamp(22px, 2vw, 28px);
+  line-height: 1.25;
+  margin: 0 0 6px;
+  letter-spacing: -0.035em;
+}
+.horizontal.horizontal
+  :global(:is(.portal-page-heading, .member-page-heading, .member-welcome)) {
+  margin: 0 0 12px;
+  gap: 12px;
+}
+.horizontal.horizontal :global(.workspace-page > header) {
+  margin: 0 0 12px;
+  gap: 12px;
+}
+.horizontal.horizontal :global(.workspace-page > header > span) {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+}
+.horizontal.horizontal :global(.workspace-page > header h1) {
+  font-size: 25px;
+}
+.horizontal.horizontal :global(.workspace-page > header p) {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.horizontal.horizontal :global(.workspace-body) {
+  margin-top: 0;
+  min-width: 0;
+}
+.horizontal.horizontal
+  :global(
+    :is(
+      .workspace-panel,
+      .member-card,
+      .member-form-card,
+      .bento-card,
+      .profile-support-card
+    )
+  ) {
+  padding: 18px;
+  margin-bottom: 14px;
+}
+.horizontal.horizontal :global(:is(.workspace-tabs, .segmented)) {
+  margin: 12px 0;
+  gap: 5px;
+  padding-bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+.horizontal.horizontal :global(:is(.workspace-tabs, .segmented) button) {
+  border-radius: 7px;
+  min-height: 34px;
+  padding: 6px 11px;
+}
+.horizontal.horizontal
+  :global(
+    :is(
+      .form-grid,
+      .member-form-card .form-grid,
+      .member-profile-editor .form-grid
+    )
+  ) {
+  gap: 12px 16px;
+}
+.horizontal.horizontal :global(:is(.review-toolbar, .crm-filters)) {
+  margin: 12px 0;
+  gap: 12px;
+}
+.horizontal.horizontal :global(.member-register-filters) {
+  padding: 16px;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+.horizontal.horizontal :global(.member-register-table :is(td, th)) {
+  padding: 10px 13px;
+  font-size: 12px;
+}
+.horizontal.horizontal :global(.member-register-table th) {
+  font-size: 10px;
+}
+.horizontal.horizontal :global(.member-record-button) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  min-height: 32px;
+  width: 100%;
+  text-align: left;
+  color: var(--ink);
+  font: inherit;
+  border: 0;
+  background: transparent;
+}
+.horizontal.horizontal :global(.member-record-button strong) {
+  flex: 1;
+  font-size: 13px;
+}
+.horizontal.horizontal :global(.member-record-avatar) {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--portal-active);
+  color: var(--accent-text);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.horizontal :global(.member-record-contact) {
+  margin-left: 41px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.horizontal.horizontal :global(.member-register-resultbar) {
+  margin: 8px 0;
+}
+.horizontal.horizontal :global(.member-register-bulk) {
+  padding: 12px 0;
+  margin: 0;
+  gap: 10px;
+}
+.horizontal.horizontal :global(.member-register-bulk > section) {
+  padding: 12px 14px;
+}
+.horizontal :global(.member-register-workspace) {
+  min-width: 0;
+}
+.horizontal :global(.member-register-workspace > p) {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.horizontal :global(.profile-results-layout) {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.horizontal.horizontal :global(.member-register-detail) {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.horizontal :global(.member-register-detail dl) {
+  margin: 12px 0;
+}
+.horizontal :global(.portal-inspector :is(dd, dt)) {
+  font-size: 12px;
+}
+.horizontal :global(.directory-layout) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+.horizontal :global(.directory-record) {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.horizontal :global(.directory-record small) {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 4px 0 0 41px;
+}
+.horizontal :global(.directory-record[aria-selected="true"]) {
+  background: var(--portal-active);
+}
+.horizontal.horizontal :global(.directory-preview) {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  margin: 0;
+}
+.horizontal.horizontal :global(.member-home) {
+  gap: 14px;
+}
+.horizontal.horizontal :global(.member-home > header) {
+  margin: 0;
+  gap: 12px;
+}
+.horizontal.horizontal :global(.member-home > header h1) {
+  font-size: clamp(22px, 2vw, 28px);
+}
+.horizontal.horizontal :global(.member-home > header p) {
+  margin: 0;
+  font-size: 12px;
+}
+.horizontal.horizontal :global(.member-home > header > span) {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+.horizontal.horizontal :global(.member-home .member-profile-summary) {
+  padding: 18px;
+}
+.horizontal.horizontal :global(.member-profile-summary h2) {
+  margin: 8px 0;
+}
+.horizontal.horizontal :global(.member-home .member-footnote) {
+  margin: 0;
+}
+.horizontal.horizontal :global(.member-event-journey) {
+  padding: 18px !important;
+}
+.horizontal.horizontal :global(.event-journey-grid) {
+  gap: 18px;
+}
+.horizontal.horizontal :global(.profile-form-section) {
+  padding-block: 16px;
+}
+.horizontal :global(:is(.page-content, .member-content) > a:first-child) {
+  display: inline-flex;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.horizontal :global(.account-menu small) {
+  overflow-wrap: anywhere;
+}
+.horizontal :global(.portal-topbar .avatar-trigger) {
+  border-radius: 50%;
+}
+@media (min-width: 1280px) {
+  .horizontal :global(.profile-results-layout:has(> .portal-inspector)) {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 380px);
+  }
+  .horizontal :global(.directory-layout:has(> .portal-inspector)) {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+  }
+}
+@media (max-width: 800px) {
+  .horizontal.horizontal:global(.workspace) {
+    display: block;
+  }
+  .horizontal.horizontal :global(.portal-topbar) {
+    min-height: 58px;
+    height: 58px;
+  }
+  .horizontal.horizontal :global(.portal-navigation) {
+    min-height: 46px;
+    height: 46px;
+    padding-block: 1px;
+  }
+  .horizontal :global(.portal-navigation a) {
+    min-height: 42px;
+  }
+  .horizontal :global(.portal-subsections a) {
+    min-height: 40px;
+  }
+  .horizontal.horizontal :global(.portal-utilities) {
+    gap: 6px;
+  }
+  .horizontal.horizontal
+    :global(.portal-topbar:has(.search-entry) .portal-utilities) {
+    width: auto;
+  }
+  .horizontal.horizontal :global(.search-entry) {
+    width: 40px;
+    height: 40px;
+    padding: 10px;
+  }
+  .horizontal :global(.search-entry :is(span, kbd)) {
+    display: none;
+  }
+  .horizontal.horizontal :global(:is(.avatar-trigger, .bell-trigger)) {
+    width: 40px;
+    height: 40px;
+  }
+  .horizontal.horizontal :global(.member-register-filters) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .horizontal.horizontal
+    :global(
+      :is(.workspace-main, .page-content, .member-content)
+        :is(
+          input:not([type="checkbox"]):not([type="radio"]):not(
+              [type="hidden"]
+            ):not([type="range"]):not([type="color"]):not([type="file"]),
+          select,
+          textarea
+        )
+    ) {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .horizontal.horizontal
+    :global(:is(.button, .workspace-tabs button, .segmented button)) {
+    min-height: 44px;
+  }
+}
+@media (max-width: 390px) {
+  .horizontal :global(.portal-brand-row) {
+    gap: 5px;
+  }
+  .horizontal :global(.portal-brand-row .brand-name) {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .horizontal :global(:is(.portal-navigation, .portal-subsections) a) {
+    transition: none;
+  }
+}
+
+.horizontal.horizontal :global(.portal-page-intro) {
+  margin-bottom: 14px;
+}
+.horizontal.horizontal :global(.portal-page-intro > header) {
+  margin: 0 0 10px;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+}
+.horizontal.horizontal :global(.portal-page-intro > header > span) {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+}
+.horizontal.horizontal :global(.portal-page-intro > header p) {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.horizontal.horizontal :global(.portal-page-intro .portal-subsections) {
+  margin-bottom: 0;
+}
+.horizontal.horizontal :global(button[data-copy-value]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  font: inherit;
+  text-align: left;
+  user-select: text;
+  cursor: copy;
+}
+.horizontal.horizontal :global(.member-register-table td) {
+  font-size: 13px;
+  padding-block: 8px;
+}
+.horizontal :global(.member-overview-activity p) {
+  color: var(--muted);
+}
+.horizontal :global(.member-activity-counts) {
+  display: grid;
+  gap: 0;
+  margin: 0 0 14px;
+}
+.horizontal :global(.member-activity-counts > div) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+  gap: 12px;
+}
+.horizontal :global(.member-activity-counts dt) {
+  font-size: 12px;
+  color: var(--muted);
+}
+.horizontal :global(.member-activity-counts dd) {
+  font-size: 24px;
+  font-weight: 650;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.horizontal :global(.portal-delivery-state) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+@media (min-width: 1024px) {
+  .horizontal.horizontal :global(.portal-page-intro) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .horizontal.horizontal :global(.portal-page-intro > header) {
+    margin: 0;
+    min-width: 0;
+  }
+  .horizontal.horizontal :global(.portal-page-intro > .portal-subsections) {
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 800px) {
+  .horizontal.horizontal :global(button[data-copy-value]) {
+    min-height: 36px;
+  }
+}
+
+.horizontal :global(:is(h1, h2, h3, [id], button, input, select, textarea, a)) {
+  scroll-margin-top: 116px;
+}
+.horizontal.horizontal
+  :global(
+    .workspace-body .flyer-workspace > section[aria-label="Flyer preview"]
+  ) {
+  top: 116px;
+}
+@media (max-width: 800px) {
+  .horizontal.horizontal
+    :global(
+      :is(.account-menu, .attention-panel, .command-dialog)
+        :is(input, select, textarea)
+    ) {
+    font-size: 16px;
+  }
+}
+
+.horizontal :global(:is(.portal-navigation, .portal-subsections) a) {
+  border-radius: 999px;
+}
+.horizontal :global(.portal-subsections) {
+  border-radius: 999px;
+}
+@media (min-width: 1024px) {
+  .horizontal.horizontal :global(.member-register-filters) {
+    grid-template-columns: minmax(180px, 2fr) minmax(130px, 1fr) minmax(
+        130px,
+        1fr
+      ) auto;
+    align-items: end;
+  }
+}
+
+.horizontal { --control-border: #75849c; }
+:global(html[data-color-mode="dark"]) .horizontal { --control-border: #7186a5; }
+.horizontal :global(:is(input,select,textarea)) { --line: var(--control-border); }
+
+.horizontal :global(.member-register-table tr.is-selected td:first-child) { box-shadow: inset 3px 0 var(--accent-text); }
+
+.horizontal :global(.portal-person-record) { padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.horizontal.horizontal :global(.portal-person-trigger) { display: grid; width: 100%; gap: 4px; padding: 0; margin: 0 0 4px; border: 0; background: transparent; color: var(--ink); text-align: left; font: inherit; }
+.horizontal :global(.portal-person-record:has([aria-pressed="true"])) { background: var(--portal-active); }
+.horizontal :global(.portal-person-trigger small) { color: var(--muted); }

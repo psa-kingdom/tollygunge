@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue } from "./portal-values";
 import { WorkspacePanel, WorkspaceSteps, WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useRef } from "react";
 import { api } from "./operations-client";
@@ -108,7 +109,7 @@ export function HistoryImport() {
                 {preview.rows.map((row) => (
                   <tr key={row.line}>
                     <td>{row.line}</td>
-                    <td>{row.email}</td>
+                    <td><CopyValue value={row.email} /></td>
                     <td>{row.eventId}</td>
                     <td>{row.attendedAt}</td>
                     <td>

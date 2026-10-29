@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue } from "./portal-values";
 import { WorkspaceEmptyState } from "./workspace-ui";
 import { EventOperations } from "./event-operations";
 import { defaultReminders, disabledReminders, istInput, istInstant, eventTime, type Speaker, type ReminderSettings } from "@/domain/event-flow";
@@ -528,7 +529,7 @@ export function EventManager({
                           <td>
                             {a.name}
                             <small>
-                              {a.email} · {a.mobile} · {a.membership_number}
+                              <CopyValue value={a.email} /> · <CopyValue value={a.mobile} /> · <CopyValue value={a.membership_number} label="membership number" />
                             </small>
                           </td>
                           <td>
@@ -629,7 +630,7 @@ export function EventManager({
           <p>Provider acceptance and delivery are separate states. Showing the latest 100 messages and reminders.</p>
           <button type="button" className="button secondary" disabled={busy || !!selected?.completed_at || !!selected?.archived_at} onClick={async () => {try {await loadDelivery(selected.id);} catch(e) {setMessage(e instanceof Error ? e.message : "Refresh failed.");}}}>Refresh delivery</button>
           {[{label:"Emails",rows:delivery.mail},{label:"Reminders",rows:delivery.reminders}].map(({label,rows}) => <details key={label}><summary>{label} ({rows.length})</summary>
-            {!rows.length ? <p>No {label.toLowerCase()} yet.</p> : <div className="table-scroll" role="region" aria-label={label} tabIndex={0}><table><thead><tr><th>Registration</th><th>Type</th><th>Time (IST)</th><th>Status / reason</th></tr></thead><tbody>{rows.map((r) => <tr key={r.id}><td>{r.registration_id}</td><td>{r.audience ?? r.kind}</td><td>{eventTime(r.due_at ?? r.created_at!)}</td><td>{r.status}{r.reason ? " · "+r.reason.replaceAll("_"," ") : ""}</td></tr>)}</tbody></table></div>}
+            {!rows.length ? <p>No {label.toLowerCase()} yet.</p> : <div className="table-scroll" role="region" aria-label={label} tabIndex={0}><table><thead><tr><th>Registration</th><th>Type</th><th>Time (IST)</th><th>Status / reason</th></tr></thead><tbody>{rows.map((r) => <tr key={r.id}><td><CopyValue value={r.registration_id} label="registration identifier" /></td><td>{r.audience ?? r.kind}</td><td>{eventTime(r.due_at ?? r.created_at!)}</td><td>{r.status}{r.reason ? " · "+r.reason.replaceAll("_"," ") : ""}</td></tr>)}</tbody></table></div>}
           </details>)}
         </section>}
         <p role="status">{message}</p>

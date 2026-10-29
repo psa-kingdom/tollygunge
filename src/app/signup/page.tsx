@@ -16,7 +16,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   if (await currentActor()) redirect(returnTo ?? "/member");
   return (
     <SiteShell>
-      <AuthLayout title="Create your TPA account" description="Start with an account. Complete your profile and apply for membership when you’re ready.">
+      <AuthLayout portalReview title="Create your TPA account" description="Start with an account. Complete your profile and apply for membership when you’re ready.">
         {process.env.ONBOARDING_ENABLED === "true" ? (
           <Signup returnTo={returnTo} />
         ) : (

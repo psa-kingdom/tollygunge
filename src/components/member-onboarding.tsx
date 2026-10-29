@@ -5,6 +5,7 @@ import { verificationSteps } from "@/domain/verification";
 import { api } from "./operations-client";
 import { VerifyEmail } from "./onboarding-auth";
 import { PortalIcon } from "./portal-icon";
+import { StatusBadge } from "./portal-values";
 type Status = {
   email: string;
   emailVerified: boolean;
@@ -55,9 +56,9 @@ export function MemberOnboarding({
           <h2 id="verification-title">Your profile verification</h2>
         </div>
         {s && (
-          <span className={"member-badge " + (s.verified ? "is-verified" : "")}>
+          <StatusBadge tone={s.verified ? "success" : review?.status === "rejected" ? "error" : "pending"}>
             {label}
-          </span>
+          </StatusBadge>
         )}
       </div>
       {attentionCount > 0 && (

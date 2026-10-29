@@ -1,3 +1,4 @@
+import { PortalSubsections } from "@/components/portal-subsections";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { currentActor } from "@/lib/actor";
@@ -23,14 +24,14 @@ export default async function Admin() {
     .filter((x) => x.href !== "/admin").length;
   return (
     <main id="main" className="workspace-main portal-overview">
-      <header className="portal-page-heading">
-      <span className="eyebrow">TPA / STAFF</span>
+      <div className="portal-page-intro"><header className="portal-page-heading">
       <h1>Welcome, {actor.name}.</h1>
       <p>
         What needs your attention today? Review a record, take action, and
         confirm the outcome.
       </p>
       </header>
+      <PortalSubsections /></div>
       <div className="service-shortcuts service-metrics">
         {overview.metrics.map((m) => (
           <Link key={m.label} href={m.href} data-count={m.count} data-tone={dashboardMetricPresentation(m.label, m.count).tone}>
@@ -57,11 +58,7 @@ export default async function Admin() {
           </ul>
         </section>
       )}
-      <p>
-        <Link className="text-link" href="/preview/admin">
-          Explore the labelled design preview →
-        </Link>
-      </p>
+
     </main>
   );
 }

@@ -1,3 +1,5 @@
+> Historical first checkpoint. The approved horizontal revision and current client handoff are documented in [PORTAL_HORIZONTAL_CLIENT_REVIEW.md](PORTAL_HORIZONTAL_CLIENT_REVIEW.md).
+
 # Portal review checkpoint — 29 October 2026
 
 The first three working screens are ready for visual review. The remaining

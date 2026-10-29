@@ -1,5 +1,5 @@
+import { PortalSubsections } from "@/components/portal-subsections";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { currentActor } from "@/lib/actor";
 import { AccountShell as SiteShell } from "@/components/site-shell";
 import { Inquiries } from "@/components/inquiries";
@@ -13,8 +13,8 @@ export default async function Page() {
   return (
     <SiteShell>
       <main id="main" className="page-content">
-        <Link href="/member">← Your member space</Link>
         <h1>Contact the secretariat</h1>
+        <PortalSubsections />
         <Inquiries />
       </main>
     </SiteShell>

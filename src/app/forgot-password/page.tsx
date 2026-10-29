@@ -1,3 +1,4 @@
+import { AuthLayout } from "@/components/auth-layout";
 import { SiteShell } from "@/components/site-shell";
 import { RecoveryRequest } from "@/components/password-controls";
 import { recoveryConfigured } from "@/lib/auth-email";
@@ -10,16 +11,12 @@ export const metadata = {
 export default function Page() {
   return (
     <SiteShell>
-      <main id="main" className="page-content">
-        <section className="login-panel">
-          <h1>Reset your password</h1>
-          <p>Request a private, single-use link that expires in 15 minutes.</p>
+      <AuthLayout portalReview title="Reset your password" description="Request a private, single-use link that expires in 15 minutes.">
           <RecoveryRequest enabled={recoveryConfigured()} />
           <p>
             <Link href="/login">Back to sign-in</Link>
           </p>
-        </section>
-      </main>
+      </AuthLayout>
     </SiteShell>
   );
 }

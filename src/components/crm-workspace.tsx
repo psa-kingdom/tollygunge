@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue } from "./portal-values";
 import { WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useEffect, useCallback } from "react";
 import { api } from "./operations-client";
@@ -283,14 +284,15 @@ export function CrmWorkspace() {
                   <dd>
                     {selected.name}
                     <br />
-                    <a href={`mailto:${selected.email}`}>{selected.email}</a>
+                    <CopyValue value={selected.email} />{" "}
+                    <a href={`mailto:${selected.email}`} aria-label={`Email ${selected.name}`}>Email ↗</a>
                     {selected.phone && (
                       <>
                         <br />
-                        <a
+                        <CopyValue value={selected.phone} />{" "}<a
                           href={`tel:${selected.phone.replace(/[^+0-9]/g, "")}`}
                         >
-                          {selected.phone}
+                          Call ↗
                         </a>
                       </>
                     )}

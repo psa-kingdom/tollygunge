@@ -38,7 +38,6 @@ export function DashboardAttention({ initialItems, workspaceCount }: { initialIt
     </section>
     <section className="bento-card bento-status">
       <span className="eyebrow">WORKSPACE STATUS</span><h2>{items.length}</h2><p>Active alerts needing attention</p><p>{workspaceCount} permitted workspaces</p>
-      <div className="portal-account-shortcuts"><Link href="/account/profile" className="text-link">Your profile →</Link><Link href="/member/security" className="text-link">Account security →</Link></div>
     </section>
   </div>;
 }

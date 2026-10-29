@@ -25,7 +25,7 @@ export function PasswordResetLanding() {
   return token ? (
     <PasswordUpdate token={token} />
   ) : (
-    <FallbackPanel kind="expiredLink" />
+    <FallbackPanel compact kind="expiredLink" />
   );
 }
 

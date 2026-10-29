@@ -10,6 +10,8 @@ import Link from "./navigation-link";
 import { SignOut } from "./auth-controls";
 import { ReportIssueLink } from "./report-issue-link";
 import { PortalIcon } from "./portal-icon";
+import { autoUpdate, flip, offset, safePolygon, shift, useFloating, useFocus, useHover, useInteractions } from "@floating-ui/react";
+import { CopyValue } from "./portal-values";
 
 function usePopoverPosition(
   open: boolean,
@@ -85,19 +87,27 @@ function ModeControl() {
 }
 export function AccountControls({
   actor,
+  portal = false,
 }: {
   actor?: { name: string; email: string; roles: string[] } | null;
+  portal?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const pinned = useRef(false);
+  const {refs: {setReference, setFloating}, floatingStyles, context} = useFloating({ open, onOpenChange: value => { if (!pinned.current) setOpen(value); }, placement: "bottom-end", strategy: "fixed", middleware: [offset(10), flip(), shift({padding:12})], whileElementsMounted: autoUpdate });
+  const hover = useHover(context, { enabled: portal, delay: {open:180,close:100}, handleClose: safePolygon({buffer:6}), mouseOnly:true });
+  const focus = useFocus(context, {enabled:portal});
+  const {getReferenceProps,getFloatingProps} = useInteractions([hover,focus]);
   useEffect(() => {
     if (!open) return;
     const dismiss = (e: PointerEvent) => {
-      if (!root.current?.contains(e.target as Node)) setOpen(false);
+      if (!root.current?.contains(e.target as Node)) { pinned.current = false; setOpen(false); }
     };
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        pinned.current = false;
         setOpen(false);
         trigger.current?.focus();
       }
@@ -114,11 +124,12 @@ export function AccountControls({
       {actor && <AttentionBell />}
       <div className="account-popover" ref={root}>
         <button
-          ref={trigger}
+          ref={node => { trigger.current = node; setReference(node); }}
+          {...getReferenceProps()}
           className="avatar-trigger"
           aria-label={actor ? "Account menu" : "Appearance settings"}
           aria-expanded={open}
-          onClick={() => setOpen(!open)}
+          onClick={() => { const next = !pinned.current; pinned.current = next; setOpen(next); }}
         >
           <span aria-hidden="true">
             {actor ? actor.name.slice(0, 1).toUpperCase() : "◐"}
@@ -127,29 +138,32 @@ export function AccountControls({
         {open && (
           <div
             className="account-menu"
+            ref={setFloating}
+            style={portal ? {...floatingStyles, right:"auto", maxHeight:"calc(100dvh - 24px)", overflowY:"auto"} : undefined}
+            {...getFloatingProps()}
             role="dialog"
             aria-label="Account settings"
             onClick={(e) => {
-              if ((e.target as HTMLElement).closest("a")) setOpen(false);
+              if ((e.target as HTMLElement).closest("a")) { pinned.current = false; setOpen(false); }
             }}
           >
             {actor && (
               <>
                 <strong>{actor.name}</strong>
-                <small>{actor.email}</small>
+                <small>{portal ? <CopyValue value={actor.email} /> : actor.email}</small>
                 <Link href="/account/profile">Your profile</Link>
                 <Link href="/member/security">Account security</Link>
                 <ReportIssueLink member />
-                <Link href={actor.roles.length ? "/admin" : "/member"}>
+                {!portal && <Link href={actor.roles.length ? "/admin" : "/member"}>
                   {actor.roles.length ? "Staff workspace" : "Member portal"}
-                </Link>
+                </Link>}
                 <Link href="/">Public website ↗</Link>
               </>
             )}
             <ModeControl />
-            <button disabled className="theme-coming">
+            {!portal && <button disabled className="theme-coming">
               Themes <span>Coming later</span>
-            </button>
+            </button>}
             {actor && <SignOut />}
           </div>
         )}

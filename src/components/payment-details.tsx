@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue } from "./portal-values";
 import { WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -426,9 +427,9 @@ export function MemberPaymentDetails({ eventPayment = false, eventId }: { eventP
           {r.details.method === "bank" ? (
             <dl>
               <dt>Account number</dt>
-              <dd>{r.details.accountNumber}</dd>
+              <dd><CopyValue value={r.details.accountNumber} label="account number" /></dd>
               <dt>IFSC</dt>
-              <dd>{r.details.ifsc}</dd>
+              <dd><CopyValue value={r.details.ifsc} label="IFSC" /></dd>
               <dt>Bank</dt>
               <dd>{r.details.bank}</dd>
               <dt>Branch</dt>
@@ -436,10 +437,10 @@ export function MemberPaymentDetails({ eventPayment = false, eventId }: { eventP
             </dl>
           ) : (
             <p>
-              UPI ID: <strong>{r.details.upiId}</strong>
+              UPI ID: <CopyValue value={r.details.upiId} label="UPI ID" />
             </p>
           )}
-          {r.details.phone && <p>Payment contact: {r.details.phone}</p>}
+          {r.details.phone && <p>Payment contact: <CopyValue value={r.details.phone} /></p>}
           {r.details.qrId && (
             <Image
               unoptimized

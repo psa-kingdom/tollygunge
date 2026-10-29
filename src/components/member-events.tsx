@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue } from "./portal-values";
 import { eventTime, type Speaker } from "@/domain/event-flow";
 import { MemberEventResources } from "./event-operations";
 import { MemberEventJourney } from "./member-event-journey";
@@ -197,7 +198,7 @@ export function MemberEvents() {
             {event.registration_id && (
               <p>
                 Registration identifier:{" "}
-                <strong>{event.registration_id}</strong>
+                <CopyValue value={event.registration_id} label="registration identifier" />
               </p>
             )}
             {event.registration_status === "registered" &&

@@ -5,7 +5,8 @@ import {useSearchParams} from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { api } from "./operations-client";
 import {InvitationReleaseReview} from "./invitation-release-review";
-import { PortalIcon } from "./portal-icon";
+import { ProfilePreview, ProfileInspector } from "./profile-preview";
+import { CopyValue, StatusBadge } from "./portal-values";
 import { WorkspaceEmptyState } from "./workspace-ui";
 type Member = {
   person_id: string;
@@ -62,6 +63,7 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
         );
       if (request !== requestSerial.current) return;
       setData(result);
+      setSelected(current => current && result.rows.some(row => row.person_id === current.person_id) ? current : undefined);
       setMessage("");
     } catch (e) {
       if (request === requestSerial.current) setMessage((e as Error).message);
@@ -127,14 +129,15 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
       </form>
       <div className="member-register-resultbar">
       <p>{data ? `${data.total} members` : "Loading members…"}</p>
-        <Link className="button secondary" href="/admin/workspaces/onboarding">
+        {canManage && <Link className="button secondary" href="/admin/workspaces/onboarding">
           Import / retry member records
-        </Link>
+        </Link>}
       </div>
       <div className="member-register-bulk">
       <InvitationReleaseReview personIds={chosen} canManage={canManage} onComplete={()=>{void load();setChosen([]);}} />
       <button className="button secondary" disabled={!canManage || busy} onClick={()=>setChosen(old=>[...new Set([...old,...(data?.rows??[]).filter(m=>m.user_id && !['accepted','active account'].includes(m.invitation_status)).map(m=>m.person_id)])])}>Select eligible accounts on this page</button>
       </div>
+      <div className="profile-results-layout"><div>
       <div className="table-wrap member-register-table" role="region" aria-label="Member register records" tabIndex={0}>
         <table className="operations-table">
           <thead><tr><th scope="col"><span className="sr-only">Select member</span></th><th scope="col">Member</th><th scope="col">Membership no.</th><th scope="col">Status</th><th scope="col">Account</th></tr></thead>
@@ -157,21 +160,11 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
               <span className="sr-only">Select {m.person.name}</span>
             </label></td>
             <td>
-            <button
-              type="button"
-              className="link-button member-record-button"
-              aria-label={`${m.person.name} · ${m.membership_number} · ${m.user_id ? "Account linked" : "No account"}`}
-              aria-expanded={selected?.person_id === m.person_id}
-              aria-controls={selected?.person_id === m.person_id ? "member-register-detail" : undefined}
-              onClick={(event) => { selectedButton.current = event.currentTarget; setSelected(m); }}
-            >
-              <span className="member-record-avatar" aria-hidden="true">{m.person.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("")}</span>
-              <span className="member-record-identity"><strong>{m.person.name}</strong><small>{m.email || "No email recorded"}</small></span>
-              <PortalIcon name="chevron" />
-            </button>
+            <ProfilePreview key={q+status+invitation} profile={{name: m.person.name, email: m.email, phone: m.mobile, number: m.membership_number, organization: m.person.organization, emailVerified: m.email_verified, profileVerified: m.professional_verified, membershipStatus: m.status}} disabled={Boolean(selected)} selected={selected?.person_id === m.person_id} onPin={trigger => { selectedButton.current = trigger; setSelected(m); }} />
+            <div className="member-record-contact"><CopyValue value={m.email} /></div>
             </td>
-            <td>{m.membership_number}</td>
-            <td><span className={`member-register-status ${m.status === "active" ? "is-active" : ""}`}>{m.status || "Not recorded"}</span></td>
+            <td><CopyValue value={m.membership_number} label="membership number" /></td>
+            <td><StatusBadge tone={m.status === "active" ? "active" : m.status === "suspended" ? "error" : "neutral"}>{m.status || "Not recorded"}</StatusBadge></td>
             <td><span className="member-register-account">{m.user_id ? "Account linked" : "No account"}</span></td>
           </tr>
         ))}
@@ -195,19 +188,18 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
           </button>
         </div>
       )}
-      {selected && (
-        <section id="member-register-detail" className="member-register-detail" aria-label="Member details">
+      </div>{selected && (
+        <ProfileInspector returnFocus={selectedButton} label={`${selected.person.name} member details`} onClose={() => setSelected(undefined)}><section id="member-register-detail" className="member-register-detail" aria-label="Member details">
           <div className="member-detail-heading">
             <h3 ref={detailHeading} tabIndex={-1}>{selected.person.name}</h3>
-            <button type="button" className="button secondary" onClick={() => { setSelected(undefined); selectedButton.current?.focus(); }}>Close details</button>
           </div>
           <dl>
             <dt>Membership number</dt>
-            <dd>{selected.membership_number}</dd>
+            <dd><CopyValue value={selected.membership_number} label="membership number" /></dd>
             <dt>Email</dt>
-            <dd>{selected.email}</dd>
+            <dd><CopyValue value={selected.email} /></dd>
             <dt>Mobile</dt>
-            <dd>{selected.mobile || "Not supplied"}</dd>
+            <dd><CopyValue value={selected.mobile} /></dd>
             <dt>Organization</dt>
             <dd>{selected.person.organization || "Not supplied"}</dd>
             <dt>Designation</dt>
@@ -322,8 +314,8 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
           >
             Open profile
           </Link>
-        </section>
-      )}
+        </section></ProfileInspector>
+      )}</div>
       <p role="status">{message}</p>
     </section>
   );

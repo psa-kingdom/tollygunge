@@ -1,4 +1,5 @@
 "use client";
+import { CopyValue, StatusBadge } from "./portal-values";
 import { useState } from "react";
 import { createAuthClient } from "better-auth/react";
 import Link from "next/link";
@@ -75,8 +76,8 @@ export function VerifyEmail({
   const [message, setMessage] = useState("");
   return (
     <section className="member-email-card">
-      <strong>Email: {verified ? "Verified" : "Not verified"}</strong>
-      <p>{email}</p>
+      <StatusBadge tone={verified ? "success" : "pending"}>Email: {verified ? "Verified" : "Not verified"}</StatusBadge>
+      {!verified && <p><CopyValue value={email} /></p>}
       {!verified && (
         <button
           id="verification-email-action"

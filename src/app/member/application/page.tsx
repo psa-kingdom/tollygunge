@@ -1,5 +1,5 @@
+import { PortalSubsections } from "@/components/portal-subsections";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { currentActor } from "@/lib/actor";
 import { AccountShell as SiteShell } from "@/components/site-shell";
 import { ApplicationDraft } from "@/components/application-draft";
@@ -17,8 +17,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
   return (
     <SiteShell>
       <main id="main" className="member-content member-application">
-        <Link href="/member">← Your member space</Link>
         <h1>Your verification details</h1>
+        <PortalSubsections />
         <ApplicationDraft name={actor.name} userId={actor.id} initialStep={initialStep} />
       </main>
     </SiteShell>

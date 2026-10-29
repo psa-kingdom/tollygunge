@@ -1,3 +1,5 @@
+import { PortalSubsections } from "@/components/portal-subsections";
+import { CopyValue } from "@/components/portal-values";
 import { redirect } from "next/navigation";
 
 import { currentActor } from "@/lib/actor";
@@ -26,18 +28,17 @@ export default async function Page() {
       <main id="main" className="member-content member-profile-page">
         <div className="member-page-heading">
           <div>
-            <span className="eyebrow">MEMBER SPACE</span>
             <h1>Your professional profile</h1>
             <p>
-              A clear identity. Meaningful connections. Your details, in your
-              control.
+              Update your professional details and public profile preferences.
             </p>
           </div>
           <div className="member-account-identity">
             <span>Account email · private</span>
-            <strong>{actor.email}</strong>
+            <CopyValue value={actor.email} />
           </div>
         </div>
+        <PortalSubsections />
 
         <MemberProfile
           storageEnabled={privateStorageConfigured()}

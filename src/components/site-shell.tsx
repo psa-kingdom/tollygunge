@@ -1,14 +1,17 @@
 import Link from "./navigation-link";
 import { currentActor } from "@/lib/actor";
 import { AccountControls } from "./account-controls";
-import { MemberNavigation } from "./member-navigation";
 import { StickyHeaderState } from "./sticky-header-state";
 import { publishedSettings, publicNavigation } from "@/lib/website-content";
 import { sharedDefaults, type SharedSettings } from "@/domain/website-settings";
 import { TpaLogo } from "./tpa-logo";
 import { PublicFooter } from "./public-footer";
-import { StaffNavigation } from "./staff-navigation";
-import { staffNavigation } from "@/domain/staff-navigation";
+import {
+  portalNavigation,
+  deploymentEnvironment,
+} from "@/domain/portal-navigation";
+import { PortalNavigation } from "./portal-navigation";
+import { StatusBadge } from "./portal-values";
 import { WorkspaceSearch } from "./workspace-search";
 import { PortalIcon } from "./portal-icon";
 import { PortalFrame } from "./portal-frame";
@@ -198,44 +201,34 @@ export function PortalShell({
 }) {
   const staff = Boolean(actor?.roles.length);
   return (
-    <PortalFrame
-      staff={staff}
-      sidebar={
-        <>
-          <Brand />
-          <p className="portal-workspace-label">
-            {staff ? "Association workspace" : "Member portal"}
-          </p>
-          {staff ? (
-            <StaffNavigation groups={staffNavigation(actor?.roles ?? [])} />
-          ) : (
-            <MemberNavigation />
-          )}
-          <Link
-            className="portal-public-link"
-            href="/"
-            aria-label="Public website"
-            data-nav-label="Public website"
-          >
-            <PortalIcon name="external" />
-            <span className="portal-nav-label">Public website</span>
-          </Link>
-        </>
-      }
-    >
+    <PortalFrame staff={staff}>
       <div className="staff-content portal-content">
         <header className="workspace-topbar portal-topbar">
-          <StickyHeaderState />
-          <div className="portal-context">
-            <span className="portal-context-mark">TPA</span>
-            <span className="portal-context-divider">/</span>
-            <span>{staff ? "Staff workspace" : "Member portal"}</span>
+          <div className="portal-brand-row">
+            <Brand />
+            {deploymentEnvironment(process.env.TPA_DEPLOYMENT_ENV) && (
+              <StatusBadge
+                tone={
+                  process.env.TPA_DEPLOYMENT_ENV === "testing"
+                    ? "testing"
+                    : process.env.TPA_DEPLOYMENT_ENV === "production"
+                      ? "active"
+                      : "neutral"
+                }
+              >
+                {process.env.TPA_DEPLOYMENT_ENV}
+              </StatusBadge>
+            )}
           </div>
           <div className="portal-utilities">
             {staff && <WorkspaceSearch />}
-            <AccountControls actor={actor} />
+            <AccountControls actor={actor} portal />
           </div>
         </header>
+        <PortalNavigation
+          groups={portalNavigation(actor?.roles ?? [])}
+          staff={staff}
+        />
         {children}
       </div>
     </PortalFrame>

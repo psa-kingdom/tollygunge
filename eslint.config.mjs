@@ -4,5 +4,6 @@ import nextTs from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores([".next/**", ".local/**", "next-env.d.ts", "references/**", "playwright-report/**", "test-results/**", "output/playwright/**/report/**"]),
+  // Browser evidence includes generated reports with vendored JavaScript bundles.
+  globalIgnores([".next/**", ".local/**", "next-env.d.ts", "references/**", "playwright-report/**", "test-results/**", "output/playwright/**"]),
 ]);

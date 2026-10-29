@@ -1,3 +1,4 @@
+import { PortalSubsections } from "@/components/portal-subsections";
 import { redirect } from "next/navigation";
 import { currentActor } from "@/lib/actor";
 import { AccountShell } from "@/components/site-shell";
@@ -13,6 +14,7 @@ export default async function Page() {
     <AccountShell>
       <main id="main" className="page-content">
         <h1>Association payment details</h1>
+        <PortalSubsections />
         <MemberPaymentDetails />
       </main>
     </AccountShell>

@@ -1,3 +1,5 @@
+> Historical first checkpoint. The approved horizontal revision and current client handoff are documented in [PORTAL_HORIZONTAL_CLIENT_REVIEW.md](PORTAL_HORIZONTAL_CLIENT_REVIEW.md).
+
 # Crazy Hands portal adaptation — client review checkpoint
 
 ## Implementation brief
