@@ -108,8 +108,10 @@ test("held account is visible, activates only after release, and retains private
     expect(restored.results[0].emailStatus).toBe("held");
     async function openHeldMember() {
       await page.getByLabel("Search members", {exact:true}).fill(user);
+      const searched = page.waitForResponse(response => response.url().includes("/api/staff/members?view=register&q=" + user));
       await page.getByRole("button", {name:"Search register",exact:true}).click();
-      await page.getByRole("button", {name:"Open Held browser member details",exact:true}).click();
+      expect((await searched).status()).toBe(200);
+      await page.getByRole("row").filter({hasText:user}).getByRole("button", {name:"Open Held browser member details",exact:true}).click();
     }
     await page.goto("/admin/workspaces/members");
     await openHeldMember();
@@ -132,14 +134,17 @@ test("held account is visible, activates only after release, and retains private
     );
     expect(noRelease.status()).toBe(409);
     for (const path of ["request-password-reset", "send-verification-email"]) {
-      expect(
-        (
-          await context.request.post(origin + "/api/auth/" + path, {
-            headers: { origin },
-            data: { email },
-          })
-        ).status(),
-      ).toBe(200);
+      const request = () => context.request.post(origin + "/api/auth/" + path, {
+        headers: { origin }, data: { email },
+      });
+      let response = await request();
+      if (response.status() === 429) {
+        const seconds = Number(response.headers()["retry-after"]) || 60;
+        console.log(`Respecting held-account ${path} rate limit (${seconds}s).`);
+        await page.waitForTimeout(seconds * 1000 + 100);
+        response = await request();
+      }
+      expect(response.status()).toBe(200);
     }
     expect(
       (
@@ -162,7 +167,7 @@ test("held account is visible, activates only after release, and retains private
       fullPage: true,
     });
     await page.goto('/admin/workspaces/communications?invitationTemplate=1');
-    await page.getByLabel('Invitation subject',{exact:true}).fill('Reviewed member invitation '+info.project.name);
+    await page.getByLabel('Invitation subject',{exact:true}).fill('Reviewed member invitation '+info.project.name+' '+batch.slice(0,8));
     await page.getByLabel('Invitation body',{exact:true}).fill('Hello {{member_name}},\n\n{{setup_link}}\n\nThis link expires in {{expiry}}.\n{{association_name}}');
     await page.getByRole('button',{name:'Save invitation draft',exact:true}).click();
     await expect(page.getByText('New draft saved. Invitation sending is blocked until approval.',{exact:false})).toBeVisible();
