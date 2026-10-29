@@ -43,12 +43,16 @@ export function ProfilePreview({
     query = useSearchParams();
   const previewKey = pathname + "?" + query + ":" + profile.name;
   const [opening, setOpening] = useState({ key: "", open: false });
+  const dismissedFocus = useRef(false);
   const open = opening.open && opening.key === previewKey;
   const setOpen = (value: boolean) =>
     setOpening({ key: previewKey, open: value });
   const { refs, floatingStyles, context } = useFloating({
     open: open && !disabled,
-    onOpenChange: setOpen,
+    onOpenChange: (value, _event, reason) => {
+      if (value && reason === "focus" && dismissedFocus.current) return;
+      setOpen(value);
+    },
     placement: "right-start",
     strategy: "fixed",
     middleware: [
@@ -86,6 +90,7 @@ export function ProfilePreview({
         type="button"
         ref={setReference}
         className="link-button member-record-button"
+        onBlurCapture={() => { dismissedFocus.current = false; }}
         {...getReferenceProps({
           onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
             setOpen(false);
@@ -125,6 +130,7 @@ export function ProfilePreview({
                   type="button"
                   aria-label="Close quick preview"
                   onClick={() => {
+                    dismissedFocus.current = true;
                     setOpen(false);
                     (reference.current as HTMLElement)?.focus();
                   }}

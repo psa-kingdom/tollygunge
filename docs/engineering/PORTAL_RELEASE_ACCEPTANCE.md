@@ -24,6 +24,9 @@ historical evidence, not acceptance of this candidate.
   underlying inspector. Filtering and changing records protect unsaved edits.
 - Account-menu Escape uses Floating UI's dismissal lifecycle, so restoring
   trigger focus after an appearance change does not reopen the panel.
+- Explicit keyboard close on a member quick card remains dismissed until focus
+  leaves and returns. Edge-position checks cover 1440, 390 and 320px with the
+  record visible in the viewport.
 - Retain TPA branding, blue primary actions, semantic status colors and both
   appearances. Public landing source and branding assets are unchanged.
 
@@ -91,16 +94,22 @@ mail/storage mocks. Folder cleanup remains separately gated.
 
 ## Final evidence
 
-- Final source build: `FeHMzpwZ8_PDffYzHCr0Y`; input digest
-  `25f9a0b9b0a4a2d9e2dfb0a4bef1c656892462447b68900802082d3df794cfe4`.
+- Final source build: `2ND-hKygBPapsc7vkCSqB`; input digest
+  `c1ce2e1a373669a417ffce5b9272d10aa290a8cf2c81487fe6394e45a399c00f`.
 - Build, worker build, typecheck, lint, unit/runtime (142/142) and indexed
   structure checks pass after the final source changes. Evidence:
-  `.local/launch-readiness/2026-10-29T16-12-01.144Z-5d2b5be7/results.json`.
+  `.local/launch-readiness/2026-10-29T16-45-25.505Z-d6791462/results.json`.
 - The first audit run passed 66 portal browser cases and the 310-state matrix;
   12 duplicate matrix/role cases were explicitly skipped. That run preceded
   the final Escape correction and is retained as baseline evidence only.
-- Both focused regressions pass against the final build: account-menu
-  dismissal and unsaved inspector/sheet edits.
+- All three focused regressions pass against the final build: account-menu
+  dismissal, unsaved inspector/sheet edits and quick-card keyboard close/edges.
+- The broad local run passed 204 browser and 29 backend checks, with 50 explicit
+  skips and one obsolete held-account selector failure. The corrected held-
+  account workflow then passed all three responsive projects. CI on `d26ca1e`
+  subsequently passed all four jobs, including 205 browser checks and 41
+  backend/runtime checks in launch operations. These precede the final quick-
+  card fix and remain baseline evidence; the final PR revision requires CI again.
 - Real local auth, applications, member accounts/imports/invitations, inquiries,
   website/media controls, event booking, manual payment verification and exports
   passed in the isolated workflow run starting `2026-10-29T15:56:07.970Z`.

@@ -368,3 +368,53 @@ test("Escape dismisses account settings after changing appearance without reopen
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator("html")).toHaveAttribute("data-color-mode", "dark");
 });
+
+test("quick cards fit viewport edges and explicit keyboard close stays dismissed", async ({
+  page,
+}) => {
+  await signInPortal(page, "administrator");
+  await page.goto("/admin/workspaces/members");
+  const records = page.getByRole("region", {
+    name: "Member register records",
+    exact: true,
+  });
+  const trigger = records
+    .getByRole("button", { name: /^Open .* details$/ })
+    .first();
+  await records
+    .getByRole("button", { name: /^Copy .*@/ })
+    .first()
+    .focus();
+  await page.keyboard.press("Shift+Tab");
+  await expect(trigger).toBeFocused();
+  const card = page.getByRole("dialog", { name: /quick preview/ });
+  await expect(card).toBeVisible();
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 600 });
+    await trigger.scrollIntoViewIfNeeded();
+    await expect
+      .poll(async () =>
+        card.evaluate((element) => {
+          const rect = element.getBoundingClientRect();
+          return (
+            rect.left >= 0 &&
+            rect.top >= 0 &&
+            rect.right <= innerWidth + 1 &&
+            rect.bottom <= innerHeight + 1
+          );
+        }),
+      )
+      .toBe(true);
+  }
+  await card
+    .getByRole("button", { name: "Close quick preview", exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
+  await expect(card).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(card).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(card).toHaveCount(0);
+});
