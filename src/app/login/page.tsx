@@ -33,6 +33,7 @@ export default async function Login({
   return (
     <SiteShell>
       <AuthLayout
+        portalReview
         title={actor && switching ? "Switch accounts" : "Welcome back"}
         description="Sign in to manage your profile, documents, and TPA activities."
       >

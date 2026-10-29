@@ -68,6 +68,11 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
     }
   }
   const requestSerial = useRef(0);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  const selectedButton = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (selected) detailHeading.current?.focus();
+  }, [selected]);
   useEffect(() => {
     let active = true;
     const request = ++requestSerial.current;
@@ -156,8 +161,11 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
               type="button"
               className="link-button member-record-button"
               aria-label={`${m.person.name} · ${m.membership_number} · ${m.user_id ? "Account linked" : "No account"}`}
-              onClick={() => setSelected(m)}
+              aria-expanded={selected?.person_id === m.person_id}
+              aria-controls={selected?.person_id === m.person_id ? "member-register-detail" : undefined}
+              onClick={(event) => { selectedButton.current = event.currentTarget; setSelected(m); }}
             >
+              <span className="member-record-avatar" aria-hidden="true">{m.person.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("")}</span>
               <span className="member-record-identity"><strong>{m.person.name}</strong><small>{m.email || "No email recorded"}</small></span>
               <PortalIcon name="chevron" />
             </button>
@@ -188,8 +196,11 @@ export function MemberRegister({ canManage = false }: { canManage?: boolean }) {
         </div>
       )}
       {selected && (
-        <section className="member-register-detail" aria-label="Member details">
-          <h3>{selected.person.name}</h3>
+        <section id="member-register-detail" className="member-register-detail" aria-label="Member details">
+          <div className="member-detail-heading">
+            <h3 ref={detailHeading} tabIndex={-1}>{selected.person.name}</h3>
+            <button type="button" className="button secondary" onClick={() => { setSelected(undefined); selectedButton.current?.focus(); }}>Close details</button>
+          </div>
           <dl>
             <dt>Membership number</dt>
             <dd>{selected.membership_number}</dd>

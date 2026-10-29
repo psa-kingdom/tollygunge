@@ -22,6 +22,8 @@ import { staffWorkspaceLabel } from "@/domain/staff-navigation";
 import { MembersWorkspace } from "@/components/members-workspace";
 import { WorkspacePageHeading } from "@/components/workspace-ui";
 import {WebsiteControl} from '@/components/website-control';
+import { PortalReviewHeading } from "@/components/portal-review";
+import review from "@/components/portal-review.module.css";
 const permissions: Record<string, Permission> = {
   verification: "members:review",
   onboarding: "staff:manage",
@@ -70,9 +72,9 @@ export default async function Workspace({
   )
     notFound();
   return (
-    <main id="main" className="workspace-main workspace-page">
+    <main id="main" className={`workspace-main workspace-page ${workspace === "members" ? review.review : ""}`}>
       <Link href="/admin">← Staff workspace</Link>
-      <WorkspacePageHeading workspace={workspace} title={staffWorkspaceLabel(workspace)} />
+      {workspace === "members" ? <PortalReviewHeading /> : <WorkspacePageHeading workspace={workspace} title={staffWorkspaceLabel(workspace)} />}
       <div className="workspace-body" data-workspace={workspace}>
       {workspace==='website'?<WebsiteControl/>:workspace === "verification" ? (
         <VerificationWorkspace />

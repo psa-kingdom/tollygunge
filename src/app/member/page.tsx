@@ -5,6 +5,8 @@ import Link from "next/link";
 import { AccountShell as SiteShell } from "@/components/site-shell";
 import { currentActor } from "@/lib/actor";
 import { PortalIcon } from "@/components/portal-icon";
+import { MemberReviewHeading } from "@/components/portal-review";
+import review from "@/components/portal-review.module.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -18,17 +20,8 @@ export default async function Member() {
   const attention = await attentionFor(actor);
   return (
     <SiteShell>
-      <main id="main" className="page-content member-home">
-        <header className="member-welcome">
-          <div>
-            <span className="eyebrow">YOUR MEMBER SPACE</span>
-            <h1>Hello, {actor.name}.</h1>
-            <p>{actor.email}</p>
-          </div>
-          <span className="member-welcome-mark" aria-hidden="true">
-            tpa<span>·</span>
-          </span>
-        </header>
+      <main id="main" className={`page-content member-home ${review.review} ${review.memberHome}`}>
+        <MemberReviewHeading name={actor.name} email={actor.email} />
         {process.env.ONBOARDING_ENABLED === "true" ? (
           <MemberOnboarding attentionCount={attention.length} />
         ) : (
@@ -38,6 +31,7 @@ export default async function Member() {
         )}
         <section className="member-card member-profile-summary">
           <div>
+            <span className={review.profileIcon} aria-hidden="true"><PortalIcon name="profile" /></span>
             <span className="eyebrow">PERSONAL PROFILE</span>
             <h2>Your presence at TPA</h2>
             <p>
