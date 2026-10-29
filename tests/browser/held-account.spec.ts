@@ -106,10 +106,13 @@ test("held account is visible, activates only after release, and retains private
     ).json();
     expect(restored.mode).toBe("approved-accounts");
     expect(restored.results[0].emailStatus).toBe("held");
+    async function openHeldMember() {
+      await page.getByLabel("Search members", {exact:true}).fill(user);
+      await page.getByRole("button", {name:"Search register",exact:true}).click();
+      await page.getByRole("button", {name:"Open Held browser member details",exact:true}).click();
+    }
     await page.goto("/admin/workspaces/members");
-    await page
-      .getByRole("button", { name: `Held browser member · ${user} · Account linked`, exact: true })
-      .click();
+    await openHeldMember();
     const details = page.getByRole("region", { name: "Member details" });
     await expect(
       details.getByText("Required after activation", { exact: true }),
@@ -171,7 +174,7 @@ test("held account is visible, activates only after release, and retains private
     await page.goto('/admin');
     await page.getByRole('link',{name:/Invitations held/}).click();
     await expect(page.getByRole('combobox',{name:'Invitations',exact:true})).toHaveValue('held');
-    await page.getByRole('button',{name:`Held browser member · ${user} · Account linked`,exact:true}).click();
+    await openHeldMember();
     await page.getByRole('button',{name:'Review this member invitation',exact:true}).click();
     await page.getByRole('button',{name:'Review invitations for 1 selected members',exact:true}).click();
     await expect(page.getByRole('heading',{name:'Invitation recipient review',exact:true})).toBeVisible();
