@@ -610,6 +610,52 @@ try {
     p.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
     p.on("pageerror", (e) => browserErrors.push(e.message));
     const axe = resolve("node_modules/axe-core/axe.min.js");
+    async function openWorkspace(path: string, reload = false) {
+      // Preview frames and header polling need not settle before editing.
+      // Wait for protected data and usable controls on navigation and reload.
+      const workspace = path.split("/").at(-1)!;
+      const endpoint =
+        workspace === "website" ? "website-settings" : workspace;
+      const ready = p.waitForResponse(
+        (response) =>
+          new URL(response.url()).pathname === `/api/staff/${endpoint}` &&
+          response.request().method() === "GET",
+      );
+      if (reload) await p.reload({ waitUntil: "domcontentloaded" });
+      else await p.goto(base + path, { waitUntil: "domcontentloaded" });
+      assert.equal(
+        (await ready).status(),
+        200,
+        `${workspace} data must load`,
+      );
+      await expect(p.getByRole("heading", { level: 1 })).toBeVisible();
+      const loading: Record<string, string> = {
+        governance: "Loading people…",
+        website: "Loading…",
+        content: "Loading content…",
+        media: "Loading media…",
+      };
+      await expect(
+        p.locator(".workspace-body").getByText(loading[workspace], { exact: true }),
+      ).toHaveCount(0);
+      if (workspace === "media")
+        await expect(
+          p.getByRole("button", { name: "New image", exact: true }),
+        ).toBeVisible();
+      else
+        await expect(
+          p.getByRole("tablist", {
+            name:
+              workspace === "governance"
+                ? "People workspace"
+                : workspace === "website"
+                  ? "Website controls"
+                  : "Content workspace views",
+            exact: true,
+          }),
+        ).toBeVisible();
+      await p.evaluate(() => document.fonts.ready);
+    }
     for (const width of [1440, 768, 390, 320]) {
       await p.setViewportSize({ width, height: 1000 });
       for (const path of [
@@ -618,49 +664,7 @@ try {
         "/admin/workspaces/content",
         "/admin/workspaces/media",
       ]) {
-        // Header polling can keep the network active after the workspace is
-        // usable. Wait for its protected data and rendered controls instead.
-        const workspace = path.split("/").at(-1)!;
-        const endpoint =
-          workspace === "website" ? "website-settings" : workspace;
-        const ready = p.waitForResponse(
-          (response) =>
-            new URL(response.url()).pathname === `/api/staff/${endpoint}` &&
-            response.request().method() === "GET",
-        );
-        await p.goto(base + path, { waitUntil: "domcontentloaded" });
-        assert.equal(
-          (await ready).status(),
-          200,
-          `${workspace} data must load`,
-        );
-        await expect(p.getByRole("heading", { level: 1 })).toBeVisible();
-        const loading: Record<string, string> = {
-          governance: "Loading people…",
-          website: "Loading…",
-          content: "Loading content…",
-          media: "Loading media…",
-        };
-        await expect(
-          p.locator(".workspace-body").getByText(loading[workspace], { exact: true }),
-        ).toHaveCount(0);
-        if (workspace === "media")
-          await expect(
-            p.getByRole("button", { name: "New image", exact: true }),
-          ).toBeVisible();
-        else
-          await expect(
-            p.getByRole("tablist", {
-              name:
-                workspace === "governance"
-                  ? "People workspace"
-                  : workspace === "website"
-                    ? "Website controls"
-                    : "Content workspace views",
-              exact: true,
-            }),
-          ).toBeVisible();
-        await p.evaluate(() => document.fonts.ready);
+        await openWorkspace(path);
         await p.addScriptTag({ path: axe });
         const checks = await p.evaluate(async () => {
           const a = (
@@ -695,7 +699,7 @@ try {
       }
     }
     await p.setViewportSize({ width: 1440, height: 1000 });
-    await p.goto(base + "/admin/workspaces/governance");
+    await openWorkspace("/admin/workspaces/governance");
     await p
       .getByRole("combobox", { name: "Show", exact: true })
       .selectOption("association");
@@ -706,7 +710,7 @@ try {
     await expect(
       p.getByRole("textbox", { name: /Biography heading/ }),
     ).toHaveValue("Career and contribution");
-    await p.goto(base + "/admin/workspaces/website");
+    await openWorkspace("/admin/workspaces/website");
     await expect(p).toHaveURL(base + "/admin/workspaces/website");
     await p.getByRole("tab", { name: "Homepage", exact: true }).click();
     await p.getByRole("combobox", { name: "Settings group", exact: true }).selectOption("copy");
@@ -719,7 +723,7 @@ try {
     await title.fill("UI managed homepage");
     await p.getByRole("button", { name: "Save draft", exact: true }).click();
     await expect(p.getByRole("status")).toContainText("Draft saved");
-    await p.reload();
+    await openWorkspace("/admin/workspaces/website", true);
     await p.getByRole("tab", { name: "Homepage", exact: true }).click();
     await p.getByRole("combobox", { name: "Settings group", exact: true }).selectOption("copy");
     await p.locator("summary").filter({ hasText: /^Copy$/ }).click();
@@ -728,7 +732,7 @@ try {
       .getByRole("button", { name: "Publish saved draft", exact: true })
       .click();
     await expect(p.getByRole("status")).toContainText("Published");
-    await p.goto(base + "/");
+    await p.goto(base + "/", { waitUntil: "domcontentloaded" });
     await expect(p.getByRole("heading", { level: 1 })).toContainText(
       "UI managed homepage",
     );
@@ -736,12 +740,12 @@ try {
       path: dir + "/public-home-managed.png",
       fullPage: true,
     });
-    await p.goto(base + "/admin/workspaces/content");
+    await openWorkspace("/admin/workspaces/content");
     await p.getByRole("button", { name: /^Synthetic page/ }).click();
     await p.getByRole("textbox", { name: "Title", exact: true }).fill("Synthetic browser page");
     await p.getByRole("button", { name: "Save draft", exact: true }).click();
     await expect(p.getByRole("status")).toContainText("Draft saved");
-    await p.reload();
+    await openWorkspace("/admin/workspaces/content", true);
     await p.getByRole("button", { name: /^Synthetic browser page/ }).click();
     await expect(p.getByRole("textbox", { name: "Title", exact: true })).toHaveValue("Synthetic browser page");
     await p.getByRole("tab", { name: "Preview", exact: true }).click();
@@ -761,7 +765,7 @@ try {
     assert.equal(restoredContent.published, null);
     pass("Actual Content editor saves/reloads, previews, publishes, withdraws, archives and restores privately");
 
-    await p.goto(base + "/admin/workspaces/media");
+    await openWorkspace("/admin/workspaces/media");
     const { default: sharp } = await import("sharp");
     const syntheticImage = await sharp({ create: { width: 80, height: 40, channels: 4, background: "#315d7a" } }).png().toBuffer();
     await p.locator('input[type="file"]').setInputFiles({ name: "synthetic-qa.png", mimeType: "image/png", buffer: syntheticImage });
@@ -775,7 +779,7 @@ try {
     await expect(p.getByRole("status")).toContainText("Draft details saved");
     await p.getByRole("button", { name: "Publish saved image and description", exact: true }).click();
     await expect(p.getByRole("status")).toContainText("now public");
-    await p.reload();
+    await openWorkspace("/admin/workspaces/media", true);
     await p.getByRole("button", { name: /^Synthetic browser image revised/ }).click();
     await expect(p.getByRole("textbox", { name: "Title", exact: true })).toHaveValue("Synthetic browser image revised");
     await p.getByRole("button", { name: "Unpublish image", exact: true }).click();
