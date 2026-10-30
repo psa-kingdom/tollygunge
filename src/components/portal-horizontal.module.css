@@ -33,8 +33,9 @@
   height: 38px;
 }
 .horizontal :global(.portal-brand-row .brand-name) {
+  display: inline;
   font:
-    600 9px/1.5 "TPA Jakarta",
+    800 23px/1 "TPA Jakarta",
     sans-serif;
   letter-spacing: 0;
   color: var(--ink);
@@ -412,7 +413,8 @@
     gap: 5px;
   }
   .horizontal :global(.portal-brand-row .brand-name) {
-    display: none;
+    display: inline;
+    font-size: 21px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -548,37 +550,280 @@
 }
 @media (min-width: 1024px) {
   .horizontal.horizontal :global(.member-register-filters) {
-    grid-template-columns: minmax(180px, 2fr) minmax(130px, 1fr) minmax(
-        130px,
-        1fr
-      ) auto;
+    grid-template-columns:
+      minmax(180px, 2fr) minmax(130px, 1fr) minmax(130px, 1fr)
+      auto;
     align-items: end;
   }
 }
 
-.horizontal { --control-border: #75849c; }
-:global(html[data-color-mode="dark"]) .horizontal { --control-border: #7186a5; }
-.horizontal :global(:is(input,select,textarea)) { --line: var(--control-border); }
+.horizontal {
+  --control-border: #75849c;
+}
+:global(html[data-color-mode="dark"]) .horizontal {
+  --control-border: #7186a5;
+}
+.horizontal :global(:is(input, select, textarea)) {
+  --line: var(--control-border);
+}
 
-.horizontal :global(.member-register-table tr.is-selected td:first-child) { box-shadow: inset 3px 0 var(--accent-text); }
+.horizontal :global(.member-register-table tr.is-selected td:first-child) {
+  box-shadow: inset 3px 0 var(--accent-text);
+}
 
-.horizontal :global(.portal-person-record) { padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--surface); }
-.horizontal.horizontal :global(.portal-person-trigger) { display: grid; width: 100%; gap: 4px; padding: 0; margin: 0 0 4px; border: 0; background: transparent; color: var(--ink); text-align: left; font: inherit; }
-.horizontal :global(.portal-person-record:has([aria-pressed="true"])) { background: var(--portal-active); }
-.horizontal :global(.portal-person-trigger small) { color: var(--muted); }
+.horizontal :global(.portal-person-record) {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.horizontal.horizontal :global(.portal-person-trigger) {
+  display: grid;
+  width: 100%;
+  gap: 4px;
+  padding: 0;
+  margin: 0 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+}
+.horizontal :global(.portal-person-record:has([aria-pressed="true"])) {
+  background: var(--portal-active);
+}
+.horizontal :global(.portal-person-trigger small) {
+  color: var(--muted);
+}
 
 /* TPA overview: operational totals support the next event action rather than filling a card. */
-.horizontal.horizontal :global(.member-activity-counts) { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 0 0 16px; }
-.horizontal :global(.member-activity-counts > div) { display: flex; flex-direction: column-reverse; align-items: flex-start; justify-content: flex-end; padding: 8px 0; gap: 2px; }
-.horizontal :global(.member-upcoming-events) { list-style: none; padding: 0; margin: 8px 0 16px; }
-.horizontal :global(.member-upcoming-events li) { display: grid; gap: 7px; padding: 12px 0; border-top: 1px solid var(--line); }
-.horizontal :global(.member-upcoming-events strong) { display: block; overflow-wrap: anywhere; font-size: 13px; }
-.horizontal :global(.member-upcoming-events time) { color: var(--muted); font-size: 12px; }
-.horizontal :global(.member-upcoming-events a) { width: fit-content; padding: 4px 0; font-size: 12px; font-weight: 600; }
-.horizontal :global(.member-upcoming-events [data-tone]) { justify-self: start; max-width: 100%; white-space: normal; }
-.horizontal.horizontal :global(.member-home > header) { margin-bottom: 0; }
-.horizontal.horizontal :global(.member-home) { row-gap: 12px; }
-.horizontal :global(.verification-intro) { margin: 0 0 10px; font-size: 12px; }
-.horizontal.horizontal :global(.verification-intro + .workspace-tabs) { margin: 8px 0 12px; }
-.horizontal :global(.portal-inspector) { overscroll-behavior: contain; }
-@media(max-width:600px) { .horizontal.horizontal :global(.member-activity-counts) { gap: 8px; } .horizontal :global(.member-activity-counts dt) { font-size: 11px; } }
+.horizontal.horizontal :global(.member-activity-counts) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+}
+.horizontal :global(.member-activity-counts > div) {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 8px 0;
+  gap: 2px;
+}
+.horizontal :global(.member-upcoming-events) {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 16px;
+}
+.horizontal :global(.member-upcoming-events li) {
+  display: grid;
+  gap: 7px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.horizontal :global(.member-upcoming-events strong) {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.horizontal :global(.member-upcoming-events time) {
+  color: var(--muted);
+  font-size: 12px;
+}
+.horizontal :global(.member-upcoming-events a) {
+  width: fit-content;
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.horizontal :global(.member-upcoming-events [data-tone]) {
+  justify-self: start;
+  max-width: 100%;
+  white-space: normal;
+}
+.horizontal.horizontal :global(.member-home > header) {
+  margin-bottom: 0;
+}
+.horizontal.horizontal :global(.member-home) {
+  row-gap: 12px;
+}
+.horizontal :global(.verification-intro) {
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+.horizontal.horizontal :global(.verification-intro + .workspace-tabs) {
+  margin: 8px 0 12px;
+}
+.horizontal :global(.portal-inspector) {
+  overscroll-behavior: contain;
+}
+@media (max-width: 600px) {
+  .horizontal.horizontal :global(.member-activity-counts) {
+    gap: 8px;
+  }
+  .horizontal :global(.member-activity-counts dt) {
+    font-size: 11px;
+  }
+}
+.horizontal :global(.portal-section-tools) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+.horizontal :global(.portal-audience-label) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.horizontal.horizontal :global(.portal-audience-label select) {
+  width: auto;
+  max-width: 210px;
+  min-height: 36px;
+  margin: 0;
+  padding: 6px 28px 6px 10px;
+  font-size: 12px;
+  color: var(--ink);
+}
+.horizontal :global(.portal-section-tools .portal-subsections) {
+  margin: 0;
+  min-width: 0;
+}
+.horizontal.horizontal :global(.directory-extra-filters) {
+  grid-column: 1/-1;
+  width: 100%;
+}
+.horizontal :global(.directory-extra-filters summary) {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 0;
+}
+.horizontal :global(.directory-extra-filters .form-grid) {
+  margin-top: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.horizontal :global(.participant-directory) {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+.horizontal :global(.participant-heading) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.horizontal :global(.participant-heading h2) {
+  font-size: 17px;
+  margin: 0 0 4px;
+}
+.horizontal :global(.participant-heading p) {
+  font-size: 12px;
+  margin: 0;
+  color: var(--muted);
+}
+.horizontal :global(.participant-filters) {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.3fr) minmax(160px, 1fr) minmax(130px, 0.7fr)
+    auto;
+  align-items: end;
+  gap: 12px;
+  padding: 12px;
+  background: var(--portal-active);
+  border-radius: 12px;
+}
+.horizontal :global(.participant-filters label) {
+  min-width: 0;
+  font-size: 12px;
+}
+.horizontal :global(.participant-filters :is(input, select)) {
+  width: 100%;
+  min-width: 0;
+}
+.horizontal :global(.participant-count) {
+  font-size: 12px;
+  color: var(--muted);
+}
+.horizontal :global(.participant-directory .action-row) {
+  margin-top: 14px;
+}
+@media (min-width: 1024px) {
+  .horizontal.horizontal :global(.member-register-filters) {
+    grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(120px, 1fr)) auto;
+  }
+}
+@media (max-width: 1100px) {
+  .horizontal :global(.portal-section-tools) {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .horizontal :global(.participant-filters) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1023px) {
+  .horizontal :global(.portal-section-tools) {
+    justify-content: flex-start;
+    margin-top: 10px;
+  }
+}
+@media (max-width: 600px) {
+  .horizontal :global(.portal-brand-row) {
+    gap: 8px;
+  }
+  .horizontal :global(.portal-utilities) {
+    gap: 6px;
+  }
+  .horizontal :global(.portal-topbar) {
+    gap: 8px;
+  }
+  .horizontal :global(.portal-section-tools) {
+    display: block;
+  }
+  .horizontal :global(.portal-audience-label) {
+    margin-bottom: 8px;
+  }
+  .horizontal.horizontal :global(.portal-audience-label select) {
+    min-height: 40px;
+    font-size: 16px;
+    max-width: 100%;
+  }
+  .horizontal :global(.participant-heading) {
+    display: block;
+  }
+  .horizontal :global(.participant-heading > a) {
+    margin-top: 10px;
+  }
+  .horizontal :global(.participant-filters) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .horizontal :global(.directory-extra-filters .form-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .horizontal.horizontal.horizontal :global(.member-register-filters) {
+    grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(120px, 1fr)) auto;
+  }
+  .horizontal.horizontal.horizontal
+    :global(.member-register-filters > label:first-child) {
+    grid-column: auto;
+  }
+}
+.horizontal.horizontal :global(.member-register-table table) {
+  min-width: 960px;
+}
+.horizontal.horizontal
+  :global(.member-register-table :is(th, td):nth-child(2)) {
+  min-width: 240px;
+}
+.horizontal.horizontal :global(.participant-directory table) {
+  min-width: 700px;
+}

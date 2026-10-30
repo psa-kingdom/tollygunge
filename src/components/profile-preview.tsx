@@ -58,7 +58,7 @@ export function ProfilePreview({
     middleware: [
       offset(8),
       flip({ fallbackPlacements: ["left-start", "bottom-start", "top-start"] }),
-      shift({ padding: 12 }),
+      shift({ padding: 12, crossAxis: true }),
     ],
     whileElementsMounted: autoUpdate,
   });

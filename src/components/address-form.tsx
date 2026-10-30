@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { emptyAddress, type StructuredAddress } from "@/domain/address";
 type Candidate = Pick<
   StructuredAddress,
@@ -55,6 +55,15 @@ export function AddressForm({
     candidates?: Candidate[];
   }>({});
   const pinRequest = useRef<AbortController | null>(null);
+  const latestAddress = useRef(address);
+  const automaticPin = useRef(
+    value?.state && value?.district && value?.postalLocality
+      ? value.postalCode
+      : "",
+  );
+  useEffect(() => {
+    latestAddress.current = address;
+  }, [address]);
   const key = new URLSearchParams({
     state: address.state,
     district: address.district,
@@ -80,8 +89,10 @@ export function AddressForm({
   const data = current?.data,
     loading = !current && address.country === "IN";
   function change(field: keyof StructuredAddress, text: string) {
-    pinRequest.current?.abort();
-    setPinState({});
+    if (field !== "line1" && field !== "line2") {
+      pinRequest.current?.abort();
+      setPinState({});
+    }
     let next = { ...address, [field]: text };
     if (field === "country")
       next = {
@@ -100,18 +111,26 @@ export function AddressForm({
       };
     if (field === "district")
       next = { ...next, city: "", postalLocality: "", postalCode: "" };
-    if (field === "city" || field === "postalLocality")
+    if (
+      field === "postalLocality" &&
+      !data?.localities.some(
+        (r) => r.locality === text && r.pin === address.postalCode,
+      )
+    )
       next = { ...next, postalCode: "" };
+    if (field === "postalCode" && address.country === "IN")
+      next = { ...next, state: "", district: "", city: "", postalLocality: "" };
     onChange(next);
   }
-  async function resolvePin() {
+  const resolvePin = useCallback(async () => {
+    const requested = latestAddress.current;
     pinRequest.current?.abort();
     const controller = new AbortController();
     pinRequest.current = controller;
     setPinState({ busy: true, message: "Looking up postal localities…" });
     try {
       const response = await fetch(
-        `/api/member/locations?pin=${encodeURIComponent(address.postalCode)}`,
+        `/api/member/locations?pin=${encodeURIComponent(requested.postalCode)}`,
         { signal: controller.signal },
       );
       const result: Locations & { error?: string } = await response.json();
@@ -124,7 +143,7 @@ export function AddressForm({
         postalCode: r.pin,
       }));
       if (candidates.length === 1) {
-        onChange({ ...address, city: "", ...candidates[0] });
+        onChange({ ...latestAddress.current, city: "", ...candidates[0] });
         setPinState({
           message:
             "State, District and postal locality filled from PIN. Review these details.",
@@ -134,7 +153,7 @@ export function AddressForm({
           districts = [...new Set(candidates.map((c) => c.district))];
         if (states.length === 1 && districts.length === 1)
           onChange({
-            ...address,
+            ...latestAddress.current,
             state: states[0],
             district: districts[0],
             city: "",
@@ -156,7 +175,29 @@ export function AddressForm({
               : "PIN lookup failed. Try again.",
         });
     }
-  }
+  }, [onChange]);
+  useEffect(() => {
+    if (
+      !editing ||
+      address.country !== "IN" ||
+      !/^[1-9]\d{5}$/.test(address.postalCode)
+    ) {
+      automaticPin.current = "";
+      return;
+    }
+    if (automaticPin.current === address.postalCode) return;
+    automaticPin.current = address.postalCode;
+    if (address.state && address.district && address.postalLocality) return;
+    void resolvePin();
+  }, [
+    address.country,
+    address.postalCode,
+    address.state,
+    address.district,
+    address.postalLocality,
+    editing,
+    resolvePin,
+  ]);
   function input(
     field: keyof StructuredAddress,
     label: string,
@@ -279,7 +320,9 @@ export function AddressForm({
               have been guessed.
             </p>
           )}
-          <h4>Location</h4>
+          <h4>
+            {address.country === "IN" ? "Start with your PIN" : "Location"}
+          </h4>
           <div className="form-grid address-location-grid">
             <label htmlFor={`${id}-country`}>
               Country
@@ -295,6 +338,30 @@ export function AddressForm({
                 ))}
               </select>
             </label>
+            {input(
+              "postalCode",
+              address.country === "IN" ? "PIN" : "Postal code",
+              true,
+            )}
+            {address.country === "IN" && (
+              <div className="postal-assistance form-span">
+                <button
+                  type="button"
+                  className="button secondary"
+                  disabled={
+                    !/^[1-9]\d{5}$/.test(address.postalCode) || pinState.busy
+                  }
+                  onClick={resolvePin}
+                >
+                  {pinState.busy ? "Looking up…" : "Fill from PIN"}
+                </button>
+                <small>
+                  Enter your six-digit PIN to fill State and District
+                  automatically. Choose a postal locality if prompted, then
+                  enter your house, building or colony below.
+                </small>
+              </div>
+            )}
             {address.country === "IN" ? (
               <>
                 {select(
@@ -336,29 +403,6 @@ export function AddressForm({
                 {input("district", "District (optional)", true)}
                 {input("city", "City / locality", true)}
               </>
-            )}
-            {input(
-              "postalCode",
-              address.country === "IN" ? "PIN" : "Postal code",
-              true,
-            )}
-            {address.country === "IN" && (
-              <div className="postal-assistance">
-                <button
-                  type="button"
-                  className="button secondary"
-                  disabled={
-                    !/^[1-9]\d{5}$/.test(address.postalCode) || pinState.busy
-                  }
-                  onClick={resolvePin}
-                >
-                  {pinState.busy ? "Looking up…" : "Fill from PIN"}
-                </button>
-                <small>
-                  Six digits. Postal localities may cover several
-                  neighbourhoods.
-                </small>
-              </div>
             )}
           </div>
           {address.country === "IN" && (

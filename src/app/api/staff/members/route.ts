@@ -1,4 +1,5 @@
 import { getDatabase } from "@/lib/database";
+import { combinedMemberDirectory } from "@/lib/combined-member-directory";
 import {
   authorized,
   operation,
@@ -30,6 +31,8 @@ export async function GET(request: Request) {
     )
       throw new OperationError("Check the directory filters.");
     if (params.get("view") === "register") {
+      if (params.get("records") === "all")
+        return combinedMemberDirectory(params, filters, offset, id);
       const state = params.get("status") || "all";
       if (
         ![
@@ -42,13 +45,17 @@ export async function GET(request: Request) {
         ].includes(state)
       )
         throw new OperationError("Choose a membership status.");
-      const invitation=params.get('invitation')??'all';
-      if(!['all','held'].includes(invitation))throw new OperationError('Choose an invitation filter.');
+      const invitation = params.get("invitation") ?? "all";
+      if (!["all", "held"].includes(invitation))
+        throw new OperationError("Choose an invitation filter.");
       const q = (params.get("q") || "").slice(0, 120),
         values = [id, `%${q.replace(/[\\%_]/g, "\\$&")}%`];
       return transaction(async (c) => {
         const from =
-          "FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id LEFT JOIN public.\"user\" u ON u.id=p.user_id WHERE $3::int>=0 AND ($4='all' OR m.status=$4 OR ($4='unknown' AND m.status IS NULL)) AND ($1::text IS NULL OR p.id::text=$1) AND concat_ws(' ',p.accepted->>'name',p.contact_email,p.mobile_normalized,m.membership_number) ILIKE $2"+(invitation==='held'?" AND EXISTS(SELECT 1 FROM tpa.account_invitation_holds h WHERE h.user_id=p.user_id AND h.released_at IS NULL)":"");
+          "FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id LEFT JOIN public.\"user\" u ON u.id=p.user_id WHERE $3::int>=0 AND ($4='all' OR m.status=$4 OR ($4='unknown' AND m.status IS NULL)) AND ($1::text IS NULL OR p.id::text=$1) AND concat_ws(' ',p.accepted->>'name',p.contact_email,p.mobile_normalized,m.membership_number) ILIKE $2" +
+          (invitation === "held"
+            ? " AND EXISTS(SELECT 1 FROM tpa.account_invitation_holds h WHERE h.user_id=p.user_id AND h.released_at IS NULL)"
+            : "");
         const total = (
           await c.query(`SELECT count(*)::int AS total ${from}`, [
             ...values,
