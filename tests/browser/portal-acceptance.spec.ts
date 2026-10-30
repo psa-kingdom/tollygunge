@@ -3,6 +3,7 @@ import { signInPortal } from "../helpers/portal-browser";
 import { portalNavigation } from "../../src/domain/portal-navigation";
 import { staffNavigation } from "../../src/domain/staff-navigation";
 import { hasPermission, roles } from "../../src/domain/access";
+import { spawn } from "node:child_process";
 
 test.beforeEach(({}, info) => {
   test.skip(
@@ -35,6 +36,103 @@ const authRoutes = [
   "/invitation",
   "/email-verification",
 ];
+
+test("production deployment label fits the authenticated phone header", async ({
+  page,
+  browser,
+}) => {
+  // Exercise the actual server-rendered label in the existing disposable data
+  // environment. This process is loopback-only and does not change its database.
+  expect(process.env.TPA_MAIL_SINK).toBe("true");
+  expect(new URL(process.env.DATABASE_URL!).hostname).toBe("127.0.0.1");
+  expect(process.env.TPA_DATABASE_NAME).toMatch(/^tpa_onboarding_test_/);
+  await signInPortal(page, "administrator");
+  const origin = "http://127.0.0.1:3196";
+  const server = spawn(
+    process.execPath,
+    [
+      "node_modules/next/dist/bin/next",
+      "start",
+      "--hostname",
+      "127.0.0.1",
+      "--port",
+      "3196",
+    ],
+    {
+      env: {
+        ...process.env,
+        TPA_DEPLOYMENT_ENV: "production",
+        BETTER_AUTH_URL: origin,
+        PORT: "3196",
+      },
+      stdio: "ignore",
+    },
+  );
+  try {
+    await expect
+      .poll(async () => {
+        try {
+          return (
+            await fetch(origin + "/api/health", {
+              signal: AbortSignal.timeout(2000),
+            })
+          ).ok;
+        } catch {
+          return false;
+        }
+      })
+      .toBe(true);
+    for (const mode of ["light", "dark"] as const) {
+      const context = await browser.newContext({
+        viewport: { width: 320, height: 932 },
+        colorScheme: mode,
+      });
+      try {
+        await context.addCookies(await page.context().cookies());
+        const review = await context.newPage();
+        for (const width of [320, 390, 480, 768, 1440]) {
+          await review.setViewportSize({ width, height: 932 });
+          await review.goto(origin + "/admin");
+          await expect(
+            review.locator(".portal-brand-row > [data-tone]"),
+          ).toHaveText("production");
+          await expect(
+            review.locator(".portal-brand-row .brand-name"),
+          ).toBeVisible();
+          await review.evaluate(() => document.fonts.ready);
+          const bounds = await review.evaluate(() => {
+            const brand = document.querySelector(".portal-brand-row")!,
+              utilities = document.querySelector(".portal-utilities")!;
+            const badge = brand.lastElementChild!.getBoundingClientRect();
+            return {
+              width: innerWidth,
+              scroll: document.documentElement.scrollWidth,
+              badgeRight: badge.right,
+              utilitiesLeft: utilities.getBoundingClientRect().left,
+              controls: [...utilities.querySelectorAll("button")]
+                .filter((button) => button.getClientRects().length)
+                .map((button) => {
+                  const r = button.getBoundingClientRect();
+                  return { left: r.left, right: r.right, width: r.width };
+                }),
+            };
+          });
+          expect(bounds.scroll).toBeLessThanOrEqual(width + 1);
+          expect(bounds.badgeRight).toBeLessThanOrEqual(bounds.utilitiesLeft);
+          for (const control of bounds.controls) {
+            expect(control.left).toBeGreaterThanOrEqual(0);
+            expect(control.right).toBeLessThanOrEqual(width + 1);
+            expect(control.width).toBeGreaterThanOrEqual(36);
+          }
+        }
+      } finally {
+        await context.close();
+      }
+    }
+  } finally {
+    server.kill();
+  }
+});
 async function geometry(page: Page) {
   await page.evaluate(async () => {
     await document.fonts.ready;

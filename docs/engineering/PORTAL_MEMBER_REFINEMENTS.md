@@ -47,3 +47,7 @@ Optimized build ID: `yPksqCMJIzemEgulx611V`. The candidate is an uncommitted wor
 ## Release authorization — 30 October 2026
 
 The user has authorized committing, pushing, merging and deploying this reviewed candidate. The local-review evidence above is historical acceptance evidence. GitHub checks on the committed candidate, the merged revision, provider deployment status, health and hosted read-only acceptance remain release gates. The verified pre-release Railway runtime is deployment `0b059abf-7ccd-4f35-9a22-c85275b3c3fe` at `9912c5513321d20333d49a20030eb13360f828aa`; retain it as rollback. Preserve one CPU, 1 GB, one replica and existing operational settings.
+
+### Final production-label hardening
+
+A production-configured loopback probe found that the longer PRODUCTION badge could overlap utility controls at 320px. On phone widths, the environment label now sits beneath the compact logo/TPA lockup within the existing 58px utility row. Desktop navigation is unchanged and all phone utility buttons remain 40px. A tracked acceptance test starts an isolated loopback server with the real presentation variable and verifies both appearances at 320, 390, 480, 768 and 1440px. Header, signup/member alignment and populated participant regressions pass; all seven build/static/runtime stages and 142 tests pass after this CSS correction. Evidence: `.local/launch-readiness/2026-10-30T07-58-45.592Z-0ecf5fb0/results.json` and `output/playwright/portal-member-refinements/release/final-header-regressions`. Final-head CI and hosted acceptance remain required.
