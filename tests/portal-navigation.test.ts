@@ -29,7 +29,7 @@ test("horizontal groups retain every permitted destination without granting new 
       groups.some((group) =>
         group.items.some((item) => item.href.includes("view=accounts")),
       ),
-      previous.has("/admin/workspaces/members"),
+      false,
     );
   }
 });

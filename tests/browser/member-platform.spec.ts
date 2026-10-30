@@ -207,12 +207,18 @@ test("profile uses full-size private preview, protects privacy, saves and retrie
     page.getByRole("button", { name: "Saving…", exact: true }),
   ).toBeDisabled();
   await expect(
-    page.getByText("The service is temporarily unavailable. Before resubmitting a change, check whether it was saved.", {
-      exact: true,
-    }),
+    page.getByText(
+      "The service is temporarily unavailable. Before resubmitting a change, check whether it was saved.",
+      {
+        exact: true,
+      },
+    ),
   ).toBeVisible();
   await page
-    .getByText("The service is temporarily unavailable. Before resubmitting a change, check whether it was saved.", { exact: true })
+    .getByText(
+      "The service is temporarily unavailable. Before resubmitting a change, check whether it was saved.",
+      { exact: true },
+    )
     .scrollIntoViewIfNeeded();
   await page.screenshot({ path: info.outputPath("profile-save-error.png") });
   await page.unroute("**/api/member/profile");
@@ -482,9 +488,6 @@ test("real postal reference persists a structured address and legacy text", asyn
   const result = await lookup.json();
   expect(result.localities.length).toBeGreaterThan(0);
   await residence.getByLabel("PIN", { exact: true }).fill("700001");
-  await residence
-    .getByRole("button", { name: "Fill from PIN", exact: true })
-    .click();
   if (result.localities.length > 1)
     await residence
       .getByRole("combobox", {
@@ -574,9 +577,12 @@ test("completed professional application submits for review without publication"
   await submit.click();
   await expect(submit).toBeDisabled();
   await expect(
-    page.getByText("The service is temporarily unavailable. Before resubmitting a change, check whether it was saved.", {
-      exact: true,
-    }),
+    page.getByText(
+      "The service is temporarily unavailable. Before resubmitting a change, check whether it was saved.",
+      {
+        exact: true,
+      },
+    ),
   ).toBeVisible();
   await page.unroute("**/api/member/verification");
   await page
@@ -589,9 +595,18 @@ test("completed professional application submits for review without publication"
     name: "Profile submitted successfully",
   });
   await expect(confirmation).toBeVisible();
-  await confirmation.getByRole("button", { name: "View submitted details" }).click();
-  await expect(page.getByRole("heading", { name: "Your submitted profile" })).toBeVisible();
-  await expect(page.locator(".verification-summary-section").getByText("Ananya Mukherjee", { exact: true }).first()).toBeVisible();
+  await confirmation
+    .getByRole("button", { name: "View submitted details" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Your submitted profile" }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".verification-summary-section")
+      .getByText("Ananya Mukherjee", { exact: true })
+      .first(),
+  ).toBeVisible();
   await expect(page.locator(".member-form-card")).toBeHidden();
   const profile = await (
     await context.request.get("/api/member/profile")
@@ -615,10 +630,14 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
     await page.setViewportSize({ width, height: 1000 });
     if (width >= 1280) {
       const main = (await page.locator("main").boundingBox())!;
-      const editor = (await page.locator(".member-profile-editor").boundingBox())!;
+      const editor = (await page
+        .locator(".member-profile-editor")
+        .boundingBox())!;
       expect(editor.width).toBeGreaterThan(main.width - 100);
       expect(editor.x).toBeGreaterThanOrEqual(main.x);
-      expect(editor.x + editor.width).toBeLessThanOrEqual(main.x + main.width + 1);
+      expect(editor.x + editor.width).toBeLessThanOrEqual(
+        main.x + main.width + 1,
+      );
     }
     for (const mode of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme: mode as "light" | "dark" });
@@ -657,11 +676,20 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
   }
   await page.setViewportSize({ width: 640, height: 500 });
   await page.evaluate(() => scrollTo(0, 0));
-  const nav = page.getByRole("navigation", {name:"Member navigation",exact:true});
+  const nav = page.getByRole("navigation", {
+    name: "Member navigation",
+    exact: true,
+  });
   await expect(nav).toBeVisible();
-  await nav.getByRole("link", {name:"Account",exact:true}).focus();
-  await expect(nav.getByRole("link", {name:"Account",exact:true})).toBeFocused();
-  await expect(page.getByRole("navigation", {name:"Account sections",exact:true}).getByRole("link", {name:"Security",exact:true})).toBeVisible();
+  await nav.getByRole("link", { name: "Account", exact: true }).focus();
+  await expect(
+    nav.getByRole("link", { name: "Account", exact: true }),
+  ).toBeFocused();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Account sections", exact: true })
+      .getByRole("link", { name: "Security", exact: true }),
+  ).toBeVisible();
   await page.evaluate(() => (document.documentElement.style.zoom = "2"));
   await noOverflow(page);
   await page.screenshot({
@@ -788,4 +816,50 @@ test("published preview retains its snapshot and keyboard preview tabs work", as
   expect(
     (await page.locator(".portal-topbar").boundingBox())!.y,
   ).toBeGreaterThanOrEqual(0);
+});
+
+test("PIN is first and automatically resolves without losing manual address lines", async ({
+  page,
+  context,
+}) => {
+  await member(context);
+  await mockDraftWrites(page);
+  await page.route("**/api/member/locations?**", async (route) => {
+    const pin = new URL(route.request().url()).searchParams.get("pin");
+    if (pin) await new Promise((resolve) => setTimeout(resolve, 300));
+    await route
+      .fulfill({
+        json: { ...choices, localities: choices.localities.slice(0, 1) },
+      })
+      .catch(() => {});
+  });
+  await contact(page);
+  const office = page.getByRole("region", {
+    name: "Office address",
+    exact: true,
+  });
+  const pin = office.getByLabel("PIN", { exact: true });
+  const state = office.getByRole("combobox", {
+    name: "State / Union Territory",
+    exact: true,
+  });
+  expect((await pin.boundingBox())!.y).toBeLessThan(
+    (await state.boundingBox())!.y,
+  );
+  await pin.fill("800001");
+  await office
+    .getByLabel("Address Line 1", { exact: true })
+    .fill("House 24, TPA colony");
+  await expect(state).toHaveValue("Bihar");
+  await expect(
+    office.getByRole("combobox", { name: "District", exact: true }),
+  ).toHaveValue("Patna");
+  await expect(
+    office.getByRole("combobox", { name: "Postal locality", exact: true }),
+  ).toHaveValue("G.P.O.");
+  await expect(
+    office.getByLabel("Address Line 1", { exact: true }),
+  ).toHaveValue("House 24, TPA colony");
+  await expect(pin).toHaveValue("800001");
+  await noOverflow(page);
 });

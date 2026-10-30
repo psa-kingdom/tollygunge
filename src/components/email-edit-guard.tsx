@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useId, useRef } from "react";
+export const portalNavigationEvent = "tpa:portal-navigation";
 export function useEmailEditGuard(dirty: boolean, navigation = true) {
   const [pending, setPending] = useState<(() => void) | null>(null);
   const title = useId();
@@ -11,7 +12,9 @@ export function useEmailEditGuard(dirty: boolean, navigation = true) {
   useEffect(() => {
     if (!pending) return;
     const original = trigger.current;
-    return () => { if (original?.isConnected) original.focus(); };
+    return () => {
+      if (original?.isConnected) original.focus();
+    };
   }, [pending]);
   useEffect(() => {
     if (!dirty || !navigation) return;
@@ -35,9 +38,17 @@ export function useEmailEditGuard(dirty: boolean, navigation = true) {
       setPending(() => () => location.assign(link.href));
     };
     window.addEventListener("beforeunload", unload);
+    const scopeChange = (event: Event) => {
+      event.preventDefault();
+      trigger.current = document.activeElement as HTMLElement | null;
+      const href = (event as CustomEvent<string>).detail;
+      setPending(() => () => location.assign(href));
+    };
+    window.addEventListener(portalNavigationEvent, scopeChange);
     document.addEventListener("click", click, true);
     return () => {
       window.removeEventListener("beforeunload", unload);
+      window.removeEventListener(portalNavigationEvent, scopeChange);
       document.removeEventListener("click", click, true);
     };
   }, [dirty, navigation]);
@@ -51,7 +62,11 @@ export function useEmailEditGuard(dirty: boolean, navigation = true) {
           aria-labelledby={title}
           className="email-dialog"
           onKeyDown={(e) => {
-            if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setPending(null); }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
+              setPending(null);
+            }
             if (e.key === "Tab") {
               const buttons = Array.from(
                 e.currentTarget.querySelectorAll("button"),

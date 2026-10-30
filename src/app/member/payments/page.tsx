@@ -13,8 +13,12 @@ export default async function Page() {
   return (
     <AccountShell>
       <main id="main" className="page-content">
-        <h1>Association payment details</h1>
-        <PortalSubsections />
+        <div className="portal-page-intro">
+          <header>
+            <h1>Association payment details</h1>
+          </header>
+          <PortalSubsections />
+        </div>
         <MemberPaymentDetails />
       </main>
     </AccountShell>

@@ -16,11 +16,7 @@ const admin: PortalGroup[] = [
   {
     label: "Members",
     items: [
-      workspace("Member register", "members"),
-      {
-        label: "Account directory",
-        href: "/admin/workspaces/members?view=accounts",
-      },
+      workspace("Directory", "members"),
       workspace("Verification", "verification"),
       workspace("Bulk onboarding", "onboarding"),
     ],

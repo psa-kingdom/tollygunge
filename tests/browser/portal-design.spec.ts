@@ -97,7 +97,7 @@ test("staff workspaces keep compact layouts, usable mobile navigation and keyboa
   await expect(page.getByRole("region", { name: "Member register records", exact: true })).toBeVisible();
   await page.getByLabel("Search members", { exact: true }).fill("no-such-synthetic-member-48391");
   await page.getByRole("button", { name: "Search register", exact: true }).click();
-  await expect(page.getByText(/No members match these filters/)).toBeVisible();
+  await expect(page.getByText(/No records match these filters/)).toBeVisible();
   await layoutFits(page);
   await primaryActionContrast(page);
   await page.screenshot({ path: info.outputPath("staff-register.png"), fullPage: true });
@@ -489,7 +489,7 @@ test("admin dashboard updates signup and application notifications without appro
   await dashboard.getByRole("link", { name: /1 applications awaiting profile review/ }).click();
   await expect(page.getByRole("heading", { name: "Verification", exact: true })).toBeVisible();
   await page.goto("/admin/workspaces/members?view=accounts");
-  await expect(page.getByRole("link", { name: "Account directory", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("link", { name: "Directory", exact: true })).toHaveAttribute("aria-current", "page");
 });
 
 test("dashboard semantic colors cover themes, completion states and interactive feedback", async ({ page }, info) => {

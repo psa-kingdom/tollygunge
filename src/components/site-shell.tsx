@@ -45,7 +45,8 @@ export const navigation = [
 ];
 export function Brand({
   settings = sharedDefaults,
-}: { settings?: SharedSettings } = {}) {
+  compact = false,
+}: { settings?: SharedSettings; compact?: boolean } = {}) {
   return (
     <Link
       href="/"
@@ -58,7 +59,7 @@ export function Brand({
         }
       />
       <span className="brand-name" style={{ whiteSpace: "pre-line" }}>
-        {settings.organisation}
+        {compact ? "TPA" : settings.organisation}
       </span>
     </Link>
   );
@@ -205,7 +206,7 @@ export function PortalShell({
       <div className="staff-content portal-content">
         <header className="workspace-topbar portal-topbar">
           <div className="portal-brand-row">
-            <Brand />
+            <Brand compact />
             {deploymentEnvironment(process.env.TPA_DEPLOYMENT_ENV) && (
               <StatusBadge
                 tone={

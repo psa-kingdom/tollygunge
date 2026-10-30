@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { portalNavigationEvent } from "./email-edit-guard";
 import Link from "./navigation-link";
 import type { PortalGroup } from "@/domain/portal-navigation";
 function reveal(nav: HTMLElement, target: HTMLElement) {
@@ -15,19 +16,22 @@ export function PortalNavigation({
   groups,
   subsections = false,
   staff = false,
+  canViewParticipants = false,
 }: {
   groups: PortalGroup[];
   subsections?: boolean;
   staff?: boolean;
+  canViewParticipants?: boolean;
 }) {
   const pathname = usePathname();
   const query = useSearchParams();
-  const directory =
-    query.get("view") === "accounts" || Boolean(query.get("id"));
+  const router = useRouter();
+  const participants =
+    pathname === "/admin/workspaces/events" &&
+    query.get("view") === "participants";
   const active = (href: string) => {
-    const [path, search] = href.split("?");
-    if (path === "/admin/workspaces/members" && pathname === path)
-      return Boolean(search) === directory;
+    const [path] = href.split("?");
+    if (path === "/admin/workspaces/members" && pathname === path) return true;
     return (
       pathname === path ||
       (path !== "/admin" &&
@@ -35,9 +39,10 @@ export function PortalNavigation({
         pathname.startsWith(path + "/"))
     );
   };
-  const group = groups.find((item) =>
-    item.items.some((item) => active(item.href)),
-  );
+  const group = participants
+    ? (groups.find((item) => item.label === "Members") ??
+      groups.find((item) => item.label === "Events"))
+    : groups.find((item) => item.items.some((item) => active(item.href)));
   const root = useRef<HTMLElement>(null);
   useEffect(() => {
     const nav = root.current;
@@ -63,8 +68,19 @@ export function PortalNavigation({
       observer.disconnect();
     };
   }, [pathname, query]);
-  if (subsections && (!group || group.items.length < 2)) return null;
-  return (
+  const people = subsections && (group?.label === "Members" || participants);
+  const sections = participants
+    ? ["Registrations", "Payment status", "Attendance"].map((label, index) => {
+        const params = new URLSearchParams({
+          view: "participants",
+          tab: ["registrations", "payments", "attendance"][index],
+        });
+        if (query.get("eventId")) params.set("eventId", query.get("eventId")!);
+        return { label, href: "/admin/workspaces/events?" + params };
+      })
+    : (group?.items ?? []);
+  if (subsections && (!group || sections.length < 2)) return null;
+  const navigation = (
     <nav
       ref={root}
       onFocusCapture={(event) =>
@@ -80,18 +96,29 @@ export function PortalNavigation({
       className={subsections ? "portal-subsections" : "portal-navigation"}
       aria-label={
         subsections
-          ? `${group!.label} sections`
+          ? participants
+            ? "Event participant sections"
+            : `${group!.label} sections`
           : staff
             ? "Staff navigation"
             : "Member navigation"
       }
     >
       {subsections
-        ? group!.items.map((item) => (
+        ? sections.map((item, index) => (
             <Link
               key={item.href}
               href={item.href}
-              aria-current={active(item.href) ? "page" : undefined}
+              aria-current={
+                (
+                  participants
+                    ? (query.get("tab") ?? "registrations") ===
+                      ["registrations", "payments", "attendance"][index]
+                    : active(item.href)
+                )
+                  ? "page"
+                  : undefined
+              }
             >
               {item.label}
             </Link>
@@ -106,5 +133,40 @@ export function PortalNavigation({
             </Link>
           ))}
     </nav>
+  );
+  if (!people) return navigation;
+  const hasMembers = groups.some((item) => item.label === "Members");
+  return (
+    <div className="portal-section-tools">
+      <label className="portal-audience-label">
+        People
+        <select
+          aria-label="Directory audience"
+          value={participants ? "participants" : "members"}
+          disabled={!hasMembers || !canViewParticipants}
+          onChange={(event) => {
+            const href =
+              event.target.value === "participants"
+                ? "/admin/workspaces/events?view=participants"
+                : "/admin/workspaces/members";
+            if (
+              window.dispatchEvent(
+                new CustomEvent(portalNavigationEvent, {
+                  detail: href,
+                  cancelable: true,
+                }),
+              )
+            )
+              router.push(href);
+          }}
+        >
+          {hasMembers && <option value="members">Association members</option>}
+          {canViewParticipants && (
+            <option value="participants">Event participants</option>
+          )}
+        </select>
+      </label>
+      {navigation}
+    </div>
   );
 }
