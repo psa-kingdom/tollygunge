@@ -66,6 +66,34 @@ async function geometry(page: Page) {
     };
   });
 }
+
+// The full workflow suite also creates accounts without membership. Select the
+// record kind needed by editor tests instead of relying on alphabetical order.
+async function showMembershipRecords(page: Page) {
+  await page
+    .getByRole("combobox", { name: "Record type", exact: true })
+    .selectOption("member");
+  const refreshed = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return (
+      url.pathname === "/api/staff/members" &&
+      url.searchParams.get("records") === "all" &&
+      url.searchParams.get("kind") === "member"
+    );
+  });
+  await page
+    .getByRole("button", { name: "Search register", exact: true })
+    .click();
+  const response = await refreshed;
+  expect(response.status()).toBe(200);
+  const result = await response.json();
+  expect(result.rows.length).toBeGreaterThan(0);
+  expect(
+    result.rows.every(
+      (row: { record_kind: string }) => row.record_kind === "member",
+    ),
+  ).toBe(true);
+}
 test("all portal routes reflow in both appearances with useful content near the top", async ({
   browser,
 }, info) => {
@@ -168,6 +196,7 @@ test("six staff roles retain navigation, direct route, API and preview boundarie
     }
     if (hasPermission([role], "members:review")) {
       await page.goto("/admin/workspaces/members");
+      await showMembershipRecords(page);
       const record = page.locator(".member-record-button").first();
       await expect(record).toBeVisible();
       await record.hover();
@@ -197,6 +226,7 @@ test("inspector resize and nested dismissal preserve unsaved member edits", asyn
   await signInPortal(page, "administrator");
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/admin/workspaces/members");
+  await showMembershipRecords(page);
   const first = page.locator(".member-record-button").first();
   await first.click();
   const panel = page.locator(".portal-inspector");
@@ -478,6 +508,23 @@ test("combined association directory keeps membership and account identities dis
       .getByText("Account only", { exact: true })
       .first(),
   ).toBeVisible();
+  await page.locator(".member-record-button").first().click();
+  const inspector = page.locator(".portal-inspector");
+  await expect(inspector).toBeVisible();
+  await expect(
+    inspector.getByText("Edit member contact and professional details", {
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await expect(
+    inspector.getByRole("combobox", { name: "Membership status", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    inspector.getByRole("button", {
+      name: "Review this member invitation",
+      exact: true,
+    }),
+  ).toBeDisabled();
 });
 
 test("directory audience and participant endpoints retain all six staff permission boundaries", async ({
