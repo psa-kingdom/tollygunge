@@ -618,8 +618,49 @@ try {
         "/admin/workspaces/content",
         "/admin/workspaces/media",
       ]) {
-        await p.goto(base + path, { waitUntil: "networkidle" });
+        // Header polling can keep the network active after the workspace is
+        // usable. Wait for its protected data and rendered controls instead.
+        const workspace = path.split("/").at(-1)!;
+        const endpoint =
+          workspace === "website" ? "website-settings" : workspace;
+        const ready = p.waitForResponse(
+          (response) =>
+            new URL(response.url()).pathname === `/api/staff/${endpoint}` &&
+            response.request().method() === "GET",
+        );
+        await p.goto(base + path, { waitUntil: "domcontentloaded" });
+        assert.equal(
+          (await ready).status(),
+          200,
+          `${workspace} data must load`,
+        );
         await expect(p.getByRole("heading", { level: 1 })).toBeVisible();
+        const loading: Record<string, string> = {
+          governance: "Loading people…",
+          website: "Loading…",
+          content: "Loading content…",
+          media: "Loading media…",
+        };
+        await expect(
+          p.locator(".workspace-body").getByText(loading[workspace], { exact: true }),
+        ).toHaveCount(0);
+        if (workspace === "media")
+          await expect(
+            p.getByRole("button", { name: "New image", exact: true }),
+          ).toBeVisible();
+        else
+          await expect(
+            p.getByRole("tablist", {
+              name:
+                workspace === "governance"
+                  ? "People workspace"
+                  : workspace === "website"
+                    ? "Website controls"
+                    : "Content workspace views",
+              exact: true,
+            }),
+          ).toBeVisible();
+        await p.evaluate(() => document.fonts.ready);
         await p.addScriptTag({ path: axe });
         const checks = await p.evaluate(async () => {
           const a = (
