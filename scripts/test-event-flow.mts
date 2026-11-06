@@ -1,3 +1,4 @@
+import {recordRegistrationFinance} from "../tests/helpers/finance-acceptance.mts";
 import assert from "node:assert/strict";
 import { randomUUID, randomBytes, createHmac } from "node:crypto";
 import { spawn } from "node:child_process";
@@ -49,10 +50,10 @@ try {
   const users:string[]=[],cookies:string[]=[];
   // This identity exercises both an existing login and new-account creation.
   const syntheticPassword="Event!"+randomBytes(3).toString("hex");
-  for(const role of ["administrator","member","guest","member","member"]) {
+  for(const role of ["administrator","member","guest","member","member","guest"]) {
     const id=randomUUID(),token=randomBytes(24).toString("hex");users.push(id);
     await db.query('INSERT INTO public."user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)',[id,role==="administrator"?"Event administrator":"Event member "+users.length,`event${users.length}@example.invalid`]);
-    if(role==="administrator") await db.query("INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,'administrator')",[id]);
+    if(["administrator","super_administrator"].includes(role)) await db.query("INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,$2)",[id,role]);
     if(role==="member") {
       const person=randomUUID();
       await db.query("INSERT INTO tpa.people(id,user_id,accepted,draft,contact_email) VALUES($1,$2,$3,$3,$4)",[person,id,{name:"Event member",email:`event${users.length}@example.invalid`,addresses:{}},`event${users.length}@example.invalid`]);
@@ -68,6 +69,7 @@ try {
   await db.query("UPDATE tpa.events SET status='published',fee_paise=12000 WHERE id=$1",[legacy]);
   await db.query("INSERT INTO tpa.event_registrations(id,event_id,user_id,status,fee_paise,payment_status,payment_reference,payment_note) VALUES($1,$2,$3,'registered',12000,'paid','LEGACY-BANK-001','Historical verification retained')",[legacyRegistration,legacy,users[1]]);
   await db.query("BEGIN;\n"+(await Promise.all(files.filter(f=>f>="030_").map(f=>readFile("migrations/"+f,"utf8")))).join("\n")+"\nCOMMIT;");
+  await db.query("INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,'super_administrator')",[users[5]]);
   const migrated=(await db.query("SELECT * FROM tpa.events WHERE id=$1",[legacy])).rows[0];
   assert.equal(migrated.speakers[0].name,"Legacy speaker");assert.equal(migrated.reminders.enabled,false);
   assert.equal((await db.query("SELECT count(*)::int n FROM tpa.flyer_templates WHERE event_id=$1",[legacy])).rows[0].n,1);
@@ -97,7 +99,7 @@ try {
   }
   async function row(id:string){return (await db.query("SELECT * FROM tpa.event_registrations WHERE id=$1",[id])).rows[0];}
   async function edit(e:Record<string,unknown>,change:Record<string,unknown>={}){return request("/api/staff/events",{action:"save",id:e.id,version:e.version,title:e.title,description:e.description,location:e.location,startsAt:e.starts_at,endsAt:e.ends_at,capacity:e.capacity,feePaise:e.fee_paise,visibility:e.visibility,deliveryMode:e.delivery_mode,speakers:e.speakers,reminders:e.reminders,...change});}
-  async function payment(id:string,status:string,reference="BANK-TEST-001"){const r=await row(id);return request("/api/staff/registration-payments",{id,version:r.version,status,reference,note:"Synthetic bank reconciliation evidence"});}
+  async function payment(id:string,status:string,reference="BANK-TEST-001"){return recordRegistrationFinance(db,request,id,5,status==="refunded"?"refund":"receipt",reference);}
   const speakers=Array.from({length:6},(_,i)=>({name:`Dr. Speaker ${i+1}`,credentials:"Professor of professional practice and community education"}));
   let privateEvent: {id:string};
   if(!browserOnly && !workerOnly) {
@@ -110,11 +112,11 @@ try {
   assert.equal((await db.query("SELECT count(*)::int n FROM tpa.onboarding_mail WHERE registration_id=$1",[registration.id])).rows[0].n,1);
   let payload=openMail((await db.query("SELECT payload FROM tpa.onboarding_mail WHERE registration_id=$1",[registration.id])).rows[0].payload,env.BETTER_AUTH_SECRET);
   assert.ok(payload.text.includes("not a payment confirmation"));assert.ok(payload.text.includes("₹750.00"));assert.ok(payload.text.includes("IST"));assert.ok(payload.text.includes(registration.id));
-  await request("/api/staff/registration-payments",{id:registration.id,version:registration.version,status:"paid",reference:"",note:"Checked bank"},0,400);
-  await payment(registration.id,"failed");await payment(registration.id,"pending");await payment(registration.id,"paid");
+  await request("/api/staff/registration-payments",{id:registration.id,version:registration.version,status:"paid",reference:"",note:"Checked bank"},0,409);
+  await payment(registration.id,"paid");
   await request("/api/staff/registration-payments",{id:registration.id,version:registration.version,status:"paid",reference:"BANK-TEST-001",note:"Stale verification"},0,409);
   assert.equal((await row(registration.id)).payment_status,"paid");
-  assert.equal((await db.query("SELECT count(*)::int n FROM tpa.event_payment_history WHERE registration_id=$1",[registration.id])).rows[0].n,3);
+  assert.equal((await db.query("SELECT count(*)::int n FROM tpa.event_payment_history WHERE registration_id=$1",[registration.id])).rows[0].n,1);
   await assert.rejects(edit(paid,{feePaise:10000}));
   await request("/api/staff/attendance",{registrationId:registration.id},0,409);
   paid=await edit(paid,{location:"Updated test hall"});
@@ -126,7 +128,7 @@ try {
   assert.equal((await row(registration.id)).payment_status,"paid");
   await request("/api/member/events",{action:"register",eventId:paid.id},1,409);await payment(registration.id,"refunded");
   assert.equal((await row(registration.id)).payment_status,"refunded");
-  pass("Paid reservation, deduplication, failures, verification conflicts, update/cancellation emails and refund history");
+  pass("Paid reservation, duplicate prevention, blocked legacy verification, approved receipts/refunds and update/cancellation emails");
   const free=await event({capacity:1,title:"Last-seat event"});
   const attempts=await Promise.all([1,2].map(actor=>fetch(base+"/api/member/events",{method:"POST",headers:{Cookie:"better-auth.session_token="+cookies[actor],Origin:base,"Content-Type":"application/json"},body:JSON.stringify({action:"register",eventId:free.id})})));
   assert.deepEqual(attempts.map(r=>r.status).sort(),[200,409]);
@@ -300,23 +302,25 @@ try {
     await publicPage.goto(base+"/events/"+browserEvent.id);await check(publicPage.getByRole("heading",{name:"Speakers",exact:true})).toBeVisible();await screenshot(publicPage,"public-event");
     await member.goto(base+"/member/events?eventId="+browserEvent.id);
     const card=member.locator("article").filter({has:member.getByRole("heading",{name:browserEvent.title,exact:true})});
-    if(label==="desktop") {await card.getByRole("button",{name:"Reserve place"}).click();await check(card.getByText(/^Payment pending/)).toBeVisible();}
+    if(label==="desktop") {await card.getByRole("button",{name:"Reserve place"}).click();await check(card.getByText(/^Receipt pending/)).toBeVisible();}
     await check(card.getByText("TPA TEST PAYEE",{exact:false})).toBeVisible();await screenshot(member,"pending-payment");
-    await staff.goto(base+"/admin/workspaces/payments");await check(staff.getByRole("heading",{name:"Registration payments",exact:true})).toBeVisible();await screenshot(staff,"payments");
+    await staff.goto(base+"/admin/workspaces/payments");await check(staff.getByRole("tab",{name:"Overview",exact:true})).toBeVisible();await screenshot(staff,"payments");
     await staffContext.close();await memberContext.close();await publicPage.close();
     pass(`${label} event editor, public speakers, reservation/payment instructions and staff payment UI`);
   }
   const browserReg=(await db.query("SELECT * FROM tpa.event_registrations WHERE event_id=$1 AND user_id=$2",[browserEvent.id,users[4]])).rows[0];
   const payContext=await browser.newContext({viewport:{width:1440,height:1000}});await payContext.addCookies([{name:"better-auth.session_token",value:cookies[0],url:base}]);const payPage=await payContext.newPage();
-  await payPage.goto(base+"/admin/workspaces/payments");const paymentRow=payPage.locator("tr").filter({hasText:browserEvent.title});await paymentRow.getByRole("button",{name:"Review payment"}).click();
-  await payPage.getByLabel("Bank / payment reference").fill("BROWSER-BANK-001");await payPage.getByLabel("Verification note").fill("Verified synthetic credit of INR 750");payPage.once("dialog",d=>d.accept());await payPage.getByRole("button",{name:"Confirm status change"}).click();await check(payPage.locator(".registration-payments").getByRole("status")).toContainText("Payment status saved");
+  await payment(browserReg.id,"paid","BROWSER-BANK-001");
+  await payPage.goto(base+"/admin/workspaces/payments/events/"+browserEvent.id);
+  await payPage.getByRole("tab",{name:"Participant collections",exact:true}).click();
+  await check(payPage.getByRole("row").filter({hasText:"Event member 5"})).toContainText("750.00");
   assert.equal((await row(browserReg.id)).payment_status,"paid");await payContext.close();
   const statusMail=(await db.query("SELECT * FROM tpa.onboarding_mail WHERE registration_id=$1 AND kind='event_status' ORDER BY created_at",[browserReg.id])).rows;
   assert.equal(statusMail.length,2);assert.ok(openMail(statusMail[0].payload,env.BETTER_AUTH_SECRET).text.includes("not a payment confirmation"));assert.ok(openMail(statusMail[1].payload,env.BETTER_AUTH_SECRET).text.includes("registration is confirmed"));
   for(let tick=0;tick<12;tick++) {const count=(await db.query("SELECT count(*)::int n FROM tpa.onboarding_mail WHERE registration_id=$1 AND status='queued'",[browserReg.id])).rows[0].n;if(!count)break;await runOnboardingTick(db,env);}
   const sentStatus=(await db.query("SELECT status,provider_id FROM tpa.onboarding_mail WHERE registration_id=$1 AND kind='event_status'",[browserReg.id])).rows;
   assert.ok(sentStatus.every(m=>m.status==="accepted" && m.provider_id.startsWith("sink-")));
-  pass("Staff browser payment verification and reservation/confirmation delivery through the isolated mail sink");
+  pass("Approved receipt visible in event collections and reservation/confirmation delivery through the isolated mail sink");
   const flyerContext=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});await flyerContext.addCookies([{name:"better-auth.session_token",value:cookies[0],url:base}]);const flyer=await flyerContext.newPage();
   for(const count of [1,2,3,6]) {
     const current=(await request("/api/staff/flyers?id="+browserEvent.id))[0];
@@ -339,7 +343,7 @@ try {
   for(const width of [1440,768,390]){const context=await browser.newContext({viewport:{width,height:900}});await context.addCookies([{name:"better-auth.session_token",value:cookies[4],url:base}]);const p=await context.newPage();await p.goto(base+"/member/events?eventId="+browserEvent.id);const card=p.locator("article").filter({has:p.getByRole("heading",{name:browserEvent.title,exact:true})});await check(card).toContainText("Registration confirmed");await check(card).toContainText("Attendance recorded");await p.screenshot({path:`${dir}/confirmed-attendance-${width}.png`,fullPage:true});evidence.screenshots.push(`confirmed-attendance-${width}.png`);await context.close();}
   pass("Confirmed member state, started-event attendance, duplicate check-in and desktop/tablet/phone attendance display");
   }
-  if(process.argv.includes('--payment-table')){const qa=await verifyPaymentTable(browser!,base,cookies[0],db,dir);await writeFile(dir+'/payment-table.json',JSON.stringify(qa,null,2));pass('Payment table readable at 320/390/768 in both themes, keyboard scrolling, empty state and cancelled confirmation focus');}
+  if(process.argv.includes('--payment-table')){const qa=await verifyPaymentTable(browser!,base,cookies[0],db,dir);await writeFile(dir+'/payment-table.json',JSON.stringify(qa,null,2));pass('Participant collection table readable at 320/390/768 in both themes, keyboard scrolling, empty state and dismissing the form without writes');}
   assert.deepEqual(evidence.browserErrors,[]);
   evidence.passed=true;evidence.completed=new Date().toISOString();await save();console.log("Evidence: "+dir);
 } catch(e){await save();throw e;}

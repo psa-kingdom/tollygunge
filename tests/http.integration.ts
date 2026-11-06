@@ -67,7 +67,7 @@ test(
         "/api/documents/" + randomUUID(),
       ])
         assert.equal((await request(path)).status, 401);
-      assert.equal((await request("/member", 0)).status, 200);
+      await assertPageRedirect(await request("/member", 0), "/member/events");
       await pool.query(
         'UPDATE public."user" SET "emailVerified"=false WHERE id=$1',
         [people[0]],
@@ -193,6 +193,7 @@ test(
         "payments",
       ];
       const allowed: Record<string, string[]> = {
+        super_administrator: workspaces,
         administrator: workspaces,
         membership_reviewer: ["members"],
         content_editor: ["content"],

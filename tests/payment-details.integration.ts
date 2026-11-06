@@ -70,13 +70,13 @@ test(
       await assertPageRedirect(await request("/account", 0), "/admin");
       await assertPageRedirect(await request("/member", 0), "/admin");
       await assertPageRedirect(await request("/login", 0), "/admin");
-      await assertPageRedirect(await request("/account", 1), "/member");
+      await assertPageRedirect(await request("/account", 1), "/member/events");
       const profile = await (await request("/account/profile", 0)).text();
       assert.ok(profile.includes('aria-label="Staff navigation"'));
       assert.ok(!profile.includes('aria-label="Member navigation"'));
       assert.ok(!profile.includes("Member login ↗"));
       assert.ok(!profile.includes("Join TPA"));
-      const member = await (await request("/member", 1)).text();
+      const member = await (await request("/member/events", 1)).text();
       assert.ok(member.includes('aria-label="Member navigation"'));
       assert.ok(!member.includes('aria-label="Staff navigation"'));
       assert.ok(!member.includes("Staff workspace"));

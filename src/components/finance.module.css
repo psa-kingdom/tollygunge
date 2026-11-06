@@ -208,7 +208,7 @@
 }
 .eventHeading p,
 .basis {
-  opacity: 0.8;
+  color: var(--muted);
   line-height: 1.6;
 }
 .collectionSection {

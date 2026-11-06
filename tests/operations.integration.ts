@@ -41,7 +41,7 @@ test(
         );
       }
       await pool.query(
-        "INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,'administrator'),($2,'content_editor')",
+        "INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,'super_administrator'),($2,'content_editor')",
         [people[0], people[3]],
       );
       const request = (path: string, person?: number, body?: object) =>
@@ -83,7 +83,7 @@ test(
           await request("/api/staff/access", 0, {
             id: people[0],
             roles: [],
-            expectedRoles: ["administrator"],
+            expectedRoles: ["super_administrator"],
           })
         ).status,
         409,
@@ -755,19 +755,19 @@ test(
         request("/api/staff/access", 3, {
           id: people[0],
           roles: [],
-          expectedRoles: ["administrator"],
+          expectedRoles: ["super_administrator"],
         }),
       ]);
       assert.equal(
         crossRemoval.filter((r) => r.status === 200).length,
         1,
-        "concurrent administrator removal must have only one winner",
+        "only super admin can remove an administrator",
       );
       assert.ok(crossRemoval.some((r) => [401, 403].includes(r.status)));
       assert.equal(
         (
           await pool.query(
-            "SELECT count(*)::int AS n FROM tpa.staff_roles WHERE user_id=ANY($1::text[]) AND role='administrator'",
+            "SELECT count(*)::int AS n FROM tpa.staff_roles WHERE user_id=ANY($1::text[]) AND role='super_administrator'",
             [[people[0], people[3]]],
           )
         ).rows[0].n,

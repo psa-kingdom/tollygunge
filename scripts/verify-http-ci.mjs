@@ -32,6 +32,7 @@ try {
       "--import",
       "tsx",
       "--test",
+      "--test-concurrency=1",
       "tests/http.integration.ts",
       "tests/operations.integration.ts",
       "tests/media.integration.ts",
