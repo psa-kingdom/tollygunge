@@ -125,6 +125,7 @@ export function AccountControls({
   return (
     <div className="account-controls">
       {portal && actor && <span
+        role="img"
         className={`header-profile-verified${actor.profileVerified === true ? "" : " is-unverified"}`}
         aria-label={actor.profileVerified === true ? "Profile verified" : "Profile unverified"}
         title={actor.profileVerified === true ? "Your profile has been verified by TPA" : "Your profile has not yet been verified by TPA"}
