@@ -30,7 +30,7 @@ export async function verifyPaymentTable(browser:Browser,base:string,cookie:stri
    await page.screenshot({path:`${dir}/payment-table-${width}-${colorScheme}.png`,fullPage:true});states.push({width,colorScheme,...geometry,keyboardScrollLeft,collectionFormDismissed:true,accessibility});
   }
   expect((await db.query('SELECT count(*)::int n FROM tpa.finance_entries')).rows[0].n).toBe(count);
-  await page.goto(base+'/admin/workspaces/payments');await page.getByRole('textbox',{name:'Search events by name',exact:true}).fill('No matching synthetic event');
+  await page.goto(base+'/admin/workspaces/payments');await page.getByRole('searchbox',{name:'Search events by name',exact:true}).fill('No matching synthetic event');
   await expect(page.getByText('No events match your search and filters.',{exact:true})).toBeVisible();
   return {states,emptyStateVerified:true,confirmationWrites:0};
  }finally{await context.close();}
