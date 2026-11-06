@@ -17,7 +17,7 @@ export async function signInPortal(page: Page, role: PortalRole) {
     for (const [kind, cookies] of Object.entries(saved))
       sessions.set(kind, cookies as Cookies);
   }
-  const destination = role === "member" ? "/member" : "/admin";
+  const destination = role === "member" ? "/member/events" : "/admin";
   if (sessions.has(key)) {
     await page.context().addCookies(sessions.get(key)!);
     await page.goto(destination);

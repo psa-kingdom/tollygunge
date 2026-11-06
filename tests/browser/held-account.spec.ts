@@ -229,7 +229,7 @@ test("held account is visible, activates only after release, and retains private
       .getByLabel("Password", { exact: true })
       .fill("Held!123456");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page).toHaveURL(/\/member$/);
+    await expect(page).toHaveURL(/\/member\/events$/);
     await page.goto("/account/profile");
     await page
       .getByLabel("Professional title", { exact: false })
@@ -257,10 +257,10 @@ test("held account is visible, activates only after release, and retains private
     expect(current.accepted.addresses.correspondence.district).toBe("");
     await page.goto("/member/application");
     await page
-      .getByRole("button", { name: "3. Contact & preferences", exact: true })
+      .getByRole("button", { name: "Personal details, contact & preferences", exact: true })
       .click();
     const residence = page.getByRole("region", {
-      name: "Residential address",
+      name: "Permanent address",
       exact: true,
     });
     await residence
@@ -286,7 +286,7 @@ test("held account is visible, activates only after release, and retains private
     await page.reload();
     await expect(
       page
-        .getByRole("region", { name: "Residential address", exact: true })
+        .getByRole("region", { name: "Permanent address", exact: true })
         .getByLabel("Address Line 1", { exact: true }),
     ).toHaveValue("24 Synthetic Member Lane");
   } finally {

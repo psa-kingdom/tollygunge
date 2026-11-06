@@ -112,6 +112,8 @@ try {
     await new Promise(r => setTimeout(r, 1000));
   }
   assert.ok(ready);
+  // Retire only the browser fixture's singleton role before HTTP tests create theirs.
+  await run("retire-browser-reviewer", ["--input-type=module", "-e", "import {Pool} from 'pg';const p=new Pool({connectionString:process.env.DATABASE_URL,ssl:false});try{await p.query(\"DELETE FROM tpa.staff_roles WHERE role='super_administrator' AND user_id=(SELECT id FROM public.\\\"user\\\" WHERE email='portal-super_administrator@example.invalid')\");}finally{await p.end();}"]);
   await run("baseline-http", ["--import", "tsx", "--test", "--test-concurrency=1", "tests/http.integration.ts", "tests/operations.integration.ts", "tests/media.integration.ts", "tests/payment-details.integration.ts", "tests/inquiries.integration.ts", "tests/governance.integration.ts", "tests/portraits.integration.ts", "tests/campaigns.integration.ts", "tests/reports-news.integration.ts", "tests/email-http.integration.ts", "tests/private-download-headers.integration.ts"]);
   }
 } finally {

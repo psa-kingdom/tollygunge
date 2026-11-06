@@ -45,3 +45,5 @@ Finance has only Overview and Approvals at the workspace level. Overview shows l
 ## Finance layout refinements
 
 Overview supports Card view and List view, both showing each event's approved total collected and total spent. Add fee collection is aligned to the top right. Event export controls appear only on event pages. Event pages put the three-field collected/expenses/net summary beside the event name, outside both tab panels. Add Expense, Add fee collection, Export PDF, and Export Excel share the tab row. Refresh controls and redundant expense-sheet headings, author introductions, explanatory prose, and the duplicate event-result block are removed. Table column labels, submission status, and audited review access remain available.
+
+Collection-account instructions are managed under Settings → Collection accounts. Finance retains only Overview and Approvals.

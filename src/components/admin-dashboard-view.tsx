@@ -47,6 +47,7 @@ export function AdminDashboardView({
 }: AdminDashboardViewProps) {
   return (
     <main id="main" className="workspace-main portal-overview">
+      <h1 className="sr-only">Staff workspace</h1>
       {subsections && (
         <div className="portal-page-intro" style={{ marginBottom: 16 }}>
           {subsections}

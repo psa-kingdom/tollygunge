@@ -51,6 +51,7 @@ const admin: PortalGroup[] = [
     label: "Settings",
     items: [
       workspace("Website settings", "website"),
+      workspace("Collection accounts", "payment-details"),
       workspace("Staff access", "access"),
     ],
   },

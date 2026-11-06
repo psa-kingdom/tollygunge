@@ -103,6 +103,7 @@ const groups: {
         icon: "wallet",
         permission: "payments:manage",
       },
+      {label:"Collection accounts",href:"/admin/workspaces/payment-details",icon:"wallet",permission:"payments:manage"},
       {
         label: "Email settings",
         href: "/admin/workspaces/onboarding-email",

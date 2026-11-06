@@ -61,10 +61,9 @@ test("bank editor, saved activation and member display remain responsive", async
     label = "Synthetic bank " + randomUUID();
   let paymentId: string | undefined;
   try {
-    await page.goto("/admin/workspaces/payments", {
+    await page.goto("/admin/workspaces/payment-details", {
       waitUntil: "domcontentloaded",
     });
-    await page.getByRole("tab", { name: "Payment instructions", exact: true }).click();
     // Initial data loading confirms that this streamed client form is hydrated.
     // Interacting with the server-rendered select earlier can lose its value.
     await expect(

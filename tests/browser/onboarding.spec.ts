@@ -173,7 +173,7 @@ test("verification links show their own account for signed-out visitors and an u
     await staffPage
       .getByRole("button", { name: "Sign in", exact: true })
       .click();
-    await expect(staffPage).toHaveURL(/\/member$/);
+    await expect(staffPage).toHaveURL(/\/member\/events$/);
     expect(
       (await (await staff.request.get(origin + "/api/auth/get-session")).json())
         .user.email,
@@ -373,7 +373,7 @@ test(`invitation activation offers explicit sign-in when another staff account i
       .getByLabel("Password", { exact: true })
       .fill("Invited!1234");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page).toHaveURL(/\/member$/);
+    await expect(page).toHaveURL(/\/member\/events$/);
     expect(
       (
         await (
@@ -407,24 +407,10 @@ test(
       await page
         .getByRole("button", { name: "Create account", exact: true })
         .click();
-      await expect(page).toHaveURL(/\/member$/);
-      await expect(
-        page.getByRole("heading", { name: "Your profile verification" }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("heading", { name: "Edit person", exact: true }),
-      ).toHaveCount(0);
-      await expect(
-        page.getByRole("link", { name: /^Go to Membership & professional details/ }),
-      ).toBeVisible();
-      await page.screenshot({
-        path: info.outputPath("member-dashboard-unverified.png"),
-        fullPage: true,
-      });
-      await page
-        .getByRole("link", { name: /^Go to Membership & professional details/ })
-        .click();
-      await expect(page).toHaveURL(/\/member\/application\?step=0$/);
+      await expect(page).toHaveURL(/\/member\/events$/);
+      await expect(page.getByRole("heading",{name:"Edit person",exact:true})).toHaveCount(0);
+      await page.goto("/member/application?step=0");
+      await expect(page.getByRole("navigation",{name:"Application steps"}).getByRole("button")).toHaveCount(3);
       // The dashboard link pins its requested step. Test saved-step restoration
       // through the normal resume URL, without that explicit step override.
       await page.goto("/member/application");
@@ -435,7 +421,7 @@ test(
         "Test qualification",
       );
       await page
-        .getByRole("button", { name: "2. Personal details", exact: true })
+        .getByRole("button", { name: "Personal details, contact & preferences", exact: true })
         .click();
       await page.getByText("Family & health details", { exact: false }).click();
       await page.getByLabel("Father’s name (optional)").fill("Test parent");
@@ -445,14 +431,12 @@ test(
         "Test parent",
       );
       await page
-        .getByRole("button", { name: "3. Contact & preferences", exact: true })
+        .getByRole("button", { name: "Personal details, contact & preferences", exact: true })
         .click();
       await page.getByLabel("Mobile number *").fill("+919876543210");
-      await page
-        .getByLabel("Correspondence address *")
-        .selectOption("Residence");
+      await page.getByRole("checkbox",{name:"Permanent address is the same as correspondence",exact:true}).uncheck();
       const residence = page.getByRole("region", {
-        name: "Residential address",
+        name: "Permanent address",
         exact: true,
       });
       await residence
@@ -476,13 +460,9 @@ test(
         "+919876543210",
       );
       await page
-        .getByRole("button", { name: "4. Evidence & referrals", exact: true })
+        .getByRole("button", { name: "Membership & professional details", exact: true })
         .click();
-      await page.locator("summary").filter({ hasText: "Referrals" }).click();
-      await page
-        .getByLabel("Proposer name (optional)")
-        .fill("Unverified test referral");
-      await expect(page.getByRole("status").last()).toHaveText("Saved");
+      await expect(page.getByLabel("Proposer name (optional)")).toHaveCount(0);
       await page.getByLabel("Passport photograph *").setInputFiles({
         name: "test.png",
         mimeType: "image/png",
@@ -492,7 +472,7 @@ test(
         "being configured",
       );
       await page
-        .getByRole("button", { name: "5. Review & declaration", exact: true })
+        .getByRole("button", { name: "Review & declaration", exact: true })
         .click();
       await page.getByLabel("Typed applicant signature *").fill("Browser test");
       await expect(page.getByRole("status").last()).toHaveText("Saved");
@@ -544,16 +524,8 @@ test(
             ).rows[0].emailVerified,
         )
         .toBeTruthy();
-      await page.goto("/member");
-      await expect(
-        page.getByRole("link", { name: /^Go to / }),
-      ).toBeVisible();
-      await expect(
-        page.getByText("Email: Verified", { exact: true }),
-      ).toBeVisible();
-      await expect(
-        page.getByText("Loading your profile…", { exact: true }),
-      ).toHaveCount(0);
+      await page.goto("/member/application");
+      await expect(page.getByText("Email: Verified",{exact:true})).toBeVisible();
       const header = await page.locator(".portal-topbar").boundingBox(),
         main = await page.locator("main").boundingBox();
       expect(header!.y + header!.height).toBeLessThanOrEqual(main!.y + 1);
@@ -573,7 +545,7 @@ test(
       await page.getByLabel("Password", { exact: true }).fill(password);
       await page.getByLabel("Keep me signed in").check();
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
-      await expect(page).toHaveURL(/\/member$/);
+      await expect(page).toHaveURL(/\/member\/events$/);
       const storage = await context.storageState();
       expect(
         storage.cookies.some(
@@ -587,9 +559,8 @@ test(
         .newContext({ storageState: storage });
       const tab = await resumed.newPage();
       await tab.goto(process.env.TPA_TEST_URL + "/member");
-      await expect(
-        tab.getByRole("heading", { name: "Your profile verification" }),
-      ).toBeVisible();
+      await expect(tab).toHaveURL(/\/member\/events$/);
+      await expect(tab.getByRole("button",{name:"Attendance history",exact:true})).toBeVisible();
       await resumed.close();
       await page.goto("/forgot-password");
       await page.getByLabel("Email", { exact: true }).fill(email);
@@ -651,7 +622,7 @@ test(
         .getByLabel("Password", { exact: true })
         .fill("Replace!1234");
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
-      await expect(page).toHaveURL(/\/member$/);
+      await expect(page).toHaveURL(/\/member\/events$/);
     } finally {
       await db.end();
     }
@@ -678,10 +649,8 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
   await page
     .getByRole("button", { name: "Create account", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/member$/);
-  await page
-    .getByRole("link", { name: /^Go to Membership & professional details/ })
-    .click();
+  await expect(page).toHaveURL(/\/member\/events$/);
+  await page.goto("/member/application?step=0");
   const qualification = page.getByLabel("Qualification *");
   await qualification.fill("Server baseline");
   await expect(page.getByRole("status").last()).toHaveText("Saved");
@@ -733,93 +702,25 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
   });
 });
 
-test("member dashboard separates verification states and keeps the editor off the landing page", async ({
-  page,
-}, info) => {
-  const origin = process.env.TPA_TEST_URL!;
-  const email = randomUUID() + "@example.invalid";
-  const signup = await page.request.post(origin + "/api/auth/sign-up/email", {
-    headers: { origin },
-    data: {
-      name: "Portal design test",
-      email,
-      password: "Browser!1234",
-    },
-  });
-  expect(signup.ok()).toBeTruthy();
-  const states = [
-    {
-      label: "Not verified",
-      verified: false,
-      updateRequested: false,
-      reviews: [],
-    },
-    {
-      label: "Under review",
-      verified: false,
-      updateRequested: false,
-      reviews: [{ status: "pending", reason: "" }],
-    },
-    {
-      label: "Corrections requested",
-      verified: false,
-      updateRequested: false,
-      reviews: [
-        {
-          status: "corrections",
-          reason: "Please upload a clearer certificate.",
-        },
-      ],
-    },
-    { label: "Verified", verified: true, updateRequested: false, reviews: [] },
-    {
-      label: "Verified · Update requested",
-      verified: true,
-      updateRequested: true,
-      reviews: [],
-    },
-  ];
-  for (const [index, state] of states.entries()) {
-    const remaining = index > 2 ? [] : [
-      { id: "photograph", label: "Photograph", step: 3, href: "/member/application?step=3" },
-      ...(index === 0 ? [{ id: "email", label: "Verify your account email", step: -1, href: "/member#verification-email-action" }] : []),
-    ];
-    await page.route("**/api/member/verification", (route) =>
-      route.fulfill({
-        json: {
-          email,
-          emailVerified: index > 0,
-          missing: index > 2 ? [] : ["Photograph"],
-          progress: { total: 2, completed: 2 - remaining.length, percent: (2 - remaining.length) * 50, remaining },
-          ...state,
-        },
-      }),
-    );
-    await page.goto("/member");
-    await expect(page.locator(".member-verification .member-card-heading [data-tone]")).toHaveText(state.label);
-    await expect(
-      page.getByRole("heading", { name: "Edit person", exact: true }),
-    ).toHaveCount(0);
-    await expect(
-      page.getByRole("link", { name: "Your profile", exact: true }),
-    ).toBeVisible();
-    if (state.reviews[0]?.reason)
-      await expect(page.getByText(state.reviews[0].reason)).toBeVisible();
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth,
-      ),
-    ).toBeTruthy();
-    await page.getByRole("navigation", {name:"Member navigation",exact:true}).getByRole("link", { name: "Overview", exact: true }).focus();
-    await page.keyboard.press("Tab");
-    await expect(page.getByRole("link", { name: "Membership", exact: true })).toBeFocused();
-    await expect(page.getByRole("navigation", {name:"Member navigation",exact:true})).toBeVisible();
-    await page.screenshot({
-      path: info.outputPath(`dashboard-state-${index}.png`),
-      fullPage: true,
-    });
-    await page.unroute("**/api/member/verification");
-  }
+test("member landing keeps verification review and editing in the application",async({page},info)=>{
+ const origin=process.env.TPA_TEST_URL!,email=randomUUID()+"@example.invalid";
+ expect((await page.request.post(origin+"/api/auth/sign-up/email",{headers:{origin},data:{name:"Portal state test",email,password:"Browser!1234"}})).ok()).toBeTruthy();
+ const baseline=await (await page.request.get("/api/member/verification")).json();
+ for(const state of [
+  {label:"Not verified",verified:false,updateRequested:false,reviews:[]},
+  {label:"Under review",verified:false,updateRequested:false,reviews:[{status:"pending",reason:""}]},
+  {label:"Corrections requested",verified:false,updateRequested:false,reviews:[{status:"corrections",reason:"Please upload a clearer certificate."}]},
+  {label:"Verified",verified:true,updateRequested:false,reviews:[]},
+  {label:"Verified · Update requested",verified:true,updateRequested:true,reviews:[]},
+ ]){
+  await page.route("**/api/member/verification",route=>route.fulfill({json:{...baseline,...state}}));
+  await page.goto("/member");await expect(page).toHaveURL(/\/member\/events$/);
+  await expect(page.getByRole("navigation",{name:"Application steps"})).toHaveCount(0);
+  await page.goto("/member/application");
+  await expect(page.getByRole("region",{name:"Profile verification status"})).toContainText(state.label);
+  if(state.reviews[0]?.reason)await expect(page.getByText(state.reviews[0].reason,{exact:false})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
+  await page.screenshot({path:info.outputPath(`verification-${state.label.split(' ')[0]}.png`),fullPage:true});
+  await page.unroute("**/api/member/verification");
+ }
 });
-
-
