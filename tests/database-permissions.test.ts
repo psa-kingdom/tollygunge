@@ -21,3 +21,9 @@ test('newsletter worker can recheck consent without changing subscribers or read
  assert.equal(tablePermissions.import['tpa.public_subscription_requests'],undefined);
  assert.deepEqual(tablePermissions.web['tpa.public_subscription_requests'],['INSERT','SELECT']);
 });
+
+test('historical event editing grants only the required web access and append-only revisions',()=>{
+ assert.deepEqual(tablePermissions.web['tpa.historical_event_details'],['INSERT','SELECT','UPDATE']);
+ assert.deepEqual(tablePermissions.web['tpa.historical_event_revisions'],['INSERT','SELECT']);
+ for(const role of ['email','import'])for(const table of ['tpa.historical_event_details','tpa.historical_event_revisions'])assert.equal(tablePermissions[role][table],undefined);
+});

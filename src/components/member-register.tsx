@@ -62,7 +62,9 @@ export function MemberRegister({
   const newParam = searchParams.get("new");
   const [editorDirty, setEditorDirty] = useState(false);
   const editorGuard = useEmailEditGuard(editorDirty);
-  const [isCreating, setIsCreating] = useState(false);
+  const createRequested = canManage && (actionParam === "create" || newParam === "true");
+  const [previousCreateRequest, setPreviousCreateRequest] = useState(createRequested);
+  const [isCreating, setIsCreating] = useState(createRequested);
   const createButton = useRef<HTMLButtonElement | null>(null);
   const createHeading = useRef<HTMLHeadingElement>(null);
   const closeDetails = () =>
@@ -86,12 +88,14 @@ export function MemberRegister({
   useEffect(() => {
     if (isCreating) createHeading.current?.focus();
   }, [isCreating]);
-  useEffect(() => {
-    if (canManage && (actionParam === "create" || newParam === "true")) {
+  // Adjust local editor state when navigation changes the creation request.
+  if (previousCreateRequest !== createRequested) {
+    setPreviousCreateRequest(createRequested);
+    if (createRequested) {
       setSelected(undefined);
       setIsCreating(true);
     }
-  }, [actionParam, newParam, canManage]);
+  }
   async function load(
     offset = 0,
     filters = { q, status, invitation, kind, verification, review, contact },

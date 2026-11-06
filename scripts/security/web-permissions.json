@@ -217,6 +217,15 @@
   "tpa.governance_revisions": [
     "SELECT"
   ],
+  "tpa.historical_event_details": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.historical_event_revisions": [
+    "INSERT",
+    "SELECT"
+  ],
   "tpa.inquiries": [
     "INSERT",
     "SELECT",
