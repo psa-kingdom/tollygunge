@@ -5,10 +5,11 @@ import Link from "./navigation-link";
 
 type Item = { id: string; label: string; href: string; category: string; priority: string; count: number };
 
-export function DashboardAttention({ initialItems, workspaceCount }: { initialItems: Item[]; workspaceCount: number }) {
+export function DashboardAttention({ initialItems, workspaceCount, live = true }: { initialItems: Item[]; workspaceCount: number; live?: boolean }) {
   const [items, setItems] = useState(initialItems);
   const [error, setError] = useState(false);
   useEffect(() => {
+    if (!live) return;
     const controller = new AbortController();
     let loading = false;
     const refresh = async () => {
@@ -40,7 +41,7 @@ export function DashboardAttention({ initialItems, workspaceCount }: { initialIt
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, []);
+  }, [live]);
   return <div className="dashboard-bento" id="attention">
     <section className="bento-card bento-primary" aria-labelledby="dashboard-attention-title">
       <span className="eyebrow">YOUR NEXT ACTION</span><h2 id="dashboard-attention-title">Needs attention</h2>

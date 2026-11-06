@@ -34,6 +34,7 @@ export type AdminDashboardViewProps = {
   workspaceCount: number;
   activity: ActivityItem[];
   extraSections?: ReactNode;
+  liveAttention?: boolean;
 };
 
 export function AdminDashboardView({
@@ -45,6 +46,7 @@ export function AdminDashboardView({
   workspaceCount,
   activity,
   extraSections,
+  liveAttention = true,
 }: AdminDashboardViewProps) {
   return (
     <main id="main" className="workspace-main portal-overview">
@@ -76,7 +78,7 @@ export function AdminDashboardView({
         })}
       </div>
 
-      <DashboardAttention initialItems={attentionItems.map(item => ({ ...item, count: item.count ?? 0 }))} workspaceCount={workspaceCount} />
+      <DashboardAttention live={liveAttention} initialItems={attentionItems.map(item => ({ ...item, count: item.count ?? 0 }))} workspaceCount={workspaceCount} />
 
       {activity.length > 0 && (
         <section className="bento-card" id="activity" style={{ marginTop: 16 }}>

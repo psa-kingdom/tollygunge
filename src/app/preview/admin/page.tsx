@@ -73,6 +73,7 @@ export default function AdminPreview() {
 
   return (
     <AdminDashboardView
+      liveAttention={false}
       adminName="Administrator"
       subsections={subsections}
       metrics={previewMetrics}
