@@ -112,7 +112,7 @@ try {
     await new Promise(r => setTimeout(r, 1000));
   }
   assert.ok(ready);
-  await run("baseline-http", ["--import", "tsx", "--test", "tests/http.integration.ts", "tests/operations.integration.ts", "tests/media.integration.ts", "tests/payment-details.integration.ts", "tests/inquiries.integration.ts", "tests/governance.integration.ts", "tests/portraits.integration.ts", "tests/campaigns.integration.ts", "tests/reports-news.integration.ts", "tests/email-http.integration.ts", "tests/private-download-headers.integration.ts"]);
+  await run("baseline-http", ["--import", "tsx", "--test", "--test-concurrency=1", "tests/http.integration.ts", "tests/operations.integration.ts", "tests/media.integration.ts", "tests/payment-details.integration.ts", "tests/inquiries.integration.ts", "tests/governance.integration.ts", "tests/portraits.integration.ts", "tests/campaigns.integration.ts", "tests/reports-news.integration.ts", "tests/email-http.integration.ts", "tests/private-download-headers.integration.ts"]);
   }
 } finally {
   outageServer?.kill();

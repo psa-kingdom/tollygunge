@@ -245,12 +245,13 @@ test("workspace subtabs and collapsible sections preserve a usable task hierarch
   }
   await page.screenshot({ path: info.outputPath("communications-inbox.png"), fullPage: true });
   await page.goto("/admin/workspaces/payments");
-  await expect(page.getByRole("tab", { name: "Registration payments", exact: true })).toHaveAttribute("aria-selected", "true");
-  await page.getByRole("tab", { name: "Payment instructions", exact: true }).click();
-  await expect(page.locator("#payments-instructions-panel")).toBeVisible();
-  await page.getByRole("tab", { name: "Payment instructions", exact: true }).press("Home");
-  await expect(page.getByRole("tab", { name: "Registration payments", exact: true })).toBeFocused();
-  await expect(page.locator("#payments-registrations-panel")).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Overview", exact: true })).toHaveAttribute("aria-selected", "true");
+  const approvals=page.getByRole("tab",{name:/^Approvals/});
+  await approvals.click();
+  await expect(approvals).toHaveAttribute("aria-selected","true");
+  await approvals.press("Home");
+  await expect(page.getByRole("tab",{name:"Overview",exact:true})).toBeFocused();
+  await expect(page.locator("#finance-panel-all")).toBeVisible();
   await layoutFits(page);
 });
 
@@ -306,18 +307,17 @@ test("campaign stepper preserves drafts and gates review without sending", async
 test("payments and email settings keep forms and empty states aligned", async ({ page }, info) => {
   await signIn(page, "ADMIN");
   let populated = false;
-  await page.route("**/api/staff/registration-payments?**", route => route.fulfill({ json: populated ? [{ id: "synthetic-payment", version: 1, name: "Synthetic Member", email: "member@example.test", title: "Synthetic event", fee_paise: 10000, payment_status: "pending", payment_reference: "test", payment_note: "", history: [] }] : [] }));
+  await page.route(/\/api\/staff\/finance(?:\?.*)?$/, route => route.fulfill({json:{filters:{eventId:null},events:populated?[{id:"synthetic-event",title:"Synthetic event",location:"Test venue",starts_at:"2026-11-20T10:00:00Z",participant_count:1,status:"published"}]:[],entries:[],totals:{received:0,expenses:0,refunded:0,netResult:0,pendingReceipts:0,pendingExpenses:0},registrations:[],reviewer:false,actorId:"synthetic-admin"}}));
   await page.goto("/admin/workspaces/payments");
-  const payments = page.locator(".registration-payments");
-  await expect(payments.getByRole("heading", { name: "No payments match this status", exact: true })).toBeVisible();
-  await expect(payments.getByRole("table")).toHaveCount(0);
+  await expect(page.getByText("No events yet.",{exact:true})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Event finance list",exact:true})).toHaveCount(0);
   await layoutFits(page);
-  await page.screenshot({ path: info.outputPath("payments-empty.png"), fullPage: true });
-  populated = true;
-  await payments.getByLabel("Payment status").selectOption("all");
+  await page.screenshot({path:info.outputPath("finance-empty.png"),fullPage:true});
+  populated=true;await page.reload();await page.getByRole("button",{name:"List view",exact:true}).click();
+  const payments=page.getByRole("region",{name:"Event finance list",exact:true});
   await expect(payments.getByRole("table")).toBeVisible();
-  const width = await payments.locator(".table-scroll").evaluate(el => ({ region: el.clientWidth, table: el.querySelector("table")!.getBoundingClientRect().width }));
-  expect(width.table).toBeGreaterThanOrEqual(width.region - 2);
+  const width=await payments.evaluate(el=>({region:el.clientWidth,table:el.querySelector("table")!.getBoundingClientRect().width}));
+  expect(width.table).toBeGreaterThanOrEqual(width.region-2);
   await layoutFits(page);
   await page.route("**/api/staff/onboarding-email", route => {
     if (route.request().method() !== "GET") throw new Error("Layout checks must not save recipients or send emails");
@@ -398,7 +398,7 @@ test("navigation keeps authentication isolated between requests", async ({ page 
   await page.context().clearCookies();
   await signIn(page, "MEMBER");
   await page.goto("/admin");
-  await page.waitForURL("**/member");
+  await page.waitForURL("**/member/events");
   await expect(page.locator("#staff-navigation")).toHaveCount(0);
   await page.context().clearCookies();
   await page.goto("/admin");
