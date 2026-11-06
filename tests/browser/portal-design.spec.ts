@@ -456,8 +456,9 @@ test("slow navigation retains the current page instead of replacing it with a lo
 
 test("member completion links to missing form steps and keeps approval separate",async({page},info)=>{
  await signIn(page,"MEMBER");
- const draft=await (await page.request.get("/api/member/application")).json();
- draft.details.mobile="";
+ const draft={version:1,plan:"Annual",category:"Professional",details:{fullName:"Synthetic member",phone:""},documentIds:[],step:4};
+ const verification=await (await page.request.get("/api/member/verification")).json();
+ await page.route("**/api/member/verification",route=>route.fulfill({json:{...verification,registeredContact:{email:verification.email,phone:""}}}));
  await page.route("**/api/member/application",async route=>{
    if(route.request().method()!=="GET") Object.assign(draft,route.request().postDataJSON(),{version:draft.version+1});
    await route.fulfill({json:draft});
