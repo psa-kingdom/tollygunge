@@ -156,7 +156,7 @@ test("event, flyer and import empty states lead to the correct next task", async
   await page.getByRole("button", { name: "New event", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Create event", exact: true })).toBeVisible();
   await expect(page.getByLabel("Title", { exact: true })).toBeVisible();
-  expect(await page.getByRole("listbox", { name: "Event payment accounts", exact: true }).evaluate(element => element.closest("fieldset")?.querySelector("legend")?.textContent)).toBe("Payment");
+  expect(await page.getByRole("listbox", { name: "Event payment accounts", exact: true }).evaluate(element => element.closest("fieldset")?.querySelector("legend")?.textContent)).toBe("Fee collection");
   await page.getByRole("navigation", { name: "Event form sections" }).getByRole("link", { name: "Reminders", exact: true }).click();
   await expect(page.getByLabel("Send automatic reminders", { exact: true })).toBeInViewport();
   await layoutFits(page);
@@ -455,7 +455,14 @@ test("slow navigation retains the current page instead of replacing it with a lo
 });
 
 test("member completion links to missing form steps and keeps approval separate",async({page},info)=>{
- await signIn(page,"MEMBER");await page.goto("/member/application?step=4");
+ await signIn(page,"MEMBER");
+ const draft=await (await page.request.get("/api/member/application")).json();
+ draft.details.mobile="";
+ await page.route("**/api/member/application",async route=>{
+   if(route.request().method()!=="GET") Object.assign(draft,route.request().postDataJSON(),{version:draft.version+1});
+   await route.fulfill({json:draft});
+ });
+ await page.goto("/member/application?step=4");
  const progress=page.getByRole("progressbar");await expect(progress).toHaveAttribute("max","100");
  const before=Number(await progress.getAttribute("value"));expect(before).toBeLessThan(100);
  await expect(page.getByRole("region",{name:"Profile verification status"})).toContainText("Not verified");

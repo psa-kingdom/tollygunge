@@ -1,4 +1,5 @@
 import Link from "@/components/navigation-link";
+import { DashboardAttention } from "./dashboard-attention";
 import { PortalIcon } from "@/components/portal-icon";
 import { dashboardMetricPresentation } from "@/domain/dashboard-presentation";
 import type { ReactNode } from "react";
@@ -75,52 +76,7 @@ export function AdminDashboardView({
         })}
       </div>
 
-      <div className="dashboard-bento" id="attention">
-        <section
-          className="bento-card bento-primary"
-          aria-labelledby="dashboard-attention-title"
-        >
-          <span className="eyebrow">YOUR NEXT ACTION</span>
-          <h2 id="dashboard-attention-title">Needs attention</h2>
-          <p className="dashboard-alert-help">
-            New sign-ups appear here while they complete their details.
-            Submitted applications go to Verification for administrator review.
-          </p>
-          {attentionItems.length ? (
-            attentionItems.map((item) => (
-              <Link
-                className="attention-row"
-                data-tone={
-                  item.count && item.count > 0 &&
-                  (["verification", "profile-reviews", "membership-records"].includes(item.id) ||
-                    item.priority.toLowerCase() === "high")
-                    ? "warning"
-                    : "blue"
-                }
-                key={item.id}
-                href={item.href}
-              >
-                <span>{item.label}</span>
-                <small>
-                  {item.category} · {item.priority}{" "}
-                  <span className="attention-arrow" aria-hidden="true">
-                    →
-                  </span>
-                </small>
-              </Link>
-            ))
-          ) : (
-            <p>You’re up to date in your permitted workspaces.</p>
-          )}
-        </section>
-
-        <section className="bento-card bento-status">
-          <span className="eyebrow">WORKSPACE STATUS</span>
-          <h2>{attentionItems.length}</h2>
-          <p>Active alerts needing attention</p>
-          <p>{workspaceCount} permitted workspaces</p>
-        </section>
-      </div>
+      <DashboardAttention initialItems={attentionItems.map(item => ({ ...item, count: item.count ?? 0 }))} workspaceCount={workspaceCount} />
 
       {activity.length > 0 && (
         <section className="bento-card" id="activity" style={{ marginTop: 16 }}>

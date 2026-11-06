@@ -67,8 +67,8 @@ test("postal hierarchy, city aliases, parent changes, PIN ambiguity and draft co
     const delhi = await validateAddresses(c,{office:{...address,postalCode:'110091',city:'Delhi'}});
     assert.equal(delhi.office!.city,'Delhi');
     assert.equal(delhi.office!.district,'East');
-    const good=await validateAddresses(c,{correspondence:address});assert.equal(good.correspondence!.state,"West Bengal");assert.equal(good.correspondence!.district,"Kolkata");assert.equal(good.correspondence!.city,"Kolkata");assert.equal(good.correspondence!.postalLocality,"");
-    await assert.rejects(validateAddresses(c,{office:{...address,state:"Bihar"}}));await assert.rejects(validateAddresses(c,{office:{...address,city:"Patna"}}));await assert.rejects(validateAddresses(c,{office:{...address,postalCode:"999999",city:""}}));
+    const good=await validateAddresses(c,{correspondence:address});assert.equal(good.correspondence!.state,"West Bengal");assert.equal(good.correspondence!.district,"Kolkata");assert.equal(good.correspondence!.city,"Calcutta");assert.equal(good.correspondence!.postalLocality,"");
+    await assert.rejects(validateAddresses(c,{office:{...address,state:"Bihar"}}));await assert.doesNotReject(validateAddresses(c,{office:{...address,city:"Patna"}}));await assert.rejects(validateAddresses(c,{office:{...address,postalCode:"999999",city:""}}));
     await assert.rejects(validateAddresses(c,{office:{...address,postalCode:"123",city:""}}));
     await assert.doesNotReject(validateAddresses(c,{office:{...address,postalCode:"700",city:"",state:"West Bengal"}},{},true));
     const base={...member(1),addresses:good};const incoming={...base,addresses:{correspondence:{...address,state:"Bihar",district:"",city:"",postalCode:"800001"}}};

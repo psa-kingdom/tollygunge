@@ -832,6 +832,8 @@ test("PIN is first and automatically resolves without losing manual address line
     (await state.boundingBox())!.y,
   );
   await pin.fill("800001");
+  await office.getByRole("textbox",{name:"Locality",exact:true}).fill("Manual locality");
+  await office.getByRole("textbox",{name:"City",exact:true}).fill("Manual city");
   await office
     .getByLabel("Address Line 1", { exact: true })
     .fill("House 24, TPA colony");
@@ -839,9 +841,8 @@ test("PIN is first and automatically resolves without losing manual address line
   await expect(
     office.getByRole("combobox", { name: "District", exact: true }),
   ).toHaveValue("Patna");
-  await expect(office.getByRole("textbox",{name:"Locality",exact:true})).toHaveValue("");
-  await office.getByRole("textbox",{name:"Locality",exact:true}).fill("G.P.O.");
-  await office.getByRole("textbox",{name:"City",exact:true}).fill("Patna");
+  await expect(office.getByRole("textbox",{name:"Locality",exact:true})).toHaveValue("Manual locality");
+  await expect(office.getByRole("textbox",{name:"City",exact:true})).toHaveValue("Manual city");
   await expect(
     office.getByLabel("Address Line 1", { exact: true }),
   ).toHaveValue("House 24, TPA colony");

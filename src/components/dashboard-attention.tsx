@@ -41,7 +41,7 @@ export function DashboardAttention({ initialItems, workspaceCount }: { initialIt
       document.removeEventListener("visibilitychange", refresh);
     };
   }, []);
-  return <div className="dashboard-bento">
+  return <div className="dashboard-bento" id="attention">
     <section className="bento-card bento-primary" aria-labelledby="dashboard-attention-title">
       <span className="eyebrow">YOUR NEXT ACTION</span><h2 id="dashboard-attention-title">Needs attention</h2>
       <p className="dashboard-alert-help">New sign-ups appear here while they complete their details. Submitted applications go to Verification for administrator review.</p>

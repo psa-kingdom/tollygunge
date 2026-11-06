@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import { emptyAddress, type StructuredAddress } from "@/domain/address";
 type Locations = {
   states: string[];
@@ -56,7 +56,7 @@ export function AddressForm({
       ? value.postalCode
       : "",
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     latestAddress.current = address;
   }, [address]);
   const key = new URLSearchParams({
@@ -89,16 +89,18 @@ export function AddressForm({
       pinRequest.current?.abort();
       setPinState({});
     }
-    let next = { ...address, [field]: text };
+    const latest = latestAddress.current;
+    let next = { ...latest, [field]: text };
     if (field === "country")
       next = {
         ...emptyAddress,
         country: text,
-        line1: address.line1,
-        line2: address.line2,
+        line1: latest.line1,
+        line2: latest.line2,
       };
     if (field === "state") next = { ...next, district: "" };
-    if (field === "postalCode" && address.country === "IN") next = { ...next, state: "", district: "" };
+    if (field === "postalCode" && latest.country === "IN") next = { ...next, state: "", district: "" };
+    latestAddress.current = next;
     onChange(next);
   }
   const resolvePin = useCallback(async () => {
@@ -118,7 +120,9 @@ export function AddressForm({
       const states = [...new Set(result.localities.map(row => row.state))];
       const districts = [...new Set(result.localities.map(row => row.district))];
       if (states.length === 1) {
-        onChange({ ...latestAddress.current, state: states[0], district: districts.length === 1 ? districts[0] : "" });
+        const next = { ...latestAddress.current, state: states[0], district: districts.length === 1 ? districts[0] : "" };
+        latestAddress.current = next;
+        onChange(next);
       }
       setPinState({});
     } catch (error) {

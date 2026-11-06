@@ -1015,3 +1015,24 @@
 .horizontal.horizontal :global(.participant-source-choice button[aria-pressed="true"]) { border-color:var(--link); box-shadow:inset 3px 0 var(--gold); background:var(--portal-hover); }
 .horizontal :global(.participant-source-choice button:focus-visible) { outline:2px solid var(--portal-focus); outline-offset:3px; }
 @media(max-width:600px) { .horizontal.horizontal :global(.participant-source-choice) { grid-template-columns:1fr; } }
+
+/* Give mobile navigation its own row so account controls cannot collapse it. */
+@media (max-width: 800px) {
+  .horizontal.horizontal :global(.portal-topbar) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 42px 46px;
+    height: auto;
+    min-height: 106px;
+    gap: 4px 8px;
+  }
+  .horizontal.horizontal :global(.portal-brand-row) { grid-column: 1; grid-row: 1; }
+  .horizontal.horizontal :global(.portal-utilities) { grid-column: 2; grid-row: 1; }
+  .horizontal.horizontal :global(.portal-topbar > .portal-navigation) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+  }
+  .horizontal.horizontal :global(.header-profile-verified > span) { display: none; }
+}
