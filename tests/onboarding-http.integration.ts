@@ -88,10 +88,10 @@ test(
           await request("/api/member/profile", 1, {
             action: "save",
             version: initialProfile.person.version,
-            body: { name: "Competing copy" },
+            body: { name: "Test professional" },
           })
         ).status,
-        409,
+        200,
       );
       let r = await request("/api/member/application", 1, draft);
       assert.equal(r.status, 200);

@@ -49,5 +49,6 @@ test("staff navigation exposes only assigned responsibilities", () => {
   );
   assert.ok(!links(["finance_operator"]).includes("/admin/workspaces/crm"));
   assert.ok(links(["administrator"]).includes("/admin/workspaces/access"));
+  assert.ok(links(["super_administrator"]).includes("/admin/workspaces/access"));
   assert.ok(!links(["content_editor"]).includes("/admin/workspaces/access"));
 });

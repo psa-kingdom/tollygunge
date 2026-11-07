@@ -6,6 +6,8 @@ export function dashboardMetricPresentation(label: string, count: number) {
     "Membership issues": { icon: "file", tone: "warning" },
     "Profiles needing review": { icon: "profile", tone: "warning" },
     "Invitations held": { icon: "mail", tone: "warning" },
+    "Member receipts awaiting verification": { icon: "wallet", tone: "warning" },
+    "Finance submissions awaiting approval": { icon: "wallet", tone: "warning" },
     "Payments needing verification": { icon: "wallet", tone: "warning" },
     "Upcoming events": { icon: "calendar", tone: "teal" },
     "Upcoming registrations": { icon: "calendar", tone: "blue" },

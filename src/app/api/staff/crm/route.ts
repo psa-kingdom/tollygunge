@@ -41,7 +41,7 @@ export async function GET(request: Request) {
         values,
       ),
       database.query(
-        "SELECT DISTINCT u.id,u.name FROM public.\"user\" u JOIN tpa.staff_roles r ON r.user_id=u.id WHERE r.role IN ('administrator','communications_operator') ORDER BY u.name",
+        "SELECT DISTINCT u.id,u.name FROM public.\"user\" u JOIN tpa.staff_roles r ON r.user_id=u.id WHERE r.role IN ('administrator','super_administrator','communications_operator') ORDER BY u.name",
       ),
       database.query(
         "SELECT DISTINCT unnest(tags) AS tag FROM tpa.inquiries ORDER BY tag",
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         assigned &&
         !(
           await client.query(
-            "SELECT 1 FROM tpa.staff_roles WHERE user_id=$1 AND role IN ('administrator','communications_operator')",
+            "SELECT 1 FROM tpa.staff_roles WHERE user_id=$1 AND role IN ('administrator','super_administrator','communications_operator')",
             [assigned],
           )
         ).rowCount

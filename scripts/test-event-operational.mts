@@ -1,3 +1,4 @@
+import {approveFinance,recordRegistrationFinance} from "../tests/helpers/finance-acceptance.mts";
 import assert from 'node:assert/strict';
 import {randomUUID,randomBytes,createHmac} from 'node:crypto';
 import {spawn} from 'node:child_process';
@@ -48,10 +49,10 @@ try {
  for(const file of migrations) await db.query('BEGIN;\n'+await readFile('migrations/'+file,'utf8')+'\nCOMMIT;');
  pass('All additive migrations apply in order to an isolated database');
  if(!process.argv.includes('--migration-only')) {
- for(const role of ['administrator','member','member','guest','event_operator','finance_operator','member']) {
+ for(const role of ['administrator','member','member','guest','event_operator','finance_operator','member','super_administrator']) {
   const id=randomUUID(),token=randomBytes(24).toString('hex');users.push(id);
   await db.query('INSERT INTO public."user"(id,name,email,"emailVerified") VALUES($1,$2,$3,true)',[id,role+' '+users.length,`operational${users.length}@example.invalid`]);
-  if(['administrator','event_operator','finance_operator'].includes(role))await db.query('INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,$2)',[id,role]);
+  if(['administrator','event_operator','finance_operator','super_administrator'].includes(role))await db.query('INSERT INTO tpa.staff_roles(user_id,role) VALUES($1,$2)',[id,role]);
   if(role==='member') {
    await db.query("INSERT INTO tpa.newsletter_consents(user_id,subscribed,source) VALUES($1,true,'acceptance_fixture')",[id]);
    const person=randomUUID();await db.query('INSERT INTO tpa.people(id,user_id,accepted,draft,contact_email) VALUES($1,$2,$3,$3,$4)',[person,id,{name:role,addresses:{}},`operational${users.length}@example.invalid`]);
@@ -86,9 +87,8 @@ try {
  await request('/api/member/events',{action:'register',eventId:event.id},3,403);
  const duplicate=await request('/api/member/events',{action:'register',eventId:event.id},1);assert.equal(first.id,duplicate.id);
  pass('Paid member booking, ineligible guest rejection and duplicate reservation');
- await request('/api/member/events',{action:'payment_reference',eventId:event.id,reference:'UPI-TEST-001',version:first.version},1);
- async function registration(id:string){return (await db.query('SELECT * FROM tpa.event_registrations WHERE id=$1',[id])).rows[0];}
- async function payment(id:string,status:string){const r=await registration(id);await request('/api/staff/registration-payments',{id,version:r.version,status,reference:'UPI-TEST-001',note:'Matched isolated statement'});}
+ await request('/api/member/events',{action:'payment_reference',eventId:event.id,reference:'UPI-TEST-001',version:first.version},1,409);
+ async function payment(id:string,status:string){await recordRegistrationFinance(db,request,id,7,status==='refunded'?'refund':'receipt','UPI-TEST-001');}
  await payment(first.id,'paid');await payment(second.id,'paid');
  const original=(await db.query('SELECT * FROM tpa.event_payment_configurations WHERE event_id=$1 AND revision=$2',[event.id,first.payment_revision])).rows[0];assert.equal(original.accounts[0].details.payee,'TPA Test Association');
  const revisedAccount=await request('/api/staff/payment-details',{action:'save',version:0,details:{label:'Workshop Bank',method:'bank',payee:'TPA New Test Payee',accountNumber:'1234567890',ifsc:'TEST0123456',bank:'Test Bank',branch:'Test Branch',phone:'',qrId:null}});
@@ -106,13 +106,11 @@ try {
  const overview=await request('/api/staff/events/operations?eventId='+event.id);assert.equal(overview.financials.received,150000);assert.equal(overview.financials.refunded,75000);
  const restricted=await request('/api/staff/events/operations?eventId='+event.id,undefined,4);assert.equal(restricted.financials,null);assert.deepEqual(restricted.expenses,[]);
  await operation('expense.save',{category:'venue',description:'Workshop hall rental',date:'2026-10-12',amountPaise:25000},4,403);
- await operation('expense.save',{category:'venue',description:'Workshop hall rental',date:'2026-10-12',amountPaise:25000});
- await operation('expense.save',{category:'catering',description:'Tea and refreshments',date:'2026-10-12',amountPaise:12500});
- await operation('expense.save',{category:'printing',description:'Temporary printing estimate',date:'2026-10-12',amountPaise:200});
- let temporary=(await request('/api/staff/events/operations?eventId='+event.id)).expenses.find((x:{description:string})=>x.description==='Temporary printing estimate');
- await operation('expense.save',{id:temporary.id,expenseVersion:temporary.version,category:'printing',description:'Corrected printing estimate',date:'2026-10-12',amountPaise:100});
- temporary=(await request('/api/staff/events/operations?eventId='+event.id)).expenses.find((x:{id:string})=>x.id===temporary.id);
- await operation('expense.void',{id:temporary.id,expenseVersion:temporary.version,reason:'Estimate did not become an expense'});
+ await operation('expense.save',{category:'venue',description:'Workshop hall rental',date:'2026-10-12',amountPaise:25000},0,409);
+ const sheetId=randomUUID();
+ await request('/api/staff/finance',{action:'sheet.add',id:sheetId,eventId:event.id,date:'2026-10-12',submit:true,note:'Actual workshop expenses',lines:[{header:'Venue',description:'Workshop hall rental',date:'2026-10-12',amountPaise:25000},{header:'Catering',description:'Tea and refreshments',date:'2026-10-12',amountPaise:12500}]});
+ assert.equal((await request('/api/staff/events/operations?eventId='+event.id)).financials.expenses,0);
+ await approveFinance(db,request,event.id,sheetId,7);
  const totals=(await request('/api/staff/events/operations?eventId='+event.id)).financials;assert.equal(totals.netResult,37500);assert.equal(totals.pending,75000);
  pass('Refund and expense totals reconcile; event operators cannot access financial data or write expenses');
  await operation('perk.grant',{registrationId:first.id,title:'Workshop reading pack',notes:'Available at the workshop desk'});

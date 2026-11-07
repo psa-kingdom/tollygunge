@@ -41,6 +41,6 @@ try {
     await pool.query('INSERT INTO tpa.account_invitation_holds(user_id) VALUES($1)',[user]);
   }
   await pool.query("COMMIT");
-  console.log("Provisioned six staff roles, one member and 32 held synthetic register records; no email or production data.");
+  console.log(`Provisioned ${roles.length} staff roles, one member and 32 held synthetic register records; no email or production data.`);
 } catch (error) { await pool.query("ROLLBACK"); throw error; }
 finally { await pool.end(); }

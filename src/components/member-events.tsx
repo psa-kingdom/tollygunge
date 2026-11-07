@@ -1,4 +1,5 @@
 "use client";
+import { MemberReceipts } from "./member-receipts";
 import { upcomingMemberEvents } from "@/domain/member-upcoming-events";
 import { CopyValue } from "./portal-values";
 import { eventTime, type Speaker } from "@/domain/event-flow";
@@ -131,6 +132,7 @@ export function MemberEvents() {
               </p>
             )}
             <MemberEventResources eventId={event.id} />
+            {event.registration_id && <MemberReceipts eventId={event.id} registrationId={event.registration_id} amountPaise={event.registration_fee_paise??event.fee_paise} eligible={event.registration_status==='registered'&&['pending','failed'].includes(event.payment_status)&&!event.completed_at&&!event.archived_at&&event.status==='published'&&(event.registration_fee_paise??event.fee_paise)>0} onSaved={async()=>setEvents(await api<Event[]>("/api/member/events"))} />}
             {event.speakers?.length > 0 && (
               <details className="event-speaker-summary">
                 <summary>Speakers ({event.speakers.length})</summary>
@@ -157,7 +159,7 @@ export function MemberEvents() {
               ["pending", "failed"].includes(event.payment_status) && (
                 <section className="notice">
                   <p>
-                    Payment pending · ₹
+                    Receipt pending · ₹
                     {(
                       (event.registration_fee_paise ?? event.fee_paise) / 100
                     ).toFixed(2)}
@@ -169,47 +171,7 @@ export function MemberEvents() {
                     association. Include the registration identifier above.
                   </p>
                   <MemberPaymentDetails eventPayment eventId={event.id} />
-                  <form
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const f = new FormData(e.currentTarget);
-                      setBusy(true);
-                      try {
-                        await api("/api/member/events", {
-                          action: "payment_reference",
-                          eventId: event.id,
-                          reference: f.get("reference"),
-                          version: event.registration_version,
-                        });
-                        setEvents(await api<Event[]>("/api/member/events"));
-                        setMessage(
-                          "Payment reference submitted for staff verification.",
-                        );
-                      } catch (error) {
-                        setMessage((error as Error).message);
-                      } finally {
-                        setBusy(false);
-                      }
-                    }}
-                  >
-                    <label>
-                      Payment reference
-                      <input
-                        name="reference"
-                        required
-                        minLength={3}
-                        maxLength={200}
-                        defaultValue={event.payment_reference}
-                      />
-                    </label>
-                    <button
-                      disabled={
-                        busy || !!event.completed_at || !!event.archived_at
-                      }
-                    >
-                      Submit payment reference
-                    </button>
-                  </form>
+
                 </section>
               )}
             {event.registration_starts_at && (

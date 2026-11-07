@@ -1,3 +1,4 @@
+import {approveFinance,recordRegistrationFinance} from "../tests/helpers/finance-acceptance.mts";
 import assert from 'node:assert/strict';
 import type {Browser} from '@playwright/test';
 import {expect} from '@playwright/test';
@@ -53,13 +54,15 @@ export async function operationalBrowserJourney({browser,base,cookies,db,dir,req
  await check(engagement.locator('[aria-live=polite]')).toContainText('Saved promotion approved');
  await communications(event.id,'promotion');
  await member.goto(base+'/member/events?eventId='+event.id);const card=member.locator('article').filter({has:member.getByRole('heading',{name:title,exact:true})});
- await card.getByRole('button',{name:'Reserve place'}).click();await check(card.getByText(/^Payment pending/)).toBeVisible();
- await card.getByLabel('Payment reference',{exact:true}).fill('UI-UPI-750');await card.getByRole('button',{name:'Submit payment reference'}).click();
- await check(member.getByText('Payment reference submitted for staff verification.',{exact:true})).toBeVisible();
- await staff.goto(base+'/admin/workspaces/payments');const paymentRow=staff.locator('tr').filter({hasText:title});await paymentRow.getByRole('button',{name:'Review payment'}).click();
- await staff.getByLabel('Bank / payment reference').fill('UI-UPI-750');await staff.getByLabel('Verification note').fill('Matched workshop payment statement');staff.once('dialog',d=>d.accept());await staff.getByRole('button',{name:'Confirm status change'}).click();
+ await card.getByRole('button',{name:'Reserve place'}).click();await check(card.getByText(/^Receipt pending/)).toBeVisible();
+
+ const registration=(await db.query('SELECT id FROM tpa.event_registrations WHERE event_id=$1 AND user_id=(SELECT "userId" FROM public.session WHERE token=$2)',[event.id,decodeURIComponent(cookies[1]).split('.')[0]])).rows[0];
+ await recordRegistrationFinance(db,request,registration.id,7,'receipt','UI-UPI-750');
+ await staff.goto(base+'/admin/workspaces/payments/events/'+event.id);
+ await staff.getByRole('tab',{name:'Participant collections',exact:true}).click();
+ await check(staff.getByRole('row').filter({hasText:'member 2'})).toContainText('750.00');
  await member.reload();await check(card).toContainText('Registration confirmed');
- pass('Administrator creates/configures/exports/publishes/reviews promotion; member books/submits reference; staff verifies through UI');
+ pass('Administrator creates/configures/exports/publishes/reviews promotion; member books/submits reference; admin receipt requires separate super-admin approval');
  await communications(event.id,'reminder');
  // Time progression is the only database fixture operation in this UI lifecycle.
  await db.query("UPDATE tpa.events SET starts_at=now()-interval '2 hours',ends_at=now()-interval '1 hour',version=version+1 WHERE id=$1",[event.id]);
@@ -70,9 +73,21 @@ export async function operationalBrowserJourney({browser,base,cookies,db,dir,req
  const attendance=staff.locator('#event-attendance');await attendance.locator('summary').first().click();await attendance.getByRole('checkbox',{name:/^member 2/}).check();await attendance.getByLabel('Correction note').fill('Workshop attendance desk record');
  await attendance.getByRole('button',{name:'Mark selected attended',exact:true}).click();await check(staff.getByRole('region',{name:'Event command center'}).locator('[data-operation-message]').first()).toContainText('Saved');
  await attendance.getByRole('button',{name:'Finalize attendance and mark remaining confirmed registrants absent'}).click();
- const financials=staff.locator('#event-financials');await financials.locator('summary').first().click();
- const expense=financials.locator('form');await expense.getByLabel('Description',{exact:true}).fill('Auditorium rental');await expense.getByLabel('Date',{exact:true}).fill('2026-10-12');await expense.getByLabel('Amount (₹)',{exact:true}).fill('250');await expense.getByRole('button',{name:'Save expense',exact:true}).click();
- await check(financials).toContainText('₹500.00');
+ await check(attendance.getByText('Attendance finalized',{exact:true})).toBeVisible();
+ await staff.goto(base+'/admin/workspaces/payments/events/'+event.id);
+ await staff.getByRole('button',{name:'Add Expense',exact:true}).click();
+ const expense=staff.getByRole('group',{name:'Draft expense sheet',exact:true});
+ await expense.getByLabel('Expense header',{exact:true}).fill('Venue');
+ await expense.getByLabel('Description',{exact:true}).fill('Auditorium rental');
+ await expense.getByLabel('Expense date',{exact:true}).fill('2026-10-12');
+ await expense.getByLabel('Amount (₹)',{exact:true}).fill('250');
+ await expense.getByRole('button',{name:'Submit expenses for approval',exact:true}).click();
+ await check(staff.getByText('Pending approval',{exact:true}).first()).toBeVisible();
+ const sheet=(await db.query("SELECT id FROM tpa.finance_entries WHERE event_id=$1 AND kind='expenses' AND status='submitted'",[event.id])).rows[0];
+ await approveFinance(db,request,event.id,sheet.id,7);
+ await staff.goto(base+'/admin/workspaces/events?id='+event.id);
+ await check(staff.getByRole('region',{name:'Event command center'}).getByText(/^Received /)).toBeVisible();
+ await attendance.locator('summary').first().click();
  // Upload usable artifacts through the existing resource form.
  const doc=new jsPDF();doc.text('TPA Workshop Presentation and Follow-up',20,20);const bytes=Buffer.from(doc.output('arraybuffer'));
  await writeFile(dir+'/workshop-resource.pdf',bytes);
@@ -85,7 +100,9 @@ export async function operationalBrowserJourney({browser,base,cookies,db,dir,req
   await resourceDetails.getByRole('button',{name:'Upload resource',exact:true}).click();await check(resources.locator('[aria-live=polite]')).toContainText('Event resource saved');
  }
  await attendance.getByRole('checkbox',{name:'I reviewed receipts, refunds, pending amounts and expenses.'}).check();await attendance.getByRole('button',{name:'Complete event',exact:true}).click();
+ await check.poll(async()=>Boolean((await db.query('SELECT completed_at FROM tpa.events WHERE id=$1',[event.id])).rows[0].completed_at)).toBe(true);
  await member.reload();await check(card).toContainText('Attendance');await check(card).toContainText('badge');
+ await card.getByText('Resources, perks and receipt history',{exact:true}).click();
  await check(member.getByRole('link',{name:'Workshop presentation',exact:true}).first()).toBeVisible();
  const download=member.waitForEvent('download');await member.getByRole('link',{name:'Workshop presentation',exact:true}).first().click();await (await download).saveAs(dir+'/member-presentation.pdf');
  await member.screenshot({path:dir+'/member-completed-workshop.png',fullPage:true});await staff.screenshot({path:dir+'/admin-completed-workshop.png',fullPage:true});

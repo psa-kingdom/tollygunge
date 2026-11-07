@@ -23,7 +23,7 @@ export async function GET(request: Request) {
           [actor.id, permittedReports(actor.roles)],
         )
       ).rows,
-      administrator: actor.roles.includes("administrator"),
+      administrator: (actor.roles.includes("administrator") || actor.roles.includes("super_administrator")),
     };
   });
 }
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       !["private", "shared"].includes(String(visibility))
     )
       throw new OperationError("Choose private or shared.");
-    if (visibility === "shared" && !actor.roles.includes("administrator"))
+    if (visibility === "shared" && !(actor.roles.includes("administrator") || actor.roles.includes("super_administrator")))
       throw new OperationError("Administrators manage shared presets.", 403);
     return transaction(async (client) => {
       if (input.id) {
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
           !row ||
           (row.visibility === "private"
             ? row.owner_user_id !== actor.id
-            : !actor.roles.includes("administrator")) ||
+            : !(actor.roles.includes("administrator") || actor.roles.includes("super_administrator"))) ||
           !permittedReports(actor.roles).includes(row.report)
         )
           throw new OperationError("Preset unavailable.", 403);

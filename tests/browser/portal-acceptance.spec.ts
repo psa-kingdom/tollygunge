@@ -37,12 +37,12 @@ const authRoutes = [
   "/email-verification",
 ];
 
-test("production deployment label fits the authenticated phone header", async ({
+test("production portal header fits without a deployment badge", async ({
   page,
   browser,
 }) => {
-  // Exercise the actual server-rendered label in the existing disposable data
-  // environment. This process is loopback-only and does not change its database.
+  // Exercise the actual production header without reintroducing a deployment badge.
+  // This process is loopback-only and does not change its disposable database.
   expect(process.env.TPA_MAIL_SINK).toBe("true");
   expect(new URL(process.env.DATABASE_URL!).hostname).toBe("127.0.0.1");
   expect(process.env.TPA_DATABASE_NAME).toMatch(/^tpa_onboarding_test_/);
@@ -95,7 +95,7 @@ test("production deployment label fits the authenticated phone header", async ({
           await review.goto(origin + "/admin");
           await expect(
             review.locator(".portal-brand-row > [data-tone]"),
-          ).toHaveText("production");
+          ).toHaveCount(0);
           await expect(
             review.locator(".portal-brand-row .brand-name"),
           ).toBeVisible();
@@ -254,7 +254,7 @@ test("all portal routes reflow in both appearances with useful content near the 
   });
 });
 
-test("six staff roles retain navigation, direct route, API and preview boundaries", async ({
+test("all staff roles retain navigation, direct route, API and preview boundaries", async ({
   browser,
 }) => {
   test.setTimeout(360000);
@@ -312,7 +312,7 @@ test("six staff roles retain navigation, direct route, API and preview boundarie
         page.getByText("Edit member contact and professional details", {
           exact: true,
         }),
-      ).toHaveCount(role === "administrator" ? 1 : 0);
+      ).toHaveCount(hasPermission([role], "staff:manage") ? 1 : 0);
     }
     await context.close();
   }
@@ -362,7 +362,7 @@ test("inspector resize and nested dismissal preserve unsaved member edits", asyn
   await expect(first).toBeFocused();
 });
 
-test("member overview prioritizes real event payment actions and handles independent loading failures", async ({
+test("member events keep receipt actions available when attendance loading fails", async ({
   page,
 }) => {
   await signInPortal(page, "member");
@@ -387,22 +387,17 @@ test("member overview prioritizes real event payment actions and handles indepen
       json: { error: "Synthetic service failure" },
     }),
   );
-  await page.goto("/member");
-  await expect(
-    page.getByText("Event payment reference needed", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Review event payment →", exact: true }),
-  ).toHaveAttribute("href", `/member/events?eventId=${event.id}`);
-  await expect(
-    page
-      .getByRole("status")
-      .filter({ hasText: "Activity totals are unavailable" }),
-  ).toBeVisible();
-  await expect(page.locator(".member-activity-counts")).toHaveCount(0);
-  await page.unroute("**/api/member/event-journey");
-  await page.reload();
-  await expect(page.locator(".member-activity-counts")).toBeVisible();
+  await page.route("**/api/member/receipts?*",route=>route.fulfill({json:[]}));
+  await page.route("**/api/member/events/operations?*",route=>route.fulfill({json:{assets:[],perks:[],payments:[]}}));
+  await page.goto("/member/events");
+  await expect(page.getByRole("region",{name:"Your attendance",exact:true}).getByRole("alert")).toContainText("temporarily unavailable");
+  await expect(page.getByText("Synthetic service failure",{exact:true})).toHaveCount(0);
+  await page.getByRole("button",{name:/^Upcoming registrations/}).click();
+  await expect(page.getByRole("heading",{name:event.title,exact:true})).toBeVisible();
+  await expect(page.getByRole("button",{name:"Submit receipt for admin review",exact:true})).toBeVisible();
+  await page.unroute("**/api/member/event-journey");await page.reload();
+  await expect(page.getByText("Total events attended",{exact:true})).toBeVisible();
+
 });
 
 test("verification tools distinguish reviews from application and verified-profile records", async ({
@@ -625,7 +620,7 @@ test("combined association directory keeps membership and account identities dis
   ).toBeDisabled();
 });
 
-test("directory audience and participant endpoints retain all six staff permission boundaries", async ({
+test("directory and participant routes retain all staff permission boundaries", async ({
   browser,
 }) => {
   for (const role of roles) {
@@ -643,24 +638,10 @@ test("directory audience and participant endpoints retain all six staff permissi
       const eventsAllowed = hasPermission([role], "events:manage");
       const events = await page.request.get("/api/staff/events");
       expect(events.status()).toBe(eventsAllowed ? 200 : 403);
-      await page.goto(
-        eventsAllowed
-          ? "/admin/workspaces/events?view=participants"
-          : "/admin/workspaces/members",
-      );
-      if (allowed || eventsAllowed) {
-        const select = page.getByRole("combobox", {
-          name: "Directory audience",
-          exact: true,
-        });
-        await expect(select).toBeVisible();
-        await expect(
-          select.locator('option[value="participants"]'),
-        ).toHaveCount(eventsAllowed ? 1 : 0);
-        await expect(select.locator('option[value="members"]')).toHaveCount(
-          allowed ? 1 : 0,
-        );
-      }
+      expect((await page.goto("/admin/workspaces/members"))?.status()).toBe(allowed?200:404);
+      expect((await page.goto("/admin/workspaces/events?view=participants&source=live"))?.status()).toBe(eventsAllowed?200:404);
+      if(eventsAllowed)await expect(page.getByRole("navigation",{name:"Event participant sections",exact:true})).toBeVisible();
+
     } finally {
       await context.close();
     }
@@ -709,10 +690,7 @@ test("participant tabs preserve event selection and accessible read-only preview
       },
     }),
   );
-  await page.goto("/admin/workspaces/members");
-  await page
-    .getByRole("combobox", { name: "Directory audience", exact: true })
-    .selectOption("participants");
+  await page.goto("/admin/workspaces/events?view=participants&source=live");
   await expect(
     page.getByRole("heading", { name: "Event participants", exact: true }),
   ).toBeVisible();
@@ -727,12 +705,12 @@ test("participant tabs preserve event selection and accessible read-only preview
     .selectOption(eventId);
   for (const [label, tab] of [
     ["Registrations", "registrations"],
-    ["Payment status", "payments"],
+    ["Receipt status", "payments"],
     ["Attendance", "attendance"],
   ]) {
     await page.getByRole("link", { name: label, exact: true }).click();
     await expect(page).toHaveURL(
-      new RegExp("tab=" + tab + "&eventId=" + eventId),
+      new RegExp("tab=" + tab + "&source=live&eventId=" + eventId),
     );
     await expect(
       page.getByText("No membership recorded", { exact: true }),
@@ -745,14 +723,14 @@ test("participant tabs preserve event selection and accessible read-only preview
   });
   await expect(inspector).toBeVisible();
   await expect(
-    inspector.getByText("Payment pending", { exact: true }),
+    inspector.getByText("Receipt pending", { exact: true }),
   ).toBeVisible();
   await expect(inspector.getByText("Verified", { exact: true })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(inspector).toHaveCount(0);
 });
 
-test("TPA brand, right aligned membership tabs and single-line signup fit all target widths", async ({
+test("TPA brand, membership navigation and signup fit all target widths", async ({
   browser,
 }) => {
   for (const mode of ["light", "dark"] as const) {
@@ -772,24 +750,14 @@ test("TPA brand, right aligned membership tabs and single-line signup fit all ta
         await expect(
           page.locator(".portal-brand-row .brand-name"),
         ).toBeVisible();
-        const rects = await page.evaluate(() => {
-          const heading = document
-            .querySelector(".portal-page-intro h1")!
-            .getBoundingClientRect();
-          const tabs = document
-            .querySelector(".portal-subsections")!
-            .getBoundingClientRect();
-          return {
-            heading: { right: heading.right, top: heading.top },
-            tabs: { left: tabs.left, top: tabs.top },
-            overflow: document.documentElement.scrollWidth > innerWidth,
-          };
+        const rects=await page.evaluate(()=>{
+          const tabs=document.querySelector(".application-topline .portal-subsections")!.getBoundingClientRect();
+          const completion=document.querySelector(".application-completion")!.getBoundingClientRect();
+          return {tabs:{right:tabs.right,top:tabs.top},completion:{left:completion.left,top:completion.top},overflow:document.documentElement.scrollWidth>innerWidth+1};
         });
         expect(rects.overflow).toBe(false);
-        if (width >= 1024) {
-          expect(rects.tabs.left).toBeGreaterThan(rects.heading.right);
-          expect(Math.abs(rects.tabs.top - rects.heading.top)).toBeLessThan(20);
-        }
+        if(width>=1024)expect(rects.tabs.right).toBeLessThanOrEqual(rects.completion.left+1);
+
       }
       await context.clearCookies();
       await page.goto("/signup");

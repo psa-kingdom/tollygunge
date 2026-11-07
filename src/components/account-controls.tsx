@@ -125,6 +125,7 @@ export function AccountControls({
   return (
     <div className="account-controls">
       {portal && actor && <span
+        role="img"
         className={`header-profile-verified${actor.profileVerified === true ? "" : " is-unverified"}`}
         aria-label={actor.profileVerified === true ? "Profile verified" : "Profile unverified"}
         title={actor.profileVerified === true ? "Your profile has been verified by TPA" : "Your profile has not yet been verified by TPA"}
@@ -177,7 +178,7 @@ export function AccountControls({
               <>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
                   <strong style={{ margin: 0 }}>{actor.name}</strong>
-                  {actor.roles?.includes("administrator") ? (
+                  {(actor.roles?.includes("administrator") || actor.roles?.includes("super_administrator")) ? (
                     <span
                       style={{
                         fontSize: 10,
@@ -192,7 +193,7 @@ export function AccountControls({
                         flexShrink: 0,
                       }}
                     >
-                      Admin
+                      {actor.roles?.includes("super_administrator") ? "Super admin" : "Admin"}
                     </span>
                   ) : actor.plan ? (
                     <span

@@ -1,7 +1,7 @@
 import { queueEventMail } from "@/lib/event-mail";
 import { randomUUID } from "node:crypto";
 import { getDatabase } from "@/lib/database";
-import { record, uuid, text, version } from "@/domain/operations";
+import { record, uuid } from "@/domain/operations";
 import {
   operation,
   authorized,
@@ -35,14 +35,7 @@ export async function POST(request: Request) {
           eventId,
         ])
       ).rows[0];
-      if(input.action === "payment_reference") {
-        if(!event || event.completed_at || event.archived_at || event.status!=="published") throw new OperationError("Event is closed for changes.",409);
-        const reference=text(input.reference,"Payment reference",200,3);
-        const result=await client.query("UPDATE tpa.event_registrations SET payment_reference=$3,version=version+1 WHERE event_id=$1 AND user_id=$2 AND version=$4 AND status='registered' AND payment_status IN ('pending','failed') RETURNING id",[eventId,actor.id,reference,version(input.version)]);
-        if(!result.rowCount) throw new OperationError("Registration changed or does not await payment. Reload.",409);
-        await audit(client,actor.id,"payment.reference_submitted",result.rows[0].id);
-        return {saved:true};
-      }
+      if(input.action === "payment_reference") throw new OperationError("Submit a receipt with payment proof from your event page.",409);
       if (
         !event || event.completed_at || event.archived_at ||
         event.status !== "published" || event.completed_at ||

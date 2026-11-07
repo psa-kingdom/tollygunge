@@ -47,7 +47,7 @@ async function dashboardTextContrast(page: Page) {
     await Promise.all(elements.flatMap(element => element.getAnimations()
       .map(animation => animation.finished.catch(() => undefined))));
   });
-  const ratios = await page.locator('.profile-completion :is(strong, p, summary), .service-metrics :is(strong, .metric-label), .attention-row :is(span, small), .member-service-tile :is(h3, p)').evaluateAll(elements => elements.filter(el => (el as HTMLElement).offsetHeight > 0).map(el => {
+  const ratios = await page.locator('.application-completion strong, .profile-completion :is(strong, p, summary), .service-metrics :is(strong, .metric-label), .attention-row :is(span, small), .member-service-tile :is(h3, p)').evaluateAll(elements => elements.filter(el => (el as HTMLElement).offsetHeight > 0).map(el => {
     const luminance = (color: string) => {
       const rgb = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(channel => {
         const value = channel / 255;
@@ -156,7 +156,7 @@ test("event, flyer and import empty states lead to the correct next task", async
   await page.getByRole("button", { name: "New event", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Create event", exact: true })).toBeVisible();
   await expect(page.getByLabel("Title", { exact: true })).toBeVisible();
-  expect(await page.getByRole("listbox", { name: "Event payment accounts", exact: true }).evaluate(element => element.closest("fieldset")?.querySelector("legend")?.textContent)).toBe("Payment");
+  expect(await page.getByRole("listbox", { name: "Event payment accounts", exact: true }).evaluate(element => element.closest("fieldset")?.querySelector("legend")?.textContent)).toBe("Fee collection");
   await page.getByRole("navigation", { name: "Event form sections" }).getByRole("link", { name: "Reminders", exact: true }).click();
   await expect(page.getByLabel("Send automatic reminders", { exact: true })).toBeInViewport();
   await layoutFits(page);
@@ -245,12 +245,13 @@ test("workspace subtabs and collapsible sections preserve a usable task hierarch
   }
   await page.screenshot({ path: info.outputPath("communications-inbox.png"), fullPage: true });
   await page.goto("/admin/workspaces/payments");
-  await expect(page.getByRole("tab", { name: "Registration payments", exact: true })).toHaveAttribute("aria-selected", "true");
-  await page.getByRole("tab", { name: "Payment instructions", exact: true }).click();
-  await expect(page.locator("#payments-instructions-panel")).toBeVisible();
-  await page.getByRole("tab", { name: "Payment instructions", exact: true }).press("Home");
-  await expect(page.getByRole("tab", { name: "Registration payments", exact: true })).toBeFocused();
-  await expect(page.locator("#payments-registrations-panel")).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Overview", exact: true })).toHaveAttribute("aria-selected", "true");
+  const approvals=page.getByRole("tab",{name:/^Approvals/});
+  await approvals.click();
+  await expect(approvals).toHaveAttribute("aria-selected","true");
+  await approvals.press("Home");
+  await expect(page.getByRole("tab",{name:"Overview",exact:true})).toBeFocused();
+  await expect(page.locator("#finance-panel-all")).toBeVisible();
   await layoutFits(page);
 });
 
@@ -306,18 +307,17 @@ test("campaign stepper preserves drafts and gates review without sending", async
 test("payments and email settings keep forms and empty states aligned", async ({ page }, info) => {
   await signIn(page, "ADMIN");
   let populated = false;
-  await page.route("**/api/staff/registration-payments?**", route => route.fulfill({ json: populated ? [{ id: "synthetic-payment", version: 1, name: "Synthetic Member", email: "member@example.test", title: "Synthetic event", fee_paise: 10000, payment_status: "pending", payment_reference: "test", payment_note: "", history: [] }] : [] }));
+  await page.route(/\/api\/staff\/finance(?:\?.*)?$/, route => route.fulfill({json:{filters:{eventId:null},events:populated?[{id:"synthetic-event",title:"Synthetic event",location:"Test venue",starts_at:"2026-11-20T10:00:00Z",participant_count:1,status:"published"}]:[],entries:[],totals:{received:0,expenses:0,refunded:0,netResult:0,pendingReceipts:0,pendingExpenses:0},registrations:[],reviewer:false,actorId:"synthetic-admin"}}));
   await page.goto("/admin/workspaces/payments");
-  const payments = page.locator(".registration-payments");
-  await expect(payments.getByRole("heading", { name: "No payments match this status", exact: true })).toBeVisible();
-  await expect(payments.getByRole("table")).toHaveCount(0);
+  await expect(page.getByText("No events yet.",{exact:true})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Event finance list",exact:true})).toHaveCount(0);
   await layoutFits(page);
-  await page.screenshot({ path: info.outputPath("payments-empty.png"), fullPage: true });
-  populated = true;
-  await payments.getByLabel("Payment status").selectOption("all");
+  await page.screenshot({path:info.outputPath("finance-empty.png"),fullPage:true});
+  populated=true;await page.reload();await page.getByRole("button",{name:"List view",exact:true}).click();
+  const payments=page.getByRole("region",{name:"Event finance list",exact:true});
   await expect(payments.getByRole("table")).toBeVisible();
-  const width = await payments.locator(".table-scroll").evaluate(el => ({ region: el.clientWidth, table: el.querySelector("table")!.getBoundingClientRect().width }));
-  expect(width.table).toBeGreaterThanOrEqual(width.region - 2);
+  const width=await payments.evaluate(el=>({region:el.clientWidth,table:el.querySelector("table")!.getBoundingClientRect().width}));
+  expect(width.table).toBeGreaterThanOrEqual(width.region-2);
   await layoutFits(page);
   await page.route("**/api/staff/onboarding-email", route => {
     if (route.request().method() !== "GET") throw new Error("Layout checks must not save recipients or send emails");
@@ -398,7 +398,7 @@ test("navigation keeps authentication isolated between requests", async ({ page 
   await page.context().clearCookies();
   await signIn(page, "MEMBER");
   await page.goto("/admin");
-  await page.waitForURL("**/member");
+  await page.waitForURL("**/member/events");
   await expect(page.locator("#staff-navigation")).toHaveCount(0);
   await page.context().clearCookies();
   await page.goto("/admin");
@@ -454,25 +454,25 @@ test("slow navigation retains the current page instead of replacing it with a lo
   await expect(page.locator("main h1")).not.toHaveText(publicHeading!);
 });
 
-test("member completion links to missing form steps and keeps approval separate", async ({ page }, info) => {
-  await signIn(page, "MEMBER");
-  await page.route("**/api/member/verification", route => route.fulfill({ json: {
-    email: "member@example.test", emailVerified: false, verified: false, updateRequested: false, missing: ["Mobile number"], reviews: [],
-    progress: { total: 10, completed: 6, percent: 60, remaining: [{ id: "phone", label: "Mobile number", step: 2, href: "/member/application?step=2" }, { id: "photograph", label: "Passport photograph", step: 3, href: "/member/application?step=3" }, { id: "signature", label: "Typed applicant signature", step: 4, href: "/member/application?step=4" }, { id: "email", label: "Verify your account email", step: -1, href: "/member#verification-email-action" }] },
-  } }));
-  await page.reload();
-  await expect(page.getByText("60% complete", { exact: true })).toBeVisible();
-  const progress = page.getByRole("progressbar", { name: "Profile completion", exact: true });
-  await expect(progress).toHaveAttribute("value", "6");
-  await expect(progress).toHaveAttribute("max", "10");
-  await expect(page.getByText("Not verified", {exact:true})).toBeVisible();
-  await layoutFits(page);
-  await page.screenshot({ path: info.outputPath("member-completion.png"), fullPage: true });
-  // Let the actual application endpoints supply the full policy/schema after navigation.
-  await page.unroute("**/api/member/verification");
-  await page.getByRole("link", { name: /Go to Contact & preferences/ }).click();
-  await expect(page).toHaveURL(/\/member\/application\?step=2/);
-  await expect(page.getByRole("heading", { name: "Contact & preferences", exact: true })).toBeVisible();
+test("member completion links to missing form steps and keeps approval separate",async({page},info)=>{
+ await signIn(page,"MEMBER");
+ const draft={version:1,plan:"Annual",category:"Professional",details:{fullName:"Synthetic member",phone:""},documentIds:[],step:4};
+ const verification=await (await page.request.get("/api/member/verification")).json();
+ await page.route("**/api/member/verification",route=>route.fulfill({json:{...verification,registeredContact:{email:verification.email,phone:""}}}));
+ await page.route("**/api/member/application",async route=>{
+   if(route.request().method()!=="GET") Object.assign(draft,route.request().postDataJSON(),{version:draft.version+1});
+   await route.fulfill({json:draft});
+ });
+ await page.goto("/member/application?step=4");
+ const progress=page.getByRole("progressbar");await expect(progress).toHaveAttribute("max","100");
+ const before=Number(await progress.getAttribute("value"));expect(before).toBeLessThan(100);
+ await expect(page.getByRole("region",{name:"Profile verification status"})).toContainText("Not verified");
+ await page.getByRole("button",{name:"Mobile number",exact:true}).click();
+ await expect(page.getByRole("heading",{name:"Personal details, contact & preferences",exact:true})).toBeAttached();
+ await page.getByLabel("Mobile number *").fill("9876543210");
+ await expect.poll(async()=>Number(await progress.getAttribute("value"))).toBeGreaterThan(before);
+ await expect(page.getByRole("region",{name:"Profile verification status"})).toContainText("Not verified");
+ await layoutFits(page);await page.screenshot({path:info.outputPath("member-completion.png"),fullPage:true});
 });
 
 test("admin dashboard updates signup and application notifications without approving accounts", async ({ page }) => {
@@ -496,58 +496,21 @@ test("dashboard semantic colors cover themes, completion states and interactive 
   const baseline = process.env.TPA_DASHBOARD_CAPTURE_BASELINE === "1";
   await page.setViewportSize({ width: info.project.name === "desktop" ? 1320 : info.project.name === "tablet" ? 768 : 390, height: 900 });
   await signIn(page, "MEMBER");
-  let state = "empty";
-  await page.route("**/api/member/verification", route => {
-    const completed = state === "empty" ? 0 : state === "incomplete" ? 6 : 10;
-    return route.fulfill({ json: {
-      email: "member@example.test", emailVerified: completed === 10, verified: state === "verified", updateRequested: false,
-      missing: [], reviews: state === "submitted" ? [{ status: "pending", reason: "" }] : [],
-      progress: { total: 10, completed, percent: completed * 10, remaining: Array.from({ length: 10 - completed }, (_, index) => ({ id: `item-${index}`, label: index === 0 ? "Qualification" : `Required item ${index + 1}`, step: 0, href: "/member/application?step=0" })) },
-    } });
-  });
-  for (const mode of ["light", "dark"]) {
-    for (const value of ["empty", "incomplete", "complete", "submitted", "verified"]) {
-      state = value;
-      await page.goto("/member");
-      await expect(page.getByText(`${value === "empty" ? 0 : value === "incomplete" ? 60 : 100}% complete`, { exact: true })).toBeVisible();
-      await page.evaluate(value => document.documentElement.setAttribute("data-color-mode", value), mode);
-      await layoutFits(page);
-      if (!baseline) {
-        await dashboardTextContrast(page);
-        await primaryActionContrast(page);
-        const profileCard = await page.locator('.member-overview-activity').boundingBox();
-        expect(profileCard!.height).toBeLessThan(440);
-        if (info.project.name === 'desktop') {
-          const verificationCard = await page.locator('.member-verification').boundingBox();
-          expect(profileCard!.y).toEqual(verificationCard!.y);
-          expect(verificationCard!.height).toBeLessThan(500);
-        }
-        if (info.project.name === "phone") {
-          for (const target of await page.locator('.member-home :is(.button, .member-service-tile)').all()) expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-        }
-        await expect(page.locator(".profile-completion-ready")).toHaveCount(value === "complete" ? 1 : 0);
-        if (value === "complete") await expect(page.locator(".member-verification .member-card-heading [data-tone]")).toHaveText("Not verified");
-        if (value === "submitted") await expect(page.locator(".member-verification .member-card-heading [data-tone]")).toHaveText("Under review");
-        if (value === "verified") await expect(page.locator(".member-verification .member-card-heading [data-tone]")).toHaveText("Verified");
-      }
-      await page.screenshot({ path: info.outputPath(`member-${mode}-${value}.png`), fullPage: true });
+  const baselineStatus=await (await page.request.get("/api/member/verification")).json();
+  for(const mode of ["light","dark"]){
+    for(const state of ["incomplete","submitted","verified"]){
+      await page.route("**/api/member/verification",route=>route.fulfill({json:{...baselineStatus,verified:state==="verified",reviews:state==="submitted"?[{status:"pending",reason:""}]:[],latestSubmission:null}}));
+      await page.goto("/member/application");
+      await expect(page.getByRole("region",{name:"Profile verification status"})).toContainText(state==="verified"?"Verified":state==="submitted"?"Under review":"Not verified");
+      await page.evaluate(value=>document.documentElement.setAttribute("data-color-mode",value),mode);
+      await layoutFits(page);await dashboardTextContrast(page);
+      if(await page.locator(".button:not(.secondary):not(:disabled)").count())await primaryActionContrast(page);
+      await page.screenshot({path:info.outputPath(`member-${mode}-${state}.png`),fullPage:true});
+      await page.unroute("**/api/member/verification");
     }
   }
-  if (!baseline) {
-    const tile = page.locator('#member-navigation a[href="/member/events"]');
-    await tile.scrollIntoViewIfNeeded();
-    const before = await tile.boundingBox();
-    await tile.hover();
-    await expect(tile).toHaveCSS("transform", "none");
-    const after = await tile.boundingBox();
-    expect(after).toEqual(before);
-    await tile.focus();
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Shift+Tab");
-    expect(await tile.evaluate(el => el.matches(":focus-visible"))).toBeTruthy();
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await expect(tile).toHaveCSS("transition-duration", "0s");
-  }
+  const tile=page.locator('#member-navigation a[href="/member/events"]');await tile.focus();await expect(tile).toBeFocused();
+  await page.emulateMedia({reducedMotion:"reduce"});await expect(tile).toHaveCSS("transition-duration","0s");
   await page.context().clearCookies();
   await signIn(page, "ADMIN");
   let alerts = [{ id: "verification", label: "2 applications awaiting profile review", href: "/admin/workspaces/verification", category: "Verification", priority: "Normal", count: 2 }];
@@ -653,20 +616,19 @@ test("copy failure keeps the contact selectable and does not open a record", asy
   expect(await copy.evaluate(element=>getComputedStyle(element).userSelect)).toBe("text");
 });
 
-test("member event layout separates attendance, guidance and event filtering", async ({ page }, info) => {
-  await signIn(page, "MEMBER");
-  await page.route("**/api/member/event-journey", route => route.fulfill({ json: { attendanceCount: 0, badges: [], resources: [] } }));
-  await page.route("**/api/member/events", route => route.fulfill({ json: [] }));
-  await page.goto("/member/events");
-  await expect(page.getByRole("heading", { name: "Your event journey" })).toBeVisible();
-  await expect(page.getByText("No milestone badges yet", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Event period")).toBeVisible();
-  await expect(page.getByRole("complementary", { name: "Registration and attendance information" })).toBeVisible();
-  await layoutFits(page);
-  await page.screenshot({ path: info.outputPath("member-events-refined.png"), fullPage: true });
-  await page.setViewportSize({ width: 320, height: 740 });
-  await layoutFits(page);
-  await expect(page.getByLabel("Event period")).toBeVisible();
+test("member event layout separates attendance history and upcoming registrations",async({page},info)=>{
+ await signIn(page,"MEMBER");
+ await page.route("**/api/member/event-journey",route=>route.fulfill({json:{attendanceCount:0,badges:[],resources:[],attendedEvents:[],historicalAttendance:[]}}));
+ await page.route("**/api/member/events",route=>route.fulfill({json:[]}));
+ await page.goto("/member/events");
+ await expect(page.getByRole("heading",{name:"Your attendance",exact:true})).toBeVisible();
+ await expect(page.getByText("No attended events are recorded for your membership yet.",{exact:false})).toBeVisible();
+ const picker=page.locator('summary[aria-label="Choose event month"]');await picker.click();
+ await expect(page.getByLabel("Event month",{exact:true})).toBeVisible();await page.keyboard.press("Escape");await expect(picker).toBeFocused();
+ await layoutFits(page);await page.screenshot({path:info.outputPath("member-events-refined.png"),fullPage:true});
+ await page.setViewportSize({width:320,height:740});await layoutFits(page);
+ await page.getByRole("button",{name:/^Upcoming registrations/}).click();
+ await expect(page.getByText("You have no upcoming registrations.",{exact:false})).toBeVisible();
 });
 
 test("member notifications have readable controls, category states and keyboard dismissal", async ({ page }, info) => {

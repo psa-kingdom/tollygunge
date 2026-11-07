@@ -71,9 +71,9 @@ async function submit(page: Page, email: string, value = password, keep = false)
 for (const staff of [false, true]) {
   test(`actual ${staff ? "administrator" : "member"} form login persists, isolates roles and logs out`, async ({ page, context }) => {
     const user = await identity({ staff });
-    const destination = staff ? "/admin" : "/member";
+    const destination = staff ? "/admin" : "/member/events";
     await page.goto(destination);
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
     expect((await context.request.get("/api/member/events")).status()).toBe(401);
 
     expect((await submit(page, user.email, "Wrong!1234")).status()).toBe(401);
@@ -93,17 +93,17 @@ for (const staff of [false, true]) {
     expect((await context.request.get("/api/staff/members")).status()).toBe(staff ? 200 : 403);
     if (!staff) {
       await page.goto("/admin");
-      await expect(page).toHaveURL(/\/member$/);
+      await expect(page).toHaveURL(/\/member\/events$/);
     }
 
     await page.getByRole("button", { name: "Account menu", exact: true }).click();
     await page.getByRole("button", { name: "Sign out", exact: true }).click();
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
     expect(await (await context.request.get("/api/auth/get-session")).json()).toBeNull();
     expect((await context.request.get("/api/member/events")).status()).toBe(401);
     expect((await context.request.get("/api/staff/members")).status()).toBe(401);
     await page.goto(destination);
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
   });
 }
 
@@ -112,7 +112,7 @@ test("expired database session denies APIs and protected navigation", async ({ p
   const user = await identity();
   await page.goto("/login");
   expect((await submit(page, user.email)).status()).toBe(200);
-  await expect(page).toHaveURL(/\/member$/);
+  await expect(page).toHaveURL(/\/member\/events$/);
   const db = new Pool(databaseOptions());
   try {
     await db.query('UPDATE public."session" SET "expiresAt"=now()-interval \'1 minute\' WHERE "userId"=$1', [user.id]);
@@ -122,7 +122,7 @@ test("expired database session denies APIs and protected navigation", async ({ p
   expect(await (await context.request.get("/api/auth/get-session")).json()).toBeNull();
   expect((await context.request.get("/api/member/events")).status()).toBe(401);
   await page.reload();
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
 });
 
 test("unverified staff require operator approval and held accounts cannot sign in", async ({ page, context }, info) => {
@@ -131,7 +131,7 @@ test("unverified staff require operator approval and held accounts cannot sign i
   await page.goto("/login");
   expect((await submit(page, staff.email)).status()).toBe(200);
   // Password authentication alone does not grant an unapproved staff actor.
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login(?:\?.*)?$/);
   expect((await context.request.get("/api/staff/members")).status()).toBe(401);
   const db = new Pool(databaseOptions());
   try {

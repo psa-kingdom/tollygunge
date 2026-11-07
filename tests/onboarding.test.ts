@@ -20,6 +20,7 @@ import {
   hashToken,
 } from "../src/lib/onboarding-mail";
 test("versioned fields preserve identity/type and enforce configuration", () => {
+  assert.doesNotThrow(() => validateFields(initialFields));
   assert.throws(() =>
     validateFields(
       initialFields.map((f) =>
@@ -64,8 +65,9 @@ test("incomplete drafts save; required evidence and category are enforced only o
     signature: "Test",
   };
   assert.deepEqual(missingFields(initialFields, values, "Student", true), ["Professional category required"]);
+  // Certificates are optional in the current default policy.
   assert.ok(
-    missingFields(initialFields, values, "Professional", true).includes(
+    !missingFields(initialFields, values, "Professional", true).includes(
       "Professional certificate",
     ),
   );

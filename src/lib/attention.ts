@@ -35,10 +35,10 @@ export async function attentionFor(actor: Actor) {
   if (hasPermission(actor.roles, "payments:manage"))
     await add(
       "pending-payments",
-      "SELECT count(*)::int n FROM tpa.event_registrations WHERE status='registered' AND payment_status='pending'",
-      "event payments awaiting manual verification",
+      hasPermission(actor.roles,"finance:approve") ? "SELECT count(*)::int n FROM tpa.finance_entries WHERE status='submitted' AND source<>'member'" : "SELECT count(*)::int n FROM tpa.finance_entries WHERE status='submitted' AND source='member'",
+      hasPermission(actor.roles,"finance:approve") ? "financial submissions awaiting approval" : "member receipts awaiting verification",
       "/admin/workspaces/payments",
-      "Payments",
+      "Finance",
       "High",
     );
   if (hasPermission(actor.roles, "payments:manage"))
@@ -47,7 +47,7 @@ export async function attentionFor(actor: Actor) {
       "SELECT count(*)::int n FROM tpa.event_registrations WHERE status='cancelled' AND payment_status='paid'",
       "cancelled paid registrations needing refund review",
       "/admin/workspaces/payments",
-      "Payments",
+      "Finance",
       "High",
     );
   if (hasPermission(actor.roles, "members:review"))
@@ -90,7 +90,7 @@ export async function attentionFor(actor: Actor) {
       "Publication",
       "Low",
     );
-  if (actor.roles.includes("administrator"))
+  if ((actor.roles.includes("administrator") || actor.roles.includes("super_administrator")))
     await add(
       "profile-reviews",
       "SELECT count(*)::int n FROM tpa.profile_reviews WHERE status='pending'",

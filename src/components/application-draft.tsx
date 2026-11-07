@@ -1,4 +1,6 @@
 "use client";
+import { VerifyEmail } from "./onboarding-auth";
+import { StatusBadge } from "./portal-values";
 import { prefillApplicationPhone } from "@/domain/application-contact";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -598,6 +600,12 @@ export function ApplicationDraft({
       </div>
       {status && (
         <>
+          <section aria-label="Profile verification status">
+            <StatusBadge tone={status.verified ? "success" : status.reviews[0]?.status === "rejected" ? "error" : "pending"}>
+              {status.verified ? status.updateRequested ? "Verified · Update requested" : "Verified" : ["pending", "submitted"].includes(status.reviews[0]?.status) ? "Under review" : status.reviews[0]?.status === "corrections" ? "Corrections requested" : "Not verified"}
+            </StatusBadge>
+            <VerifyEmail email={status.email} verified={status.emailVerified} />
+          </section>
           {status.reviews[0] && (
             <p>
               Latest review: {status.reviews[0].status}{" "}

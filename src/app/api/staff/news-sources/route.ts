@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     return {
       sources,
       revisions,
-      administrator: actor.roles.includes("administrator"),
+      administrator: (actor.roles.includes("administrator") || actor.roles.includes("super_administrator")),
       collectionEnabled: false,
     };
   });
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       (!input.id && (expected !== 0 || input.action !== "save"))
     )
       throw new OperationError("Save a source draft first.");
-    if (input.action !== "save" && !actor.roles.includes("administrator"))
+    if (input.action !== "save" && !(actor.roles.includes("administrator") || actor.roles.includes("super_administrator")))
       throw new OperationError("Administrators approve or pause sources.", 403);
     const details =
       input.action === "save"

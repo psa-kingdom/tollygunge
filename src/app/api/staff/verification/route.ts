@@ -51,7 +51,7 @@ export async function GET(r: Request) {
         [(Math.floor(verifiedPage) - 1) * 100, q],
       )
     ).rows;
-    const draft = actor.roles.includes("administrator")
+    const draft = (actor.roles.includes("administrator") || actor.roles.includes("super_administrator"))
       ? (
           await db.query(
             "SELECT * FROM tpa.verification_policy_draft WHERE id=true",
@@ -61,7 +61,7 @@ export async function GET(r: Request) {
     return {
       policy: p,
       draft,
-      admin: actor.roles.includes("administrator"),
+      admin: (actor.roles.includes("administrator") || actor.roles.includes("super_administrator")),
       reviews: reviews.slice(0, 100),
       verified: verified.slice(0, 100),
       hasMore: reviews.length > 100 || verified.length > 100,
@@ -84,7 +84,7 @@ export async function POST(r: Request) {
     const actor = await authorized(r, "members:review", true),
       input = await jsonBody(r);
     if (
-      !actor.roles.includes("administrator") &&
+      !(actor.roles.includes("administrator") || actor.roles.includes("super_administrator")) &&
       input.action !== "corrections"
     )
       throw new OperationError("Administrator control required.", 403);

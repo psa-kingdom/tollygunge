@@ -7,7 +7,7 @@ import {spawn} from 'node:child_process';
 test('import-worker failure restarts independently and cannot stop web login or receive mail keys',async()=>{
  const folder=await mkdtemp(join(tmpdir(),'tpa-import-runtime-'));
  await copyFile(resolve('scripts/start-runtime.mjs'),join(folder,'start-runtime.mjs'));
- await writeFile(join(folder,'server.js'),"const fs=require('fs');fs.writeFileSync('web-ready','ready');setInterval(()=>fs.writeFileSync('web-ready','ready'),100);process.on('SIGTERM',()=>process.exit(0));");
+ await writeFile(join(folder,'server.js'),"const fs=require('fs');fs.writeFileSync('web-ready','ready');setInterval(()=>{fs.writeFileSync('web-ready-next','ready');fs.renameSync('web-ready-next','web-ready');},100);process.on('SIGTERM',()=>process.exit(0));");
  await writeFile(join(folder,'email-worker.mjs'),"setInterval(()=>{},100);process.on('SIGTERM',()=>process.exit(0));");
  await writeFile(join(folder,'member-import-worker.mjs'),"import fs from 'node:fs';fs.appendFileSync('import-attempts',JSON.stringify({mail:!!process.env.RESEND_API_KEY,receiving:!!process.env.RESEND_RECEIVING_API_KEY,smtp:!!process.env.SMTP_PASSWORD})+'\\n');process.exit(1);");
  const parent=spawn(process.execPath,['start-runtime.mjs'],{cwd:folder,env:{...process.env,RESEND_API_KEY:'synthetic',RESEND_RECEIVING_API_KEY:'synthetic',SMTP_PASSWORD:'synthetic'},stdio:'ignore'});

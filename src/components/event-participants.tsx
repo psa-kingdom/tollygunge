@@ -40,9 +40,9 @@ const labels: Record<string, string> = {
   registered: "Registered",
   confirmed: "Confirmed registration",
   cancelled: "Cancelled",
-  paid: "Payment verified",
-  pending: "Payment pending",
-  failed: "Payment needs attention",
+  paid: "Receipt verified",
+  pending: "Receipt pending",
+  failed: "Receipt needs attention",
   refunded: "Refund recorded",
   not_required: "No payment required",
   attended: "Attended",
@@ -86,7 +86,7 @@ export function EventParticipants(props: { tab: "registrations" | "payments" | "
         <strong>Past attendance registers</strong><span>Browse the imported member lists by event date.</span>
       </button>
       <button type="button" aria-pressed={!historical} onClick={() => chooseSource("live")}>
-        <strong>Online registrations</strong><span>Review website bookings, payments and check-ins.</span>
+        <strong>Online registrations</strong><span>Review website bookings, receipts and check-ins.</span>
       </button>
     </nav>}
     {historical && props.workbookEvents?.length ? <WorkbookEventParticipants key={requestedDate} events={props.workbookEvents} initialDate={requestedDate} /> : <LiveEventParticipants {...props} />}
@@ -262,7 +262,7 @@ function LiveEventParticipants({
             </label>
             <label>
               {tab === "payments"
-                ? "Payment status"
+                ? "Receipt status"
                 : tab === "attendance"
                   ? "Attendance status"
                   : "Registration status"}
@@ -334,7 +334,7 @@ function LiveEventParticipants({
                         <th>Membership no.</th>
                         <th>
                           {tab === "payments"
-                            ? "Payment"
+                            ? "Receipt"
                             : tab === "attendance"
                               ? "Attendance"
                               : "Registration"}
@@ -440,7 +440,7 @@ function LiveEventParticipants({
                     className="button secondary"
                     href="/admin/workspaces/payments"
                   >
-                    Open manual payment verification →
+                    Open receipt verification →
                   </Link>
                 )}
               </div>

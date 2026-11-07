@@ -382,7 +382,7 @@ export function EventManager({
               </select>
             </label>
             </fieldset>
-            <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)}><legend>Payment</legend>
+            <fieldset disabled={busy || (selected?.status === "cancelled" || !!selected?.completed_at || !!selected?.archived_at)}><legend>Fee collection</legend>
             <p>Fees are collected using association payment instructions and confirmed by staff.</p>
             <label>
               Registration fee (₹; zero for free)
@@ -503,9 +503,9 @@ export function EventManager({
                 </select>
               </label>
               <label>Attendance status<select value={outcomeFilter} onChange={e=>{setOutcomeFilter(e.target.value);setAttendeePage(1);}}>{['all','attended','absent','unmarked'].map(s=><option key={s}>{s}</option>)}</select></label>
-              <label>Payment status<select value={paymentFilter} onChange={e=>{setPaymentFilter(e.target.value);setAttendeePage(1);}}>{['all','paid','pending','failed','refunded','cancelled','not_required'].map(s=><option key={s}>{s}</option>)}</select></label>
+              <label>Receipt status<select value={paymentFilter} onChange={e=>{setPaymentFilter(e.target.value);setAttendeePage(1);}}>{['all','paid','pending','failed','refunded','cancelled','not_required'].map(s=><option key={s}>{s}</option>)}</select></label>
               {canVerifyPayments && (
-                <Link href="/admin/workspaces/payments">Verify payments →</Link>
+                <Link href="/admin/workspaces/payments">Review receipts →</Link>
               )}
             </div>
             <div className="action-row"><button type="button" disabled={attendeePage===1} onClick={()=>setAttendeePage(attendeePage-1)}>Previous attendees</button><span>Page {attendeePage} · {filteredAttendees.length} matching attendees · 50 rows per page</span><button type="button" disabled={attendeePage*50>=filteredAttendees.length} onClick={()=>setAttendeePage(attendeePage+1)}>Next attendees</button></div>
@@ -541,8 +541,8 @@ export function EventManager({
                                 ? "confirmed"
                                 : "pending payment"}
                             <small>
-                              Registered: {eventTime(a.registered_at)}{a.payment_updated_at&&<> · Payment updated: {eventTime(a.payment_updated_at)}</>}<br/>
-                              Payment: {a.payment_status} · ₹
+                              Registered: {eventTime(a.registered_at)}{a.payment_updated_at&&<> · Receipt updated: {eventTime(a.payment_updated_at)}</>}<br/>
+                              Receipt: {a.payment_status} · ₹
                               {(a.fee_paise / 100).toFixed(2)}
                             </small>
                           </td>

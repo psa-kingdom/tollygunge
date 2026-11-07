@@ -109,7 +109,7 @@ export const initialFields: VerificationField[] = [
   field("phone", "Mobile number", 2, true),
   field("officeAddress", "Office address", 2, false, "multiline"),
   field("residenceAddress", "Residence address", 2, false, "multiline"),
-  field("correspondenceAddress", "Correspondence address", 2, true, "select", [
+  field("correspondenceAddress", "Correspondence address", 2, false, "select", [
     "Office",
     "Residence",
   ]),

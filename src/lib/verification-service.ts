@@ -181,7 +181,7 @@ export async function reviewVerification(
   actor: Actor,
   input: Record<string, unknown>,
 ) {
-  if (!actor.roles.includes("administrator") && input.action !== "corrections")
+  if (!(actor.roles.includes("administrator") || actor.roles.includes("super_administrator")) && input.action !== "corrections")
     throw new OperationError("Administrator decision required.", 403);
   const action = String(input.action),
     reason = typeof input.reason === "string" ? input.reason.trim() : "";

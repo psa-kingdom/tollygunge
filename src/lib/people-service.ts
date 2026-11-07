@@ -17,7 +17,7 @@ import { memberInput, mobile } from "@/domain/member-foundation";
 import { validateAddresses } from "./member-address";
 type Actor = { id: string; name: string; roles: string[] };
 export function admin(actor: Actor) {
-  return actor.roles.includes("administrator");
+  return (actor.roles.includes("administrator") || actor.roles.includes("super_administrator"));
 }
 export function staffPeople(actor: Actor) {
   return (

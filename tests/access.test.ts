@@ -11,9 +11,12 @@ test("every staff role has exactly its intended permission set", () => {
     "payments:manage",
     "documents:review",
     "staff:manage",
+    "staff:roles",
+    "finance:approve",
   ];
   const expected = {
-    administrator: permissions,
+    super_administrator: permissions,
+    administrator: permissions.filter(p=>p!=="staff:roles"&&p!=="finance:approve"),
     membership_reviewer: ["members:review", "documents:review"],
     content_editor: ["content:publish"],
     event_operator: ["events:manage"],

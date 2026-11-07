@@ -44,8 +44,8 @@ export async function operationalOverview(roles: string[]) {
     );
   if (hasPermission(roles, "payments:manage"))
     await metric(
-      "Payments needing verification",
-      "SELECT count(*)::int n FROM tpa.event_registrations WHERE payment_status='pending' AND status='registered'",
+      hasPermission(roles,"finance:approve") ? "Finance submissions awaiting approval" : "Member receipts awaiting verification",
+      hasPermission(roles,"finance:approve") ? "SELECT count(*)::int n FROM tpa.finance_entries WHERE status='submitted' AND source<>'member'" : "SELECT count(*)::int n FROM tpa.finance_entries WHERE status='submitted' AND source='member'",
       "/admin/workspaces/payments",
     );
   if (hasPermission(roles, "events:manage")) {
@@ -61,7 +61,7 @@ export async function operationalOverview(roles: string[]) {
     );
   }
   await Promise.all(pending);
-  const activity = roles.includes("administrator")
+  const activity = (roles.includes("administrator") || roles.includes("super_administrator"))
     ? (
         await db.query(
           'SELECT a.action,a.created_at,u.name FROM tpa.audit_events a LEFT JOIN public."user" u ON u.id=a.actor_user_id ORDER BY a.created_at DESC LIMIT 12',

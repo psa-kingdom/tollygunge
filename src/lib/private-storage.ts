@@ -187,3 +187,9 @@ export async function eventAssetStorage(id:string, action:'store'|'read'|'remove
   if(!result.Body) throw Error('Resource unavailable.');
   return result.Body.transformToWebStream() as ReadableStream;
 }
+
+// Authorized finance proof endpoints stream private evidence; never expose object keys.
+export async function readPrivateProof(id: string) {
+ const {bucket,client}=storage();const object=await client.send(new GetObjectCommand({Bucket:bucket,Key:privateObjectKey(id)}));
+ if(!object.Body) throw Error("Proof unavailable.");return object.Body.transformToWebStream() as ReadableStream;
+}

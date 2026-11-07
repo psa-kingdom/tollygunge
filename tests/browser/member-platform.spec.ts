@@ -117,10 +117,10 @@ async function contrast(locator: Locator, backgroundSelector: string) {
 async function contact(page: Page) {
   await page.goto("/member/application");
   await page
-    .getByRole("button", { name: "3. Contact & preferences", exact: true })
+    .getByRole("button", { name: "Personal details, contact & preferences", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Contact & preferences", exact: true }),
+    page.getByRole("heading", { name: "Personal details, contact & preferences", exact: true }),
   ).toBeVisible();
 }
 async function mockDraftWrites(page: Page) {
@@ -233,7 +233,7 @@ test("profile uses full-size private preview, protects privacy, saves and retrie
   await noOverflow(page);
 });
 
-test("address cascading resets descendants, resolves ambiguous PIN and supports international entry", async ({
+test("address state changes clear district, preserve manual locality and support international entry", async ({
   page,
   context,
 }) => {
@@ -257,7 +257,7 @@ test("address cascading resets descendants, resolves ambiguous PIN and supports 
   });
   await contact(page);
   const office = page.getByRole("region", {
-    name: "Office address",
+    name: "Correspondence address",
     exact: true,
   });
   await office
@@ -266,15 +266,13 @@ test("address cascading resets descendants, resolves ambiguous PIN and supports 
   await office
     .getByRole("combobox", { name: "District", exact: true })
     .selectOption("Patna");
-  await office
-    .getByRole("combobox", { name: "Postal locality", exact: true })
-    .selectOption("Bankipore");
+  await office.getByRole("textbox",{name:"Locality",exact:true}).fill("Bankipore");
   await expect(
     office.getByRole("button", { name: "Fill from PIN", exact: true }),
   ).toHaveCount(0);
   await expect(office.locator(".address-location-grid > label")).toHaveText([
     "PIN",
-    /Postal locality/,
+    /Locality/,
     /City/,
     /District/,
     /State \/ Union Territory/,
@@ -282,19 +280,15 @@ test("address cascading resets descendants, resolves ambiguous PIN and supports 
   ]);
   await office.getByLabel("PIN", { exact: true }).fill("800001");
   await expect(
-    office.getByRole("combobox", {
-      name: "Postal locality",
+    office.getByRole("textbox", {
+      name: "Locality",
       exact: true,
     }),
   ).toBeVisible();
   await office
-    .getByRole("combobox", {
-      name: "Postal locality",
-      exact: true,
-    })
-    .selectOption("Bankipore");
+    .getByRole("textbox", {name:"Locality",exact:true}).fill("Bankipore");
   await expect(
-    office.getByRole("combobox", { name: "Postal locality", exact: true }),
+    office.getByRole("textbox", { name: "Locality", exact: true }),
   ).toHaveValue("Bankipore");
   await office
     .getByRole("combobox", { name: "State / Union Territory", exact: true })
@@ -303,9 +297,9 @@ test("address cascading resets descendants, resolves ambiguous PIN and supports 
     office.getByRole("combobox", { name: "District", exact: true }),
   ).toHaveValue("");
   await expect(
-    office.getByRole("combobox", { name: "Postal locality", exact: true }),
-  ).toHaveValue("");
-  await expect(office.getByLabel("PIN", { exact: true })).toHaveValue("");
+    office.getByRole("textbox", { name: "Locality", exact: true }),
+  ).toHaveValue("Bankipore");
+  await expect(office.getByLabel("PIN", { exact: true })).toHaveValue("800001");
   await expect(
     office
       .getByRole("combobox", { name: "District", exact: true })
@@ -314,16 +308,10 @@ test("address cascading resets descendants, resolves ambiguous PIN and supports 
   await office
     .getByRole("combobox", { name: "District", exact: true })
     .selectOption("Kolkata");
-  await expect(
-    office.getByRole("combobox", { name: "Postal locality", exact: true }),
-  ).toContainText("No matching locations");
+  await expect(office.getByRole("textbox",{name:"Locality",exact:true})).toBeEditable();
   await office.getByLabel("PIN", { exact: true }).fill("999999");
-  await expect(
-    office.getByText(
-      "No postal locality found for this PIN. Check the number and try again.",
-      { exact: true },
-    ),
-  ).toBeVisible();
+  await expect(office.getByLabel("PIN",{exact:true})).toHaveValue("999999");
+  await expect(office.getByRole("textbox",{name:"Locality",exact:true})).toBeEditable();
   await office
     .getByRole("combobox", { name: "Country", exact: true })
     .selectOption("GB");
@@ -359,7 +347,7 @@ test("lookup failure can retry; a late PIN response cannot overwrite a changed c
   });
   await contact(page);
   const office = page.getByRole("region", {
-    name: "Office address",
+    name: "Correspondence address",
     exact: true,
   });
   await expect(office.getByRole("alert")).toContainText(
@@ -411,7 +399,7 @@ test("legacy Student draft becomes Professional without erasing saved evidence",
   ).toHaveCount(0);
   await page
     .getByRole("button", {
-      name: "1. Membership & professional details",
+      name: "Membership & professional details",
       exact: true,
     })
     .click();
@@ -433,7 +421,7 @@ test("password requirements validate before submission and header remains visibl
   context,
 }, info) => {
   await page.goto("/signup");
-  const password = page.getByLabel("Password", { exact: false });
+  const password = page.getByLabel("Password", { exact: true });
   await password.fill("12345");
   await expect(
     page.getByText("Use at least 6 characters.", { exact: true }),
@@ -482,7 +470,7 @@ test("real postal reference persists a structured address and legacy text", asyn
   await member(context);
   await contact(page);
   const residence = page.getByRole("region", {
-    name: "Residential address",
+    name: "Permanent address",
     exact: true,
   });
   const lookup = await context.request.get("/api/member/locations?pin=700001");
@@ -490,13 +478,8 @@ test("real postal reference persists a structured address and legacy text", asyn
   const result = await lookup.json();
   expect(result.localities.length).toBeGreaterThan(0);
   await residence.getByLabel("PIN", { exact: true }).fill("700001");
-  if (result.localities.length > 1)
-    await residence
-      .getByRole("combobox", {
-        name: "Postal locality",
-        exact: true,
-      })
-      .selectOption(result.localities[0].locality);
+  await residence.getByRole("textbox",{name:"Locality",exact:true}).fill(result.localities[0].locality);
+  await residence.getByRole("textbox",{name:"City",exact:true}).fill(result.localities[0].city || result.localities[0].district);
   await residence
     .getByLabel("Address Line 1", { exact: true })
     .fill("24 Synthetic Member Lane");
@@ -512,7 +495,7 @@ test("real postal reference persists a structured address and legacy text", asyn
   await page.reload();
   await expect(
     page
-      .getByRole("region", { name: "Residential address", exact: true })
+      .getByRole("region", { name: "Permanent address", exact: true })
       .getByLabel("Address Line 1", { exact: true }),
   ).toHaveValue("24 Synthetic Member Lane");
 });
@@ -683,13 +666,13 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
     exact: true,
   });
   await expect(nav).toBeVisible();
-  await nav.getByRole("link", { name: "Account", exact: true }).focus();
+  await nav.getByRole("link", { name: "Profile", exact: true }).focus();
   await expect(
-    nav.getByRole("link", { name: "Account", exact: true }),
+    nav.getByRole("link", { name: "Profile", exact: true }),
   ).toBeFocused();
   await expect(
     page
-      .getByRole("navigation", { name: "Account sections", exact: true })
+      .getByRole("navigation", { name: "Profile sections", exact: true })
       .getByRole("link", { name: "Security", exact: true }),
   ).toBeVisible();
   await page.evaluate(() => (document.documentElement.style.zoom = "2"));
@@ -701,7 +684,7 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
   await page.evaluate(() => (document.documentElement.style.zoom = "1"));
   await contact(page);
   const residence = page.getByRole("region", {
-    name: "Residential address",
+    name: "Permanent address",
     exact: true,
   });
   await residence
@@ -728,7 +711,7 @@ test("responsive visual evidence includes light, dark, long fields and zoom", as
     }
   }
   await page
-    .getByRole("button", { name: "5. Review & declaration", exact: true })
+    .getByRole("button", { name: "Review & declaration", exact: true })
     .click();
   await expect(
     page.getByRole("button", {
@@ -837,7 +820,7 @@ test("PIN is first and automatically resolves without losing manual address line
   });
   await contact(page);
   const office = page.getByRole("region", {
-    name: "Office address",
+    name: "Correspondence address",
     exact: true,
   });
   const pin = office.getByLabel("PIN", { exact: true });
@@ -849,6 +832,8 @@ test("PIN is first and automatically resolves without losing manual address line
     (await state.boundingBox())!.y,
   );
   await pin.fill("800001");
+  await office.getByRole("textbox",{name:"Locality",exact:true}).fill("Manual locality");
+  await office.getByRole("textbox",{name:"City",exact:true}).fill("Manual city");
   await office
     .getByLabel("Address Line 1", { exact: true })
     .fill("House 24, TPA colony");
@@ -856,9 +841,8 @@ test("PIN is first and automatically resolves without losing manual address line
   await expect(
     office.getByRole("combobox", { name: "District", exact: true }),
   ).toHaveValue("Patna");
-  await expect(
-    office.getByRole("combobox", { name: "Postal locality", exact: true }),
-  ).toHaveValue("G.P.O.");
+  await expect(office.getByRole("textbox",{name:"Locality",exact:true})).toHaveValue("Manual locality");
+  await expect(office.getByRole("textbox",{name:"City",exact:true})).toHaveValue("Manual city");
   await expect(
     office.getByLabel("Address Line 1", { exact: true }),
   ).toHaveValue("House 24, TPA colony");

@@ -72,7 +72,7 @@ export function PortalNavigation({
   const people = subsections && group?.label === "Members";
   const historical = participants && query.get("source") !== "live" && !query.get("eventId");
   const sections = participants && !historical
-    ? ["Registrations", "Payment status", "Attendance"].map((label, index) => {
+    ? ["Registrations", "Receipt status", "Attendance"].map((label, index) => {
         const params = new URLSearchParams({
           view: "participants",
           tab: ["registrations", "payments", "attendance"][index],

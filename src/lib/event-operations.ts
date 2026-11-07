@@ -1,3 +1,4 @@
+import { financeTotals } from "@/domain/finance";
 import 'server-only';
 import type { PoolClient } from 'pg';
 import { OperationError, audit } from './operation-api';
@@ -31,12 +32,9 @@ export async function eventFinancials(c: {query: PoolClient['query']}, id:string
     coalesce(sum(fee_paise) FILTER(WHERE status='registered' AND payment_status IN ('pending','failed')),0)::text AS pending,
     coalesce(sum(fee_paise) FILTER(WHERE status='cancelled' AND payment_status='paid'),0)::text AS refund_review
     FROM tpa.event_registrations WHERE event_id=$1`,[id])).rows[0];
-  const h=(await c.query(`SELECT coalesce(sum(h.fee_paise) FILTER(WHERE h.to_status='paid' AND (h.from_status IS NULL OR h.from_status IN ('pending','failed'))),0)::text AS received,
-    coalesce(sum(h.fee_paise) FILTER(WHERE h.from_status='paid' AND h.to_status='refunded' OR h.from_status IS NULL AND h.to_status='refunded'),0)::text AS refunded
-    FROM tpa.event_payment_history h JOIN tpa.event_registrations r ON r.id=h.registration_id WHERE r.event_id=$1`,[id])).rows[0];
   // Legacy refunded baselines establish both a receipt and full refund; provenance stays explicit.
   const legacy=(await c.query("SELECT coalesce(sum(h.fee_paise),0)::text AS amount FROM tpa.event_payment_history h JOIN tpa.event_registrations r ON r.id=h.registration_id WHERE r.event_id=$1 AND h.from_status IS NULL AND h.to_status='refunded'",[id])).rows[0];
-  const expenses=(await c.query('SELECT coalesce(sum(amount_paise),0)::text AS amount FROM tpa.event_expenses WHERE event_id=$1 AND voided_at IS NULL',[id])).rows[0];
-  const received=Number(h.received)+Number(legacy.amount), refunded=Number(h.refunded), expense=Number(expenses.amount);
-  return {booked:Number(r.booked),pending:Number(r.pending),received,refunded,netCollected:received-refunded,expenses:expense,netResult:received-refunded-expense,legacyRefundBaseline:Number(legacy.amount),refundReview:Number(r.refund_review)};
+  const ledger=(await c.query("SELECT kind,status,amount_paise FROM tpa.finance_entries WHERE event_id=$1",[id])).rows;
+  const totals=financeTotals(ledger);
+  return {...totals,booked:Number(r.booked),pending:Number(r.pending),legacyRefundBaseline:Number(legacy.amount),refundReview:Number(r.refund_review)};
 }

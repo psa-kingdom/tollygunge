@@ -3,7 +3,7 @@ import { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { databaseOptions } from '../../src/lib/database-options';
 
-test('v3 landing lists only the next three published public events', async ({ page }, info) => {
+test('v3 landing lists only the latest three published public events', async ({ page }, info) => {
   test.skip(!process.env.TPA_DATABASE_NAME?.startsWith('tpa_onboarding_test_'), 'Requires disposable database');
   const db = new Pool(databaseOptions()), actor=randomUUID(), prefix='V3 synthetic '+randomUUID().slice(0,8);
   try {
@@ -13,8 +13,8 @@ test('v3 landing lists only the next three published public events', async ({ pa
     }
     await page.goto('/');
     const list=page.locator('.v3-event-list'); await expect(list.locator('li')).toHaveCount(3);
-    for(const suffix of ['one','two','three']) await expect(list).toContainText(prefix+' '+suffix);
-    for(const suffix of ['four','past','draft','private']) await expect(list).not.toContainText(prefix+' '+suffix);
+    await expect(list.locator('h3')).toHaveText(['four','three','two'].map(suffix=>prefix+' '+suffix));
+    for(const suffix of ['one','past','draft','private']) await expect(list).not.toContainText(prefix+' '+suffix);
     await expect(list.locator('time').first()).toHaveAttribute('datetime', /Z$/);
     await page.locator('.v3-events').screenshot({path:info.outputPath('published-events.png')});
     await list.locator('h3 a').first().click(); await expect(page).toHaveURL(/\/events\/[a-f0-9-]+$/);

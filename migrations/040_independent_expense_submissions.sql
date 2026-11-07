@@ -1,0 +1,1 @@
+DROP INDEX tpa.finance_one_pending_expense_sheet;

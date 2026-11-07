@@ -1,4 +1,5 @@
 export const roles = [
+  "super_administrator",
   "administrator",
   "membership_reviewer",
   "content_editor",
@@ -14,8 +15,11 @@ export type Permission =
   | "communications:manage"
   | "payments:manage"
   | "documents:review"
-  | "staff:manage";
+  | "staff:manage"
+  | "staff:roles"
+  | "finance:approve";
 const grants: Record<StaffRole, readonly Permission[]> = {
+  super_administrator: ["members:review", "content:publish", "events:manage", "communications:manage", "payments:manage", "documents:review", "staff:manage", "staff:roles", "finance:approve"],
   administrator: [
     "members:review",
     "content:publish",
@@ -50,3 +54,5 @@ export function canReadPrivateDocument(
     (actor.id === ownerId || hasPermission(actor.roles, "documents:review"))
   );
 }
+
+export function staffRoleLabel(role: string) { return role === "administrator" ? "Admin" : role === "super_administrator" ? "Super admin" : role.replaceAll("_", " "); }

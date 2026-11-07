@@ -88,7 +88,7 @@ export async function GET(request: Request) {
         canReview: admin(actor),
         canEditPrivate: privatePeople(actor),
         canPublish:
-          actor.roles.includes("administrator") ||
+          (actor.roles.includes("administrator") || actor.roles.includes("super_administrator")) ||
           actor.roles.includes("content_editor"),
       };
     } finally {

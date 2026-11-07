@@ -3,15 +3,18 @@ import { CopyValue } from "./portal-values";
 import { WorkspacePanel, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
-import type { StaffRole } from "@/domain/access";
+import { staffRoleLabel, type StaffRole } from "@/domain/access";
 type Person = {
   id: string;
   name: string;
   email: string;
   roles: StaffRole[];
   eligible: boolean;
+  verified: boolean;
 };
 type Directory = {
+  canCreateSuperAdmin:boolean;
+  canManageRoles:boolean;
   people: Person[];
   actorId: string;
   roles: StaffRole[];
@@ -103,7 +106,7 @@ export function StaffAccess() {
               <strong>{person.name}</strong>
               <small>
                 {person.roles.length
-                  ? person.roles.map((r) => r.replaceAll("_", " ")).join(", ")
+                  ? person.roles.map((r) => staffRoleLabel(r)).join(", ")
                   : "No staff roles"}
               </small>
             </button><CopyValue value={person.email} /></div>
@@ -155,7 +158,7 @@ export function StaffAccess() {
               <p><CopyValue value={selected.email} /></p>
               {selected.id === directory?.actorId && (
                 <p className="notice">
-                  Another administrator must change your access.
+                  Super-admin access is managed by the operator setup command.
                 </p>
               )}
               {!selected.eligible && (
@@ -164,15 +167,17 @@ export function StaffAccess() {
                   access.
                 </p>
               )}
+              {directory?.canCreateSuperAdmin && <div className="notice"><h3>Set up the single super admin</h3><p>Select a verified account to review financial submissions. This option closes once the super admin is assigned.</p><button type="button" className="button" disabled={busy||!selected.verified} onClick={async()=>{setBusy(true);try{await api('/api/staff/access',{action:'create_super_admin',id:selected.id});setDirectory(await api<Directory>('/api/staff/access'));setSelected(undefined);setMessage('Super admin assigned. That account must sign in again.');}catch(e){setMessage((e as Error).message);}finally{setBusy(false);}}}>Make this account super admin</button></div>}
               <fieldset
                 disabled={
+                  !directory?.canManageRoles ||
                   busy ||
                   selected.id === directory?.actorId ||
                   (!selected.eligible && !selected.roles.length)
                 }
               >
                 <legend>Staff responsibilities</legend>
-                {directory?.roles.map((role) => (
+                {directory?.roles.filter(role => role !== "super_administrator").map((role) => (
                   <label className="check-label" key={role}>
                     <input
                       type="checkbox"
@@ -186,14 +191,14 @@ export function StaffAccess() {
                         )
                       }
                     />
-                    {role.replaceAll("_", " ")}
+                    {staffRoleLabel(role)}
                   </label>
                 ))}
               </fieldset>
               <button
                 className="button"
                 disabled={
-                  busy ||
+                  !directory?.canManageRoles || busy ||
                   selected.id === directory?.actorId ||
                   (!selected.eligible && chosen.length > 0)
                 }

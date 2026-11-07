@@ -191,12 +191,12 @@ export async function processEmailJob(
       }
       if(job.payload.eventPromotion) {
         if(env.EVENT_PROMOTIONS_ENABLED!=='true') {await finish('queued','promotion_paused',new Date(Date.now()+60000));return false;}
-        if(!(await pool.query("SELECT 1 FROM tpa.staff_roles WHERE user_id=$1 AND role IN ('administrator','event_operator')",[job.created_by])).rowCount) {await finish('skipped','sender_event_permission_revoked');return false;}
+        if(!(await pool.query("SELECT 1 FROM tpa.staff_roles WHERE user_id=$1 AND role IN ('administrator','super_administrator','event_operator')",[job.created_by])).rowCount) {await finish('skipped','sender_event_permission_revoked');return false;}
         if(!await promotionJobEligibility(pool,job.dispatch_id,job.user_id)) {await finish('skipped','event_promotion_obsolete');return false;}
       }
       const authority = (
         await pool.query(
-          "SELECT 1 FROM tpa.staff_roles r JOIN public.\"user\" u ON u.id=r.user_id WHERE r.user_id=$1 AND role IN ('administrator','communications_operator') AND (u.\"emailVerified\" OR EXISTS(SELECT 1 FROM tpa.operator_approved_identities a WHERE a.user_id=u.id))",
+          "SELECT 1 FROM tpa.staff_roles r JOIN public.\"user\" u ON u.id=r.user_id WHERE r.user_id=$1 AND role IN ('administrator','super_administrator','communications_operator') AND (u.\"emailVerified\" OR EXISTS(SELECT 1 FROM tpa.operator_approved_identities a WHERE a.user_id=u.id))",
           [job.created_by],
         )
       ).rowCount;

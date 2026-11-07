@@ -10,7 +10,7 @@ permissions:
   contents: read
 jobs:
   runtime-container:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       DATABASE_URL: postgresql://tpa_qa:tpa_ci_disposable@127.0.0.1:55439/postgres
       TPA_CONTAINER_QA_OUTPUT: runtime-container.json
@@ -46,7 +46,7 @@ jobs:
             .local/launch-readiness/container-roles/
           if-no-files-found: error
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       DATABASE_URL: postgresql://tpa_ci:tpa_ci_disposable@127.0.0.1:5432/tpa_ci
       TPA_DATABASE_NAME: tpa_ci
@@ -93,7 +93,7 @@ jobs:
           if-no-files-found: warn
 
   onboarding:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       DATABASE_URL: postgresql://tpa_ci:tpa_ci_disposable@127.0.0.1:5432/tpa_onboarding_test_ci
       TPA_DATABASE_NAME: tpa_onboarding_test_ci
@@ -142,7 +142,7 @@ jobs:
             .local/member-http-server.log
 
   launch-operations:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/testing/launch-readiness' || github.ref == 'refs/heads/main'
     env:
       DATABASE_URL: postgresql://tpa_qa:tpa_ci_disposable@127.0.0.1:55439/postgres

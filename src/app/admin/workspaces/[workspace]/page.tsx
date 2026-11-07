@@ -2,6 +2,7 @@ import { HistoricalEventLibrary } from "@/components/historical-event-library";
 import { loadWorkbookAttendance } from "@/lib/workbook-attendance";
 import { StatusBadge } from "@/components/portal-values";
 import { PortalSubsections } from "@/components/portal-subsections";
+import { PaymentDetailsManager } from "@/components/payment-details";
 import { PaymentsWorkspace } from "@/components/payments-workspace";
 import { VerificationWorkspace } from "@/components/verification-workspace";
 import {
@@ -37,6 +38,7 @@ const permissions: Record<string, Permission> = {
   content: "content:publish",
   communications: "communications:manage",
   payments: "payments:manage",
+  "payment-details": "payments:manage",
   crm: "communications:manage",
   flyers: "events:manage",
   imports: "events:manage",
@@ -96,7 +98,7 @@ export default async function Workspace({
           }
           description={
             participants
-              ? "Browse registrations, event payment status and attendance."
+              ? "Browse registrations, event receipt status and attendance."
               : undefined
           }
         />
@@ -160,6 +162,8 @@ export default async function Workspace({
             canManage={hasPermission(actor.roles, "staff:manage")}
             canViewPayments={hasPermission(actor.roles, "payments:manage")}
           />
+        ) : workspace === "payment-details" ? (
+          <PaymentDetailsManager />
         ) : workspace === "payments" ? (
           <PaymentsWorkspace />
         ) : (

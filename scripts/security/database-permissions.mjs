@@ -35,6 +35,6 @@ export const tablePermissions={web:webTables,email:emailTables,import:importTabl
 // PostgreSQL row-lock clauses require UPDATE on at least one column. These
 // timestamp-only grants preserve existing locking without granting business writes.
 export const columnPermissions={web:{},email:{'tpa.events':{UPDATE:['created_at']},'tpa.event_registrations':{UPDATE:['registered_at']}},import:{'public.user':{UPDATE:['updatedAt']}}};
-export const sequencePermissions={web:['tpa.audit_events_id_seq','tpa.event_operation_history_id_seq','tpa.payment_detail_revisions_id_seq','tpa.website_revisions_id_seq'],email:[],import:['tpa.audit_events_id_seq']};
+export const sequencePermissions={web:['tpa.finance_history_id_seq','tpa.audit_events_id_seq','tpa.event_operation_history_id_seq','tpa.payment_detail_revisions_id_seq','tpa.website_revisions_id_seq'],email:[],import:['tpa.audit_events_id_seq']};
 export function quoteIdentifier(name){if(!/^[A-Za-z_][A-Za-z_0-9]*$/.test(name))throw Error('Invalid identifier');return '"'+name+'"';}
 export function quoteObject(name){return name.split('.').map(quoteIdentifier).join('.');}

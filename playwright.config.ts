@@ -9,6 +9,8 @@ export default defineConfig({
     channel: process.env.TPA_BROWSER_CHANNEL || undefined,
     baseURL: process.env.TPA_TEST_URL || "http://127.0.0.1:3112",
     trace: "retain-on-failure",
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
     screenshot: "only-on-failure",
   },
   projects: [

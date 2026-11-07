@@ -11,15 +11,15 @@ test('historical participants belong to Events and do not show online-only tabs'
  await expect(page.getByRole('navigation',{name:'Staff navigation'}).getByRole('link',{name:'Events',exact:true})).toHaveAttribute('aria-current','page');
  await expect(page.getByRole('navigation',{name:'Staff navigation'}).getByRole('link',{name:'Members',exact:true})).not.toHaveAttribute('aria-current','page');
  await expect(page.getByText('Past attendance registers')).toBeVisible();
- await expect(page.getByRole('link',{name:'Payment status',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('link',{name:'Receipt status',exact:true})).toHaveCount(0);
  await expect(page.getByRole('combobox',{name:'Directory audience'})).toHaveCount(0);
  await expect(page.getByRole('link',{name:'← All events'})).toHaveAttribute('href','/admin/workspaces/events');
 });
 test('online task links keep the selected event and source',async({page})=>{
  await open(page,'/admin/workspaces/events?view=participants&eventId=example&tab=payments');
  const nav=page.getByRole('navigation',{name:'Event participant sections'});
- await expect(nav.getByRole('link',{name:'Payment status',exact:true})).toHaveAttribute('aria-current','page');
- for(const label of ['Registrations','Payment status','Attendance']){
+ await expect(nav.getByRole('link',{name:'Receipt status',exact:true})).toHaveAttribute('aria-current','page');
+ for(const label of ['Registrations','Receipt status','Attendance']){
  const href=await nav.getByRole('link',{name:label,exact:true}).getAttribute('href');const url=new URL(href!,'http://portal.test');expect(url.searchParams.get('eventId')).toBe('example');expect(url.searchParams.get('source')).toBe('live');
  }
 });

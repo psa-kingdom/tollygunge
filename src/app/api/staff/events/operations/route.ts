@@ -6,7 +6,7 @@ import { hasPermission } from '@/domain/access';
 
 import { record, uuid, version, text } from '@/domain/operations';
 
-import { expenseCategories, moneyInput, recordingUrl } from '@/domain/event-operations';
+import { recordingUrl } from '@/domain/event-operations';
 
 import { operation, authorized, jsonBody, transaction, OperationError } from '@/lib/operation-api';
 
@@ -56,6 +56,8 @@ export async function POST(request: Request) {
 
   if (['complete','reopen','archive'].includes(action)) await authorized(request,'events:manage',true);
 
+  if(action.startsWith('expense.')) throw new OperationError('Use the event finance sheet and submit it for approval.',409);
+
   const id=uuid(i.eventId);
 
   return transaction(async c=> {
@@ -89,6 +91,7 @@ export async function POST(request: Request) {
    let details:unknown=i;
 
    if(action==='complete') {
+    if((await c.query("SELECT 1 FROM tpa.finance_entries WHERE event_id=$1 AND (status IN ('draft','submitted') OR (status='returned' AND source<>'member')) LIMIT 1",[id])).rowCount) throw new OperationError('Resolve outstanding financial submissions before completing this event.',409);
 
     if(e.status==='draft' || new Date(e.ends_at)>new Date() || !e.attendance_finalized_at || i.financialReviewed!==true) throw new OperationError('End the event, finalize attendance and acknowledge financial review before completion.',409);
 
@@ -136,48 +139,6 @@ export async function POST(request: Request) {
       ON CONFLICT(registration_id) DO UPDATE SET outcome='absent',version=tpa.event_attendance.version+1,checked_in_by=$2 WHERE tpa.event_attendance.outcome='unmarked'`,[id,actor.id]);
 
     await c.query('UPDATE tpa.events SET attendance_finalized_at=now() WHERE id=$1',[id]);
-
-   } else if(action==='expense.save') {
-
-    if(!expenseCategories.some(c=>c===i.category)) throw new OperationError('Choose an expense category.');
-
-    const expenseId=i.id?uuid(i.id):randomUUID(), amount=moneyInput(i.amountPaise), description=text(i.description,'Description',1000,3);
-
-    const date=String(i.date); if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || new Date(date).toISOString().slice(0,10)!==date) throw new OperationError('Choose a valid expense date.');
-
-    const account=i.accountId?(await snapshotAccounts(c,[uuid(i.accountId)]))[0]:null;
-
-    const receipt=i.receiptId?uuid(i.receiptId):null;
-
-    if(receipt && !(await c.query("SELECT 1 FROM tpa.event_assets WHERE id=$1 AND event_id=$2 AND eligibility='finance' AND status='published'",[receipt,id])).rowCount) throw new OperationError('Choose a receipt belonging to this event.');
-
-    const args=[expenseId,id,i.category,description,amount,date,text(i.vendor??'','Vendor',160),text(i.method??'','Method',80),JSON.stringify(account),text(i.notes??'','Notes',1000),receipt,actor.id];
-
-    if(i.id) {
-
-     const prior=(await c.query('SELECT * FROM tpa.event_expenses WHERE id=$1 AND event_id=$2 FOR UPDATE',[expenseId,id])).rows[0];
-
-     if(!prior || prior.version!==version(i.expenseVersion) || prior.voided_at) throw new OperationError('Expense changed. Reload.',409);
-
-     if(!i.accountId) args[8]=JSON.stringify(prior.account_snapshot);
-
-     await c.query('UPDATE tpa.event_expenses SET category=$3,description=$4,amount_paise=$5,expense_date=$6,vendor=$7,method=$8,account_snapshot=$9,notes=$10,receipt_id=$11,updated_by=$12,version=version+1 WHERE id=$1 AND event_id=$2',args);
-
-     details={before:prior,after:args};
-
-    } else {await c.query('INSERT INTO tpa.event_expenses(id,event_id,category,description,amount_paise,expense_date,vendor,method,account_snapshot,notes,receipt_id,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)',args);details={id:expenseId,values:args};}
-
-    await c.query('UPDATE tpa.events SET financial_reviewed_at=NULL WHERE id=$1',[id]);
-
-   } else if(action==='expense.void') {
-
-    const reason=text(i.reason,'Void reason',1000,3);
-
-    const prior=(await c.query('SELECT * FROM tpa.event_expenses WHERE id=$1 AND event_id=$2 FOR UPDATE',[uuid(i.id),id])).rows[0];
-
-    if(!prior || prior.version!==version(i.expenseVersion) || prior.voided_at) throw new OperationError('Expense changed. Reload.',409);
-
-    await c.query('UPDATE tpa.event_expenses SET voided_at=now(),version=version+1,updated_by=$2 WHERE id=$1',[prior.id,actor.id]);details={before:prior,reason};
 
    } else if(action==='asset.link') {
 

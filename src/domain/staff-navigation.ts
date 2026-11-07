@@ -98,11 +98,12 @@ const groups: {
     label: "Administration",
     items: [
       {
-        label: "Payments",
+        label: "Finance",
         href: "/admin/workspaces/payments",
         icon: "wallet",
         permission: "payments:manage",
       },
+      {label:"Collection accounts",href:"/admin/workspaces/payment-details",icon:"wallet",permission:"payments:manage"},
       {
         label: "Email settings",
         href: "/admin/workspaces/onboarding-email",

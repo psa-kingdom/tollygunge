@@ -46,7 +46,7 @@ test("member issue reports retain existing status tracking and are tagged for st
   test.skip(!process.env.TPA_UI_MEMBER_EMAIL, "Synthetic member credentials required.");
   await page.goto("/login"); await page.getByLabel("Email",{exact:true}).fill(process.env.TPA_UI_MEMBER_EMAIL!);
   await page.getByLabel("Password",{exact:true}).fill(process.env.TPA_UI_MEMBER_PASSWORD!);
-  await page.getByRole("button",{name:"Sign in",exact:true}).click(); await page.waitForURL("**/member");
+  await page.getByRole("button",{name:"Sign in",exact:true}).click(); await page.waitForURL("**/member/events");
   await page.getByRole("button",{name:"Account menu",exact:true}).click();
   await page.getByRole("dialog",{name:"Account settings",exact:true}).getByRole("link",{name:"Report an issue",exact:true}).click();
   const subject="Synthetic member issue " + randomUUID().slice(0,8);
