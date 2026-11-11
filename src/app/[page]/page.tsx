@@ -1,3 +1,4 @@
+import { validEventDate, eventInDateRange } from "@/domain/event-date-range";
 import { selectPublicEvents } from "@/domain/public-event-selection";
 import { publicHistoricalEvents } from "@/lib/public-historical-events";
 import { peopleFallback } from "@/domain/people-placement";
@@ -29,10 +30,13 @@ export default async function ContentPage({
   params, searchParams,
 }: {
   params: Promise<{ page: string }>;
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{ month?: string; from?: string; to?: string }>;
 }) {
   const { page } = await params;
-  const requestedMonth = (await searchParams).month;
+  const query = await searchParams;
+  const requestedMonth = query.month;
+  const from = validEventDate(query.from), to = validEventDate(query.to);
+  const rangeError = !!(from && to && from > to);
   const month = typeof requestedMonth === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth) ? requestedMonth : "";
   const fallback = pages[page];
   if (!fallback) notFound();
@@ -63,11 +67,13 @@ export default async function ContentPage({
     page === "events" && process.env.DATABASE_URL
       ? (
           await getDatabase().query(
-            "SELECT id,title,location,starts_at,ends_at FROM tpa.events WHERE status='published' AND visibility='public' AND ($1::text='' OR to_char(starts_at AT TIME ZONE 'Asia/Kolkata','YYYY-MM')=$1) ORDER BY starts_at DESC", [month],
+            "SELECT id,title,description,location,starts_at,ends_at FROM tpa.events WHERE status='published' AND visibility='public' AND ($1::text='' OR to_char(starts_at AT TIME ZONE 'Asia/Kolkata','YYYY-MM')=$1) ORDER BY starts_at DESC", [month],
           )
         ).rows
       : [];
-  const selection = selectPublicEvents(allEvents, page === "events" ? await publicHistoricalEvents(month) : [], month);
+  const inRange = (date: string) => eventInDateRange(date, from, to);
+  const history = page === "events" ? await publicHistoricalEvents(month) : [];
+  const selection = selectPublicEvents(allEvents.filter(event => inRange(new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(event.starts_at)))), history.filter(event => inRange(event.date)), month, from || to ? null : 3);
   const events = selection.events, pastEvents = selection.historical;
   if (!live && page === "events") {
     data.sections[0].text = events.some(
@@ -90,7 +96,7 @@ export default async function ContentPage({
       <PublicContentView
         page={page}
         data={data}
-        context={{ eventMonth: month, people, media, events, pastEvents, articles,biographyTemplate:(await publishedSettings('shared')).biographyHeading,importantLinks:page==='resources'?await publishedResources('link'):[],downloads:page==='resources'?await publishedResources('document'):[] }}
+        context={{ eventFrom: from, eventTo: to, eventRangeError: rangeError, eventMonth: month, people, media, events, pastEvents, articles,biographyTemplate:(await publishedSettings('shared')).biographyHeading,importantLinks:page==='resources'?await publishedResources('link'):[],downloads:page==='resources'?await publishedResources('document'):[] }}
       />
     </SiteShell>
   );

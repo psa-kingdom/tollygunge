@@ -1,4 +1,3 @@
-import { EventMonthInput } from "./event-month-input";
 import type { PublicHistoricalEvent } from "@/lib/public-historical-events";
 import { HistoricalEventCard } from "./historical-event-card";
 import Link from "next/link";
@@ -13,6 +12,9 @@ import { RichContent } from "./rich-content";
 import type { ContentBody } from "@/domain/operations";
 export type PublicContentContext = {
   eventMonth?: string;
+  eventFrom?: string;
+  eventTo?: string;
+  eventRangeError?: boolean;
   pastEvents?: PublicHistoricalEvent[];
   defaultPage?: ContentBody;
   biographyTemplate?: string;
@@ -39,6 +41,7 @@ export type PublicContentContext = {
   events: {
     id: string;
     title: string;
+    description?: string;
     ends_at: string;
     starts_at: string;
     location: string;
@@ -105,15 +108,14 @@ export function PublicContentView({
           />
         )}
       </div>
-      {page === "events" && <section className="event-archive-filter" aria-label="Browse events by month">
+      {page === "events" && <section className="event-archive-filter" aria-label="Filter events by date range">
         <form action="/events" method="get">
-          <label htmlFor="event-archive-month">Browse past events
-            <EventMonthInput id="event-archive-month" name="month" defaultValue={context.eventMonth ?? ""} required />
-          </label>
-          <button className="button" type="submit">Show month</button>
-          {context.eventMonth && <Link className="text-link" href="/events">Back to latest events</Link>}
+          <label>From date<input type="date" name="from" defaultValue={context.eventFrom || ""} /></label>
+          <label>To date<input type="date" name="to" defaultValue={context.eventTo || ""} /></label>
+          <button className="button" type="submit">Show events</button>
+          <Link className="text-link" href="/events">Clear dates</Link>
         </form>
-        <p role="status">{context.eventMonth ? `Events for ${new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(context.eventMonth + "-01T12:00:00+05:30"))}${!events.length && !context.pastEvents?.length ? " — no events found." : "."}` : "Showing the latest three events. Choose a month to browse earlier events."}</p>
+        <p role={context.eventRangeError ? "alert" : "status"}>{context.eventRangeError ? "From date must be on or before To date." : context.eventFrom || context.eventTo ? `${events.length + (context.pastEvents?.length || 0)} events in the selected range.` : "Showing the latest three events. Choose a date range to browse more."}</p>
       </section>}
       <div className="public-content-layout">
         <aside className="public-page-index">
@@ -219,13 +221,14 @@ export function PublicContentView({
                         : new Date(event.ends_at) <= new Date(),
                     )
                     .map((event) => (
-                      <article className="event-row" key={event.id}>
+                      <article className="event-row public-event-detail-card" key={event.id}>
                         <div>
                           <h3>
                             <Link href={`/events/${event.id}`}>
                               {event.title}
                             </Link>
                           </h3>
+                          {event.description && <p>{event.description}</p>}
                           <p>
                             {new Date(event.starts_at).toLocaleString("en-IN", {
                               timeZone: "Asia/Kolkata",
@@ -275,10 +278,10 @@ export function PublicContentView({
                 {page === "membership" && i === 1 && (
                   <>
                     <div className="plan-grid">
-                      {["Patron", "Annual", "Life"].map((plan) => (
+                      {["Life", "Patron"].map((plan) => (
                         <article className="plan-card" key={plan}>
                           <span className="eyebrow">TPA MEMBERSHIP</span>
-                          <h3>{plan}</h3>
+                          <h3>{plan} membership</h3>
                           <p>
                             Benefits, fee and eligibility awaiting confirmation.
                           </p>

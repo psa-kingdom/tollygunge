@@ -41,7 +41,7 @@ export function MemberCreator({
     organization: "",
     designation: "",
     membershipNumber: "",
-    type: "Annual",
+    type: "Life",
     status: "active",
     provisionAccount: false,
   });
@@ -253,9 +253,10 @@ export function MemberCreator({
           value={form.type}
           onChange={(e) => updateField("type", e.target.value)}
         >
-          <option value="Annual">Annual</option>
-          <option value="Life">Life</option>
-          <option value="Patron">Patron</option>
+
+          {form.type === "Annual" && <option value="Annual" disabled>Historical Annual membership — select Life or Patron to change</option>}
+          <option value="Life">Life member</option>
+          <option value="Patron">Patron member</option>
         </select>
         {fieldErrors.type && (
           <span className="field-error" role="alert">
@@ -333,7 +334,7 @@ export function MemberEditor({
       designation: member.person.jobTitle || "",
       membershipNumber: member.membership_number,
       addresses: member.person.addresses || {},
-      type: member.type || "Annual",
+      type: member.type || "Life",
     }),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
@@ -407,9 +408,10 @@ export function MemberEditor({
             value={form.type}
             onChange={(e) => setForm({ ...form, type: e.target.value })}
           >
-            <option value="Annual">Annual</option>
-            <option value="Life">Life</option>
-            <option value="Patron">Patron</option>
+
+            {form.type === "Annual" && <option value="Annual" disabled>Historical Annual membership — select Life or Patron to change</option>}
+          <option value="Life">Life member</option>
+            <option value="Patron">Patron member</option>
           </select>
         </label>
         <button className="button" disabled={busy}>

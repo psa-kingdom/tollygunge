@@ -30,10 +30,16 @@ test("contribution and interest fields belong to membership and professional det
 });
 
 test("evidence fields and saved evidence-step links now open membership details", () => {
-  for (const id of ["photograph", "certificate"]) {
+  for (const id of ["certificate"]) {
     assert.equal(memberApplicationFieldStep(initialFields.find(field => field.id === id)!), 0);
   }
   assert.equal(memberApplicationStep(3), 0);
   assert.equal(adjacentApplicationStep(4, -1), 1);
   assert.ok(!memberApplicationSteps.some(step => step.label === "Evidence"));
+});
+
+test("recent photograph belongs to personal details", () => {
+ const f = initialFields.find(f => f.id === "photograph")!;
+ assert.equal(memberApplicationFieldStep(f), 1);
+ assert.equal(f.label, "Recent photograph");
 });

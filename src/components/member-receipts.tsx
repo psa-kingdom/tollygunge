@@ -4,6 +4,9 @@ import { api } from "./operations-client";
 import { rupees } from "@/domain/finance";
 type Receipt = {
   id: string;
+  entry_date: string;
+  method: string;
+  kind: string;
   status: string;
   amount_paise: number;
   reference: string;
@@ -47,11 +50,11 @@ export function MemberReceipts({
     };
   }, [eventId]);
   return (
-    <section aria-label="Participation fee receipts">
-      <h4>Participation fee receipts</h4>
+    <section aria-label="Payment transactions">
+      <h4>Payment transactions</h4>
       {rows.map((r) => (
         <p key={r.id}>
-          {rupees(Number(r.amount_paise))} · {r.status} · {r.reference}{" "}
+          {r.entry_date} · {r.kind} · {rupees(Number(r.amount_paise))} · {r.method || "Method not recorded"} · {r.status} · {r.reference || "No reference"}{" "}
           {r.proof_id && (
             <a
               href={`/api/finance/proofs/${r.proof_id}`}
@@ -64,6 +67,7 @@ export function MemberReceipts({
           {r.review_note && <span> · Review: {r.review_note}</span>}
         </p>
       ))}
+      {loaded && !rows.length && <p>No receipts or refunds have been recorded.</p>}
       {eligible && loaded && !rows.some((r) => r.status === "submitted") && (
         <form
           className="member-settings"

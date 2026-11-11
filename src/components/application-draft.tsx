@@ -1,4 +1,6 @@
 "use client";
+import { SignatureInput } from "./signature-input";
+import { DocumentPreview } from "./document-preview";
 import { VerifyEmail } from "./onboarding-auth";
 import { StatusBadge } from "./portal-values";
 import { prefillApplicationPhone } from "@/domain/application-contact";
@@ -70,7 +72,7 @@ export function ApplicationDraft({
   const [submitted, setSubmitted] = useState<SubmittedApplication | null>(null);
   const [draft, setDraft] = useState<Draft>({
       version: 0,
-      plan: "Annual",
+      plan: "Life",
       category: "Professional",
       details: { fullName: name },
       documentIds: [],
@@ -316,6 +318,7 @@ export function ApplicationDraft({
     }
   }
   function renderField(f: VerificationField) {
+    if (f.id === "signatureDocument") return <SignatureInput key={f.id} value={draft.details[f.id]} onUpload={file => upload(f, file)} details={draft.details} />;
     if (["officeAddress", "residenceAddress"].includes(f.id)) {
       if (f.id === "residenceAddress" && sameAddress) return (
         <section className="address-section form-span address-same-preview" key={f.id} aria-label="Permanent address">
@@ -535,7 +538,7 @@ export function ApplicationDraft({
       )
     : [];
   const progress = status ? verificationProgress(status.policy.fields, draft.details, draft.category, status.emailVerified) : null;
-  const standardPersonalIds = ["title", "fullName", "dateOfBirth"];
+  const standardPersonalIds = ["gender", "fullName", "dateOfBirth", "photograph"];
   const standardContactIds = ["phone", "officePhone", "residencePhone", "fax"];
   const preferenceIds = ["correspondenceAddress", "deliveryPreference"];
   const professionalIds = ["qualification", "professionalStatus", "organization", "professionalBody", "registration", "certificate"];
@@ -707,10 +710,10 @@ export function ApplicationDraft({
             </section>}
           </div> : memberApplicationStep(draft.step) === 0 ? <div className="application-form-sections">
             <section className="application-form-section">
-              <h3>Membership &amp; photograph</h3>
+              <h3>Membership</h3>
               <div className="form-grid">
                 <label>Membership plan<input value={draft.plan} readOnly /><small>Assigned by your administrator.</small></label>
-                {orderedFields(["photograph"])}
+
               </div>
             </section>
             {directFields.some(field => professionalIds.includes(field.id)) && <section className="application-form-section">
@@ -755,10 +758,10 @@ export function ApplicationDraft({
                   const label = f.id === "officeAddress" ? "Correspondence address" : f.id === "residenceAddress" ? "Permanent address" : f.label;
                   const editing = reviewEditing === f.id;
                   return <div key={f.id} className="application-review-row">
-                    <dt>{label}</dt>
+                    <dt><strong>{label}</strong></dt>
                     <dd>
                       <div className="application-review-value">
-                        <span>{draft.details[f.id] ? verificationAnswer(f, draft.details[f.id]) : "Not provided"}</span>
+                        {f.type === "document" && draft.details[f.id] ? <DocumentPreview id={draft.details[f.id]} label={f.label} /> : <span>{draft.details[f.id] ? verificationAnswer(f, draft.details[f.id]) : "Not provided"}</span>}
                         <button className="text-button" type="button" aria-label={`${editing ? "Close editor for" : "Edit"} ${label}`} aria-expanded={editing} aria-controls={`review-edit-${f.id}`} disabled={!ready || busy || conflict} onClick={async () => {
                           if (!(await save())) return;
                           if (!editing && f.id === "residenceAddress") setSameAddress(false);

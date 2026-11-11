@@ -2773,3 +2773,14 @@ html[data-color-mode="dark"] .button:not(.secondary):not(.gold):not(.danger):hov
 .member-settings .auth-password-wrapper input { width:100%; padding-right:48px; }
 .member-settings .auth-password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; padding:0; background:transparent; border:0; border-radius:4px; color:var(--ink); cursor:pointer; }
 .member-settings .auth-password-toggle:focus-visible { outline:2px solid var(--link); outline-offset:2px; }
+
+/* Membership review and event cards retain the existing TPA visual system. */
+.application-review-list dt, .verification-summary-section dt { font-weight: 700; }
+.application-document-preview { display: grid; gap: .75rem; }
+.application-document-preview img { max-width: 100%; border: 1px solid #d6dfe5; border-radius: 8px; background: white; }
+.application-final-declaration .member-check-field { display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-start; gap: .75rem; grid-column: 1 / -1; }
+.application-final-declaration .member-check-field input { flex: 0 0 auto; width: 20px; height: 20px; margin-top: .15rem; }
+.signature-field { display: grid; gap: 1rem; min-width: 0; }
+.member-event-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1.5rem; align-items: start; }
+.member-event-cards .member-event-card { border: 1px solid #d6dfe5; border-radius: 12px; padding: 1.5rem; margin: 0; min-width: 0; }
+.member-event-card .form-actions { flex-wrap: wrap; }

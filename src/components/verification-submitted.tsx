@@ -1,4 +1,5 @@
 "use client";
+import { DocumentPreview } from "./document-preview";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import {
@@ -116,9 +117,9 @@ export function VerificationSubmitted({
             <dl>
               {answered.map((field) => (
                 <div key={field.id}>
-                  <dt>{field.label}</dt>
+                  <dt><strong>{field.label}</strong></dt>
                   <dd>
-                    {verificationAnswer(field, submission.details[field.id])}
+                    {field.type === "document" ? <DocumentPreview id={submission.details[field.id]} label={field.label} /> : verificationAnswer(field, submission.details[field.id])}
                   </dd>
                 </div>
               ))}

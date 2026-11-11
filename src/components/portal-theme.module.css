@@ -1080,3 +1080,11 @@
 }
 
 .portal :global(.header-profile-verified.is-unverified) { color:var(--status-warning); background:var(--status-warning-bg); }
+
+.portal :global(.application-review-row dt strong), .portal :global(.verification-summary-section dt strong) { font-weight:700; color:var(--ink); }
+.portal.portal :global(.application-final-declaration .member-check-field) { display:flex; align-items:flex-start; flex-direction:row; gap:12px; grid-column:1 / -1; }
+.portal.portal :global(.application-final-declaration .member-check-field input) { order:-1; flex:0 0 20px; width:20px; height:20px; margin:3px 0 0; }
+.portal :global(.signature-field) { grid-column:1 / -1; min-width:0; }
+.portal :global(.signature-field .form-actions) { display:flex; flex-wrap:wrap; gap:10px; }
+.portal :global(.application-personal-grid label:has(#verification-photograph)) { grid-column:1 / -1; }
+.portal :global(.member-event-cards .member-event-card) { background:var(--surface); border-color:var(--line); }
