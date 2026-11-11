@@ -1088,3 +1088,13 @@
 .portal :global(.signature-field .form-actions) { display:flex; flex-wrap:wrap; gap:10px; }
 .portal :global(.application-personal-grid label:has(#verification-photograph)) { grid-column:1 / -1; }
 .portal :global(.member-event-cards .member-event-card) { background:var(--surface); border-color:var(--line); }
+
+.portal :global(.attendance-range-filter) { display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; order:2; }
+.portal :global(.attendance-range-filter label) { display:grid; gap:8px; font-size:13px; font-weight:600; min-width:0; }
+.portal :global(.attendance-range-filter input) { color:var(--ink); background:var(--control); border:1px solid var(--line); border-radius:8px; padding:10px; min-height:42px; min-width:0; }
+.portal :global(.attendance-range-filter [role=alert]) { flex-basis:100%; margin:0; }
+@media(max-width:650px) {
+  .portal :global(.attendance-range-filter) { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); width:100%; }
+  .portal :global(.attendance-range-filter input) { width:100%; }
+  .portal :global(.attendance-range-filter button), .portal :global(.attendance-range-filter [role=alert]) { grid-column:1 / -1; }
+}

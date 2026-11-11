@@ -42,7 +42,8 @@ export function MemberEvents() {
   const [events, setEvents] = useState<Event[]>([]),
     [message, setMessage] = useState("Loading events…"),
     [busy, setBusy] = useState(false);
-  const [month, setMonth] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [view, setView] = useState<"attendance" | "upcoming" | "transactions">(requestedEvent ? "upcoming" : "attendance");
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
@@ -83,7 +84,7 @@ export function MemberEvents() {
         <button type="button" aria-pressed={view === "upcoming"} onClick={() => setView("upcoming")}>Upcoming registrations{upcoming.length ? ` (${upcoming.length})` : ""}</button>
         <button type="button" aria-pressed={view === "transactions"} onClick={() => setView("transactions")}>Transactions</button>
       </nav>
-      {view === "attendance" && <MemberEventJourney month={month} onMonthChange={setMonth} />}
+      {view === "attendance" && <MemberEventJourney from={from} to={to} onFromChange={setFrom} onToChange={setTo} />}
       {view === "upcoming" && <section className="member-upcoming-intro">
         <h2>Your upcoming registrations</h2>
         {loadState === "ready" && !visibleEvents.length && <p>You have no upcoming registrations. <Link href="/events">Browse events</Link></p>}

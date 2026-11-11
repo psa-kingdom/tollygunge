@@ -1,7 +1,7 @@
 "use client";
-import { EventMonthInput } from "./event-month-input";
+import { eventInDateRange } from "@/domain/event-date-range";
 import { selectPublicEvents } from "@/domain/public-event-selection";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { api } from "./operations-client";
 import Link from "./navigation-link";
 import { PortalIcon } from "./portal-icon";
@@ -20,8 +20,8 @@ export type EventJourney = {
   }[];
 };
 
-export function MemberEventJourney({ month = "", onMonthChange }: { month?: string; onMonthChange: (month: string) => void }) {
-  const picker = useRef<HTMLDetailsElement>(null);
+export function MemberEventJourney({ from, to, onFromChange, onToChange }: { from: string; to: string; onFromChange: (value: string) => void; onToChange: (value: string) => void }) {
+  const rangeError = !!(from && to && from > to);
   const [journey, setJourney] = useState<EventJourney | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -38,12 +38,11 @@ export function MemberEventJourney({ month = "", onMonthChange }: { month?: stri
     };
   }, []);
 
-  const selected = selectPublicEvents(journey?.attendedEvents ?? [], journey?.historicalAttendance ?? [], month, null);
-  const monthLabel = month ? new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(`${month}-01T12:00:00+05:30`)) : "";
+  const selected = selectPublicEvents(journey?.attendedEvents ?? [], journey?.historicalAttendance ?? [], "", null);
   const history = [
     ...selected.events.map(event => ({ key: event.id, title: event.title, date: event.starts_at, href: `/member/events?eventId=${event.id}` })),
     ...selected.historical.map(event => ({ key: event.date, title: event.title, date: `${event.date}T12:00:00+05:30`, href: `/events/history/${event.date}` })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ].filter(event => eventInDateRange(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(event.date)), from, to)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   return (
     <section
       className="content-section member-event-journey"
@@ -53,23 +52,12 @@ export function MemberEventJourney({ month = "", onMonthChange }: { month?: stri
       {journey ? (
         <div className="event-journey-grid">
           <div className="event-attendance-stat">
-            <details className="attendance-month-picker" ref={picker} onKeyDown={event => {
-              if (event.key === "Escape" && picker.current) { picker.current.open = false; picker.current.querySelector("summary")?.focus(); }
-            }}>
-              <summary aria-label="Choose event month" title="Choose event month"><PortalIcon name="calendar" /><span>{monthLabel || "Filter by month"}</span></summary>
-              <div className="attendance-month-panel">
-                <label>Event month
-                  <EventMonthInput value={month} onChange={event => {
-                    onMonthChange(event.target.value);
-                    if (picker.current) { picker.current.open = false; picker.current.querySelector("summary")?.focus(); }
-                  }} />
-                </label>
-                <button type="button" className="button secondary" onClick={() => {
-                  onMonthChange("");
-                  if (picker.current) { picker.current.open = false; picker.current.querySelector("summary")?.focus(); }
-                }}>Show all events</button>
-              </div>
-            </details>
+            <div className="attendance-range-filter" role="group" aria-label="Filter events by date range">
+              <label>From date<input type="date" value={from} onChange={event => onFromChange(event.target.value)} aria-invalid={rangeError} aria-describedby={rangeError ? "attendance-range-error" : undefined} /></label>
+              <label>To date<input type="date" value={to} onChange={event => onToChange(event.target.value)} aria-invalid={rangeError} aria-describedby={rangeError ? "attendance-range-error" : undefined} /></label>
+              <button type="button" className="button secondary" onClick={() => { onFromChange(""); onToChange(""); }}>Clear dates</button>
+              {rangeError && <p id="attendance-range-error" role="alert">From date must be on or before To date.</p>}
+            </div>
             <div className="attendance-total">
               <strong>{journey.attendanceCount + (journey.historicalAttendance?.length ?? 0)}</strong>
               <span>Total events attended</span>
@@ -77,8 +65,8 @@ export function MemberEventJourney({ month = "", onMonthChange }: { month?: stri
           </div>
           <section className="event-journey-detail">
             <div className="attendance-list-heading">
-              <h3>{monthLabel || "Attendance history"}</h3>
-              <p role="status">{month ? `${history.length} ${history.length === 1 ? "event" : "events"} in this month` : `${history.length} attended ${history.length === 1 ? "event" : "events"}`}</p>
+              <h3>{from || to ? "Attendance in selected range" : "Attendance history"}</h3>
+              <p role="status">{from || to ? `${history.length} ${history.length === 1 ? "event" : "events"} in this range` : `${history.length} attended ${history.length === 1 ? "event" : "events"}`}</p>
             </div>
             {history.length ? <ul className="event-journey-list attendance-history-list">
               {history.map(event => <li key={event.key}>
@@ -88,7 +76,7 @@ export function MemberEventJourney({ month = "", onMonthChange }: { month?: stri
                 </div>
                 <span className="attendance-outcome">Attended</span>
               </li>)}
-            </ul> : <p>{month ? "No attended events are recorded for this month. Choose another month." : "No attended events are recorded for your membership yet. Contact the association if an event is missing."}</p>}
+            </ul> : <p>{from || to ? "No attended events are recorded in this date range. Adjust or clear the dates." : "No attended events are recorded for your membership yet. Contact the association if an event is missing."}</p>}
           </section>
           {journey.badges.length > 0 && <section className="event-journey-detail attendance-earned-badges">
             <h3>
