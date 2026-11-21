@@ -308,6 +308,7 @@ test("all staff roles retain navigation, direct route, API and preview boundarie
         .getByRole("button", { name: "Open full details →" })
         .click();
       await expect(page.locator(".portal-inspector")).toBeVisible();
+      if (hasPermission([role], "staff:manage")) await page.getByRole("button", {name:"Manage membership",exact:true}).click();
       await expect(
         page.getByText("Edit member contact and professional details", {
           exact: true,
@@ -328,6 +329,7 @@ test("inspector resize and nested dismissal preserve unsaved member edits", asyn
   const first = page.locator(".member-record-button").first();
   await first.click();
   const panel = page.locator(".portal-inspector");
+  await panel.getByRole("button", {name:"Manage membership",exact:true}).click();
   await panel
     .getByText("Edit member contact and professional details", { exact: true })
     .click();
@@ -340,7 +342,7 @@ test("inspector resize and nested dismissal preserve unsaved member edits", asyn
   await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(field).toBeFocused();
   await expect(field).toHaveValue("Unsaved synthetic change");
-  expect(await panel.evaluate((el) => el.matches(":modal"))).toBe(false);
+  expect(await panel.evaluate((el) => el.matches(":modal"))).toBe(true);
   await panel
     .getByRole("button", { name: "Close details", exact: true })
     .click();
@@ -609,6 +611,7 @@ test("combined association directory keeps membership and account identities dis
       exact: true,
     }),
   ).toHaveCount(0);
+  await inspector.getByRole("button", { name: "Manage membership", exact: true }).click();
   await expect(
     inspector.getByRole("combobox", { name: "Membership status", exact: true }),
   ).toBeDisabled();

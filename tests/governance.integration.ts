@@ -60,6 +60,10 @@ test(
         [users[0], users[1], users[2], users[4]],
       );
       assert.equal((await req("/api/staff/governance")).status, 401);
+      assert.equal((await req("/api/staff/profile-reviews")).status, 401);
+      for (const actor of [1,2,3,4])
+        assert.equal((await req("/api/staff/profile-reviews", actor)).status, 403);
+      assert.equal((await req("/api/staff/profile-reviews?page=0", 0)).status, 400);
       assert.equal((await req("/api/staff/governance", 1)).status, 403);
       assert.equal(
         (await req("/api/staff/profile-reviews", 2, { action: "approve" }))
@@ -183,6 +187,11 @@ test(
       });
       let review = row.reviews[0];
       assert.equal(review.status, "pending");
+      const pendingQueue = await ok("/api/staff/profile-reviews", 0);
+      assert.ok(pendingQueue.records.some((item: { person_id:string }) => item.person_id === row.id));
+      const reviewDetail = await ok("/api/staff/profile-reviews?id=" + row.id, 0);
+      assert.equal(reviewDetail.record.reviews[0].id, review.id);
+      assert.equal(reviewDetail.record.version, row.version);
       const proposalVersion = row.version;
       row = await ok("/api/staff/governance", 0, {
         action: "submit",

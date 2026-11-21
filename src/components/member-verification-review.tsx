@@ -1,9 +1,9 @@
 "use client";
-import { useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { api } from "./operations-client";
 import { SubmittedDetails } from "./verification-submitted-details";
+import styles from "./member-review.module.css";
 import type { Review, VerificationData } from "./verification-workspace";
-
 export function MemberVerificationReview({
   personId,
   userId,
@@ -11,6 +11,8 @@ export function MemberVerificationReview({
   verified,
   disabled = false,
   onApproved,
+  autoOpen = false,
+  onBusyChange,
 }: {
   personId: string | null;
   userId: string | null;
@@ -18,17 +20,20 @@ export function MemberVerificationReview({
   verified: boolean;
   disabled?: boolean;
   onApproved: () => Promise<void>;
+  autoOpen?: boolean;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const id = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
+  const [decision, setDecision] = useState("");
   const [busy, setBusy] = useState(false);
   const [review, setReview] = useState<Review>();
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
   const [canApprove, setCanApprove] = useState(false);
-  async function inspect() {
+  const inspect = useCallback(async () => {
     setOpen(true);
     setBusy(true);
     setReview(undefined);
@@ -68,26 +73,38 @@ export function MemberVerificationReview({
       setBusy(false);
       requestAnimationFrame(() => heading.current?.focus());
     }
-  }
+  }, [personId, userId]);
+  useEffect(() => {
+    let active = true;
+    if (autoOpen)
+      void Promise.resolve().then(() => {
+        if (active) return inspect();
+      });
+    return () => {
+      active = false;
+    };
+  }, [autoOpen, inspect]);
   return (
     <div className="member-verification-review">
-      <button
-        ref={trigger}
-        type="button"
-        className="button secondary"
-        disabled={busy || disabled}
-        aria-expanded={open}
-        aria-controls={id}
-        onClick={() => void inspect()}
-      >
-        {verified
-          ? "Review verification update"
-          : "Approve profile verification"}
-      </button>
+      {!autoOpen && (
+        <button
+          ref={trigger}
+          type="button"
+          className="button secondary"
+          disabled={busy || disabled}
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={() => void inspect()}
+        >
+          {verified
+            ? "Review verification update"
+            : "Approve profile verification"}
+        </button>
+      )}
       {open && (
         <section
           id={id}
-          className="decision-panel"
+          className={styles.section}
           aria-labelledby={`${id}-heading`}
           aria-busy={busy}
         >
@@ -103,64 +120,142 @@ export function MemberVerificationReview({
                 requirements v{review.requirement_version} before approving.
               </p>
               <SubmittedDetails review={review} />
-              {canApprove ? (
-                <>
-                  <label>
-                    Approval note (optional)
-                    <textarea
-                      maxLength={2000}
-                      value={reason}
-                      disabled={busy || disabled}
-                      onChange={(event) => setReason(event.target.value)}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className="button"
-                    disabled={busy || disabled}
-                    onClick={async () => {
-                      setBusy(true);
-                      setMessage("");
-                      try {
-                        await api("/api/staff/verification", {
-                          action: "approve",
-                          id: review.id,
-                          version: review.version,
-                          reason,
-                        });
-                        setReview(undefined);
-                        setMessage("Profile verification approved.");
-                        await onApproved();
-                      } catch (error) {
-                        setMessage(
-                          error instanceof Error
-                            ? error.message
-                            : "Unable to approve verification.",
-                        );
-                      } finally {
-                        setBusy(false);
-                      }
-                    }}
-                  >
-                    Confirm profile verification
-                  </button>
-                </>
-              ) : (
-                <p>Only an administrator can approve profile verification.</p>
-              )}
+              <div className={styles.decision}>
+                <h4>Review decision</h4>
+                <p>
+                  Approval verifies the submitted profile. Membership status and
+                  payment verification are managed separately.
+                </p>
+                {!decision ? (
+                  <div className="action-row">
+                    {[
+                      ...(canApprove
+                        ? [{ action: "approve", label: "Approve verification" }]
+                        : []),
+                      { action: "corrections", label: "Request corrections" },
+                      ...(canApprove
+                        ? [{ action: "reject", label: "Reject submission" }]
+                        : []),
+                    ].map((item) => (
+                      <button
+                        type="button"
+                        key={item.action}
+                        className={
+                          item.action === "approve"
+                            ? "button"
+                            : "button secondary"
+                        }
+                        disabled={busy || disabled}
+                        onClick={() => {
+                          setDecision(item.action);
+                          setReason("");
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <p>
+                      {decision === "approve"
+                        ? "Confirm that the submitted details and evidence meet the requirements."
+                        : "Explain what the member needs to change. Your feedback will be recorded with this decision."}
+                    </p>
+                    <label>
+                      {decision === "approve"
+                        ? "Approval note (optional)"
+                        : "Reason (required)"}
+                      <textarea
+                        rows={3}
+                        maxLength={2000}
+                        value={reason}
+                        disabled={busy || disabled}
+                        onChange={(event) => setReason(event.target.value)}
+                      />
+                    </label>
+                    <div className="action-row">
+                      <button
+                        type="button"
+                        className="button"
+                        disabled={
+                          busy ||
+                          disabled ||
+                          (decision !== "approve" && !reason.trim())
+                        }
+                        onClick={async () => {
+                          setBusy(true);
+                          onBusyChange?.(true);
+                          setMessage("");
+                          try {
+                            await api("/api/staff/verification", {
+                              action: decision,
+                              id: review.id,
+                              version: review.version,
+                              reason,
+                            });
+                            setReview(undefined);
+                            setDecision("");
+                            setMessage(
+                              decision === "approve"
+                                ? "Profile verification approved."
+                                : decision === "corrections"
+                                  ? "Corrections requested."
+                                  : "Submission rejected.",
+                            );
+                            await onApproved();
+                          } catch (error) {
+                            setMessage(
+                              error instanceof Error
+                                ? error.message
+                                : "Unable to save the decision.",
+                            );
+                          } finally {
+                            setBusy(false);
+                            onBusyChange?.(false);
+                          }
+                        }}
+                      >
+                        {busy
+                          ? "Saving decision…"
+                          : decision === "approve"
+                            ? "Confirm profile verification"
+                            : decision === "corrections"
+                              ? "Confirm corrections request"
+                              : "Confirm rejection"}
+                      </button>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        disabled={busy || disabled}
+                        onClick={() => setDecision("")}
+                      >
+                        Cancel decision
+                      </button>
+                    </div>
+                  </>
+                )}
+                {!canApprove && (
+                  <p>
+                    Only an administrator can approve or reject an application.
+                  </p>
+                )}
+              </div>
             </>
           )}
-          <button
-            type="button"
-            className="button secondary"
-            disabled={busy || disabled}
-            onClick={() => {
-              setOpen(false);
-              requestAnimationFrame(() => trigger.current?.focus());
-            }}
-          >
-            Close verification review
-          </button>
+          {!autoOpen && (
+            <button
+              type="button"
+              className="button secondary"
+              disabled={busy || disabled}
+              onClick={() => {
+                setOpen(false);
+                requestAnimationFrame(() => trigger.current?.focus());
+              }}
+            >
+              Close verification review
+            </button>
+          )}
         </section>
       )}
     </div>

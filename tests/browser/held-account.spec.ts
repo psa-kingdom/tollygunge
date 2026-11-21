@@ -180,6 +180,7 @@ test("held account is visible, activates only after release, and retains private
     await page.getByRole('link',{name:/Invitations held/}).click();
     await expect(page.getByRole('combobox',{name:'Invitations',exact:true})).toHaveValue('held');
     await openHeldMember();
+    await page.getByRole('button',{name:'Manage membership',exact:true}).click();
     await page.getByRole('button',{name:'Review this member invitation',exact:true}).click();
     await page.getByRole('button',{name:'Review invitations for 1 selected members',exact:true}).click();
     await expect(page.getByRole('heading',{name:'Invitation recipient review',exact:true})).toBeVisible();

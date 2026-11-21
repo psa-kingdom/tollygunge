@@ -24,6 +24,7 @@ test.beforeAll(async () => {
       loader: "tsx",
     },
     bundle: true,
+    loader: { ".css": "empty", ".module.css": "empty" },
     write: false,
     platform: "browser",
     jsx: "automatic",
@@ -106,6 +107,9 @@ test("member detail reviews evidence and approves the exact submission version",
     page.getByRole("link", { name: "View private evidence" }),
   ).toHaveAttribute("href", "/api/documents/document-1");
   expect(writes).toHaveLength(0);
+  await page
+    .getByRole("button", { name: "Approve verification", exact: true })
+    .click();
   await page.getByLabel("Approval note (optional)").fill("Evidence checked");
   await page
     .getByRole("button", { name: "Confirm profile verification", exact: true })
@@ -148,7 +152,9 @@ test("non-administrator cannot approve from the detail review", async ({
     .getByRole("button", { name: "Approve profile verification", exact: true })
     .click();
   await expect(
-    page.getByText("Only an administrator can approve profile verification."),
+    page.getByText(
+      "Only an administrator can approve or reject an application.",
+    ),
   ).toBeVisible();
   await expect(
     page.getByRole("button", {
@@ -163,6 +169,9 @@ test("stale submission stays open and shows the server error", async ({
   await fixture(page, { stale: true });
   await page
     .getByRole("button", { name: "Approve profile verification", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Approve verification", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Confirm profile verification", exact: true })
