@@ -728,14 +728,6 @@ export function MemberRegister({
                         : "Unverified"}
                     </dd>
                   </dl>
-                  <button
-                    type="button"
-                    className="button secondary"
-                    onClick={() => setDetailTab("Application review")}
-                    hidden={!canManage}
-                  >
-                    Review application
-                  </button>
                 </div>
               )}
               {detailTab === "Attendance" && (
@@ -961,16 +953,29 @@ export function MemberRegister({
                     )}
                 </section>
               )}
-              {selected.user_id && (
-                <Link
-                  className="button secondary"
-                  href={
-                    "/admin/workspaces/members?view=accounts&id=" +
-                    encodeURIComponent(selected.user_id)
-                  }
-                >
-                  Open account details →
-                </Link>
+              {((detailTab === "Summary" && canManage) || selected.user_id) && (
+                <div className={styles.detailActions}>
+                  {detailTab === "Summary" && canManage && (
+                    <button
+                      type="button"
+                      className="button"
+                      onClick={() => setDetailTab("Application review")}
+                    >
+                      Review application
+                    </button>
+                  )}
+                  {selected.user_id && (
+                    <Link
+                      className="button secondary"
+                      href={
+                        "/admin/workspaces/members?view=accounts&id=" +
+                        encodeURIComponent(selected.user_id)
+                      }
+                    >
+                      Open account details →
+                    </Link>
+                  )}
+                </div>
               )}
               {message && <p role="status">{message}</p>}
             </section>
