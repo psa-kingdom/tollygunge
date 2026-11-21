@@ -23,12 +23,7 @@ const admin: PortalGroup[] = [
   },
   {
     label: "Events",
-    items: [
-      workspace("Events", "events"),
-      { label: "Participants & attendance", href: "/admin/workspaces/events?view=participants" },
-      workspace("Flyers", "flyers"),
-      workspace("Historical imports", "imports"),
-    ],
+    items: [workspace("Events", "events")],
   },
   {
     label: "Publishing",
@@ -50,7 +45,6 @@ const admin: PortalGroup[] = [
   {
     label: "Settings",
     items: [
-      workspace("Website settings", "website"),
       workspace("Collection accounts", "payment-details"),
       workspace("Staff access", "access"),
     ],

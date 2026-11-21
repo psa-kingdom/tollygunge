@@ -50,7 +50,7 @@ test("public pages share a responsive footer and reachable section navigation", 
       for (const href of hrefs) await expect(page.locator(href)).toHaveCount(1);
       await index.locator("a").first().click();
       const top = await page
-        .locator("#section-0")
+        .locator(hrefs[0])
         .evaluate((el) => el.getBoundingClientRect().top);
       const headerBottom = await page
         .locator("header.site-header")
@@ -63,45 +63,48 @@ test("public pages share a responsive footer and reachable section navigation", 
   }
 });
 
-test("native public disclosures close on Escape, outside click and destination selection", async ({
+test("public navigation links directly to pages, while the mobile menu closes normally", async ({
   page,
 }) => {
   await page.goto("/governance");
   const desktop = page.viewportSize()!.width > 1100;
-  const menu = desktop
-    ? page.locator(".desktop-nav .nav-menu").nth(1)
-    : page.locator(".mobile-nav");
+  const menu = page.locator(".mobile-nav");
   const trigger = menu.locator(":scope > summary");
-  await trigger.focus();
-  await page.keyboard.press("Enter");
-  await expect(menu).toHaveAttribute("open", "");
-  await page.keyboard.press("Escape");
-  await expect(menu).not.toHaveAttribute("open", "");
-  await expect(trigger).toBeFocused();
-  expect(
-    await trigger.evaluate((el) => getComputedStyle(el).outlineStyle),
-  ).not.toBe("none");
-  await trigger.click();
-  await expect(menu).toHaveAttribute("open", "");
-  await page.mouse.click(5, 5);
-  await expect(menu).not.toHaveAttribute("open", "");
-  await trigger.click();
-  if (!desktop)
-    await menu.locator("nav details").nth(1).locator("summary").click();
-  await menu
-    .getByRole("link", { name: "Executive Committee", exact: true })
-    .click();
-  await expect(page).toHaveURL(/\/governance#section-0$/);
-  await expect(menu).not.toHaveAttribute("open", "");
-  await trigger.focus();
-  await page.keyboard.press("Enter");
-  const panel = desktop
-    ? menu.locator(".dropdown")
-    : menu.locator(":scope > nav");
-  expect(
-    await panel.evaluate((el) => getComputedStyle(el).transitionDuration),
-  ).toBe("0s");
-  await page.keyboard.press("Escape");
+  if (!desktop) {
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    await expect(menu).toHaveAttribute("open", "");
+    await page.keyboard.press("Escape");
+    await expect(menu).not.toHaveAttribute("open", "");
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await page.mouse.click(5, 5);
+    await expect(menu).not.toHaveAttribute("open", "");
+    await trigger.click();
+  }
+  const nav = page.getByRole("navigation", {
+    name: desktop ? "Primary" : "Mobile",
+    exact: true,
+  });
+  await expect(nav.locator("details")).toHaveCount(0);
+  for (const [name, href] of [
+    ["About", "/about"],
+    ["Governance", "/governance"],
+    ["Membership", "/membership"],
+    ["Events", "/events"],
+    ["Resources", "/resources"],
+  ]) {
+    await expect(nav.getByRole("link", { name, exact: true })).toHaveAttribute(
+      "href",
+      href,
+    );
+  }
+  await expect(
+    nav.getByRole("link", { name: "Governance", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  await nav.getByRole("link", { name: "Membership", exact: true }).click();
+  await expect(page).toHaveURL(/\/membership$/);
+  if (!desktop) await expect(menu).not.toHaveAttribute("open", "");
 });
 
 test("320px menu scrolls within the viewport and closes after navigation", async ({
@@ -111,13 +114,13 @@ test("320px menu scrolls within the viewport and closes after navigation", async
   await page.goto("/resources");
   await page.locator(".mobile-nav > summary").click();
   const nav = page.getByRole("navigation", { name: "Mobile", exact: true });
-  await nav.locator("details").nth(4).locator("summary").click();
+  await expect(nav.locator("details")).toHaveCount(0);
   const rect = await nav.boundingBox();
   expect(rect!.x).toBeGreaterThanOrEqual(0);
   expect(rect!.x + rect!.width).toBeLessThanOrEqual(321);
   expect(rect!.y + rect!.height).toBeLessThanOrEqual(568);
-  await nav.getByRole("link", { name: "Important Links", exact: true }).click();
-  await expect(page).toHaveURL(/\/resources#section-3$/);
+  await nav.getByRole("link", { name: "Governance", exact: true }).click();
+  await expect(page).toHaveURL(/\/governance$/);
   await expect(page.locator(".mobile-nav")).not.toHaveAttribute("open", "");
 });
 

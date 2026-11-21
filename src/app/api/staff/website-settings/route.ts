@@ -1,4 +1,5 @@
 import { getDatabase } from "@/lib/database";
+import { requireContentMedia } from "@/lib/content-media";
 import {
   websiteDefaults,
   settingsBody,
@@ -71,19 +72,7 @@ export async function POST(request: Request) {
         throw new OperationError("Save the settings first.");
       const body =
         action === "save" ? settingsBody(key, input.body) : row.draft;
-      if (
-        "logoMediaId" in body &&
-        body.logoMediaId &&
-        !(
-          await c.query(
-            "SELECT 1 FROM tpa.public_media WHERE id=$1 AND published IS NOT NULL",
-            [body.logoMediaId],
-          )
-        ).rowCount
-      )
-        throw new OperationError(
-          "Choose a published media image for the logo.",
-        );
+      await requireContentMedia(c,body,action==='publish');
       const result =
         action === "save"
           ? (

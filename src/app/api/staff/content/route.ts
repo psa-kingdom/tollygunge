@@ -1,4 +1,5 @@
 import { contentLimits } from "@/domain/rich-content";
+import { requireContentMedia } from "@/lib/content-media";
 import { randomUUID } from "node:crypto";
 import { getDatabase } from "@/lib/database";
 import { contentInput, record, uuid, version } from "@/domain/operations";
@@ -28,6 +29,10 @@ export async function POST(request: Request) {
       raw = record(await jsonBody(request, contentLimits.requestBytes));
     return transaction(async (client) => {
       if (['publish','unpublish','archive','restore'].includes(String(raw.action))) {
+        if(raw.action==='publish') {
+          const existing=(await client.query("SELECT draft FROM tpa.content_entries WHERE id=$1",[uuid(raw.id)])).rows[0];
+          if(existing) await requireContentMedia(client,existing.draft,true);
+        }
         const id = uuid(raw.id),
           expected = version(raw.version);
         const result = await client.query(
@@ -57,6 +62,7 @@ export async function POST(request: Request) {
         throw new OperationError("Invalid content action.");
       const input = contentInput(raw),
         id = input.id ?? randomUUID();
+      await requireContentMedia(client,input.body,false);
       const result = input.id
         ? await client.query(
             "UPDATE tpa.content_entries SET draft=$3,version=version+1,updated_by=$4,updated_at=now() WHERE id=$1 AND version=$2 AND kind=$5 AND slug=$6 AND archived_at IS NULL RETURNING *",

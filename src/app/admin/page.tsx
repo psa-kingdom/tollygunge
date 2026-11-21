@@ -1,5 +1,3 @@
-import { HistoricalEventLibrary } from "@/components/historical-event-library";
-import { hasPermission } from "@/domain/access";
 import { redirect } from "next/navigation";
 import { currentActor } from "@/lib/actor";
 import { attentionFor } from "@/lib/attention";
@@ -46,7 +44,6 @@ export default async function Admin() {
       attentionItems={attention}
       workspaceCount={workspaceCount}
       activity={activity}
-      extraSections={hasPermission(actor.roles, "events:manage") ? <HistoricalEventLibrary /> : undefined}
     />
   );
 }

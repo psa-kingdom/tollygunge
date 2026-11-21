@@ -7,6 +7,32 @@ import {
 import { roles } from "../src/domain/access";
 import { staffNavigation } from "../src/domain/staff-navigation";
 
+test("settings contains only role-permitted collection accounts and staff access", () => {
+  assert.deepEqual(
+    portalNavigation(["administrator"])
+      .find((group) => group.label === "Settings")
+      ?.items.map((item) => item.label),
+    ["Collection accounts", "Staff access"],
+  );
+  assert.deepEqual(
+    portalNavigation(["finance_operator"])
+      .find((group) => group.label === "Settings")
+      ?.items.map((item) => item.label),
+    ["Collection accounts"],
+  );
+  assert.equal(
+    portalNavigation(["content_editor"]).some(
+      (group) => group.label === "Settings",
+    ),
+    false,
+  );
+  assert.ok(
+    portalNavigation(["content_editor"]).find(
+      (group) => group.label === "Publishing",
+    ),
+  );
+});
+
 test("horizontal groups retain every permitted destination without granting new workspaces", () => {
   for (const role of roles) {
     const previous = new Set(

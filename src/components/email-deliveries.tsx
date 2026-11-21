@@ -1,5 +1,8 @@
 "use client";
-import { WorkspaceEmptyState } from "./workspace-ui";
+import { PortalIcon } from "./portal-icon";
+import { StatusBadge } from "./portal-values";
+import { emailLabel } from "@/domain/communications-ui";
+import styles from "./communications.module.css";
 import { useState, useEffect, useCallback } from "react";
 import { api } from "./operations-client";
 export type EmailReadiness = {
@@ -57,39 +60,52 @@ export function EmailDeliveries() {
     return () => clearTimeout(timer);
   }, [load]);
   return (
-    <section className="content-section">
-      <h2>Email delivery</h2>
-      <p>
-        Provider acceptance and mailbox delivery are separate. Recovery tokens
-        and message bodies never appear in these logs.
-      </p>
-      <div className="email-health">
-        <strong>Worker: {data?.readiness.worker ?? "checking"}</strong>
-        <span>
-          {data?.readiness.healthy
-            ? "Heartbeat healthy"
-            : "Worker unavailable or not yet started"}
-        </span>
-        {data?.readiness.quota && (
-          <span>
-            Daily usage {data.readiness.quota.daily.used}/
-            {data.readiness.quota.daily.limit ?? "unlimited"} · Monthly{" "}
-            {data.readiness.quota.monthly.used}/
-            {data.readiness.quota.monthly.limit ?? "unlimited"}. Campaigns
-            reserve 20 daily sends for recovery/replies.
-          </span>
-        )}
-      </div>
+    <section>
+      <header className={styles.sectionHeading}>
+        <div>
+          <h2>Delivery activity</h2>
+          <p>Track outgoing messages and anything that needs attention.</p>
+        </div>
+        <button
+          className="button secondary"
+          disabled={busy}
+          onClick={() => void load()}
+        >
+          Refresh
+        </button>
+      </header>
       {data && (
-        <p>
-          {data.counts.queued} queued · {data.counts.quota_wait} waiting for
-          quota · {data.counts.failed} failed · {data.counts.review} need
-          reconciliation
-        </p>
+        <>
+          <dl className={styles.metrics}>
+            <div>
+              <dt>In queue</dt>
+              <dd>{data.counts.queued}</dd>
+            </div>
+            <div>
+              <dt>Failed</dt>
+              <dd>{data.counts.failed}</dd>
+            </div>
+            <div>
+              <dt>Needs review</dt>
+              <dd>{data.counts.review}</dd>
+            </div>
+          </dl>
+          {!data.readiness.enabled && (
+            <p className={styles.notice}>
+              Sending is paused. You can still prepare and save emails.
+            </p>
+          )}
+          {data.counts.quota_wait > 0 && (
+            <p className={styles.notice}>
+              {data.counts.quota_wait} emails are waiting for the sending
+              allowance to reset.
+            </p>
+          )}
+        </>
       )}
-      <div className="crm-filters">
-        <label>
-          Job status
+      <div className={styles.toolbar}>
+        <label className={styles.filterSelect}>
+          Status
           <select
             value={status}
             disabled={busy}
@@ -107,113 +123,169 @@ export function EmailDeliveries() {
               "failed",
               "review",
               "cancelled",
-            ].map((s) => (
-              <option key={s} value={s}>
-                {s}
+            ].map((x) => (
+              <option key={x} value={x}>
+                {x === "all" ? "All statuses" : emailLabel(x)}
               </option>
             ))}
           </select>
         </label>
-        <button
-          className="button secondary"
-          disabled={busy}
-          onClick={() => void load()}
-        >
-          Refresh delivery
-        </button>
-      </div>
-      <p role="status">{message}</p>
-      {data && !data.entries.length && (
-        <WorkspaceEmptyState icon="mail" title="No email jobs match these filters" description="Delivery attempts will appear here after messages are queued. Adjust the status filter or refresh to check again." actionLabel="Refresh delivery" onAction={() => void load()} />
-      )}
-      <div className="table-scroll" role="region" aria-label="Email delivery records" tabIndex={0}>
-        <table>
-          <thead>
-            <tr>
-              <th>Type / recipient</th>
-              <th>Processing</th>
-              <th>Provider outcome</th>
-              <th>Next attempt</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.entries.map((x) => (
-              <tr key={x.id}>
-                <td>
-                  {x.kind}
-                  <br />
-                  {x.recipient ?? "Shared inbox ingestion"}
-                  <small>{x.id}</small>
-                </td>
-                <td>
-                  {x.status}
-                  <br />
-                  {x.reason?.replaceAll("_", " ")}
-                </td>
-                <td>
-                  {x.outcome.replaceAll("_", " ")}
-                  <details>
-                    <summary>Event history</summary>
-                    {x.events.length ? (
-                      x.events.map((e, i) => (
-                        <p key={i}>
-                          {e.type} · {new Date(e.at).toLocaleString("en-IN")}
-                        </p>
-                      ))
-                    ) : (
-                      <p>No provider event recorded yet.</p>
-                    )}
-                  </details>
-                </td>
-                <td>
-                  {x.status === "queued"
-                    ? new Date(x.available_at).toLocaleString("en-IN")
-                    : "—"}
-                  {x.status === "review" && (
-                    <p>
-                      Check provider records before any resend. Automatic retry
-                      is stopped.
-                    </p>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="email-actions">
-        <button
-          className="button secondary"
-          disabled={busy || page === 1}
-          onClick={() => setPage(page - 1)}
-        >
-          Previous
-        </button>
-        <span>Page {page}</span>
-        <button
-          className="button secondary"
-          disabled={busy || !data?.hasMore}
-          onClick={() => setPage(page + 1)}
-        >
-          Next
-        </button>
-      </div>
-      <details>
-        <summary>Recent recovery delivery receipts</summary>
-        <p>
-          Metadata only. Recovery bodies and reset tokens are never recorded.
+        <p className={styles.helper}>
+          Provider accepted does not confirm delivery to the recipient.
         </p>
-        {data?.recovery?.length ? (
-          data.recovery.map((x) => (
-            <p key={x.provider_id}>
-              {new Date(x.created_at).toLocaleString("en-IN")} · {x.outcome}{" "}
-              <small>{x.provider_id}</small>
+      </div>
+      {message && (
+        <p role="status" className={styles.notice}>
+          {message}
+        </p>
+      )}
+      {data?.entries.length ? (
+        <div
+          className={styles.tableWrap}
+          role="region"
+          aria-label="Email delivery records"
+          tabIndex={0}
+        >
+          <table>
+            <thead>
+              <tr>
+                <th>Recipient / email</th>
+                <th>Status</th>
+                <th>Outcome</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.entries.map((x) => (
+                <tr key={x.id}>
+                  <td>
+                    {x.recipient ?? "Incoming message"}
+                    <small>{emailLabel(x.kind)}</small>
+                  </td>
+                  <td>
+                    <StatusBadge
+                      tone={
+                        x.status === "failed"
+                          ? "error"
+                          : x.status === "review"
+                            ? "pending"
+                            : "neutral"
+                      }
+                    >
+                      {emailLabel(x.status)}
+                    </StatusBadge>
+                    {x.reason && <small>{emailLabel(x.reason)}</small>}
+                  </td>
+                  <td>
+                    {emailLabel(x.outcome || "Awaiting update")}
+                    {x.status === "review" && (
+                      <small>
+                        Check provider records before resending. Automatic
+                        retries are stopped.
+                      </small>
+                    )}
+                  </td>
+                  <td>
+                    <details className={styles.details}>
+                      <summary>View details</summary>
+                      <p>
+                        Record: <code>{x.id}</code>
+                      </p>
+                      {x.status === "queued" && (
+                        <p>
+                          Next attempt:{" "}
+                          {new Date(x.available_at).toLocaleString("en-IN", {
+                            timeZone: "Asia/Kolkata",
+                          })}
+                        </p>
+                      )}
+                      {x.events.length ? (
+                        x.events.map((e, i) => (
+                          <p key={i}>
+                            {emailLabel(e.type)} ·{" "}
+                            {new Date(e.at).toLocaleString("en-IN", {
+                              timeZone: "Asia/Kolkata",
+                            })}
+                          </p>
+                        ))
+                      ) : (
+                        <p>No provider events recorded yet.</p>
+                      )}
+                    </details>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : data && !busy ? (
+        <div className={styles.empty}>
+          <PortalIcon name="chart" />
+          <h3>
+            {status === "all"
+              ? "No delivery activity yet"
+              : "No matching delivery records"}
+          </h3>
+          <p>
+            {status === "all"
+              ? "Queued emails and their delivery updates will appear here."
+              : "Choose another status to see more records."}
+          </p>
+        </div>
+      ) : null}
+      {data && (data.hasMore || page > 1) && (
+        <div className={styles.pagination}>
+          <button
+            className="text-button"
+            disabled={busy || page === 1}
+            onClick={() => setPage(page - 1)}
+          >
+            Previous
+          </button>
+          <span>Page {page}</span>
+          <button
+            className="text-button"
+            disabled={busy || !data.hasMore}
+            onClick={() => setPage(page + 1)}
+          >
+            Next
+          </button>
+        </div>
+      )}
+      {data && (
+        <details className={styles.history}>
+          <summary>
+            Sending configuration &amp; account recovery receipts
+          </summary>
+          <p>
+            Worker: {data.readiness.worker} ·{" "}
+            {data.readiness.healthy ? "Available" : "Unavailable"} · Provider{" "}
+            {data.readiness.configured ? "configured" : "not configured"}
+          </p>
+          {data.readiness.quota && (
+            <p>
+              Daily usage: {data.readiness.quota.daily.used} /{" "}
+              {data.readiness.quota.daily.limit ?? "unlimited"} · Monthly usage:{" "}
+              {data.readiness.quota.monthly.used} /{" "}
+              {data.readiness.quota.monthly.limit ?? "unlimited"}. Campaigns
+              reserve 20 daily sends for recovery and replies.
             </p>
-          ))
-        ) : (
-          <p>No receipts recorded yet.</p>
-        )}
-      </details>
+          )}
+          <h3>Account recovery receipts</h3>
+          {data.recovery?.length ? (
+            data.recovery.map((x) => (
+              <p key={x.provider_id}>
+                {new Date(x.created_at).toLocaleString("en-IN", {
+                  timeZone: "Asia/Kolkata",
+                })}{" "}
+                · {emailLabel(x.outcome)} <code>{x.provider_id}</code>
+              </p>
+            ))
+          ) : (
+            <p>No receipts recorded yet.</p>
+          )}
+        </details>
+      )}
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { showMemberSection } from "@/domain/people-placement";
 import { EventMonthInput } from "./event-month-input";
 import type { PublicHistoricalEvent } from "@/lib/public-historical-events";
 import { HistoricalEventCard } from "./historical-event-card";
@@ -63,6 +64,9 @@ export function PublicContentView({
   readOnly?: boolean;
 }) {
   const { people, media, events, articles } = context;
+  const visibleSections = data.sections
+    .map((section, i) => ({ section, i }))
+    .filter(({ i }) => showMemberSection(page, i, people));
   const illustration =
     page === "membership" || page === "about"
       ? "/design/book-community-watercolor.webp"
@@ -73,15 +77,23 @@ export function PublicContentView({
     <main id="main" className={`public-information public-page-${page}`}>
       <div className="page-heading">
         <div className="page-heading-copy">
-          <span className="eyebrow">{data.label}</span>
+          <span
+            className="eyebrow"
+            data-cms-field={readOnly ? "label" : undefined}
+          >
+            {data.label}
+          </span>
           <h1
+            data-cms-field={readOnly ? "title" : undefined}
             className={
               data.titleSize ? `content-title-${data.titleSize}` : undefined
             }
           >
             {data.title}
           </h1>
-          <RichContent document={data.introRich} text={data.intro} />
+          <div data-cms-field={readOnly ? "intro" : undefined}>
+            <RichContent document={data.introRich} text={data.intro} />
+          </div>
           {page === "membership" && (
             <Link className="button page-primary-action" href="/join">
               Start your application <span aria-hidden="true">→</span>
@@ -93,38 +105,63 @@ export function PublicContentView({
             </a>
           )}
         </div>
-        {illustration && (
+        {(data.heroMediaId || illustration) && (
           <Image
             className="page-heading-art"
-            src={illustration}
+            data-cms-field={readOnly ? "heroMediaId" : undefined}
+            src={
+              data.heroMediaId ? `/media/${data.heroMediaId}` : illustration!
+            }
             width={480}
             height={480}
             sizes="(max-width: 767px) 260px, 390px"
-            alt=""
-            aria-hidden="true"
+            alt={data.heroMediaId ? data.heroAlt || "" : ""}
+            aria-hidden={!data.heroMediaId || undefined}
+            unoptimized={Boolean(data.heroMediaId)}
           />
         )}
       </div>
-      {page === "events" && <section className="event-archive-filter" aria-label="Browse events by month">
-        <form action="/events" method="get">
-          <label htmlFor="event-archive-month">Browse past events
-            <EventMonthInput id="event-archive-month" name="month" defaultValue={context.eventMonth ?? ""} required />
-          </label>
-          <button className="button" type="submit">Show month</button>
-          {context.eventMonth && <Link className="text-link" href="/events">Back to latest events</Link>}
-        </form>
-        <p role="status">{context.eventMonth ? `Events for ${new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(context.eventMonth + "-01T12:00:00+05:30"))}${!events.length && !context.pastEvents?.length ? " — no events found." : "."}` : "Showing the latest three events. Choose a month to browse earlier events."}</p>
-      </section>}
+      {page === "events" && (
+        <section
+          className="event-archive-filter"
+          aria-label="Browse events by month"
+        >
+          <form action="/events" method="get">
+            <label htmlFor="event-archive-month">
+              Browse past events
+              <EventMonthInput
+                id="event-archive-month"
+                name="month"
+                defaultValue={context.eventMonth ?? ""}
+                required
+              />
+            </label>
+            <button className="button" type="submit">
+              Show month
+            </button>
+            {context.eventMonth && (
+              <Link className="text-link" href="/events">
+                Back to latest events
+              </Link>
+            )}
+          </form>
+          <p role="status">
+            {context.eventMonth
+              ? `Events for ${new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(context.eventMonth + "-01T12:00:00+05:30"))}${!events.length && !context.pastEvents?.length ? " — no events found." : "."}`
+              : "Showing the latest three events. Choose a month to browse earlier events."}
+          </p>
+        </section>
+      )}
       <div className="public-content-layout">
         <aside className="public-page-index">
           <nav aria-label="On this page">
             <span className="page-index-label">On this page</span>
             <ol>
-              {data.sections.map((section, i) => (
+              {visibleSections.map(({ section, i }, position) => (
                 <li key={i}>
                   <a href={`#section-${i}`}>
                     <span aria-hidden="true">
-                      {String(i + 1).padStart(2, "0")}
+                      {String(position + 1).padStart(2, "0")}
                     </span>
                     {section.title}
                   </a>
@@ -142,7 +179,7 @@ export function PublicContentView({
           )}
         </aside>
         <div className="content-page">
-          {data.sections.map((section, i) => (
+          {visibleSections.map(({ section, i }) => (
             <section
               id={`section-${i}`}
               className="content-section"
@@ -150,6 +187,7 @@ export function PublicContentView({
               key={i}
             >
               <h2
+                data-cms-field={readOnly ? `sections.${i}.title` : undefined}
                 id={`section-heading-${i}`}
                 className={
                   section.titleSize
@@ -160,7 +198,26 @@ export function PublicContentView({
                 {section.title}
               </h2>
               <div className="public-section-body">
-                <RichContent document={section.rich} text={section.text} />
+                {section.mediaId && (
+                  <Image
+                    unoptimized
+                    src={`/media/${section.mediaId}`}
+                    alt={section.mediaAlt || ""}
+                    width={1000}
+                    height={600}
+                    style={{
+                      width: "100%",
+                      height: "auto",
+                      borderRadius: 12,
+                      marginBottom: 24,
+                    }}
+                  />
+                )}
+                <div
+                  data-cms-field={readOnly ? `sections.${i}.text` : undefined}
+                >
+                  <RichContent document={section.rich} text={section.text} />
+                </div>
                 {["about", "governance"].includes(page) && (
                   <PublicGovernance
                     biographyTemplate={context.biographyTemplate}
@@ -174,7 +231,12 @@ export function PublicContentView({
                 {page === "resources" && i === 1 && (
                   <div className="media-gallery">
                     {media.map((asset) => (
-                      <figure key={asset.id}>
+                      <figure
+                        key={asset.id}
+                        data-cms-record={
+                          readOnly ? `media:${asset.id}` : undefined
+                        }
+                      >
                         <Image
                           unoptimized
                           src={`/media/${asset.id}`}
@@ -241,9 +303,11 @@ export function PublicContentView({
                         </Link>
                       </article>
                     ))}
-                {page === "events" && i === 1 && context.pastEvents?.map(event => (
-                  <HistoricalEventCard key={event.date} event={event} />
-                ))}
+                {page === "events" &&
+                  i === 1 &&
+                  context.pastEvents?.map((event) => (
+                    <HistoricalEventCard key={event.date} event={event} />
+                  ))}
                 {page === "resources" &&
                   i === 0 &&
                   articles.map((article) => (
@@ -337,10 +401,22 @@ export function PublicContentView({
     </main>
   );
 }
-export function ArticleContentView({ body, breadcrumbs = false }: { body: ContentBody; breadcrumbs?: boolean }) {
+export function ArticleContentView({
+  body,
+  breadcrumbs = false,
+}: {
+  body: ContentBody;
+  breadcrumbs?: boolean;
+}) {
   return (
     <main id="main" className="page-content">
-      {breadcrumbs && <PublicBreadcrumbs section="Resources" href="/resources" title={body.title} />}
+      {breadcrumbs && (
+        <PublicBreadcrumbs
+          section="Resources"
+          href="/resources"
+          title={body.title}
+        />
+      )}
       <span className="eyebrow">TPA RESOURCES</span>
       <h1
         className={

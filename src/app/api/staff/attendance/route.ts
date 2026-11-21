@@ -1,4 +1,5 @@
 import { getDatabase } from "@/lib/database";
+import { hasPermission } from "@/domain/access";
 
 import { record, uuid, version, text } from "@/domain/operations";
 
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
 
  return operation(async()=> {
 
-  await authorized(request,'events:manage');
+  const actor=await authorized(request,'events:manage');
 
   const q=new URL(request.url).searchParams,eventId=uuid(q.get('eventId'));
 
@@ -25,6 +26,12 @@ export async function GET(request: Request) {
    LEFT JOIN LATERAL (SELECT membership_number FROM tpa.memberships WHERE person_id=p.id ORDER BY (status='active') DESC,id LIMIT 1) m ON true
 
    LEFT JOIN tpa.event_attendance a ON a.registration_id=r.id WHERE r.event_id=$1 ORDER BY u.name,r.id`,[eventId])).rows;
+
+  if(hasPermission(actor.roles,'payments:manage')) {
+    const receipts=(await getDatabase().query("SELECT DISTINCT ON (registration_id) registration_id,method,reference,status,source,amount_paise FROM tpa.finance_entries WHERE event_id=$1 AND kind='receipt' AND registration_id IS NOT NULL AND status<>'superseded' ORDER BY registration_id,(status='approved') DESC,created_at DESC,id",[eventId])).rows;
+    const byRegistration=new Map(receipts.map(row=>[row.registration_id,row]));
+    for(const row of rows){const receipt=byRegistration.get(row.id);row.payment_method=receipt?.method||null;row.payment_reference=receipt?.reference||null;row.receipt_source=receipt?.source||null;row.receipt_status=receipt?.status||null;}
+  }
 
   if(!q.has('page')) return rows; // Retain the accepted legacy array contract.
 

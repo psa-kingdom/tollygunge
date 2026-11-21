@@ -6,9 +6,7 @@ import { publishedSettings, publicNavigation } from "@/lib/website-content";
 import { sharedDefaults, type SharedSettings } from "@/domain/website-settings";
 import { TpaLogo } from "./tpa-logo";
 import { PublicFooter } from "./public-footer";
-import {
-  portalNavigation,
-} from "@/domain/portal-navigation";
+import { portalNavigation } from "@/domain/portal-navigation";
 import { PortalNavigation } from "./portal-navigation";
 import { WorkspaceSearch } from "./workspace-search";
 import { PortalIcon } from "./portal-icon";
@@ -74,42 +72,10 @@ export async function Header() {
       <PublicHeaderBehavior />
       <Brand settings={settings} />
       <nav className="desktop-nav" aria-label="Primary">
-        {navigation.map((n, navIndex) => (
-          <details
-            className="nav-menu"
-            name="primary-navigation"
-            data-nav-href={n.href}
-            key={navIndex}
-          >
-            <summary>
-              {n.title}
-              <svg
-                className="nav-chevron"
-                width="12"
-                height="12"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <path d="m4 6 4 4 4-4" />
-              </svg>
-            </summary>
-            <div className="dropdown">
-              <Link className="nav-overview" href={n.href}>
-                {n.title} overview <span aria-hidden="true">↗</span>
-              </Link>
-              {n.links.map((label, i) => (
-                <Link key={i} href={`${n.href}#section-${i}`}>
-                  {label}
-                  <span className="nav-link-arrow" aria-hidden="true">
-                    →
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </details>
+        {navigation.map((n) => (
+          <Link key={n.href} href={n.href} data-nav-href={n.href}>
+            {n.title}
+          </Link>
         ))}
         <Link href={settings.contactHref} data-nav-href={settings.contactHref}>
           {settings.contactLabel}
@@ -136,36 +102,10 @@ export async function Header() {
           <span>Menu</span>
         </summary>
         <nav aria-label="Mobile">
-          {navigation.map((n, navIndex) => (
-            <details
-              key={navIndex}
-              name="mobile-sections"
-              data-nav-href={n.href}
-            >
-              <summary>
-                {n.title}
-                <svg
-                  className="nav-chevron"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  aria-hidden="true"
-                >
-                  <path d="m4 6 4 4 4-4" />
-                </svg>
-              </summary>
-              <Link className="nav-overview" href={n.href}>
-                {n.title} overview <span aria-hidden="true">↗</span>
-              </Link>
-              {n.links.map((label, i) => (
-                <Link key={i} href={`${n.href}#section-${i}`}>
-                  {label}
-                </Link>
-              ))}
-            </details>
+          {navigation.map((n) => (
+            <Link key={n.href} href={n.href} data-nav-href={n.href}>
+              {n.title}
+            </Link>
           ))}
           <Link href={settings.contactHref}>{settings.contactLabel}</Link>
           <Link href={actor ? "/account" : "/login"}>

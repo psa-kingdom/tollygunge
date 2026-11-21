@@ -17,7 +17,8 @@ export const publishedSettings = cache(
         [key],
       )
     ).rows[0];
-    return row?.published ?? websiteDefaults[key];
+    const value = row?.published;
+    return value ? { ...websiteDefaults[key], ...value } : websiteDefaults[key];
   },
 );
 export async function publicNavigation() {

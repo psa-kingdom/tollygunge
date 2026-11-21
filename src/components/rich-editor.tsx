@@ -56,6 +56,7 @@ export function TextCounter({
 export function RichEditor({
   label,
   disabled = false,
+  compact = false,
   document,
   text,
   limit,
@@ -63,6 +64,7 @@ export function RichEditor({
 }: {
   label: string;
   disabled?: boolean;
+  compact?: boolean;
   document?: RichNode;
   text: string;
   limit: number;
@@ -70,6 +72,7 @@ export function RichEditor({
 }) {
   const id = useId(),
     [linkOpen, setLinkOpen] = useState(false),
+    [moreFormatting, setMoreFormatting] = useState(false),
     [url, setUrl] = useState(""),
     [error, setError] = useState("");
   const editor = useEditor({
@@ -143,17 +146,22 @@ export function RichEditor({
     run: () => void,
     active = false,
     disabled = false,
-  ) => (
-    <button
-      type="button"
-      aria-label={name}
-      aria-pressed={active}
-      disabled={disabled}
-      onClick={run}
-    >
-      {name}
-    </button>
-  );
+  ) =>
+    compact &&
+    !moreFormatting &&
+    !["Bold", "Italic", "Bullets", "Numbers", "Link", "Undo", "Redo"].includes(
+      name,
+    ) ? null : (
+      <button
+        type="button"
+        aria-label={name}
+        aria-pressed={active}
+        disabled={disabled}
+        onClick={run}
+      >
+        {name}
+      </button>
+    );
   return (
     <div className="rich-editor">
       <div
@@ -187,26 +195,28 @@ export function RichEditor({
             <option value="4">Heading 4</option>
           </select>
         </label>
-        <label className="toolbar-select">
-          Size
-          <select
-            aria-label={`${label} text size`}
-            value={editor.getAttributes("textStyle").size ?? "body"}
-            onChange={(e) =>
-              editor
-                .chain()
-                .focus()
-                .setMark("textStyle", { size: e.target.value })
-                .run()
-            }
-          >
-            {sizes.map((s) => (
-              <option key={s} value={s}>
-                {s[0].toUpperCase() + s.slice(1)}
-              </option>
-            ))}
-          </select>
-        </label>
+        {(!compact || moreFormatting) && (
+          <label className="toolbar-select">
+            Size
+            <select
+              aria-label={`${label} text size`}
+              value={editor.getAttributes("textStyle").size ?? "body"}
+              onChange={(e) =>
+                editor
+                  .chain()
+                  .focus()
+                  .setMark("textStyle", { size: e.target.value })
+                  .run()
+              }
+            >
+              {sizes.map((s) => (
+                <option key={s} value={s}>
+                  {s[0].toUpperCase() + s.slice(1)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {tool(
           "Bold",
           () => {
@@ -272,24 +282,26 @@ export function RichEditor({
           false,
           !editor.isActive("link"),
         )}
-        <label className="toolbar-select">
-          Align
-          <select
-            aria-label={`${label} alignment`}
-            value={
-              editor.getAttributes("paragraph").textAlign ??
-              editor.getAttributes("heading").textAlign ??
-              "left"
-            }
-            onChange={(e) =>
-              editor.chain().focus().setTextAlign(e.target.value).run()
-            }
-          >
-            {["left", "center", "right", "justify"].map((a) => (
-              <option key={a}>{a}</option>
-            ))}
-          </select>
-        </label>
+        {(!compact || moreFormatting) && (
+          <label className="toolbar-select">
+            Align
+            <select
+              aria-label={`${label} alignment`}
+              value={
+                editor.getAttributes("paragraph").textAlign ??
+                editor.getAttributes("heading").textAlign ??
+                "left"
+              }
+              onChange={(e) =>
+                editor.chain().focus().setTextAlign(e.target.value).run()
+              }
+            >
+              {["left", "center", "right", "justify"].map((a) => (
+                <option key={a}>{a}</option>
+              ))}
+            </select>
+          </label>
+        )}
         {tool("Insert table", () => {
           editor
             .chain()
@@ -335,6 +347,16 @@ export function RichEditor({
         {tool("Clear formatting", () => {
           editor.chain().focus().unsetAllMarks().clearNodes().run();
         })}
+        {compact && (
+          <button
+            type="button"
+            disabled={disabled}
+            aria-expanded={moreFormatting}
+            onClick={() => setMoreFormatting((v) => !v)}
+          >
+            {moreFormatting ? "Fewer tools" : "More formatting"}
+          </button>
+        )}
       </div>
       {linkOpen && (
         <div className="rich-link-editor">

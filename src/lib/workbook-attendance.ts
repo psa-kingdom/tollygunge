@@ -6,7 +6,7 @@ import path from "node:path";
 import { gunzipSync } from "node:zlib";
 
 export type WorkbookAttendee = { number: string; name: string; email: string; mobile: string; designation: string; organisation: string; status: "Attended" | "Not attended" | "Not recorded"; matched: boolean };
-export type WorkbookEvent = { date: string; sheet: string; rows: WorkbookAttendee[]; title?: string; description?: string; location?: string; speakers?: string; version?: number };
+export type WorkbookEvent = { date: string; sheet: string; rows: WorkbookAttendee[]; title?: string; description?: string; location?: string; speakers?: string; version?: number; attendanceAvailable?: boolean };
 const normalize = (value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 const memberKey = (value: string) => value.trim().replace(/^0+(?=\d)/, "");
 export async function loadWorkbookAttendance(): Promise<WorkbookEvent[]> {
@@ -24,7 +24,7 @@ async function readWorkbookAttendance(): Promise<WorkbookEvent[]> {
         typeof row.matched === "boolean" && ["Attended", "Not attended", "Not recorded"].includes(row.status)
       )
     )) throw Error("The private attendance snapshot is invalid.");
-    return events as WorkbookEvent[];
+    return (events as WorkbookEvent[]).map(event => ({ ...event, attendanceAvailable: true }));
   }
   const filename = process.env.TPA_ATTENDANCE_WORKBOOK || path.join(process.cwd(), ".local/event-attendance/source.xlsx");
   try { await access(filename); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return []; throw error; }
@@ -58,6 +58,6 @@ async function readWorkbookAttendance(): Promise<WorkbookEvent[]> {
         designation: member?.getCell(7).text || "", organisation: member?.getCell(8).text || "",
         status: ["attended", "yes", "present"].includes(attendance) ? "Attended" : ["notattended", "no", "absent"].includes(attendance) ? "Not attended" : "Not recorded", matched: Boolean(member) });
     });
-    return [{ date: `20${match[3]}-${match[2]}-${match[1]}`, sheet: sheet.name, rows }];
+    return [{ date: `20${match[3]}-${match[2]}-${match[1]}`, sheet: sheet.name, rows, attendanceAvailable: true }];
   }).sort((a, b) => b.date.localeCompare(a.date));
 }
