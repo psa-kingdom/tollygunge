@@ -293,7 +293,8 @@ try {
       assert.equal(created.status,"published");assert.equal(created.fee_paise,0);
       await staff.getByRole("button",{name:"Close popup",exact:true}).click();
       await staff.getByRole("button",{name:"List",exact:false}).filter({hasText:"List"}).click();
-      await check(staff.getByRole("table")).toBeVisible();
+      await check(staff.getByRole("button",{name:/List/})).toHaveAttribute("aria-pressed","true");
+      await check(staff.getByRole("button",{name:"View Community learning workshop",exact:true})).toBeVisible();
     }
     await screenshot(staff,"event-editor");
     await publicPage.goto(base+"/events/"+browserEvent.id);await check(publicPage.getByRole("heading",{name:"Speakers",exact:true})).toBeVisible();await screenshot(publicPage,"public-event");
