@@ -38,7 +38,7 @@ export const memberApplicationSteps = [
 ];
 export function memberApplicationStep(step: number) { return step === 2 ? 1 : step === 3 ? 0 : step; }
 export function memberApplicationFieldStep(field: Pick<VerificationField, "id" | "step">) {
-  return ["contributions", "contributionsOther", "interests", "interestsOther"].includes(field.id)
+  return field.id === "photograph" ? 1 : ["contributions", "contributionsOther", "interests", "interestsOther"].includes(field.id)
     ? 0 : memberApplicationStep(field.step);
 }
 export function adjacentApplicationStep(step: number, direction: -1 | 1) {
@@ -91,15 +91,7 @@ export const initialFields: VerificationField[] = [
     ...field("registration", "Professional registration number", 0),
     regulated: true,
   },
-  field("title", "Title", 1, false, "select", [
-    "Mr",
-    "Mrs",
-    "Miss",
-    "Ms",
-    "Dr",
-    "Prof", "CA", "CS", "CMA", "Adv",
-    "Other",
-  ]),
+  field("gender", "Gender", 1, false, "select", ["Male", "Female", "Transgender"]),
   field("fullName", "Full name", 1, true),
   field("fatherName", "Father’s name", 1),
   field("dateOfBirth", "Date of birth", 1, false, "date"),
@@ -147,7 +139,7 @@ export const initialFields: VerificationField[] = [
   ]),
   field("interestsOther", "Other professional interest", 2),
   {
-    ...field("photograph", "Passport photograph", 3, true, "document"),
+    ...field("photograph", "Recent photograph", 1, true, "document"),
     documentKind: "photograph",
   },
   {
@@ -174,7 +166,7 @@ export const initialFields: VerificationField[] = [
     true,
     "checkbox",
   ),
-  field("signature", "Typed applicant signature", 4, true),
+  { ...field("signatureDocument", "Applicant signature or signed form", 4, true, "document"), documentKind: "supporting" },
   field("place", "Place", 4),
 ];
 export function applicable(f: VerificationField, category: string) {

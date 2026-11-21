@@ -34,7 +34,7 @@ export function DashboardAttention({ initialItems, workspaceCount, live = true }
     return () => {
       try {
         if (!controller.signal.aborted) {
-          controller.abort("cleanup");
+          controller.abort();
         }
       } catch {
         // Ignore abort during unmount

@@ -42,8 +42,9 @@ export function MemberEvents() {
   const [events, setEvents] = useState<Event[]>([]),
     [message, setMessage] = useState("Loading events…"),
     [busy, setBusy] = useState(false);
-  const [month, setMonth] = useState("");
-  const [view, setView] = useState<"attendance" | "upcoming">(requestedEvent ? "upcoming" : "attendance");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [view, setView] = useState<"attendance" | "upcoming" | "transactions">(requestedEvent ? "upcoming" : "attendance");
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   );
@@ -75,14 +76,15 @@ export function MemberEvents() {
   const upcoming = upcomingMemberEvents(events);
   const visibleEvents = view === "upcoming"
     ? requestedEvent ? events.filter(event => event.id === requestedEvent || upcoming.some(item => item.id === event.id)) : upcoming
-    : [];
+    : view === "transactions" ? events.filter(event => event.registration_id) : [];
   return (
     <>
       <nav className="member-event-views segmented" aria-label="Event views">
         <button type="button" aria-pressed={view === "attendance"} onClick={() => setView("attendance")}>Attendance history</button>
         <button type="button" aria-pressed={view === "upcoming"} onClick={() => setView("upcoming")}>Upcoming registrations{upcoming.length ? ` (${upcoming.length})` : ""}</button>
+        <button type="button" aria-pressed={view === "transactions"} onClick={() => setView("transactions")}>Transactions</button>
       </nav>
-      {view === "attendance" && <MemberEventJourney month={month} onMonthChange={setMonth} />}
+      {view === "attendance" && <MemberEventJourney from={from} to={to} onFromChange={setFrom} onToChange={setTo} />}
       {view === "upcoming" && <section className="member-upcoming-intro">
         <h2>Your upcoming registrations</h2>
         {loadState === "ready" && !visibleEvents.length && <p>You have no upcoming registrations. <Link href="/events">Browse events</Link></p>}
@@ -97,7 +99,8 @@ export function MemberEvents() {
           }}
         />
       )}
-      {[...visibleEvents]
+      {view === "transactions" && <section><h2>Your payment transactions</h2><p>Receipts, refunds and payment status for your event registrations.</p>{loadState === "ready" && !visibleEvents.length && <p>No payment transactions yet.</p>}</section>}
+      <div className="member-event-cards">{[...visibleEvents]
         .sort(
           (a, b) =>
             Number(b.id === requestedEvent) - Number(a.id === requestedEvent),
@@ -247,7 +250,7 @@ export function MemberEvents() {
               )}
           </article>
         ))}
-      <p role="status">{message}</p>
+      </div><p role="status">{message}</p>
     </>
   );
 }

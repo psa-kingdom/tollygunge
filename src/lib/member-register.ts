@@ -158,10 +158,10 @@ export async function provisionMemberAccount(
     invitationStatus: created.invitationStatus,
   };
 }
-function membershipDetails(raw: Record<string, unknown>) {
+function membershipDetails(raw: Record<string, unknown>, previousType?: string | null) {
   const type = raw.type ?? null,
     status = raw.status ?? null;
-  if (type !== null && !["Annual", "Life", "Patron"].includes(String(type)))
+  if (type !== null && !["Life", "Patron"].includes(String(type)) && !(type === "Annual" && previousType === "Annual"))
     throw new OperationError("Check membership type.");
   if (
     status !== null &&
@@ -356,7 +356,7 @@ export async function saveMember(
   const detail = membershipDetails({
     ...baseline,
     ...((raw.membership as Record<string, unknown>) ?? {}),
-  });
+  }, membership?.type);
   if (row)
     await c.query(
       "UPDATE tpa.people SET accepted=$2,draft=$2,contact_email=$3,mobile_normalized=$4,version=version+1,updated_at=now() WHERE id=$1",

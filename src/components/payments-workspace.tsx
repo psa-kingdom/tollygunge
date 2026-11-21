@@ -14,6 +14,7 @@ import {
   type FinanceLine,
 } from "@/domain/finance";
 import styles from "./finance.module.css";
+import { MembershipPaymentConfirmation } from './membership-payments';
 type Entry = {
   id: string;
   event_id: string;
@@ -364,6 +365,7 @@ export function FinanceWorkspace({
   );
   return (
     <div className={styles.finance}>
+      {!fixedEventId && <MembershipPaymentConfirmation />}
       {fixedEventId && (
         <header className={styles.eventHeading}>
           <div className={styles.eventIdentity}>

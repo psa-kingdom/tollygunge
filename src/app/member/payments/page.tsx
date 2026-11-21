@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { currentActor } from "@/lib/actor";
 import { AccountShell } from "@/components/site-shell";
 import { MemberPaymentDetails } from "@/components/payment-details";
+import { MemberMembershipPayments } from '@/components/membership-payments';
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Payment details",
@@ -19,6 +20,7 @@ export default async function Page() {
           </header>
           <PortalSubsections />
         </div>
+        <MemberMembershipPayments />
         <MemberPaymentDetails />
       </main>
     </AccountShell>

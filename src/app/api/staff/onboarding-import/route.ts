@@ -382,7 +382,7 @@ export async function POST(r: Request) {
             [
               randomUUID(),
               user,
-              row.plan ?? "Annual",
+              row.plan ?? "Life",
               row.category ?? "Professional",
               row.details,
               p.version,

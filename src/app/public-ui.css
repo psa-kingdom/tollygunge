@@ -1083,3 +1083,6 @@ html[data-color-mode="dark"]
 
 .public-shell .historical-event-detail .historical-event-card h1 { font-size:clamp(26px,3.5vw,44px); line-height:1.2; margin:0; letter-spacing:-.025em; }
 .public-shell .historical-event-detail .historical-event-card { margin:24px 0 32px; }
+
+.public-event-detail-card { display: grid; gap: 1rem; padding: 1.5rem; border: 1px solid var(--border, #d6dfe5); border-radius: 12px; margin-block: 1rem; }
+.event-archive-filter form { flex-wrap: wrap; }

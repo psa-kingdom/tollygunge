@@ -583,9 +583,9 @@ export function MemberPaymentDetails({
           "Use the saved payment instructions below for this event. Include your registration identifier. Staff will confirm registration after verifying payment; scanning a QR does not confirm payment."
         ) : (
           <>
-            These are association payment details, not a payment request. Fees
-            and transaction verification are still being configured. Do not
-            transfer funds until TPA confirms the purpose and amount. A scan
+            These are association payment details, not a payment request. Staff
+            will verify membership payments and send an email confirmation. Do
+            not transfer funds until TPA confirms the purpose and amount. A scan
             does not confirm payment or approve membership.
           </>
         )}

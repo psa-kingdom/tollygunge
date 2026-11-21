@@ -142,10 +142,10 @@ export function mapImport(
       email = value("email").toLowerCase(),
       details: Record<string, string> = { fullName: name };
     const category = value("category") || "Professional",
-      plan = value("plan") || "Annual";
+      plan = value("plan") || "Life";
     let error =
       category === "Professional" &&
-      ["Annual", "Life", "Patron"].includes(plan)
+      ["Life", "Patron"].includes(plan)
         ? ""
         : "Check category or plan.";
     if (
