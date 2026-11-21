@@ -69,10 +69,11 @@ test("bank editor, saved activation and member display remain responsive", async
     await expect(
       page.getByRole("status").filter({ hasText: "Loading payment details…" }),
     ).toHaveCount(0);
+    await page.getByRole("button", {name:"Add account",exact:true}).click();
     await page
       .getByRole("combobox", { name: "Payment method", exact: true })
       .selectOption("bank");
-    await page.getByLabel("Label", { exact: true }).fill(label);
+    await page.getByLabel("Account label", { exact: true }).fill(label);
     await page
       .getByLabel("Payee name", { exact: true })
       .fill("Synthetic association");
@@ -82,12 +83,12 @@ test("bank editor, saved activation and member display remain responsive", async
     await page.getByLabel("IFSC", { exact: true }).fill("ABCD0123456");
     await page.getByLabel("Bank", { exact: true }).fill("Synthetic bank");
     await page.getByLabel("Branch", { exact: true }).fill("Synthetic branch");
-    await expect(page.getByLabel("UPI ID", { exact: true })).toBeDisabled();
+    await expect(page.getByLabel("UPI ID", { exact: true })).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Upload QR photo", exact: true }),
     ).toHaveCount(0);
     await page
-      .getByRole("button", { name: "Save draft details", exact: true })
+      .getByRole("button", { name: "Save draft", exact: true })
       .click();
     await expect(
       page.getByRole("status").filter({ hasText: "Draft saved" }),
@@ -99,16 +100,16 @@ test("bank editor, saved activation and member display remain responsive", async
       )
     ).rows[0].id;
     await expect(
-      page.getByRole("button", { name: "Activate saved revision" }),
+      page.getByRole("button", { name: "Activate saved account" }),
     ).toBeDisabled();
     await page
       .getByLabel(
         "I verified that the saved payment instructions and payee belong to TPA.",
       )
       .check();
-    await page.getByRole("button", { name: "Activate saved revision" }).click();
+    await page.getByRole("button", { name: "Activate saved account" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "set to active" }),
+      page.getByRole("status").filter({ hasText: "activated for members" }),
     ).toBeVisible();
     const memberPage = await memberContext.newPage();
     await memberPage.goto("/member/payments", {

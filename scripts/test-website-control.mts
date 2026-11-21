@@ -615,7 +615,7 @@ try {
       else await p.goto(base + path, {waitUntil:"domcontentloaded"});
       await expect(p.getByRole("heading", {level:1})).toBeVisible();
       if(path.endsWith("/content") || path.endsWith("/website")) {
-        await expect(p.getByLabel("Website page",{exact:true})).toBeVisible();
+        await expect(p.getByRole("combobox",{name:/^Website page/})).toBeVisible();
         await expect(p.getByRole("button",{name:"Publish changes",exact:true})).toBeEnabled();
       } else if(path.endsWith("/governance")) {
         await expect(p.getByRole("tablist",{name:"People workspace",exact:true})).toBeVisible();
@@ -695,14 +695,14 @@ try {
     await expect(p.getByRole("heading",{level:1})).toContainText("UI managed homepage");
     await p.screenshot({path:dir+"/public-home-managed.png",fullPage:true});
     await openWorkspace("/admin/workspaces/content");
-    await p.getByLabel("Website page",{exact:true}).selectOption("about");
+    await p.getByRole("combobox",{name:/^Website page/}).selectOption("about");
     const heading=p.getByRole("textbox",{name:"Page heading",exact:true});
     await expect(heading).toHaveValue("Synthetic page");
     await heading.fill("Synthetic browser page");
     await p.getByRole("button",{name:"Save draft",exact:true}).click();
     await expect(p.getByRole("status")).toContainText("Draft saved");
     await openWorkspace("/admin/workspaces/content",true);
-    await p.getByLabel("Website page",{exact:true}).selectOption("about");
+    await p.getByRole("combobox",{name:/^Website page/}).selectOption("about");
     await expect(heading).toHaveValue("Synthetic browser page");
     await expect(p.locator("iframe").first()).toBeVisible();
     await p.screenshot({path:dir+"/content-preview.png",fullPage:true});
