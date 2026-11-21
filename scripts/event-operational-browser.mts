@@ -24,7 +24,7 @@ export async function operationalBrowserJourney({browser,base,cookies,db,dir,req
  await staff.getByLabel('Starts · IST',{exact:true}).fill(istInput(new Date(Date.now()+2*86400000).toISOString()));
  await staff.getByLabel('Ends · IST',{exact:true}).fill(istInput(new Date(Date.now()+2*86400000+3600000).toISOString()));
  await staff.getByRole('button',{name:'Create event',exact:true}).click();
- await check(staff.getByRole('status')).toContainText('Event draft created');
+ await check(staff.getByRole('status').filter({hasText:'Event draft created'})).toBeVisible();
  type EventRow={id:string;title:string;version:number};
  const event=(await request('/api/staff/events') as EventRow[]).find(e=>e.title===title);assert.ok(event);
  let current=(await request('/api/staff/events?id='+event.id) as EventRow[])[0];

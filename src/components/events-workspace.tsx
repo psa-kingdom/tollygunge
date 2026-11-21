@@ -1,4 +1,5 @@
 "use client";
+import { useSearchParams } from "next/navigation";
 
 import {
   useCallback,
@@ -141,6 +142,9 @@ export function EventsWorkspace({
 }: {
   historicalEvents: WorkbookEvent[];
 }) {
+  const params = useSearchParams();
+  const linkedId = params.get("id") || params.get("eventId") || params.get("eventDate");
+  const openedLink = useRef<string | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [loaded, setLoaded] = useState(false),
     [error, setError] = useState("");
@@ -198,10 +202,9 @@ export function EventsWorkspace({
   );
   // Keep existing links to an individual event or historical register useful.
   useEffect(() => {
-    if (!loaded) return;
-    const params = new URLSearchParams(window.location.search);
-    const id =
-      params.get("id") || params.get("eventId") || params.get("eventDate");
+    if (!loaded || openedLink.current === linkedId) return;
+    openedLink.current = linkedId;
+    const id = linkedId;
     if (id) {
       const live = events.find((e) => e.id === id),
         historical = historicalEvents.find((e) => e.date === id);
@@ -230,7 +233,7 @@ export function EventsWorkspace({
           }),
         );
     }
-  }, [loaded, events, historicalEvents]);
+  }, [loaded, linkedId, events, historicalEvents]);
   return (
     <section className={styles.workspace}>
       <header className={styles.heading}>
