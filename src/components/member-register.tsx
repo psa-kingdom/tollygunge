@@ -371,11 +371,11 @@ export function MemberRegister({
               <thead>
                 <tr>
                   {invitationMode && (
-                    <th scope="col">
+                    <th scope="col" className="member-register-selection-column">
                       <span className="sr-only">Select member</span>
                     </th>
                   )}
-                  <th scope="col">Person</th>
+                  <th scope="col" className="member-register-person-column">Person</th>
                   <th scope="col">Membership no.</th>
                   <th scope="col">Membership</th>
                   <th scope="col">Account</th>
@@ -393,7 +393,7 @@ export function MemberRegister({
                     }
                   >
                     {invitationMode && (
-                      <td>
+                      <td className="member-register-selection-column">
                         <label className="member-register-select">
                           <input
                             type="checkbox"
@@ -514,7 +514,7 @@ export function MemberRegister({
                 ))}
                 {data && !data.rows.length && (
                   <tr>
-                    <td colSpan={6} className="member-register-empty">
+                    <td colSpan={invitationMode ? 6 : 5} className="member-register-empty">
                       <WorkspaceEmptyState
                         icon="people"
                         title="No records match these filters"

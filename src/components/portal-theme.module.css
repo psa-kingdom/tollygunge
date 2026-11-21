@@ -314,7 +314,8 @@
 .portal :global(.member-register-bulk .action-row) { margin: 0; }
 .portal :global(.member-register-bulk a) { font-size: 11px; color: var(--link); }
 .portal :global(.member-register-table table) { min-width: 660px; }
-.portal :global(.member-register-table :is(th, td):first-child) { width: 42px; padding-right: 0; }
+.portal :global(.member-register-table .member-register-selection-column) { width: 42px; padding-inline-end: 0; }
+.portal :global(.member-register-table .member-register-person-column) { width: 32%; min-width: 220px; }
 .portal :global(.member-register-table td) { vertical-align: middle; }
 .portal :global(.member-register-table tr.is-selected) { background: var(--portal-active); }
 .portal :global(.member-register-select) { display: flex; align-items: center; min-height: 32px; }
