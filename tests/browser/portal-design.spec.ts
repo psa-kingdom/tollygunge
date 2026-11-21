@@ -165,7 +165,7 @@ test("event creation stays simple, removed flyers stay unavailable and imports r
   await page.screenshot({path:info.outputPath("event-editor.png"),fullPage:true});
   await editor.getByRole("button",{name:"Cancel",exact:true}).click();
   await page.goto("/admin/workspaces/flyers");
-  await expect(page.getByRole("heading",{name:/not found|404/i})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"A little off the beaten path.",exact:true})).toBeVisible();
   await expect(page.getByRole("button",{name:"Generate preview",exact:true})).toHaveCount(0);
   await page.goto("/admin/workspaces/onboarding");
   await expect(page.getByRole("heading", { name: "Prepare your import", exact: true })).toBeVisible();
@@ -312,7 +312,7 @@ test("settings separates collection accounts and staff access from publishing", 
   await expect(settings.getByRole("link")).toHaveCount(2);
   await expect(settings.getByRole("link", { name: "Website settings", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Add account", exact: true }).click();
-  const method = page.getByLabel("Payment method", { exact: true });
+  const method = page.getByRole("combobox", { name: "Payment method", exact: true });
   await expect(page.getByLabel("UPI ID", { exact: true })).toBeVisible();
   await method.selectOption("bank");
   await expect(page.getByLabel("UPI ID", { exact: true })).toHaveCount(0);
@@ -403,12 +403,12 @@ test("member completion links to missing form steps and keeps approval separate"
  await page.goto("/member/application?step=4");
  const progress=page.getByRole("progressbar");await expect(progress).toHaveAttribute("max","100");
  const before=Number(await progress.getAttribute("value"));expect(before).toBeLessThan(100);
- await expect(page.getByRole("region",{name:"Profile verification status"})).toContainText("Not verified");
+ await expect(page.getByRole("region",{name:"Profile verification status"})).toHaveCount(0);
  await page.getByRole("button",{name:"Mobile number",exact:true}).click();
  await expect(page.getByRole("heading",{name:"Personal details, contact & preferences",exact:true})).toBeAttached();
  await page.getByLabel("Mobile number *").fill("9876543210");
  await expect.poll(async()=>Number(await progress.getAttribute("value"))).toBeGreaterThan(before);
- await expect(page.getByRole("region",{name:"Profile verification status"})).toContainText("Not verified");
+ await expect(page.getByRole("region",{name:"Profile verification status"})).toHaveCount(0);
  await layoutFits(page);await page.screenshot({path:info.outputPath("member-completion.png"),fullPage:true});
 });
 
@@ -553,8 +553,8 @@ test("member event layout separates attendance history and upcoming registration
  await page.goto("/member/events");
  await expect(page.getByRole("heading",{name:"Your attendance",exact:true})).toBeVisible();
  await expect(page.getByText("No attended events are recorded for your membership yet.",{exact:false})).toBeVisible();
- const picker=page.locator('summary[aria-label="Choose event month"]');await picker.click();
- await expect(page.getByLabel("Event month",{exact:true})).toBeVisible();await page.keyboard.press("Escape");await expect(picker).toBeFocused();
+ await expect(page.getByLabel("From date",{exact:true})).toBeVisible();
+ await expect(page.getByLabel("To date",{exact:true})).toBeVisible();
  await layoutFits(page);await page.screenshot({path:info.outputPath("member-events-refined.png"),fullPage:true});
  await page.setViewportSize({width:320,height:740});await layoutFits(page);
  await page.getByRole("button",{name:/^Upcoming registrations/}).click();

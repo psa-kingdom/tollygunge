@@ -321,7 +321,7 @@ try {
   pass("Approved receipt visible in event collections and reservation/confirmation delivery through the isolated mail sink");
   const flyerContext=await browser.newContext();await flyerContext.addCookies([{name:"better-auth.session_token",value:cookies[0],url:base}]);
   const flyer=await flyerContext.newPage();await flyer.goto(base+"/admin/workspaces/flyers?id="+browserEvent.id);
-  await check(flyer.getByRole("heading",{name:/not found|404/i})).toBeVisible();
+  await check(flyer.getByRole("heading",{name:"A little off the beaten path.",exact:true})).toBeVisible();
   const privateFlyer=(await request("/api/staff/flyers?id="+privateEvent.id))[0];assert.equal(eventLink(base,privateFlyer),`${base}/member/events?eventId=${privateEvent.id}`);
   await flyerContext.close();pass("Removed flyer workspace is unavailable; retained flyer API preserves member-only destinations");
   await db.query("UPDATE tpa.events SET starts_at=now()-interval '1 minute',registration_ends_at=NULL WHERE id=$1",[browserEvent.id]);
