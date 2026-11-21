@@ -523,7 +523,8 @@ test(
         )
         .toBeTruthy();
       await page.goto("/member/application");
-      await expect(page.getByText("Email: Verified",{exact:true})).toBeVisible();
+      await expect.poll(async()=> (await (await page.request.get("/api/member/verification")).json()).emailVerified).toBe(true);
+      await expect(page.getByRole("navigation",{name:"Application steps"})).toBeVisible();
       const header = await page.locator(".portal-topbar").boundingBox(),
         main = await page.locator("main").boundingBox();
       expect(header!.y + header!.height).toBeLessThanOrEqual(main!.y + 1);

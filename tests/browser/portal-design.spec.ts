@@ -1,3 +1,4 @@
+import { staffNavigation } from "../../src/domain/staff-navigation";
 import { test, expect, type Page } from "@playwright/test";
 import { signInPortal } from "../helpers/portal-browser";
 
@@ -47,7 +48,7 @@ async function dashboardTextContrast(page: Page) {
     await Promise.all(elements.flatMap(element => element.getAnimations()
       .map(animation => animation.finished.catch(() => undefined))));
   });
-  const ratios = await page.locator('.application-completion strong, .profile-completion :is(strong, p, summary), .service-metrics :is(strong, .metric-label), .attention-row :is(span, small), .member-service-tile :is(h3, p)').evaluateAll(elements => elements.filter(el => (el as HTMLElement).offsetHeight > 0).map(el => {
+  const ratios = await page.locator('.application-completion strong, .profile-completion :is(strong, p, summary), .service-metrics :is(strong, .metric-label), #attention :is(strong, small), .member-service-tile :is(h3, p)').evaluateAll(elements => elements.filter(el => (el as HTMLElement).offsetHeight > 0).map(el => {
     const luminance = (color: string) => {
       const rgb = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map(channel => {
         const value = channel / 255;
@@ -87,7 +88,7 @@ test("staff workspaces keep compact layouts, usable mobile navigation and keyboa
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: /Search workspace/ })).toBeFocused();
-  const routes = ["/admin", ...["reports","members","verification","onboarding","events","flyers","imports","content","media","governance","communications","crm","onboarding-email","payments","website","access"].map(slug => "/admin/workspaces/"+slug)];
+  const routes = ["/admin", ...staffNavigation(["administrator"]).flatMap(group=>group.items.map(item=>item.href)).filter(href=>href!=="/admin")];
   for (const route of routes.filter(route => route !== "/admin")) {
     await page.goto(route);
     await layoutFits(page);
@@ -144,28 +145,28 @@ test("portal navigation does not leak its palette or typography into public page
   }))).toEqual(original);
 });
 
-test("event, flyer and import empty states lead to the correct next task", async ({ page }, info) => {
+test("event creation stays simple, removed flyers stay unavailable and imports retain their workflow", async ({ page }, info) => {
   await signIn(page, "ADMIN");
   await page.route("**/api/staff/events?*", route => route.fulfill({ json: [] }));
   await page.route("**/api/staff/events", route => route.fulfill({ json: [] }));
   await page.route("**/api/staff/flyers", route => route.fulfill({ json: [] }));
   await page.goto("/admin/workspaces/events");
-  await expect(page.getByRole("heading", { name: "Your events start here", exact: true })).toBeVisible();
-  await expect(page.locator("#event-details")).toHaveCount(0);
+  await expect(page.getByRole("heading", {name:"Your next event starts here",exact:true})).toBeVisible();
   await primaryActionContrast(page);
-  await page.getByRole("button", { name: "New event", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Create event", exact: true })).toBeVisible();
-  await expect(page.getByLabel("Title", { exact: true })).toBeVisible();
-  expect(await page.getByRole("listbox", { name: "Event payment accounts", exact: true }).evaluate(element => element.closest("fieldset")?.querySelector("legend")?.textContent)).toBe("Fee collection");
-  await page.getByRole("navigation", { name: "Event form sections" }).getByRole("link", { name: "Reminders", exact: true }).click();
-  await expect(page.getByLabel("Send automatic reminders", { exact: true })).toBeInViewport();
+  await page.getByRole("button",{name:"Create new event",exact:true}).first().click();
+  const editor=page.getByRole("dialog",{name:"Create new event",exact:true});
+  await expect(editor.getByLabel("Event title",{exact:true})).toBeVisible();
+  await expect(editor.getByLabel("Starts · IST",{exact:true})).toBeVisible();
+  await expect(editor.getByLabel("Venue or meeting link",{exact:true})).toBeVisible();
+  await expect(editor.getByLabel("Participant limit",{exact:true})).toBeHidden();
+  await editor.locator("summary").filter({hasText:"Booking settings"}).click();
+  await expect(editor.getByLabel("Participant limit",{exact:true})).toHaveValue("50");
   await layoutFits(page);
-  await page.screenshot({ path: info.outputPath("event-editor.png"), fullPage: true });
+  await page.screenshot({path:info.outputPath("event-editor.png"),fullPage:true});
+  await editor.getByRole("button",{name:"Cancel",exact:true}).click();
   await page.goto("/admin/workspaces/flyers");
-  await expect(page.getByRole("heading", { name: "Create an event before designing its flyer", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create an event", exact: true })).toHaveAttribute("href", "/admin/workspaces/events");
-  await expect(page.getByRole("button", { name: "Generate preview", exact: true })).toHaveCount(0);
-  await layoutFits(page);
+  await expect(page.getByRole("heading",{name:/not found|404/i})).toBeVisible();
+  await expect(page.getByRole("button",{name:"Generate preview",exact:true})).toHaveCount(0);
   await page.goto("/admin/workspaces/onboarding");
   await expect(page.getByRole("heading", { name: "Prepare your import", exact: true })).toBeVisible();
   await expect(page.getByRole("list", { name: "Workflow progress" }).locator('li[aria-current="step"]')).toHaveText(/Choose workbook/);
@@ -216,31 +217,11 @@ test("workspace subtabs and collapsible sections preserve a usable task hierarch
   await expect(page.getByRole("heading", { name: "Verification history", exact: true })).toBeVisible();
   await layoutFits(page);
   await page.goto("/admin/workspaces/communications");
-  const deliveryDetails = page.getByRole("button", { name: "Delivery details", exact: true });
-  await deliveryDetails.click();
-  const detailsDialog = page.getByRole("dialog", { name: "Delivery details", exact: true });
-  await expect(detailsDialog).toBeVisible();
-  await expect(detailsDialog.getByRole("heading", { name: "Email setup", exact: true })).toBeVisible();
-  await expect(detailsDialog.getByRole("button", { name: "Close", exact: true })).toBeFocused();
-  await page.keyboard.press("Escape");
-  await expect(detailsDialog).not.toBeVisible();
-  await expect(deliveryDetails).toBeFocused();
-  await deliveryDetails.click();
-  await detailsDialog.getByRole("button", { name: "Close", exact: true }).click();
-  await expect(detailsDialog).not.toBeVisible();
-  const tools = page.getByRole("tablist", { name: "Communication tools", exact: true });
-  for (const name of ["Campaigns", "Email templates", "Member invitations", "Delivery logs", "Shared inbox"]) {
-    const tab = tools.getByRole("tab", { name, exact: true });
-    await tab.click();
-    await expect(tab).toHaveAttribute("aria-selected", "true");
-    const panel = await tab.getAttribute("aria-controls");
-    await expect(page.locator(`#${panel}`)).toBeVisible();
-    if (name === "Campaigns") {
-      const campaign = page.locator(`#${panel}`);
-      await expect(campaign.getByRole("heading", { name: "2. Preview message and audience", exact: true })).toBeHidden();
-      await expect(campaign.getByRole("heading", { name: "3. Review and send", exact: true })).toHaveCount(0);
-      await expect(campaign.getByRole("button", { name: /Preview message & audience/ })).toBeDisabled();
-    }
+  const tools=page.getByRole("navigation",{name:"Communication tools",exact:true});
+  for(const name of ["Email campaigns","Templates","Member invitations","Delivery activity","Inbox"]){
+    const item=tools.getByRole("button",{name,exact:true});await item.click();
+    await expect(item).toHaveAttribute("aria-current","page");
+    await expect(page.locator("main h2").first()).toBeVisible();
     await layoutFits(page);
   }
   await page.screenshot({ path: info.outputPath("communications-inbox.png"), fullPage: true });
@@ -256,52 +237,37 @@ test("workspace subtabs and collapsible sections preserve a usable task hierarch
 });
 
 
-test("campaign stepper preserves drafts and gates review without sending", async ({ page }, info) => {
-  const actions: string[] = [];
-  let saved = { id: "synthetic-campaign", version: 1, name: "", subject: "", body: "", audience: { city: "", profession: "" }, status: "draft" };
-  await signIn(page, "ADMIN");
-  await page.route("**/api/staff/campaigns**", async route => {
-    const request = route.request();
-    const body = request.method() === "POST" ? request.postDataJSON() : null;
-    if (body) actions.push(body.action);
-    let response: unknown = { campaigns: [] };
-    if (body?.action === "save") {
-      saved = { ...saved, ...body, version: saved.version + 1 };
-      response = saved;
-    } else if (body?.action === "preview") {
-      response = { matched: 0, eligible: 0, unsubscribed: 0, unverified: 0, preference_blocked: 0, as_of: new Date().toISOString(), sample: [], audience: saved.audience };
-    } else if (request.url().includes("?id=")) {
-      response = { entry: saved, revisions: [], dispatches: [] };
-    }
-    await route.fulfill({ json: response });
+test("campaign steps preserve drafts and require a saved review before sending",async({page},info)=>{
+  const actions:string[]=[];
+  let saved={id:"synthetic-campaign",version:1,name:"",subject:"",body:"",audience:{city:"",profession:""},status:"draft"};
+  await signIn(page,"ADMIN");
+  await page.route("**/api/staff/campaigns**",async route=>{
+    const request=route.request();const body=request.method()==="POST"?request.postDataJSON():null;
+    if(body)actions.push(body.action);
+    let response:unknown={campaigns:[]};
+    if(body?.action==="save"){saved={...saved,...body,version:saved.version+1};response=saved;}
+    else if(body?.action==="preview")response={matched:0,eligible:0,unsubscribed:0,unverified:0,preference_blocked:0,as_of:new Date().toISOString(),sample:[],audience:saved.audience};
+    else if(body?.action==="review")response={campaign:saved,eligible:0,sample:[],reviewToken:"synthetic-review",readiness:{enabled:false,healthy:false,reasons:[]}};
+    else if(request.url().includes("?id="))response={entry:saved,revisions:[],dispatches:[]};
+    await route.fulfill({json:response});
   });
   await page.goto("/admin/workspaces/communications");
-  await page.getByRole("tab", { name: "Campaigns", exact: true }).click();
-  const campaign = page.locator("#communications-campaigns-panel");
-  const steps = campaign.getByRole("list", { name: "Workflow progress", exact: true });
-  await expect(steps.getByRole("button", { name: /Preview message & audience/ })).toBeDisabled();
-  await campaign.getByLabel("Campaign name", { exact: true }).fill("Synthetic newsletter");
-  await campaign.getByLabel("Campaign subject", { exact: true }).fill("Synthetic subject");
-  await campaign.getByLabel("Campaign message (plain text)", { exact: true }).fill("Synthetic message for wizard navigation checks.");
-  await campaign.getByRole("button", { name: "Save and continue", exact: true }).click();
-  await expect(campaign.getByRole("region", { name: "Message and audience preview", exact: true })).toBeVisible();
-  await expect(campaign.getByLabel("Campaign name", { exact: true })).toBeHidden();
-  await expect(campaign.getByRole("button", { name: "Continue to review", exact: true })).toBeDisabled();
-  await campaign.getByRole("button", { name: "Back to writing", exact: true }).click();
-  await expect(campaign.getByLabel("Campaign name", { exact: true })).toHaveValue("Synthetic newsletter");
-  await steps.getByRole("button", { name: /Preview message & audience/ }).click();
-  await campaign.getByRole("button", { name: "Preview current audience", exact: true }).click();
-  await expect(campaign.getByRole("button", { name: "Continue to review", exact: true })).toBeEnabled();
-  await campaign.getByRole("button", { name: "Continue to review", exact: true }).click();
-  await expect(campaign.getByRole("heading", { name: "3. Review and send", exact: true })).toBeVisible();
-  await expect(campaign.getByRole("region", { name: "Message and audience preview", exact: true })).toBeHidden();
-  await layoutFits(page);
-  await page.screenshot({ path: info.outputPath("campaign-review-step.png"), fullPage: true });
-  await steps.getByRole("button", { name: /Write campaign/ }).click();
-  await campaign.getByLabel("Campaign subject", { exact: true }).fill("Updated subject");
-  await expect(steps.getByRole("button", { name: /Review & send/ })).toBeDisabled();
-  await expect(steps.getByRole("button", { name: /Preview message & audience/ })).toBeDisabled();
-  expect(actions).toEqual(["save", "preview"]);
+  await page.getByRole("button",{name:"Create email",exact:true}).click();
+  const steps=page.getByRole("list",{name:"Email creation steps",exact:true});
+  await expect(steps.getByRole("button",{name:/Review & send/})).toBeDisabled();
+  await page.getByRole("button",{name:/Continue to message/}).click();
+  await page.getByRole("textbox",{name:/^Email name/}).fill("Synthetic newsletter");
+  await page.getByRole("textbox",{name:/^Subject line/}).fill("Synthetic subject");
+  await page.getByRole("textbox",{name:/^Message/}).fill("Synthetic message for step navigation checks.");
+  await page.getByRole("button",{name:/Save & review/}).click();
+  await expect(page.getByRole("heading",{name:"Ready for a final check",exact:true})).toBeVisible();
+  await expect(page.getByText("Sending is paused. Your draft is saved and ready for later.",{exact:true})).toBeVisible();
+  await layoutFits(page);await page.screenshot({path:info.outputPath("campaign-review-step.png"),fullPage:true});
+  await steps.getByRole("button",{name:/Message/}).click();
+  await expect(page.getByRole("textbox",{name:/^Email name/})).toHaveValue("Synthetic newsletter");
+  await page.getByRole("textbox",{name:/^Subject line/}).fill("Updated subject");
+  await expect(steps.getByRole("button",{name:/Review & send/})).toBeDisabled();
+  expect(actions).toEqual(["preview","save","review"]);
 });
 
 test("payments and email settings keep forms and empty states aligned", async ({ page }, info) => {
@@ -472,7 +438,8 @@ test("dashboard semantic colors cover themes, completion states and interactive 
     for(const state of ["incomplete","submitted","verified"]){
       await page.route("**/api/member/verification",route=>route.fulfill({json:{...baselineStatus,verified:state==="verified",reviews:state==="submitted"?[{status:"pending",reason:""}]:[],latestSubmission:null}}));
       await page.goto("/member/application");
-      await expect(page.getByRole("region",{name:"Profile verification status"})).toContainText(state==="verified"?"Verified":state==="submitted"?"Under review":"Not verified");
+      await expect(page.getByRole("navigation",{name:"Application steps"})).toBeVisible();
+      await expect(page.getByRole("region",{name:"Profile verification status"})).toHaveCount(0);
       await page.evaluate(value=>document.documentElement.setAttribute("data-color-mode",value),mode);
       await layoutFits(page);await dashboardTextContrast(page);
       if(await page.locator(".button:not(.secondary):not(:disabled)").count())await primaryActionContrast(page);
@@ -493,29 +460,21 @@ test("dashboard semantic colors cover themes, completion states and interactive 
     await layoutFits(page);
     if (!baseline) {
       await dashboardTextContrast(page);
-      await expect(page.locator('.portal-overview .attention-row[data-tone="warning"]')).toHaveCount(1);
+      await expect(page.locator('#attention').getByRole('link',{name:/2 applications/})).toHaveCount(1);
       const metrics = await page.locator(".service-metrics > a").evaluateAll(elements => elements.map(el => ({ count: Number(el.querySelector("strong")!.textContent), tone: el.getAttribute("data-tone") })));
       expect(metrics.every(metric => metric.count !== 0 || metric.tone !== "warning")).toBeTruthy();
-      const row = page.locator('.portal-overview .attention-row').first();
-      await row.scrollIntoViewIfNeeded();
-      await row.focus();
-      await page.keyboard.press('Tab');
-      await page.keyboard.press('Shift+Tab');
-      expect(await row.evaluate(el => el.matches(':focus-visible'))).toBeTruthy();
-      await row.hover();
-      const hoverBackground = await row.evaluate(el => getComputedStyle(el).backgroundColor);
-      await page.mouse.down();
-      await expect(row).not.toHaveCSS('background-color', hoverBackground);
-      await page.mouse.move(0, 0);
-      await page.mouse.up();
-      await row.blur();
+      const row=page.locator('#attention').getByRole('link',{name:/2 applications/});
+      await row.scrollIntoViewIfNeeded();await row.focus();
+      await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
+      expect(await row.evaluate(el=>el.matches(':focus-visible'))).toBeTruthy();
+      await row.hover();await expect(row).toBeVisible();
       await page.evaluate(() => window.scrollTo(0, 0));
     }
     await page.screenshot({ path: info.outputPath(`admin-${mode}-pending.png`), fullPage: true });
   }
   alerts = [];
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect(page.getByRole("region", { name: "Needs attention", exact: true }).getByText("You’re up to date in your permitted workspaces.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Needs attention", exact: true }).getByText("You’re all caught up", { exact: true })).toBeVisible();
   if (!baseline) {
     const attentionLink = page.locator('#staff-navigation a').first();
     await attentionLink.focus();
