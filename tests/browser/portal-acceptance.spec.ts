@@ -563,7 +563,7 @@ test("member detail popup fits desktop and phone layouts", async ({ page }, info
       const rect = element.getBoundingClientRect();
       return rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1 && element.scrollWidth <= element.clientWidth + 1;
     })).toBe(true);
-    await page.screenshot({ path: info.outputPath(`member-details-${width}.png`) });
+    await page.screenshot({ path: info.outputPath(`member-details-${width}.png`), animations: "disabled" });
   }
   await panel.getByRole("button", { name: "Application review", exact: true }).click();
   await expect(panel.getByRole("heading", { name: /Profile verification/ })).toBeVisible();
