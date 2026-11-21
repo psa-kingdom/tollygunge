@@ -233,16 +233,13 @@ for (const width of [320, 390, 768, 1440]) {
       for (const [name, url] of [
         ["account", "/account/profile"],
         ["admin", "/admin"],
-        ["settings", "/admin/workspaces/website"],
+        ["settings", "/admin/workspaces/payment-details"],
       ]) {
         await page.goto(url, {waitUntil:"networkidle"});
         await expect(page).toHaveURL(new RegExp(url + "$"));
         if (name === "settings") {
-          await expect(page.locator(".content-editor-columns")).toBeVisible();
-          if (stage === "after")
-            await expect(
-              page.frameLocator("iframe").locator("img[data-tpa-logo]").first(),
-            ).toHaveJSProperty("naturalWidth", 1139);
+          await expect(page.getByRole("heading", {name:"Settings",exact:true})).toBeVisible();
+          await expect(page.getByRole("navigation", {name:"Settings",exact:true})).toBeVisible();
         }
         await capture(name);
       }

@@ -1,5 +1,6 @@
 import { publishedPeople } from "@/lib/public-people";
 import "server-only";
+import { publicHistoricalEvents } from "./public-historical-events";
 import { getDatabase } from "./database";
 import { publishedArticles } from "./public-content";
 import {publishedSettings,publishedResources} from './website-content';
@@ -40,6 +41,7 @@ export async function previewContext(
     people,
     media,
     events,
+    pastEvents: page === "events" ? await publicHistoricalEvents() : [],
     articles: page === "resources" ? await publishedArticles() : [],
   };
 }

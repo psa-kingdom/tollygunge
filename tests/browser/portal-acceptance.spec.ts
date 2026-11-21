@@ -640,7 +640,7 @@ test("directory and participant routes retain all staff permission boundaries", 
       expect(events.status()).toBe(eventsAllowed ? 200 : 403);
       expect((await page.goto("/admin/workspaces/members"))?.status()).toBe(allowed?200:404);
       expect((await page.goto("/admin/workspaces/events?view=participants&source=live"))?.status()).toBe(eventsAllowed?200:404);
-      if(eventsAllowed)await expect(page.getByRole("navigation",{name:"Event participant sections",exact:true})).toBeVisible();
+      if(eventsAllowed)await expect(page.getByRole("heading",{name:"Events",exact:true})).toBeVisible();
 
     } finally {
       await context.close();
@@ -648,86 +648,24 @@ test("directory and participant routes retain all staff permission boundaries", 
   }
 });
 
-test("participant tabs preserve event selection and accessible read-only previews (synthetic API responses)", async ({
-  page,
-}) => {
-  await signInPortal(page, "administrator");
-  const eventId = "11111111-1111-4111-8111-111111111111";
-  await page.route("**/api/staff/events", (route) =>
-    route.fulfill({
-      json: [
-        {
-          id: eventId,
-          title: "TPA professional seminar",
-          starts_at: "2027-01-01T12:00:00Z",
-          status: "published",
-        },
-      ],
-    }),
-  );
-  await page.route("**/api/staff/attendance?**", (route) =>
-    route.fulfill({
-      json: {
-        rows: [
-          {
-            id: "registration-ref-001",
-            name: "Synthetic event guest",
-            email: "guest@example.invalid",
-            mobile: "9876543210",
-            membership_number: null,
-            status: "registered",
-            payment_status: "pending",
-            fee_paise: 50000,
-            outcome: "unmarked",
-            registered_at: "2026-10-01T12:00:00Z",
-            checked_in_at: null,
-            attendance_note: "",
-          },
-        ],
-        total: 1,
-        page: 1,
-        pageSize: 50,
-      },
-    }),
-  );
-  await page.goto("/admin/workspaces/events?view=participants&source=live");
-  await expect(
-    page.getByRole("heading", { name: "Event participants", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("navigation", {
-      name: "Event participant sections",
-      exact: true,
-    }),
-  ).toBeVisible();
-  await page
-    .getByRole("combobox", { name: "Event", exact: true })
-    .selectOption(eventId);
-  for (const [label, tab] of [
-    ["Registrations", "registrations"],
-    ["Receipt status", "payments"],
-    ["Attendance", "attendance"],
-  ]) {
-    await page.getByRole("link", { name: label, exact: true }).click();
-    await expect(page).toHaveURL(
-      new RegExp("tab=" + tab + "&source=live&eventId=" + eventId),
-    );
-    await expect(
-      page.getByText("No membership recorded", { exact: true }),
-    ).toBeVisible();
-  }
-  await page.getByRole("button", { name: /Synthetic event guest/ }).click();
-  const inspector = page.getByRole("dialog", {
-    name: "Synthetic event guest participant details",
-    exact: true,
-  });
-  await expect(inspector).toBeVisible();
-  await expect(
-    inspector.getByText("Receipt pending", { exact: true }),
-  ).toBeVisible();
-  await expect(inspector.getByText("Verified", { exact: true })).toHaveCount(0);
-  await page.keyboard.press("Escape");
-  await expect(inspector).toHaveCount(0);
+test("participant details open in a searchable event popup (synthetic API responses)",async({page})=>{
+ await signInPortal(page,"administrator");
+ const eventId="11111111-1111-4111-8111-111111111111";
+ const event={id:eventId,title:"TPA professional seminar",starts_at:"2027-01-01T12:00:00Z",ends_at:"2027-01-01T14:00:00Z",status:"published",capacity:50,fee_paise:50000,version:1,location:"TPA hall",description:"Synthetic seminar",registrations:1};
+ await page.route("**/api/staff/events**",route=>route.fulfill({json:[event]}));
+ await page.route("**/api/staff/attendance?**",route=>route.fulfill({json:[{id:"registration-ref-001",name:"Synthetic event guest",email:"guest@example.invalid",mobile:"9876543210",membership_number:null,status:"registered",payment_status:"pending",fee_paise:50000,outcome:"unmarked",registered_at:"2026-10-01T12:00:00Z",checked_in_at:null}]}));
+ await page.goto(`/admin/workspaces/events?eventId=${eventId}`);
+ const dialog=page.getByRole("dialog",{name:event.title,exact:true});await expect(dialog).toBeVisible();
+ await dialog.getByRole("button",{name:"Participants & attendance",exact:true}).click();
+ await expect(dialog.getByRole("region",{name:"Event participants",exact:true})).toContainText("Synthetic event guest");
+ await expect(dialog.getByRole("button",{name:"Check in",exact:true})).toBeDisabled();
+ await dialog.getByRole("searchbox",{name:"Search participants",exact:true}).fill("no matching person");
+ await expect(dialog.getByRole("heading",{name:"No matching participants",exact:true})).toBeVisible();
+ // Native search inputs consume Escape to clear a nonempty query first.
+ await page.keyboard.press("Escape");
+ await expect(dialog.getByRole("searchbox",{name:"Search participants",exact:true})).toHaveValue("");
+ await dialog.getByRole("button",{name:"Close popup",exact:true}).focus();
+ await page.keyboard.press("Escape");await expect(dialog).toHaveCount(0);
 });
 
 test("TPA brand, membership navigation and signup fit all target widths", async ({
@@ -789,98 +727,23 @@ test("TPA brand, membership navigation and signup fit all target widths", async 
   }
 });
 
-test("populated participant tabs reflow at all five widths in both appearances (synthetic API responses)", async ({
-  page,
-}) => {
-  await signInPortal(page, "administrator");
-  const eventId = "22222222-2222-4222-8222-222222222222";
-  await page.route("**/api/staff/events", (route) =>
-    route.fulfill({
-      json: [
-        {
-          id: eventId,
-          title:
-            "TPA continuing professional education — detailed event title for reflow",
-          starts_at: "2027-02-01T12:00:00Z",
-          status: "published",
-        },
-      ],
-    }),
-  );
-  await page.route("**/api/staff/attendance?**", (route) =>
-    route.fulfill({
-      json: {
-        rows: [
-          {
-            id: "synthetic-roster-reference",
-            name: "Synthetic professional participant with a deliberately long name",
-            email: "long-professional-participant-address@example.invalid",
-            mobile: "9876543210",
-            membership_number: "TPA-SYNTHETIC-2026-001",
-            status: "registered",
-            payment_status: "paid",
-            fee_paise: 50000,
-            outcome: "attended",
-            registered_at: "2026-10-01T12:00:00Z",
-            checked_in_at: "2026-10-01T14:00:00Z",
-            attendance_note: "Synthetic check-in",
-          },
-        ],
-        total: 1,
-        page: 1,
-        pageSize: 50,
-      },
-    }),
-  );
-  for (const mode of ["light", "dark"]) {
-    await page.addInitScript(
-      (mode) =>
-        localStorage.setItem("tpa-appearance", JSON.stringify({ mode })),
-      mode,
-    );
-    for (const width of [320, 390, 768, 1024, 1440]) {
-      await page.setViewportSize({ width, height: 932 });
-      for (const tab of ["registrations", "payments", "attendance"]) {
-        await page.goto(
-          `/admin/workspaces/events?view=participants&tab=${tab}&eventId=${eventId}`,
-        );
-        await expect(
-          page.getByRole("region", {
-            name: "Event participant records",
-            exact: true,
-          }),
-        ).toBeVisible();
-        await expect(page.locator("html")).toHaveAttribute(
-          "data-color-mode",
-          mode,
-        );
-        expect(
-          await page.evaluate(
-            () => document.documentElement.scrollWidth <= innerWidth + 1,
-          ),
-        ).toBe(true);
-        const trigger = page.getByRole("button", {
-          name: /^Open Synthetic professional participant/,
-        });
-        await trigger.focus();
-        const card = page.getByRole("dialog", { name: /quick preview/ });
-        await expect(card).toBeVisible();
-        await expect
-          .poll(() =>
-            card.evaluate((el) => {
-              const r = el.getBoundingClientRect();
-              return (
-                r.left >= 0 &&
-                r.top >= 0 &&
-                r.right <= innerWidth + 1 &&
-                r.bottom <= innerHeight + 1
-              );
-            }),
-          )
-          .toBe(true);
-        await page.keyboard.press("Escape");
-        await expect(card).toHaveCount(0);
-      }
-    }
+test("populated participant popups reflow across widths and appearances (synthetic API responses)",async({page})=>{
+ await signInPortal(page,"administrator");
+ const eventId="22222222-2222-4222-8222-222222222222";
+ const event={id:eventId,title:"TPA continuing professional education with a detailed title",starts_at:"2027-02-01T12:00:00Z",ends_at:"2027-02-01T14:00:00Z",status:"published",capacity:50,fee_paise:50000,version:1,location:"TPA hall",description:"Synthetic seminar",registrations:1};
+ await page.route("**/api/staff/events**",route=>route.fulfill({json:[event]}));
+ await page.route("**/api/staff/attendance?**",route=>route.fulfill({json:[{id:"synthetic-roster-reference",name:"Synthetic professional participant with a deliberately long name",email:"long-professional-participant-address@example.invalid",mobile:"9876543210",membership_number:"TPA-SYNTHETIC-2026-001",status:"registered",payment_status:"paid",fee_paise:50000,outcome:"attended",registered_at:"2026-10-01T12:00:00Z",checked_in_at:"2026-10-01T14:00:00Z"}]}));
+ for(const mode of ["light","dark"]){
+  await page.addInitScript(mode=>localStorage.setItem("tpa-appearance",JSON.stringify({mode})),mode);
+  for(const width of [320,390,768,1024,1440]){
+   await page.setViewportSize({width,height:932});await page.goto(`/admin/workspaces/events?eventId=${eventId}`);
+   const dialog=page.getByRole("dialog",{name:event.title,exact:true});await expect(dialog).toBeVisible();
+   await dialog.getByRole("button",{name:"Participants & attendance",exact:true}).click();
+   await expect(dialog.getByRole("region",{name:"Event participants",exact:true})).toContainText("TPA-SYNTHETIC-2026-001");
+   await expect(page.locator("html")).toHaveAttribute("data-color-mode",mode);
+   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+   const bounds=await dialog.boundingBox();expect(bounds!.x).toBeGreaterThanOrEqual(0);expect(bounds!.x+bounds!.width).toBeLessThanOrEqual(width+1);
+   await page.keyboard.press("Escape");await expect(dialog).toHaveCount(0);
   }
+ }
 });

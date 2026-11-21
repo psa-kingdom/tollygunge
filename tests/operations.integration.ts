@@ -299,7 +299,7 @@ test(
       await assertPageNotFound(await request(`/resources/${slug}`));
       const application = {
         version: 0,
-        plan: "Annual",
+        plan: "Life",
         category: "Professional",
         details: {
           fullName: "Synthetic applicant",

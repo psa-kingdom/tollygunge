@@ -30,7 +30,7 @@ export function PublicGovernance({
   return (
     <div className="people-roster">
       {entries.map(({ id, published: p, portrait_available, portrait_alt }) => (
-        <article className="person-card" key={id}>
+        <article className="person-card" key={id} data-cms-record={`people:${id}`}>
           <div className="person-card-identity">
             <GovernancePortrait
               name={p.name}

@@ -271,6 +271,10 @@
     "SELECT",
     "UPDATE"
   ],
+  "tpa.membership_payments": [
+    "INSERT",
+    "SELECT"
+  ],
   "tpa.memberships": [
     "INSERT",
     "SELECT",

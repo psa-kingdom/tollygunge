@@ -64,7 +64,7 @@ test(
       };
       let draft = {
         version: 0,
-        plan: "Annual",
+        plan: "Life",
         category: "Professional",
         step: 2,
         documentIds: [] as string[],
@@ -78,7 +78,6 @@ test(
           correspondenceAddress: "Residence",
           residenceAddress: "Kolkata",
           declaration: "true",
-          signature: "Test professional",
         } as Record<string, string>,
       };
       const initialProfile = await get("/api/member/profile");
@@ -115,13 +114,13 @@ test(
         await (await request("/api/member/application", 2)).json(),
         null,
       );
-      for (const kind of ["photograph", "certificate"]) {
+      for (const [field, kind] of [["photograph", "photograph"], ["certificate", "certificate"], ["signatureDocument", "supporting"]]) {
         const id = randomUUID();
         await db.query(
           "INSERT INTO tpa.private_documents(id,owner_user_id,kind,content_type,byte_size) VALUES($1,$2,$3,'image/png',10)",
           [id, accounts[1], kind],
         );
-        draft.details[kind] = id;
+        draft.details[field] = id;
         draft.documentIds.push(id);
       }
       await db.query(

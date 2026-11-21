@@ -94,10 +94,10 @@ try {
       match[2].replace(/<[^>]*>/g, "").includes(label),
     );
   const google = button(html, "Continue with Google"),
-    googleGated = html.includes("Google sign-in is not available yet");
-  if (!google || (googleGated && !/disabled/.test(google[1]))) failures++;
+    googleGated = !google || html.includes("Google sign-in is not available yet");
+  if (google && googleGated && !/disabled/.test(google[1])) failures++;
   console.log(
-    `INFO Google onboarding ${googleGated ? "gated (control disabled)" : "present; provider acceptance remains separate"}`,
+    `INFO Google onboarding ${!google ? "gated (control hidden)" : googleGated ? "gated (control disabled)" : "present; provider acceptance remains separate"}`,
   );
   const recovery = await check("/forgot-password", [200]),
     recoveryHtml = recovery ? await recovery.text() : "",

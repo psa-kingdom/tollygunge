@@ -1,0 +1,384 @@
+.pages {
+  min-width: 0;
+}
+.pages > div {
+  min-width: 0;
+}
+.editorLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 22px;
+  align-items: start;
+}
+.writing {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 26px;
+}
+.writing fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.writing label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 22px;
+}
+.writing label small {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 400;
+}
+.writing :is(input:not([type="checkbox"]), textarea, select) {
+  width: 100%;
+}
+.writing textarea {
+  resize: vertical;
+  line-height: 1.8;
+}
+.writing h3 {
+  font-size: 16px;
+  margin: 0 0 18px;
+}
+.writing .titleInput {
+  font-size: 25px !important;
+  line-height: 1.5;
+  padding: 12px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: transparent !important;
+  letter-spacing: -0.4px;
+}
+.writing :global(.rich-toolbar) {
+  gap: 4px;
+  padding: 8px;
+}
+.writing :global(.rich-toolbar button) {
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 11px;
+}
+.writing :global(.tiptap) {
+  min-height: 250px;
+  font-size: 15px;
+  line-height: 1.85;
+}
+.writing :global(.content-counter) {
+  font-size: 10px;
+  color: var(--muted);
+}
+.writing :global(.rich-editor) {
+  margin: 0 0 24px;
+}
+.writing :global(.rich-editor > label) {
+  margin-bottom: 8px;
+}
+.writing .section {
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
+  margin-top: 22px;
+}
+.settings {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.settings section {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+}
+.settings h3 {
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+.settings p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin: 12px 0;
+}
+.settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  margin: 16px 0;
+}
+.settings select,
+.settings input {
+  width: 100%;
+}
+.settings details {
+  font-size: 12px;
+  margin-top: 16px;
+}
+.settings summary {
+  cursor: pointer;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.settings :global(.button) {
+  width: 100%;
+  justify-content: center;
+  margin-top: 10px;
+}
+.settings .check {
+  flex-direction: row;
+  align-items: flex-start;
+  line-height: 1.7;
+  font-size: 11px;
+  gap: 9px;
+}
+.check input {
+  width: auto;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.preview {
+  padding: 25px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  min-width: 0;
+}
+.profilePreview {
+  text-align: center;
+}
+.avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 18px;
+  background: var(--surface-muted);
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  color: var(--muted);
+}
+.profilePreview h3 {
+  font-size: 21px;
+  margin: 0 0 10px;
+}
+.profilePreview p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.profilePreview .biography {
+  text-align: left;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 24px;
+  white-space: pre-wrap;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.notice {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.placement {
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 20px;
+}
+.placement summary {
+  font-size: 13px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+.placement fieldset {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.placement legend {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 0 6px;
+}
+.placements {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.placements span {
+  font-size: 11px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--muted);
+}
+.tools {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.tools summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 0 12px 12px;
+}
+.tools button {
+  font-size: 12px !important;
+}
+.reviewDiff {
+  display: grid;
+  gap: 14px;
+  margin: 20px 0;
+  font-size: 12px;
+}
+.reviewDiff dt {
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.reviewDiff dd {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+@media (max-width: 1100px) {
+  .editorLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .settings > section {
+    min-width: 0;
+  }
+}
+@media (max-width: 600px) {
+  .writing,
+  .preview {
+    padding: 20px;
+  }
+  .settings,
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .writing .titleInput {
+    font-size: 22px !important;
+  }
+}
+
+.navigation > div:nth-child(4) {
+  margin-top: 0 !important;
+}
+@media (max-width: 800px) {
+  .navigation .tools {
+    margin: 0;
+    padding: 10px 0 0;
+    border: 0;
+    min-width: 155px;
+  }
+}
+
+@media (max-width: 800px) {
+  .navigation {
+    align-items: flex-start;
+  }
+  .navigation .tools {
+    padding: 0;
+    min-width: 160px;
+  }
+  .navigation .tools summary {
+    margin: 0;
+    padding: 12px 10px;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+}
+.pageLibraries {
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.libraryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.libraryCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.libraryCard > svg {
+  width: 24px;
+  height: 24px;
+  color: var(--muted);
+}
+.libraryCard strong {
+  font-size: 16px;
+}
+.libraryCard span,
+.libraryCard small {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.editorialTools {
+  margin-top: 22px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.editorialTools summary {
+  cursor: pointer;
+}
+.pageTool {
+  padding-top: 25px;
+}
+.pageTool > h3 {
+  font-size: 20px;
+  margin: 0 0 12px;
+}
+.pageTool > p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.pages [aria-label="Website page tools"] {
+  margin-bottom: 20px;
+}
+@media (max-width: 600px) {
+  .libraryGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.groupChoice {
+  display: block;
+  margin: 4px 0;
+}
+.groupChoice select {
+  width: 100%;
+  max-width: 240px;
+  font-size: 12px;
+}

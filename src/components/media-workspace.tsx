@@ -3,12 +3,13 @@ import { WorkspaceEmptyState } from "./workspace-ui";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { api } from "./operations-client";
+import { useUnsavedProfile } from "./use-unsaved-profile";
 type Details = {
   title: string;
   altText: string;
   category: string;
   homepageFeatured?: boolean;
-  displayOrder?:number;
+  displayOrder?: number;
 };
 type Asset = {
   id: string;
@@ -25,18 +26,27 @@ const empty: Details = {
   category: "",
   homepageFeatured: false,
 };
-export function MediaWorkspace() {
+export function MediaWorkspace({
+  initialId,
+  onDirty,
+}: { initialId?: string; onDirty?: (dirty: boolean) => void } = {}) {
   const [library, setLibrary] = useState<Library>(),
     [selected, setSelected] = useState<Asset>(),
     [form, setForm] = useState<Details>(empty),
     [file, setFile] = useState<File>(),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("Loading media…");
+  const dirty =
+    JSON.stringify(form) !== JSON.stringify(selected?.draft ?? empty) || !!file;
+  const { guard, dialog } = useUnsavedProfile(dirty, !onDirty);
+  useEffect(() => {
+    onDirty?.(dirty);
+  }, [dirty, onDirty]);
   useEffect(() => {
     api<Library>("/api/staff/media" + (location.search || ""))
       .then((data) => {
         setLibrary(data);
-        const id = new URLSearchParams(location.search).get("id");
+        const id = initialId ?? new URLSearchParams(location.search).get("id");
         const asset = data.assets.find((a) => a.id === id);
         if (asset) {
           setSelected(asset);
@@ -45,7 +55,7 @@ export function MediaWorkspace() {
         setMessage("");
       })
       .catch((e) => setMessage(e.message));
-  }, []);
+  }, [initialId]);
   async function refresh(id?: string) {
     const data = await api<Library>("/api/staff/media");
     setLibrary(data);
@@ -78,12 +88,16 @@ export function MediaWorkspace() {
   }
   return (
     <>
-      <details className="workspace-notice-disclosure"><summary>Publication and image replacement</summary><p>
-        Published assets appear in Resources. The landing page uses the text-led Paper v3 design.
-        Save changes, then publish to update public descriptions. Image
-        files are retained as separate assets; upload a new image and withdraw
-        the old one to replace a photograph.
-      </p></details>
+      {dialog}
+      <details className="workspace-notice-disclosure">
+        <summary>Publication and image replacement</summary>
+        <p>
+          Published assets appear in Resources. The landing page uses the
+          text-led Paper v3 design. Save changes, then publish to update public
+          descriptions. Image files are retained as separate assets; upload a
+          new image and withdraw the old one to replace a photograph.
+        </p>
+      </details>
       {library && !library.uploadEnabled && (
         <p className="notice">
           Uploads await managed production storage configuration.
@@ -94,12 +108,14 @@ export function MediaWorkspace() {
           <button
             className="button"
             disabled={busy}
-            onClick={() => {
-              setSelected(undefined);
-              setForm(empty);
-              setFile(undefined);
-              setMessage("");
-            }}
+            onClick={() =>
+              guard(() => {
+                setSelected(undefined);
+                setForm(empty);
+                setFile(undefined);
+                setMessage("");
+              })
+            }
           >
             New image
           </button>
@@ -107,11 +123,14 @@ export function MediaWorkspace() {
             <button
               key={asset.id}
               disabled={busy}
-              onClick={() => {
-                setSelected(asset);
-                setForm(asset.draft);
-                setMessage("");
-              }}
+              onClick={() =>
+                guard(() => {
+                  setSelected(asset);
+                  setForm(asset.draft);
+                  setFile(undefined);
+                  setMessage("");
+                })
+              }
             >
               <strong>{asset.draft.title}</strong>
               <small>
@@ -120,7 +139,14 @@ export function MediaWorkspace() {
               </small>
             </button>
           ))}
-          {library && !library.assets.length && <WorkspaceEmptyState compact icon="image" title="No editorial images yet" description="Uploaded images will appear here for editing and publication." />}
+          {library && !library.assets.length && (
+            <WorkspaceEmptyState
+              compact
+              icon="image"
+              title="No editorial images yet"
+              description="Uploaded images will appear here for editing and publication."
+            />
+          )}
           {library?.assets.length === 100 && (
             <p>Showing the latest 100 assets.</p>
           )}
@@ -203,7 +229,18 @@ export function MediaWorkspace() {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               />
             </label>
-              <label>Display order<input type="number" min={0} max={9999} value={form.displayOrder??0} onChange={e=>setForm({...form,displayOrder:Number(e.target.value)})}/></label>
+            <label>
+              Display order
+              <input
+                type="number"
+                min={0}
+                max={9999}
+                value={form.displayOrder ?? 0}
+                onChange={(e) =>
+                  setForm({ ...form, displayOrder: Number(e.target.value) })
+                }
+              />
+            </label>
             <label>
               Accessible image description
               <textarea
@@ -220,7 +257,6 @@ export function MediaWorkspace() {
             >
               {selected ? "Save draft details" : "Upload private draft"}
             </button>
-
           </form>
           {selected && (
             <>
@@ -245,14 +281,14 @@ export function MediaWorkspace() {
               <div className="action-row">
                 <button
                   className="button"
-                  disabled={busy}
+                  disabled={busy || dirty}
                   onClick={() => action("publish")}
                 >
                   Publish saved image and description
                 </button>
                 <button
                   className="button secondary"
-                  disabled={busy || !selected.published}
+                  disabled={busy || dirty || !selected.published}
                   onClick={() => action("unpublish")}
                 >
                   Unpublish image

@@ -9,6 +9,7 @@ import {
   type ContentSize,
 } from "./rich-content";
 export const pageSlugs = [
+  "privacy",
   "about",
   "governance",
   "membership",
@@ -17,6 +18,7 @@ export const pageSlugs = [
   "contact",
 ] as const;
 export const pageSections: Record<string, string[]> = {
+  privacy: ["Information you provide", "How information is used", "Private and published information", "Service providers and essential storage", "Communications and issue reports", "Records, corrections and requests"],
   about: ["About TPA", "Vision & Mission", "Founding Members"],
   governance: [
     "Executive Committee",
@@ -95,6 +97,8 @@ export function instant(value: unknown) {
   return result;
 }
 export type ContentBody = {
+  heroMediaId?: string;
+  heroAlt?: string;
   label?: string;
   displayOrder?: number;
   title: string;
@@ -103,6 +107,8 @@ export type ContentBody = {
   introRich?: RichNode;
   titleSize?: ContentSize;
   sections: {
+    mediaId?: string;
+    mediaAlt?: string;
     title: string;
     text: string;
     rich?: RichNode;
@@ -123,6 +129,7 @@ export function content(value: unknown, kind: string): ContentBody {
     const s = record(section);
     const rich = s.rich === undefined ? undefined : validateRich(s.rich);
     return {
+      ...(s.mediaId ? { mediaId: uuid(s.mediaId), mediaAlt: text(s.mediaAlt ?? "", "Image description", 240, 5) } : {}),
       title: text(s.title, "Section title", contentLimits.heading, 1),
       text: text(
         rich ? richText(rich) : s.text,
@@ -159,6 +166,7 @@ export function content(value: unknown, kind: string): ContentBody {
   )
     throw new Error("Entry exceeds 100,000 characters.");
   return {
+    ...(input.heroMediaId ? { heroMediaId: uuid(input.heroMediaId), heroAlt: text(input.heroAlt ?? "", "Image description", 240, 5) } : {}),
     title,
     intro,
     ...(input.label===undefined?{}:{label:text(input.label,"Page label",160)}),

@@ -3,7 +3,14 @@ import assert from "node:assert/strict";
 import {
   storageMode,
   managedStorageCredentials,
+  localStorageEndpoint,
 } from "../src/domain/storage-configuration";
+test("local storage cannot be redirected to production services",()=>{
+ const env={TPA_DEPLOYMENT_ENV:'local',DATABASE_URL:'postgresql://tester@127.0.0.1:55439/local',TPA_LOCAL_STORAGE_ENDPOINT:'http://127.0.0.1:59000'};
+ assert.equal(localStorageEndpoint(env),'http://127.0.0.1:59000');
+ assert.equal(localStorageEndpoint({}),undefined);
+ for(const change of [{TPA_DEPLOYMENT_ENV:'production'},{DATABASE_URL:'postgresql://tester@database.example/production'},{TPA_LOCAL_STORAGE_ENDPOINT:'http://storage.example'},{TPA_LOCAL_STORAGE_ENDPOINT:'http://user:password@127.0.0.1:59000'}])assert.throws(()=>localStorageEndpoint({...env,...change}));
+});
 
 test("production never falls back to local credential files", () => {
   const env = {

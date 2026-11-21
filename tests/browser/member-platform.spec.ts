@@ -507,11 +507,11 @@ test("completed professional application submits for review without publication"
   const id = await member(context),
     db = new Pool(databaseOptions());
   const photograph = randomUUID(),
-    certificate = randomUUID();
+    certificate = randomUUID(), signatureDocument = randomUUID();
   try {
     await db.query(
-      "INSERT INTO tpa.private_documents(id,owner_user_id,kind,content_type,byte_size) VALUES($1,$2,'photograph','image/png',10),($3,$2,'certificate','application/pdf',10)",
-      [photograph, id, certificate],
+      "INSERT INTO tpa.private_documents(id,owner_user_id,kind,content_type,byte_size) VALUES($1,$2,'photograph','image/png',10),($3,$2,'certificate','application/pdf',10),($4,$2,'supporting','image/png',10)",
+      [photograph, id, certificate, signatureDocument],
     );
   } finally {
     await db.end();
@@ -528,7 +528,7 @@ test("completed professional application submits for review without publication"
     photograph,
     certificate,
     declaration: "true",
-    signature: "Ananya Mukherjee",
+    signatureDocument,
   };
   expect(missingFields(initialFields, details, "Professional", true)).toEqual(
     [],
@@ -536,10 +536,10 @@ test("completed professional application submits for review without publication"
   const saved = await context.request.post("/api/member/application", {
     data: {
       version: 0,
-      plan: "Annual",
+      plan: "Life",
       category: "Professional",
       details,
-      documentIds: [photograph, certificate],
+      documentIds: [photograph, certificate, signatureDocument],
       step: 4,
     },
     headers: { Origin: process.env.TPA_TEST_URL! },

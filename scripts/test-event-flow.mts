@@ -5,8 +5,6 @@ import { spawn } from "node:child_process";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { Pool } from "pg";
 import { chromium, expect } from "@playwright/test";
-import { PNG } from "pngjs";
-import jsQR from "jsqr";
 import { databaseOptions } from "../src/lib/database-options";
 import { scheduleEventReminders, deliverEventReminder } from "../src/lib/event-reminders";
 import { runOnboardingTick } from "../src/lib/onboarding-delivery";
@@ -250,7 +248,7 @@ try {
   if(!workerOnly) {
   const instructions={label:"Synthetic event payments",payee:"TPA TEST PAYEE",upiId:"synthetic-test@upi",phone:"",qrId:null};
   await db.query("INSERT INTO tpa.payment_details(id,status,draft,active_snapshot) VALUES($1,'active',$2,$2)",[randomUUID(),instructions]);
-  let browserEvent=await event({title:"Community learning workshop",feePaise:75000,speakers,location:"Tollygunge association auditorium"});
+  const browserEvent=await event({title:"Community learning workshop",feePaise:75000,speakers,location:"Tollygunge association auditorium"});
   browser=await chromium.launch({channel:process.env.TPA_BROWSER_CHANNEL || undefined});
   for(const viewport of [{width:1440,height:1000},{width:768,height:1024},{width:390,height:844}]){
     const label=viewport.width===1440?"desktop":viewport.width===768?"tablet":"phone";
@@ -275,28 +273,28 @@ try {
       await check(signup.locator("article").first()).toContainText(browserEvent.title);await signupContext.close();
       pass("Anonymous event link and real password sign-in and signup preserve the selected event");
     }
-    await staff.goto(base+"/admin/workspaces/events?id="+browserEvent.id);await check(staff.getByLabel("Title",{exact:true})).toHaveValue(browserEvent.title);
-    await check(staff.getByText("Pre-event reminders",{exact:true})).toBeVisible();
+    await staff.goto(base+"/admin/workspaces/events?id="+browserEvent.id);
+    await check(staff.getByRole("dialog",{name:browserEvent.title,exact:true})).toBeVisible();
+    await staff.getByRole("button",{name:"Participants & attendance",exact:true}).click();
+    await check(staff.getByLabel("Search participants",{exact:true})).toBeVisible();
+    await staff.getByRole("button",{name:"Close popup",exact:true}).click();
     if(label==="desktop") {
-      await staff.getByRole("button",{name:"New event",exact:true}).click();
-      await staff.getByLabel("Title",{exact:true}).fill("Created through event editor");
-      await staff.getByLabel("Venue / joining instructions").fill("Synthetic browser hall");
-      await staff.getByLabel("Starts (IST)").fill(istInput(new Date(Date.now()+5*86400000).toISOString()));
-      await staff.getByLabel("Ends (IST)").fill(istInput(new Date(Date.now()+5*86400000+3600000).toISOString()));
-      await staff.getByRole("button",{name:"Add speaker",exact:true}).click();await staff.getByLabel("Name",{exact:true}).fill("Dr. Browser Speaker");
-      await staff.getByRole("button",{name:"Save draft",exact:true}).click();await check(staff.getByRole("status")).toContainText("Event draft saved");
-      await staff.getByRole("button",{name:"Publish saved event",exact:true}).click();await check(staff.getByRole("status")).toContainText("Published");
-      const created=(await request("/api/staff/events")).find((e:{title:string})=>e.title==="Created through event editor");assert.equal(created.status,"published");assert.equal(created.speakers.length,1);
-      await staff.goto(base+"/admin/workspaces/events?id="+browserEvent.id);await check(staff.getByLabel("Title",{exact:true})).toHaveValue(browserEvent.title);
-      await staff.getByRole("button",{name:"Move speaker 6 up",exact:true}).click();
-      await check(staff.getByLabel("Name",{exact:true}).nth(4)).toHaveValue("Dr. Speaker 6");
-      await staff.getByRole("button",{name:"Move speaker 5 down",exact:true}).click();
-      await staff.getByLabel("Reminder 1 (minutes)").fill("2880");
-      await staff.getByRole("button",{name:"Save changes & notify registrants"}).click();
-      await check(staff.getByRole("status")).toContainText("Event changes saved");
-      browserEvent=(await request("/api/staff/events?id="+browserEvent.id))[0];
-      assert.equal(browserEvent.reminders.offsets[0],2880);
-      await staff.getByLabel("Title",{exact:true}).focus();await staff.keyboard.press("Tab");await check(staff.getByRole("group",{name:"Event details",exact:true}).getByLabel("Description")).toBeFocused();
+      await staff.getByRole("button",{name:"Create new event",exact:true}).click();
+      await staff.getByLabel("Event title",{exact:true}).fill("Created through event editor");
+      await staff.getByLabel("Venue or meeting link",{exact:true}).fill("Synthetic browser hall");
+      await staff.getByLabel("Starts · IST",{exact:true}).fill(istInput(new Date(Date.now()+5*86400000).toISOString()));
+      await staff.getByLabel("Ends · IST",{exact:true}).fill(istInput(new Date(Date.now()+5*86400000+3600000).toISOString()));
+      await staff.getByRole("button",{name:"Create event",exact:true}).click();
+      await staff.getByRole("button",{name:/Created through event editor/}).click();
+      await check(staff.getByRole("dialog",{name:"Created through event editor",exact:true})).toBeVisible();
+      await staff.getByRole("button",{name:"Publish event",exact:true}).click();
+      await check(staff.getByRole("dialog")).toContainText("Upcoming");
+      const created=(await request("/api/staff/events")).find((e:{title:string})=>e.title==="Created through event editor");
+      assert.equal(created.status,"published");assert.equal(created.fee_paise,0);
+      await staff.getByRole("button",{name:"Close popup",exact:true}).click();
+      await staff.getByRole("button",{name:"List",exact:false}).filter({hasText:"List"}).click();
+      await check(staff.getByRole("button",{name:/List/})).toHaveAttribute("aria-pressed","true");
+      await check(staff.getByRole("button",{name:"View Community learning workshop",exact:true})).toBeVisible();
     }
     await screenshot(staff,"event-editor");
     await publicPage.goto(base+"/events/"+browserEvent.id);await check(publicPage.getByRole("heading",{name:"Speakers",exact:true})).toBeVisible();await screenshot(publicPage,"public-event");
@@ -321,23 +319,11 @@ try {
   const sentStatus=(await db.query("SELECT status,provider_id FROM tpa.onboarding_mail WHERE registration_id=$1 AND kind='event_status'",[browserReg.id])).rows;
   assert.ok(sentStatus.every(m=>m.status==="accepted" && m.provider_id.startsWith("sink-")));
   pass("Approved receipt visible in event collections and reservation/confirmation delivery through the isolated mail sink");
-  const flyerContext=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});await flyerContext.addCookies([{name:"better-auth.session_token",value:cookies[0],url:base}]);const flyer=await flyerContext.newPage();
-  for(const count of [1,2,3,6]) {
-    const current=(await request("/api/staff/flyers?id="+browserEvent.id))[0];
-    const chosen=speakers.slice(0,count);if(count===6)chosen[5]={name:("Dr. "+"Longspeakername".repeat(4)).slice(0,60),credentials:"A".repeat(120)};
-    await request("/api/staff/flyers",{eventId:browserEvent.id,version:current.template_version,speakers:chosen});
-    await flyer.goto(base+"/admin/workspaces/flyers?id="+browserEvent.id);await check(flyer.getByRole("button",{name:"Generate preview"})).toBeEnabled();await flyer.getByRole("button",{name:"Generate preview"}).click();await check(flyer.getByRole("status")).toContainText("Preview generated");
-    const image=await flyer.locator("img.flyer-preview").getAttribute("src");assert.ok(image?.startsWith("data:image/png;base64,"));
-    const bytes=Buffer.from(image!.split(",")[1],"base64"),png=PNG.sync.read(bytes);assert.equal(png.width,1080);assert.equal(png.height,1350);
-    assert.equal(jsQR(new Uint8ClampedArray(png.data),png.width,png.height)?.data,eventLink(base,browserEvent));
-    const pngName=`flyer-${count}-speakers.png`;await writeFile(dir+"/"+pngName,bytes);evidence.exports.push(pngName);
-    const download=flyer.waitForEvent("download");await flyer.getByRole("button",{name:"Download PDF"}).click();const pdf=await download;const pdfName=`flyer-${count}-speakers.pdf`;await pdf.saveAs(dir+"/"+pdfName);assert.ok((await readFile(dir+"/"+pdfName)).subarray(0,5).toString()==="%PDF-");evidence.exports.push(pdfName);
-  }
-  for(const width of [768,390]) {await flyer.setViewportSize({width,height:900});await flyer.screenshot({path:`${dir}/flyer-builder-${width}.png`,fullPage:true});evidence.screenshots.push(`flyer-builder-${width}.png`);assert.ok(await flyer.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
+  const flyerContext=await browser.newContext();await flyerContext.addCookies([{name:"better-auth.session_token",value:cookies[0],url:base}]);
+  const flyer=await flyerContext.newPage();await flyer.goto(base+"/admin/workspaces/flyers?id="+browserEvent.id);
+  await check(flyer.getByRole("heading",{name:"A little off the beaten path.",exact:true})).toBeVisible();
   const privateFlyer=(await request("/api/staff/flyers?id="+privateEvent.id))[0];assert.equal(eventLink(base,privateFlyer),`${base}/member/events?eventId=${privateEvent.id}`);
-  await flyer.goto(base+"/admin/workspaces/flyers?id="+privateEvent.id);await flyer.getByRole("button",{name:"Generate preview"}).click();await check(flyer.getByRole("status")).toContainText("Preview generated");
-  const privateImage=await flyer.locator("img.flyer-preview").getAttribute("src"),privatePng=PNG.sync.read(Buffer.from(privateImage!.split(",")[1],"base64"));assert.equal(jsQR(new Uint8ClampedArray(privatePng.data),privatePng.width,privatePng.height)?.data,eventLink(base,privateFlyer));await flyerContext.close();
-  pass("One/two/three/six-speaker PNG and PDF exports, long supported text, responsive flyer UI and public/member-only QR destinations");
+  await flyerContext.close();pass("Removed flyer workspace is unavailable; retained flyer API preserves member-only destinations");
   await db.query("UPDATE tpa.events SET starts_at=now()-interval '1 minute',registration_ends_at=NULL WHERE id=$1",[browserEvent.id]);
   await request("/api/staff/attendance",{registrationId:browserReg.id});assert.equal((await request("/api/staff/attendance",{registrationId:browserReg.id})).duplicate,true);
   for(const width of [1440,768,390]){const context=await browser.newContext({viewport:{width,height:900}});await context.addCookies([{name:"better-auth.session_token",value:cookies[4],url:base}]);const p=await context.newPage();await p.goto(base+"/member/events?eventId="+browserEvent.id);const card=p.locator("article").filter({has:p.getByRole("heading",{name:browserEvent.title,exact:true})});await check(card).toContainText("Registration confirmed");await check(card).toContainText("Attendance recorded");await p.screenshot({path:`${dir}/confirmed-attendance-${width}.png`,fullPage:true});evidence.screenshots.push(`confirmed-attendance-${width}.png`);await context.close();}

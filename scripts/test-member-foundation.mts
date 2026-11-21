@@ -33,13 +33,13 @@ try {
     assert.equal((await fixture.query("SELECT count(*)::int n FROM information_schema.columns WHERE table_schema='tpa' AND table_name='people' AND column_name='contact_email'")).rows[0].n,0);
     await fixture.query('DELETE FROM public."user" WHERE email=\'COLLISION@example.invalid\'');
     await run(["scripts/migrate.mjs"]);await run(["scripts/migrate.mjs"]);
-    assert.equal((await fixture.query("SELECT count(*)::int n FROM tpa.verification_policies")).rows[0].n,2);
+    assert.equal((await fixture.query("SELECT count(*)::int n FROM tpa.verification_policies")).rows[0].n,3);
     assert.ok(JSON.stringify((await fixture.query("SELECT fields FROM tpa.verification_policies WHERE version=1")).rows).includes("Student"));
     assert.ok(!JSON.stringify((await fixture.query("SELECT fields FROM tpa.verification_policies WHERE version=2")).rows).includes("Student"));
     assert.equal((await fixture.query("SELECT details FROM tpa.application_drafts WHERE user_id=$1",[id])).rows[0].details.studentEvidence,"legacy-evidence");
     // Other suites require the complete latest policy; the legacy fixture remains immutable.
     const {initialFields}=await import("../src/domain/verification");
-    await fixture.query("INSERT INTO tpa.verification_policies(version,fields) VALUES(3,$1)",[JSON.stringify(initialFields)]);
+    await fixture.query("INSERT INTO tpa.verification_policies(version,fields) SELECT coalesce(max(version),0)+1,$1::jsonb FROM tpa.verification_policies",[JSON.stringify(initialFields)]);
   } finally {await fixture.end();}
   await run(["--import","tsx","scripts/provision-postal.mts"]);
   await run(["--conditions=react-server","--import","tsx","--test",...(process.argv.includes("--http-only")?["--test-name-pattern=concurrent|postal hierarchy|legacy Student|preservation imports|invitation queue failure"]:[]),"tests/member-foundation.integration.ts"]);

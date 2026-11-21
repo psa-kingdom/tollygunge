@@ -463,7 +463,8 @@ test(
         .getByRole("button", { name: "Membership & professional details", exact: true })
         .click();
       await expect(page.getByLabel("Proposer name (optional)")).toHaveCount(0);
-      await page.getByLabel("Passport photograph *").setInputFiles({
+      await page.getByRole("button", {name:"Personal details, contact & preferences",exact:true}).click();
+      await page.getByLabel("Recent photograph *").setInputFiles({
         name: "test.png",
         mimeType: "image/png",
         buffer: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
@@ -474,12 +475,9 @@ test(
       await page
         .getByRole("button", { name: "Review & declaration", exact: true })
         .click();
-      await page.getByLabel("Typed applicant signature *").fill("Browser test");
-      await expect(page.getByRole("status").last()).toHaveText("Saved");
-      await page.reload();
-      await expect(page.getByLabel("Typed applicant signature *")).toHaveValue(
-        "Browser test",
-      );
+      await expect(page.getByLabel("Upload signature or signed form (PNG, JPEG or PDF, up to 5 MB)")).toBeVisible();
+      await expect(page.getByText("A saved signature or signed form is required before submission.",{exact:true})).toBeVisible();
+      await expect(page.getByRole("button",{name:"Download form to sign",exact:true})).toBeEnabled();
       await expect(
         page.getByRole("button", {
           name: "Submit for profile verification",
@@ -525,7 +523,8 @@ test(
         )
         .toBeTruthy();
       await page.goto("/member/application");
-      await expect(page.getByText("Email: Verified",{exact:true})).toBeVisible();
+      await expect.poll(async()=> (await (await page.request.get("/api/member/verification")).json()).emailVerified).toBe(true);
+      await expect(page.getByRole("navigation",{name:"Application steps"})).toBeVisible();
       const header = await page.locator(".portal-topbar").boundingBox(),
         main = await page.locator("main").boundingBox();
       expect(header!.y + header!.height).toBeLessThanOrEqual(main!.y + 1);
@@ -717,7 +716,8 @@ test("member landing keeps verification review and editing in the application",a
   await page.goto("/member");await expect(page).toHaveURL(/\/member\/events$/);
   await expect(page.getByRole("navigation",{name:"Application steps"})).toHaveCount(0);
   await page.goto("/member/application");
-  await expect(page.getByRole("region",{name:"Profile verification status"})).toContainText(state.label);
+  await expect(page.getByRole("region",{name:"Profile verification status"})).toHaveCount(0);
+  await expect(page.getByRole("navigation",{name:"Application steps"}).getByRole("button")).toHaveCount(3);
   if(state.reviews[0]?.reason)await expect(page.getByText(state.reviews[0].reason,{exact:false})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   await page.screenshot({path:info.outputPath(`verification-${state.label.split(' ')[0]}.png`),fullPage:true});

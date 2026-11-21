@@ -1,5 +1,7 @@
 "use client";
-import { WorkspaceEmptyState } from "./workspace-ui";
+import { PortalIcon } from "./portal-icon";
+import { emailLabel } from "@/domain/communications-ui";
+import styles from "./communications.module.css";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "./operations-client";
 import { useEmailEditGuard } from "./email-edit-guard";
@@ -34,8 +36,10 @@ type Detail = {
 };
 export function EmailInbox({
   onDirtyChange,
+  sendingEnabled = false,
 }: {
   onDirtyChange?: (dirty: boolean) => void;
+  sendingEnabled?: boolean;
 }) {
   const [entries, setEntries] = useState<Conversation[]>([]),
     [staff, setStaff] = useState<{ id: string; name: string }[]>([]),
@@ -156,26 +160,49 @@ export function EmailInbox({
     });
   }
   return (
-    <section className="content-section email-inbox">
-      <h2>Shared inbox</h2>
-      <p>
-        contact@updates.tpassociation.org · Staff-only conversations.
-        Attachments are shown as metadata; files are not retrieved.
-      </p>
-      <div className="crm-filters">
-        <label>
-          Search inbox
+    <section>
+      <header className={styles.sectionHeading}>
+        <div>
+          <h2>Inbox</h2>
+          <p>Incoming messages to contact@updates.tpassociation.org</p>
+        </div>
+        <button
+          className="button secondary"
+          disabled={busy}
+          onClick={() => void load()}
+        >
+          Refresh
+        </button>
+      </header>
+      <div className={styles.toolbar}>
+        <div className={styles.tabs}>
+          {[false, true].map((value) => (
+            <button
+              className="text-button"
+              key={String(value)}
+              aria-pressed={archived === value}
+              onClick={() => {
+                setArchived(value);
+                setPage(1);
+              }}
+            >
+              {value ? "Archived" : "Inbox"}
+            </button>
+          ))}
+        </div>
+        <label className={styles.search}>
+          <span className={styles.srOnly}>Search inbox</span>
           <input
             value={q}
             onChange={(e) => {
               setQ(e.target.value);
               setPage(1);
             }}
-            placeholder="Subject or sender"
+            placeholder="Search subject or sender"
           />
         </label>
-        <label>
-          Conversation status
+        <label className={styles.filterSelect}>
+          <span className={styles.srOnly}>Conversation status</span>
           <select
             value={status}
             onChange={(e) => {
@@ -185,316 +212,372 @@ export function EmailInbox({
           >
             {["all", "new", "in_progress", "closed"].map((x) => (
               <option key={x} value={x}>
-                {x.replaceAll("_", " ")}
+                {x === "all" ? "All statuses" : emailLabel(x)}
               </option>
             ))}
           </select>
         </label>
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={archived}
-            onChange={(e) => {
-              setArchived(e.target.checked);
-              setPage(1);
-            }}
-          />
-          Archived conversations
-        </label>
-        <button
-          className="button secondary"
-          disabled={busy}
-          onClick={() => void load()}
-        >
-          Refresh inbox
-        </button>
       </div>
-      <p role="status">{message}</p>
-      <div className={`operations-layout ${!entries.length && !busy ? "is-empty" : ""}`}>
-        <aside className="record-list">
-          {!entries.length && !busy && <WorkspaceEmptyState compact icon="mail" title="No conversations match" description="Try another subject, sender or status." />}
-          {entries.map((x) => (
-            <button
-              key={x.id}
-              disabled={busy}
-              onClick={() => guard.proceed(() => void open(x.id))}
-            >
-              <strong>
-                {x.unread ? "● " : ""}
-                {x.subject || "(No subject)"}
-              </strong>
-              <small>{x.correspondent}</small>
-              <small>
-                {x.status.replaceAll("_", " ")}
-                {x.assigned_name ? ` · ${x.assigned_name}` : ""}
-              </small>
-            </button>
-          ))}
-          <div className="email-actions">
-            <button
-              disabled={busy || page === 1}
-              onClick={() => setPage(page - 1)}
-            >
-              Previous
-            </button>
-            <span>Page {page}</span>
-            <button
-              disabled={busy || !hasMore}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </button>
-          </div>
-        </aside>
-        <section>
-          {entry ? (
-            <>
-              <h3>{entry.subject}</h3>
-              <p>
-                From {entry.correspondent}
-                <br />
-                Reply destination: {entry.reply_to}
+      {message && (
+        <p role="status" className={styles.notice}>
+          {message}
+        </p>
+      )}
+      {!entries.length && !entry && !busy ? (
+        <div className={styles.empty}>
+          <PortalIcon name="message" />
+          <h3>
+            {q || status !== "all"
+              ? "No matching conversations"
+              : archived
+                ? "No archived conversations"
+                : "Your inbox is clear"}
+          </h3>
+          <p>
+            {q || status !== "all"
+              ? "Try a different sender, subject or status."
+              : "Incoming conversations will appear here. Select a message to read it and prepare a reply."}
+          </p>
+        </div>
+      ) : !entries.length && !entry ? null : (
+        <div className={styles.inboxLayout} aria-busy={busy}>
+          <aside className={styles.conversationList} aria-label="Conversations">
+            {entries.map((x) => (
+              <button
+                className="text-button"
+                key={x.id}
+                disabled={busy}
+                aria-current={entry?.id === x.id}
+                onClick={() => guard.proceed(() => void open(x.id))}
+              >
+                <strong>
+                  {x.unread ? "● " : ""}
+                  {x.subject || "(No subject)"}
+                </strong>
+                <small>{x.correspondent}</small>
+                <small>
+                  {emailLabel(x.status)}
+                  {x.assigned_name ? ` · ${x.assigned_name}` : ""}
+                </small>
+              </button>
+            ))}
+            {!entries.length && (
+              <p className={styles.notice}>
+                No conversations match these filters.
               </p>
-              <div className="email-actions">
-                <label>
-                  Status
-                  <select
-                    disabled={busy}
-                    value={entry.status}
-                    onChange={(e) =>
-                      guard.proceed(
-                        () => void update({ status: e.target.value }),
-                      )
-                    }
-                  >
-                    {["new", "in_progress", "closed"].map((x) => (
-                      <option key={x} value={x}>
-                        {x.replaceAll("_", " ")}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Assigned to
-                  <select
-                    disabled={busy}
-                    value={entry.assigned_to ?? ""}
-                    onChange={(e) =>
-                      guard.proceed(
-                        () =>
-                          void update({ assigned_to: e.target.value || null }),
-                      )
-                    }
-                  >
-                    <option value="">Unassigned</option>
-                    {staff.map((s) => (
-                      <option value={s.id} key={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+            )}
+            {(hasMore || page > 1) && (
+              <div className={styles.pagination}>
                 <button
-                  className="button secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    guard.proceed(() => void update({ unread: !entry.unread }))
-                  }
+                  className="text-button"
+                  disabled={busy || page === 1}
+                  onClick={() => setPage(page - 1)}
                 >
-                  {entry.unread ? "Mark read" : "Mark unread"}
+                  Previous
                 </button>
+                <span>{page}</span>
                 <button
-                  className="button secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    guard.proceed(
-                      () => void update({ archived: !entry.archived }),
-                    )
-                  }
+                  className="text-button"
+                  disabled={busy || !hasMore}
+                  onClick={() => setPage(page + 1)}
                 >
-                  {entry.archived
-                    ? "Restore conversation"
-                    : "Archive conversation"}
+                  Next
                 </button>
               </div>
-              <form
-                className="email-actions"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const id = String(
-                    new FormData(e.currentTarget).get("inquiryId"),
-                  );
-                  if (draft !== entry.draft || note)
-                    guard.proceed(
-                      () => void update({ inquiry_id: id || null }),
-                    );
-                  else void update({ inquiry_id: id || null });
-                }}
-              >
-                <label>
-                  Linked CRM inquiry ID
-                  <input
-                    name="inquiryId"
-                    key={entry.inquiry_id ?? "none"}
-                    value={inquiryId}
-                    onChange={(e) => setInquiryId(e.target.value)}
-                    placeholder="Existing inquiry ID (optional)"
-                  />
-                </label>
-                <button className="button secondary" disabled={busy}>
-                  Link inquiry
-                </button>
-              </form>
-              <div className="email-thread">
-                {detail?.messages.map((m) => (
-                  <article className="email-message" key={m.id}>
-                    <strong>
-                      {m.direction === "incoming" ? "Received" : "Sent"} ·{" "}
-                      {m.sender}
-                    </strong>
+            )}
+          </aside>
+          <section className={styles.conversation}>
+            {entry ? (
+              <>
+                <h3>{entry.subject || "(No subject)"}</h3>
+                <p>
+                  {entry.correspondent}
+                  <br />
+                  Replies go to {entry.reply_to}
+                </p>
+                <div className={styles.conversationTools}>
+                  <label>
+                    Status
+                    <select
+                      disabled={busy}
+                      value={entry.status}
+                      onChange={(e) =>
+                        guard.proceed(
+                          () => void update({ status: e.target.value }),
+                        )
+                      }
+                    >
+                      {["new", "in_progress", "closed"].map((x) => (
+                        <option key={x} value={x}>
+                          {emailLabel(x)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Assigned to
+                    <select
+                      disabled={busy}
+                      value={entry.assigned_to ?? ""}
+                      onChange={(e) =>
+                        guard.proceed(
+                          () =>
+                            void update({
+                              assigned_to: e.target.value || null,
+                            }),
+                        )
+                      }
+                    >
+                      <option value="">Unassigned</option>
+                      {staff.map((x) => (
+                        <option key={x.id} value={x.id}>
+                          {x.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className={styles.thread}>
+                  {detail?.messages.map((m) => (
+                    <article
+                      className={styles.message}
+                      data-direction={m.direction}
+                      key={m.id}
+                    >
+                      <header>
+                        <strong>
+                          {m.direction === "incoming" ? "Received" : "Sent"} ·{" "}
+                          {m.sender}
+                        </strong>
+                        <small>
+                          {new Date(m.created_at).toLocaleString("en-IN", {
+                            timeZone: "Asia/Kolkata",
+                          })}
+                        </small>
+                      </header>
+                      <div className={styles.messageBody}>
+                        {m.body || "(No readable message text)"}
+                      </div>
+                      {m.attachments.length > 0 && (
+                        <p>
+                          Attachments:{" "}
+                          {m.attachments.map((a) => a.name).join(", ")} · File
+                          previews are unavailable.
+                        </p>
+                      )}
+                    </article>
+                  ))}
+                </div>
+                {(messagePage > 1 || detail?.hasMore) && (
+                  <div className={styles.pagination}>
+                    <button
+                      className="text-button"
+                      disabled={busy || messagePage === 1}
+                      onClick={() =>
+                        guard.proceed(
+                          () => void open(entry.id, messagePage - 1),
+                        )
+                      }
+                    >
+                      Newer messages
+                    </button>
+                    <button
+                      className="text-button"
+                      disabled={busy || !detail?.hasMore}
+                      onClick={() =>
+                        guard.proceed(
+                          () => void open(entry.id, messagePage + 1),
+                        )
+                      }
+                    >
+                      Older messages
+                    </button>
+                  </div>
+                )}
+                <form
+                  className={`${styles.formCard} ${styles.replyBox}`}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void action("draft", { body: draft });
+                  }}
+                >
+                  <h3>Reply</h3>
+                  <label>
+                    Message
+                    <textarea
+                      disabled={busy}
+                      value={draft}
+                      maxLength={6000}
+                      rows={6}
+                      onChange={(e) => {
+                        setDraft(e.target.value);
+                        setConfirm(false);
+                      }}
+                    />
                     <small>
-                      {new Date(m.created_at).toLocaleString("en-IN")}
+                      {draft.length.toLocaleString("en-IN")} / 6,000 characters
+                      · Save your reply before reviewing it.
                     </small>
-                    <div className="email-message-body">
-                      {m.body || "(No readable message text)"}
-                    </div>
-                    {m.attachments.length > 0 && (
-                      <p>
-                        Attachments:{" "}
-                        {m.attachments.map((a) => a.name).join(", ")}. File
-                        access is deferred.
+                  </label>
+                  <div className={styles.actions}>
+                    <button
+                      className="button secondary"
+                      disabled={busy || draft === entry.draft}
+                    >
+                      Save draft
+                    </button>
+                    <button
+                      className="button gold"
+                      type="button"
+                      disabled={
+                        busy || dirty || !entry.draft.trim() || entry.archived
+                      }
+                      onClick={() => setConfirm(true)}
+                    >
+                      Review reply
+                    </button>
+                  </div>
+                </form>
+                {confirm && (
+                  <section
+                    className={styles.formCard}
+                    aria-label="Confirm reply"
+                  >
+                    <h3>Review your reply</h3>
+                    {!sendingEnabled && (
+                      <p className={styles.notice}>
+                        Sending is paused. Your saved reply is available for
+                        later.
                       </p>
                     )}
-                  </article>
-                ))}
-              </div>
-              <div className="email-actions">
-                <button
-                  className="button secondary"
-                  disabled={busy || messagePage === 1}
-                  onClick={() =>
-                    guard.proceed(() => void open(entry.id, messagePage - 1))
-                  }
-                >
-                  Newer messages
-                </button>
-                <button
-                  className="button secondary"
-                  disabled={busy || !detail?.hasMore}
-                  onClick={() =>
-                    guard.proceed(() => void open(entry.id, messagePage + 1))
-                  }
-                >
-                  Older messages
-                </button>
-              </div>
-              <h3>Reply draft</h3>
-              <form
-                className="member-settings"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void action("draft", { body: draft });
-                }}
-              >
-                <label>
-                  Reply message
-                  <textarea
-                    value={draft}
-                    maxLength={6000}
-                    onChange={(e) => {
-                      setDraft(e.target.value);
-                      setConfirm(false);
+                    <p>
+                      To {entry.reply_to} from contact@updates.tpassociation.org
+                    </p>
+                    <div className={styles.messageBody}>{entry.draft}</div>
+                    <div className={styles.actions}>
+                      <button
+                        className="button secondary"
+                        onClick={() => setConfirm(false)}
+                      >
+                        Keep editing
+                      </button>
+                      <button
+                        className="button gold"
+                        disabled={busy || dirty || !sendingEnabled}
+                        onClick={() =>
+                          void action("send", {
+                            draftVersion: entry.draft_version,
+                            confirm: true,
+                          })
+                        }
+                      >
+                        Confirm and queue reply
+                      </button>
+                    </div>
+                  </section>
+                )}
+                <details className={styles.history}>
+                  <summary>Conversation options &amp; private notes</summary>
+                  <div className={styles.actions}>
+                    <button
+                      className="button secondary"
+                      disabled={busy}
+                      onClick={() =>
+                        guard.proceed(
+                          () => void update({ unread: !entry.unread }),
+                        )
+                      }
+                    >
+                      {entry.unread ? "Mark read" : "Mark unread"}
+                    </button>
+                    <button
+                      className="button secondary"
+                      disabled={busy}
+                      onClick={() =>
+                        guard.proceed(
+                          () => void update({ archived: !entry.archived }),
+                        )
+                      }
+                    >
+                      {entry.archived
+                        ? "Restore conversation"
+                        : "Archive conversation"}
+                    </button>
+                  </div>
+                  <form
+                    className={styles.formCard}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (draft !== entry.draft || note)
+                        guard.proceed(
+                          () => void update({ inquiry_id: inquiryId || null }),
+                        );
+                      else void update({ inquiry_id: inquiryId || null });
                     }}
-                    rows={7}
-                  />
-                  <small>{draft.length}/6,000 characters · Plain text</small>
-                </label>
-                <button className="button secondary" disabled={busy}>
-                  Save reply draft
-                </button>
-              </form>
-              <button
-                className="button"
-                disabled={
-                  busy || dirty || !entry.draft.trim() || entry.archived
-                }
-                onClick={() => setConfirm(true)}
-              >
-                Review and send reply
-              </button>
-              {confirm && (
-                <section
-                  className="email-confirm"
-                  role="region"
-                  aria-label="Confirm reply"
-                >
-                  <h4>Send saved reply</h4>
-                  <p>
-                    To {entry.reply_to} from contact@updates.tpassociation.org
-                  </p>
-                  <div className="email-message-body">{entry.draft}</div>
-                  <p>
-                    This queues the saved reply. Quota limits may delay
-                    delivery.
-                  </p>
-                  <button
-                    className="button"
-                    disabled={busy}
-                    onClick={() =>
-                      void action("send", {
-                        draftVersion: entry.draft_version,
-                        confirm: true,
-                      })
-                    }
                   >
-                    Confirm send reply
-                  </button>{" "}
-                  <button
-                    className="button secondary"
-                    onClick={() => setConfirm(false)}
+                    <label>
+                      Linked website inquiry
+                      <input
+                        value={inquiryId}
+                        onChange={(e) => setInquiryId(e.target.value)}
+                        placeholder="Existing inquiry ID"
+                      />
+                    </label>
+                    <button
+                      className="button secondary"
+                      disabled={busy || inquiryId === (entry.inquiry_id ?? "")}
+                    >
+                      Save inquiry link
+                    </button>
+                  </form>
+                  <h4>Private notes</h4>
+                  <p>Only your team can see these notes.</p>
+                  {detail?.notes.map((n) => (
+                    <article key={n.id}>
+                      <div className={styles.messageBody}>{n.body}</div>
+                      <p>
+                        {n.actor_name} ·{" "}
+                        {new Date(n.created_at).toLocaleString("en-IN", {
+                          timeZone: "Asia/Kolkata",
+                        })}
+                      </p>
+                    </article>
+                  ))}
+                  <form
+                    className={`${styles.formCard} ${styles.replyBox}`}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void action("note", { body: note });
+                    }}
                   >
-                    Cancel
-                  </button>
-                </section>
-              )}
-              <h3>Private notes</h3>
-              {detail?.notes.map((n) => (
-                <p key={n.id}>
-                  {n.body}
-                  <small>
-                    {n.actor_name} ·{" "}
-                    {new Date(n.created_at).toLocaleString("en-IN")}
-                  </small>
-                </p>
-              ))}
-              <form
-                className="member-settings"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void action("note", { body: note });
-                }}
-              >
-                <label>
-                  Private note
-                  <textarea
-                    value={note}
-                    maxLength={2000}
-                    onChange={(e) => setNote(e.target.value)}
-                  />
-                </label>
-                <button
-                  className="button secondary"
-                  disabled={busy || !note.trim()}
-                >
-                  Save private note
-                </button>
-              </form>
-            </>
-          ) : (
-            <WorkspaceEmptyState icon="mail" title={!entries.length ? "No conversations to show" : "Select a conversation"} description={!entries.length ? "Incoming conversations will appear here. Refresh the inbox or adjust the filters to check for messages." : "Choose a conversation to read its messages, assign an owner and prepare a reply."} actionLabel="Refresh inbox" onAction={() => void load()} />
-          )}
-        </section>
-      </div>
+                    <label>
+                      Add a private note
+                      <textarea
+                        disabled={busy}
+                        value={note}
+                        maxLength={2000}
+                        onChange={(e) => setNote(e.target.value)}
+                      />
+                    </label>
+                    <button
+                      className="button secondary"
+                      disabled={busy || !note.trim()}
+                    >
+                      Save note
+                    </button>
+                  </form>
+                </details>
+              </>
+            ) : (
+              <div className={`${styles.empty} ${styles.emptyCompact}`}>
+                <PortalIcon name="message" />
+                <h3>Select a conversation</h3>
+                <p>Read the message, assign an owner and prepare a reply.</p>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
       {guard.dialog}
     </section>
   );

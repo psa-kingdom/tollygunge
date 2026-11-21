@@ -1,6 +1,10 @@
 "use client";
-import { CopyValue } from "./portal-values";
+import { CopyValue, StatusBadge } from "./portal-values";
 import { WorkspaceEmptyState } from "./workspace-ui";
+import { PortalIcon } from "./portal-icon";
+import { useUnsavedProfile } from "./use-unsaved-profile";
+import ui from "./communications.module.css";
+import styles from "./settings-workspace.module.css";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { api } from "./operations-client";
@@ -38,6 +42,7 @@ const empty: Details = {
   qrId: null,
 };
 export function PaymentDetailsManager() {
+  const [editing, setEditing] = useState(false);
   const [records, setRecords] = useState<PaymentRecord[]>([]),
     [revisions, setRevisions] = useState<Revision[]>([]),
     [selected, setSelected] = useState<PaymentRecord>(),
@@ -46,6 +51,21 @@ export function PaymentDetailsManager() {
     [message, setMessage] = useState("Loading payment details…"),
     [confirmed, setConfirmed] = useState(false),
     [file, setFile] = useState<File>();
+  const dirty =
+    editing &&
+    (JSON.stringify(form) !== JSON.stringify(selected?.draft ?? empty) ||
+      !!file);
+  const { guard, dialog } = useUnsavedProfile(dirty);
+  function edit(record?: PaymentRecord) {
+    guard(() => {
+      setSelected(record);
+      setForm(record?.draft ?? empty);
+      setConfirmed(false);
+      setFile(undefined);
+      setMessage("");
+      setEditing(true);
+    });
+  }
   async function load(id?: string) {
     const data = await api<{ records: PaymentRecord[]; revisions: Revision[] }>(
       "/api/staff/payment-details",
@@ -82,7 +102,11 @@ export function PaymentDetailsManager() {
       await load(selected.id);
       setConfirmed(false);
       setMessage(
-        `Payment details set to ${action}. No transaction or membership status changed.`,
+        action === "active"
+          ? "Saved account activated for members."
+          : action === "past"
+            ? "Account archived and hidden from members."
+            : "Account hidden from members. Its draft is still available.",
       );
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Update failed.");
@@ -91,53 +115,144 @@ export function PaymentDetailsManager() {
     }
   }
   return (
-    <>
-      <div className="notice">
-        Manage collection instructions here. Fees, transaction verification and
-        membership approval remain separate. No payment is marked paid by
-        scanning a QR or activating these details.
-      </div>
-      <div className="operations-layout">
-        <aside className="record-list">
+    <section>
+      <header className={ui.sectionHeading}>
+        <div>
+          <h2>Collection accounts</h2>
+          <p>Bank and UPI instructions shown to members when they pay.</p>
+        </div>
+        {!editing && (
           <button
-            className="button secondary"
-            disabled={busy}
-            onClick={() => {
-              setSelected(undefined);
-              setForm(empty);
-              setConfirmed(false);
-              setFile(undefined);
-              setMessage("");
-            }}
+            className="button gold"
+            disabled={busy || message === "Loading payment details…"}
+            onClick={() => edit()}
           >
-            New payment details
+            <PortalIcon name="wallet" />
+            Add account
           </button>
-          {!records.length && !message && <WorkspaceEmptyState compact icon="wallet" title="No payment instructions yet" description="Prepare a bank or UPI record in the editor, then review it before activation." />}
-          {records.map((r) => (
+        )}
+      </header>
+      {!editing ? (
+        <>
+          <div
+            className={ui.tableWrap}
+            role="region"
+            aria-label="Collection accounts"
+            tabIndex={0}
+          >
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Account</th>
+                  <th scope="col">Method</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.map((record) => (
+                  <tr key={record.id}>
+                    <td>
+                      <div className={styles.account}>
+                        <span>
+                          <PortalIcon name="wallet" />
+                        </span>
+                        <div>
+                          <strong>{record.draft.label}</strong>
+                          <small>{record.draft.payee}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      {record.draft.method === "bank" ? "Bank transfer" : "UPI"}
+                      <small>
+                        {record.draft.method === "bank"
+                          ? record.draft.bank
+                          : record.draft.upiId}
+                      </small>
+                    </td>
+                    <td>
+                      <StatusBadge
+                        tone={
+                          record.status === "active" ? "success" : "neutral"
+                        }
+                      >
+                        {record.status === "past"
+                          ? "Archived"
+                          : record.status === "active"
+                            ? "Active"
+                            : "Draft"}
+                      </StatusBadge>
+                      {record.status === "active" &&
+                        JSON.stringify(record.draft) !==
+                          JSON.stringify(record.active_snapshot) && (
+                          <small>Draft changes saved</small>
+                        )}
+                    </td>
+                    <td>
+                      <button
+                        className="button secondary"
+                        onClick={() => edit(record)}
+                        aria-label={`Manage ${record.draft.label}`}
+                      >
+                        Manage
+                        <PortalIcon name="chevron" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!records.length && !message && (
+              <WorkspaceEmptyState
+                icon="wallet"
+                title="No collection accounts"
+                description="Add a bank account or UPI ID, then verify and activate it for members."
+              />
+            )}
+          </div>
+          <p className={styles.helper} style={{ marginTop: 16 }}>
+            Only active accounts appear to members. Payment verification is
+            handled in Finance.
+          </p>
+        </>
+      ) : (
+        <section className={styles.panel}>
+          <div className={styles.editorHeader}>
             <button
-              key={r.id}
+              type="button"
+              className="button secondary"
               disabled={busy}
-              onClick={() => {
-                setSelected(r);
-                setForm(r.draft);
-                setConfirmed(false);
-                setFile(undefined);
-                setMessage("");
-              }}
+              onClick={() =>
+                guard(() => {
+                  setEditing(false);
+                  setMessage("");
+                })
+              }
             >
-              <strong>{r.draft.label}</strong>
-              <small>
-                {r.status} ·{" "}
-                {r.draft.method === "bank" ? r.draft.bank : r.draft.upiId}
-              </small>
+              ← All accounts
             </button>
-          ))}
-          {!records.length && <p>No payment details saved.</p>}
-        </aside>
-        <section>
-          <h2>{selected ? "Edit payment details" : "New payment details"}</h2>
+            {selected && (
+              <StatusBadge
+                tone={selected.status === "active" ? "success" : "neutral"}
+              >
+                {selected.status === "past"
+                  ? "Archived"
+                  : selected.status === "active"
+                    ? "Active"
+                    : "Draft"}
+              </StatusBadge>
+            )}
+          </div>
+          <h2>{selected ? selected.draft.label : "Add collection account"}</h2>
+          <p className={styles.helper} style={{ marginBottom: 24 }}>
+            Save the details first. Review the saved account before activating
+            it.
+          </p>
           <form
-            className="member-settings"
+            className={`member-settings ${styles.form}`}
             onSubmit={async (e) => {
               e.preventDefault();
               setBusy(true);
@@ -163,176 +278,202 @@ export function PaymentDetailsManager() {
               }
             }}
           >
-            <label>
-              Payment method
-              <select
-                value={form.method ?? "upi"}
-                onChange={(e) => {
-                  setForm({
-                    ...form,
-                    method: e.target.value as "upi" | "bank",
-                    qrId: null,
-                  });
-                  setConfirmed(false);
-                }}
-              >
-                <option value="upi">UPI</option>
-                <option value="bank">Bank transfer</option>
-              </select>
-            </label>
-            <label>
-              Label
-              <input
-                required
-                minLength={3}
-                maxLength={100}
-                value={form.label}
-                onChange={(e) => {
-                  setForm({ ...form, label: e.target.value });
-                  setConfirmed(false);
-                }}
-              />
-            </label>
-            <label>
-              Payee name
-              <input
-                required
-                minLength={3}
-                maxLength={120}
-                value={form.payee}
-                onChange={(e) => {
-                  setForm({ ...form, payee: e.target.value });
-                  setConfirmed(false);
-                }}
-              />
-            </label>
-            <label>
-              UPI ID
-              <input
-                required={(form.method ?? "upi") === "upi"}
-                disabled={form.method === "bank"}
-                maxLength={120}
-                value={form.upiId}
-                onChange={(e) => {
-                  setForm({ ...form, upiId: e.target.value });
-                  setConfirmed(false);
-                }}
-              />
-            </label>
-            {form.method === "bank" &&
-              (
-                [
-                  ["accountNumber", "Account number", 34],
-                  ["ifsc", "IFSC", 11],
-                  ["bank", "Bank", 160],
-                  ["branch", "Branch", 160],
-                ] as const
-              ).map(([key, label, maxLength]) => (
-                <label key={key}>
-                  {label}
+            <fieldset className={styles.fields} disabled={busy}>
+              <label>
+                Payment method
+                <select
+                  value={form.method ?? "upi"}
+                  onChange={(e) => {
+                    setForm({
+                      ...form,
+                      method: e.target.value as "upi" | "bank",
+                      qrId: null,
+                    });
+                    setConfirmed(false);
+                  }}
+                >
+                  <option value="upi">UPI</option>
+                  <option value="bank">Bank transfer</option>
+                </select>
+              </label>
+              <label>
+                Account label
+                <input
+                  required
+                  minLength={3}
+                  maxLength={100}
+                  placeholder="e.g. Association bank account"
+                  value={form.label}
+                  onChange={(e) => {
+                    setForm({ ...form, label: e.target.value });
+                    setConfirmed(false);
+                  }}
+                />
+              </label>
+              <label>
+                Payee name
+                <input
+                  required
+                  minLength={3}
+                  maxLength={120}
+                  value={form.payee}
+                  onChange={(e) => {
+                    setForm({ ...form, payee: e.target.value });
+                    setConfirmed(false);
+                  }}
+                />
+              </label>
+              {(form.method ?? "upi") === "upi" && (
+                <label>
+                  UPI ID
                   <input
-                    required
-                    maxLength={maxLength}
-                    value={form[key] ?? ""}
+                    required={(form.method ?? "upi") === "upi"}
+                    maxLength={120}
+                    value={form.upiId}
                     onChange={(e) => {
-                      setForm({ ...form, [key]: e.target.value });
+                      setForm({ ...form, upiId: e.target.value });
                       setConfirmed(false);
                     }}
                   />
                 </label>
-              ))}
-            <label>
-              Payment contact number (optional)
-              <input
-                type="tel"
-                maxLength={20}
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </label>
-            <button className="button" disabled={busy}>
-              Save draft details
-            </button>
-          </form>
-          {form.method !== "bank" && (
-            <form
-              className="member-settings"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (!file) return;
-                setBusy(true);
-                try {
-                  const body = new FormData();
-                  body.set("file", file);
-                  const response = await fetch("/api/staff/payment-qr", {
-                    method: "POST",
-                    body,
-                  });
-                  const data = await response.json();
-                  if (!response.ok)
-                    throw new Error(data.error ?? "Upload failed.");
-                  setForm({ ...form, qrId: data.id });
-                  setConfirmed(false);
-                  setFile(undefined);
-                  setMessage(
-                    "QR uploaded privately. Save draft details to attach it, then verify before activation.",
-                  );
-                } catch (e) {
-                  setMessage(e instanceof Error ? e.message : "Upload failed.");
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
+              )}
+              {form.method === "bank" && (
+                <div className={styles.formGrid}>
+                  {(
+                    [
+                      ["accountNumber", "Account number", 34],
+                      ["ifsc", "IFSC", 11],
+                      ["bank", "Bank", 160],
+                      ["branch", "Branch", 160],
+                    ] as const
+                  ).map(([key, label, maxLength]) => (
+                    <label key={key}>
+                      {label}
+                      <input
+                        required
+                        maxLength={maxLength}
+                        value={form[key] ?? ""}
+                        onChange={(e) => {
+                          setForm({ ...form, [key]: e.target.value });
+                          setConfirmed(false);
+                        }}
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
               <label>
-                Upload or replace QR photo (JPEG/PNG, up to 5 MB)
+                Payment contact number (optional)
                 <input
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={(e) => setFile(e.target.files?.[0])}
+                  type="tel"
+                  maxLength={20}
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
               </label>
-              <button className="button secondary" disabled={busy || !file}>
-                Upload QR photo
-              </button>
-              {form.qrId && (
-                <>
-                  <Image
-                    unoptimized
-                    src={`/api/payment-qr/${form.qrId}`}
-                    width={300}
-                    height={300}
-                    alt="Draft payment QR; verify payee before activating"
-                    style={{
-                      maxWidth: "100%",
-                      height: "auto",
-                      objectFit: "contain",
-                    }}
-                  />
-                  <button
-                    className="button secondary"
-                    type="button"
+              <div className={styles.formFooter}>
+                <p>
+                  {file
+                    ? "Upload the selected QR image before saving."
+                    : "Saving keeps the current active instructions unchanged."}
+                </p>
+                <button
+                  className="button gold"
+                  disabled={busy || !!file || (!!selected && !dirty)}
+                >
+                  {busy ? "Saving…" : "Save draft"}
+                </button>
+              </div>
+            </fieldset>
+          </form>
+          {form.method !== "bank" && (
+            <details className={styles.section}>
+              <summary>Payment QR image (optional)</summary>
+              <form
+                className="member-settings"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!file) return;
+                  setBusy(true);
+                  try {
+                    const body = new FormData();
+                    body.set("file", file);
+                    const response = await fetch("/api/staff/payment-qr", {
+                      method: "POST",
+                      body,
+                    });
+                    const data = await response.json();
+                    if (!response.ok)
+                      throw new Error(data.error ?? "Upload failed.");
+                    setForm({ ...form, qrId: data.id });
+                    setConfirmed(false);
+                    setFile(undefined);
+                    setMessage(
+                      "QR uploaded privately. Save draft details to attach it, then verify before activation.",
+                    );
+                  } catch (e) {
+                    setMessage(
+                      e instanceof Error ? e.message : "Upload failed.",
+                    );
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                <label>
+                  Upload or replace QR photo (JPEG/PNG, up to 5 MB)
+                  <input
+                    type="file"
                     disabled={busy}
-                    onClick={() => {
-                      setForm({ ...form, qrId: null });
-                      setConfirmed(false);
-                    }}
-                  >
-                    Remove QR from draft
-                  </button>
-                </>
-              )}
-            </form>
+                    accept="image/jpeg,image/png"
+                    onChange={(e) => setFile(e.target.files?.[0])}
+                  />
+                </label>
+                <button className="button secondary" disabled={busy || !file}>
+                  Upload QR photo
+                </button>
+                {form.qrId && (
+                  <>
+                    <Image
+                      unoptimized
+                      src={`/api/payment-qr/${form.qrId}`}
+                      width={300}
+                      height={300}
+                      alt="Draft payment QR; verify payee before activating"
+                      style={{
+                        maxWidth: "100%",
+                        height: "auto",
+                        objectFit: "contain",
+                      }}
+                    />
+                    <button
+                      className="button secondary"
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        setForm({ ...form, qrId: null });
+                        setConfirmed(false);
+                      }}
+                    >
+                      Remove QR from draft
+                    </button>
+                  </>
+                )}
+              </form>
+            </details>
           )}
           {selected && (
-            <>
-              <p>
-                Current status: <strong>{selected.status}</strong>. Active
-                revisions are visible only to signed-in accounts. Draft and Past
-                details are hidden from them.
+            <section
+              className={styles.section}
+              aria-labelledby="account-activation-title"
+            >
+              <h3 id="account-activation-title">Availability to members</h3>
+              <p className={styles.helper}>
+                Active accounts are visible to signed-in members. Draft and
+                archived accounts are hidden.
               </p>
               {selected.active_snapshot && selected.status === "active" && (
-                <p>
+                <p className={styles.readOnly}>
                   Currently active: {selected.active_snapshot.payee} ·{" "}
                   {selected.active_snapshot.method === "bank"
                     ? selected.active_snapshot.bank
@@ -355,70 +496,99 @@ export function PaymentDetailsManager() {
                   className="button"
                   disabled={
                     busy ||
+                    dirty ||
                     !confirmed ||
                     JSON.stringify(form) !== JSON.stringify(selected.draft)
                   }
                   onClick={() => status("active")}
                 >
-                  Activate saved revision
+                  Activate saved account
                 </button>
                 <button
                   className="button secondary"
-                  disabled={busy}
+                  disabled={busy || dirty || selected.status === "draft"}
                   onClick={() => status("draft")}
                 >
-                  Set Draft
+                  Hide from members
                 </button>
                 <button
                   className="button secondary"
-                  disabled={busy}
+                  disabled={busy || dirty || selected.status === "past"}
                   onClick={() => status("past")}
                 >
-                  Move to Past
+                  Archive account
                 </button>
               </div>
-              <h3>Revision history</h3>
-              {revisions
-                .filter((r) => r.detail_id === selected.id)
-                .map((r) => (
-                  <p key={r.version}>
-                    Revision {r.version} · {r.status} · {r.details.payee} ·{" "}
-                    {r.details.method === "bank"
-                      ? r.details.bank
-                      : r.details.upiId}{" "}
-                    · {new Date(r.created_at).toLocaleString()}
-                  </p>
-                ))}
-            </>
+              {dirty && (
+                <p className={styles.helper}>
+                  Save your changes before updating availability.
+                </p>
+              )}
+              <details className={styles.section}>
+                <summary>Revision history</summary>
+                {revisions
+                  .filter((r) => r.detail_id === selected.id)
+                  .map((r) => (
+                    <p key={r.version}>
+                      Revision {r.version} · {r.status} · {r.details.payee} ·{" "}
+                      {r.details.method === "bank"
+                        ? r.details.bank
+                        : r.details.upiId}{" "}
+                      · {new Date(r.created_at).toLocaleString()}
+                    </p>
+                  ))}
+              </details>
+            </section>
           )}
-          <p role="status">{message}</p>
         </section>
-      </div>
-    </>
+      )}
+      {message && (
+        <p className={styles.message} role="status">
+          {message}
+        </p>
+      )}
+      {dialog}
+    </section>
   );
 }
-export function MemberPaymentDetails({ eventPayment = false, eventId }: { eventPayment?: boolean; eventId?:string }) {
+export function MemberPaymentDetails({
+  eventPayment = false,
+  eventId,
+}: {
+  eventPayment?: boolean;
+  eventId?: string;
+}) {
   const [records, setRecords] = useState<{ id: string; details: Details }[]>(
       [],
     ),
     [message, setMessage] = useState("Loading payment details…");
   useEffect(() => {
     api<{ records: { id: string; details: Details }[] }>(
-      "/api/member/payment-details"+(eventId?"?eventId="+eventId:""),
+      "/api/member/payment-details" + (eventId ? "?eventId=" + eventId : ""),
     )
       .then((data) => {
         setRecords(data.records);
-        setMessage((data as {legacy?:boolean}).legacy?"Historical event account was not recorded; confirm these legacy association instructions with staff before paying.":"");
+        setMessage(
+          (data as { legacy?: boolean }).legacy
+            ? "Historical event account was not recorded; confirm these legacy association instructions with staff before paying."
+            : "",
+        );
       })
       .catch((e) => setMessage(e.message));
   }, [eventId]);
   return (
     <>
       <div className={eventPayment ? "field-help" : "notice"}>
-        {eventPayment ? "Use the saved payment instructions below for this event. Include your registration identifier. Staff will confirm registration after verifying payment; scanning a QR does not confirm payment." : <>These are association payment details, not a payment request. Staff will verify
-        membership payments and send an email confirmation. Do not transfer
-        funds until TPA confirms the purpose and amount. A scan does not confirm
-        payment or approve membership.</>}
+        {eventPayment ? (
+          "Use the saved payment instructions below for this event. Include your registration identifier. Staff will confirm registration after verifying payment; scanning a QR does not confirm payment."
+        ) : (
+          <>
+            These are association payment details, not a payment request. Staff
+            will verify membership payments and send an email confirmation. Do
+            not transfer funds until TPA confirms the purpose and amount. A scan
+            does not confirm payment or approve membership.
+          </>
+        )}
       </div>
       {records.map((r) => (
         <section className="content-section" key={r.id}>
@@ -427,9 +597,16 @@ export function MemberPaymentDetails({ eventPayment = false, eventId }: { eventP
           {r.details.method === "bank" ? (
             <dl>
               <dt>Account number</dt>
-              <dd><CopyValue value={r.details.accountNumber} label="account number" /></dd>
+              <dd>
+                <CopyValue
+                  value={r.details.accountNumber}
+                  label="account number"
+                />
+              </dd>
               <dt>IFSC</dt>
-              <dd><CopyValue value={r.details.ifsc} label="IFSC" /></dd>
+              <dd>
+                <CopyValue value={r.details.ifsc} label="IFSC" />
+              </dd>
               <dt>Bank</dt>
               <dd>{r.details.bank}</dd>
               <dt>Branch</dt>
@@ -440,11 +617,15 @@ export function MemberPaymentDetails({ eventPayment = false, eventId }: { eventP
               UPI ID: <CopyValue value={r.details.upiId} label="UPI ID" />
             </p>
           )}
-          {r.details.phone && <p>Payment contact: <CopyValue value={r.details.phone} /></p>}
+          {r.details.phone && (
+            <p>
+              Payment contact: <CopyValue value={r.details.phone} />
+            </p>
+          )}
           {r.details.qrId && (
             <Image
               unoptimized
-              src={`/api/payment-qr/${r.details.qrId}${eventId?"?eventId="+eventId:""}`}
+              src={`/api/payment-qr/${r.details.qrId}${eventId ? "?eventId=" + eventId : ""}`}
               width={300}
               height={300}
               alt={`Payment QR for ${r.details.payee}`}
@@ -456,7 +637,7 @@ export function MemberPaymentDetails({ eventPayment = false, eventId }: { eventP
       {!message && !records.length && (
         <p>No active payment details are available.</p>
       )}
-      <p role={eventPayment?"alert":"status"}>{message}</p>
+      <p role={eventPayment ? "alert" : "status"}>{message}</p>
     </>
   );
 }

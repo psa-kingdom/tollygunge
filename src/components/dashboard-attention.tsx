@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "./navigation-link";
+import { PortalIcon } from "./portal-icon";
+import styles from "./dashboard-overview.module.css";
 
 type Item = { id: string; label: string; href: string; category: string; priority: string; count: number };
 
@@ -42,15 +44,30 @@ export function DashboardAttention({ initialItems, workspaceCount, live = true }
       document.removeEventListener("visibilitychange", refresh);
     };
   }, [live]);
-  return <div className="dashboard-bento" id="attention">
-    <section className="bento-card bento-primary" aria-labelledby="dashboard-attention-title">
-      <span className="eyebrow">YOUR NEXT ACTION</span><h2 id="dashboard-attention-title">Needs attention</h2>
-      <p className="dashboard-alert-help">New sign-ups appear here while they complete their details. Submitted applications go to Verification for administrator review.</p>
-      {items.length ? items.map(item => <Link className="attention-row" data-tone={item.count > 0 && (["verification", "profile-reviews", "membership-records"].includes(item.id) || item.priority.toLowerCase() === "high") ? "warning" : "blue"} key={item.id} href={item.href}><span>{item.label}</span><small>{item.category} · {item.priority} <span className="attention-arrow" aria-hidden="true">→</span></small></Link>) : <p>You’re up to date in your permitted workspaces.</p>}
-      {error && <p role="status">Unable to refresh alerts. Showing the last available update.</p>}
-    </section>
-    <section className="bento-card bento-status">
-      <span className="eyebrow">WORKSPACE STATUS</span><h2>{items.length}</h2><p>Active alerts needing attention</p><p>{workspaceCount} permitted workspaces</p>
-    </section>
-  </div>;
+  const groups = [
+    { priority: "High", title: "Priority", description: "Start here" },
+    { priority: "Normal", title: "To review", description: "Keep things moving" },
+    { priority: "Low", title: "When you’re ready", description: "Publishing & follow-ups" },
+  ];
+  const icons: Record<string, string> = { Finance: "wallet", Memberships: "people", Verification: "shield", Publication: "file", Inquiries: "message", Communications: "mail", Delivery: "mail", Account: "profile" };
+  return <section className={styles.attention} id="attention" aria-labelledby="dashboard-attention-title">
+    <header className={styles.heading}>
+      <div><h2 id="dashboard-attention-title">Needs attention</h2><p>Your next actions, in order of priority.</p></div>
+      <span className={styles.summary}>{items.length} open {items.length === 1 ? "task" : "tasks"}</span>
+    </header>
+    {groups.map(group => {
+      const entries = items.filter(item => item.priority === group.priority);
+      return entries.length > 0 && <section key={group.priority} className={styles.group} data-priority={group.priority} aria-label={group.title}>
+        <div className={styles.groupHeading}><h3>{group.title}</h3><span>{group.description}</span></div>
+        <ul className={styles.tasks}>{entries.map(item => <li key={item.id}>
+          <span className={styles.taskIcon}><PortalIcon name={icons[item.category] ?? "file"} /></span>
+          <div className={styles.taskText}><span>{item.category}</span><strong>{item.label}</strong></div>
+          <Link className={styles.action} href={item.href} aria-label={`Review: ${item.label}`}>Review<PortalIcon name="arrow" /></Link>
+        </li>)}</ul>
+      </section>;
+    })}
+    {!items.length && <div className={styles.empty}><PortalIcon name="shield" /><div><strong>You’re all caught up</strong><p>No actions needed in your workspaces.</p></div></div>}
+    <footer className={styles.status}><PortalIcon name="panel" /><span>Access to {workspaceCount} workspaces</span>{live && <span>Alerts update automatically</span>}</footer>
+    {error && <p className={styles.refreshError} role="status">Unable to refresh alerts. Showing the last available update.</p>}
+  </section>;
 }

@@ -1,12 +1,11 @@
+import {defaultPromotion} from '../src/domain/event-engagement';
 import {approveFinance,recordRegistrationFinance} from "../tests/helpers/finance-acceptance.mts";
 import assert from 'node:assert/strict';
 import type {Browser} from '@playwright/test';
 import {expect} from '@playwright/test';
 import type {Pool} from 'pg';
 import {jsPDF} from 'jspdf';
-import {writeFile,readFile} from 'node:fs/promises';
-import {PNG} from 'pngjs';
-import jsQR from 'jsqr';
+import {writeFile} from 'node:fs/promises';
 import {istInput} from '../src/domain/event-flow';
 export async function operationalBrowserJourney({browser,base,cookies,db,dir,request,pass,communications}:{browser:Browser;base:string;cookies:string[];db:Pool;dir:string;request:(path:string,body?:unknown,actor?:number,status?:number)=>Promise<unknown>;pass:(s:string)=>void;communications:(eventId:string,stage:'promotion'|'reminder')=>Promise<void>}) {
  const check=expect.configure({timeout:30000});
@@ -16,43 +15,36 @@ export async function operationalBrowserJourney({browser,base,cookies,db,dir,req
  const staff=await staffContext.newPage(),member=await memberContext.newPage(),errors:string[]=[];
  for(const page of [staff,member])page.on('pageerror',e=>errors.push(e.message));
  const title='UI Operational Workshop';
- await staff.goto(base+'/admin/workspaces/events');await staff.getByRole('complementary',{name:'Event library',exact:true}).getByRole('button',{name:'New event',exact:true}).click();
- await staff.getByLabel('Title',{exact:true}).fill(title);await staff.getByLabel('Description',{exact:true}).fill('A practical workshop with a presentation, photos, report and member follow-up.');
- await staff.getByLabel('Venue / joining instructions').fill('TPA Test Auditorium');
- await staff.getByLabel('Starts (IST)').fill(istInput(new Date(Date.now()+2*86400000).toISOString()));await staff.getByLabel('Ends (IST)').fill(istInput(new Date(Date.now()+2*86400000+3600000).toISOString()));
- await staff.getByLabel('Capacity',{exact:true}).fill('10');await staff.getByLabel('Registration fee').fill('750');
- await staff.getByLabel('Visibility').selectOption('members');
- await staff.getByRole('button',{name:'Add speaker',exact:true}).click();await staff.getByLabel('Name',{exact:true}).fill('Dr. Operational Speaker');
- // Account selection may be part of creation or the saved-draft command center.
- await staff.getByLabel('Event payment accounts').selectOption({label:'Workshop UPI · TPA Test Association'});
- await staff.getByRole('button',{name:'Save draft',exact:true}).click();
- await check(staff.getByRole('status')).toContainText('Event draft saved');
- await check(staff.getByLabel('Title',{exact:true})).toHaveValue(title);
- const event=(await request('/api/staff/events') as {id:string;title:string}[]).find(e=>e.title===title);assert.ok(event);
- const booking=staff.locator('#event-booking');await booking.locator('summary').first().click();
- await booking.getByRole('checkbox',{name:'Workshop UPI · TPA Test Association',exact:true}).check();await booking.getByLabel('Configuration reason').fill('Verified test workshop payee');await booking.getByRole('button',{name:'Save event payment configuration'}).click();
- await check(staff.getByRole('region',{name:'Event command center'}).locator('[data-operation-message]').first()).toContainText('Saved');
- await staff.getByRole('link',{name:'Flyer / Promotion',exact:true}).click();
- await check(staff.getByRole('button',{name:'Generate preview'})).toBeEnabled();await staff.getByRole('button',{name:'Generate preview'}).click();
- await check(staff.locator('img.flyer-preview')).toBeVisible();
- const pdfDownload=staff.waitForEvent('download');await staff.getByRole('button',{name:'Download PDF'}).click();await (await pdfDownload).saveAs(dir+'/operational-workshop.pdf');
- await staff.goto(base+'/admin/workspaces/events?id='+event.id);await staff.getByRole('button',{name:'Publish saved event',exact:true}).click();
- await staff.goto(base+'/admin/workspaces/flyers?id='+event.id);await staff.getByRole('button',{name:'Generate preview',exact:true}).click();await check(staff.locator('img.flyer-preview')).toBeVisible();
- const memberPngDownload=staff.waitForEvent('download');await staff.getByRole('button',{name:'Download PNG',exact:true}).click();await (await memberPngDownload).saveAs(dir+'/member-workshop-published.png');
- const memberPdfDownload=staff.waitForEvent('download');await staff.getByRole('button',{name:'Download PDF',exact:true}).click();await (await memberPdfDownload).saveAs(dir+'/member-workshop-published.pdf');
- const png=PNG.sync.read(await readFile(dir+'/member-workshop-published.png'));assert.equal(png.width,1080);assert.equal(png.height,1350);assert.equal(jsQR(new Uint8ClampedArray(png.data),png.width,png.height)?.data,base+'/member/events?eventId='+event.id);
- pass('Published member flyer PNG/PDF export and registration QR destination verified');
- await staff.goto(base+'/admin/workspaces/events?id='+event.id);
- const engagement=staff.locator('.event-engagement');
- await engagement.getByText('Event promotion',{exact:true}).click();
- await engagement.getByRole('checkbox',{name:'Registration open',exact:true}).check();
- await engagement.getByRole('button',{name:'Save promotion settings',exact:true}).click();
- await check(engagement.locator('[aria-live=polite]')).toContainText('Promotion settings saved');
- await engagement.getByRole('button',{name:'Review saved promotion',exact:true}).click();
- await check(engagement.getByRole('button',{name:'Approve saved promotion schedule',exact:true})).toBeVisible();
- await engagement.getByRole('button',{name:'Approve saved promotion schedule',exact:true}).click();
- await check(engagement.locator('[aria-live=polite]')).toContainText('Saved promotion approved');
+ // The simplified editor owns basic event details; advanced lifecycle settings
+ // remain tested through their authenticated APIs rather than removed panels.
+ await staff.goto(base+'/admin/workspaces/events');
+ await staff.getByRole('button',{name:'Create new event',exact:true}).click();
+ await staff.getByLabel('Event title',{exact:true}).fill(title);
+ await staff.getByLabel('Venue or meeting link',{exact:true}).fill('TPA Test Auditorium');
+ await staff.getByLabel('Starts · IST',{exact:true}).fill(istInput(new Date(Date.now()+2*86400000).toISOString()));
+ await staff.getByLabel('Ends · IST',{exact:true}).fill(istInput(new Date(Date.now()+2*86400000+3600000).toISOString()));
+ await staff.getByRole('button',{name:'Create event',exact:true}).click();
+ await check(staff.getByRole('status').filter({hasText:'Event draft created'})).toBeVisible();
+ type EventRow={id:string;title:string;version:number};
+ const event=(await request('/api/staff/events') as EventRow[]).find(e=>e.title===title);assert.ok(event);
+ let current=(await request('/api/staff/events?id='+event.id) as EventRow[])[0];
+ await request('/api/staff/events',{action:'save',id:event.id,version:current.version,title,description:'A practical workshop with presentations and follow-up.',location:'TPA Test Auditorium',startsAt:new Date(Date.now()+2*86400000).toISOString(),endsAt:new Date(Date.now()+2*86400000+3600000).toISOString(),capacity:10,feePaise:75000,visibility:'members',deliveryMode:'location',speakers:[{name:'Dr. Operational Speaker',credentials:'Community educator'}],reminders:{enabled:true,offsets:[60],includePending:true}});
+ async function operate(action:string,extra:Record<string,unknown>={}){
+  current=(await request('/api/staff/events?id='+event!.id) as EventRow[])[0];
+  return request('/api/staff/events/operations',{eventId:event!.id,version:current.version,action,...extra});
+ }
+ const accounts=await request('/api/staff/payment-details') as {records:{id:string;status:string}[]};
+ const account=accounts.records.find(a=>a.status==='active');assert.ok(account);
+ await operate('payment.configure',{accountIds:[account.id],reason:'Verified test workshop payee'});
+ current=(await request('/api/staff/events?id='+event.id) as EventRow[])[0];
+ await request('/api/staff/events',{action:'publish',id:event.id,version:current.version});
+ const promotion=await request('/api/staff/event-promotions',{eventId:event.id,version:0,action:'save',settings:{...defaultPromotion,registration_open:true}}) as {version:number};
+ const review=await request('/api/staff/event-promotions',{eventId:event.id,version:promotion.version,action:'review'}) as {reviewToken:string};
+ await request('/api/staff/event-promotions',{eventId:event.id,version:promotion.version,action:'approve',reviewToken:review.reviewToken});
  await communications(event.id,'promotion');
+ await staff.goto(base+'/admin/workspaces/events?id='+event.id);
+ await check(staff.getByRole('dialog',{name:title,exact:true})).toBeVisible();
+ pass('Simplified event creation and details; authenticated payment configuration and promotion review');
  await member.goto(base+'/member/events?eventId='+event.id);const card=member.locator('article').filter({has:member.getByRole('heading',{name:title,exact:true})});
  await card.getByRole('button',{name:'Reserve place'}).click();await check(card.getByText(/^Receipt pending/)).toBeVisible();
 
@@ -62,18 +54,15 @@ export async function operationalBrowserJourney({browser,base,cookies,db,dir,req
  await staff.getByRole('tab',{name:'Participant collections',exact:true}).click();
  await check(staff.getByRole('row').filter({hasText:'member 2'})).toContainText('750.00');
  await member.reload();await check(card).toContainText('Registration confirmed');
- pass('Administrator creates/configures/exports/publishes/reviews promotion; member books/submits reference; admin receipt requires separate super-admin approval');
+ pass('Member booking and separately approved admin receipt remain visible in event collections');
  await communications(event.id,'reminder');
  // Time progression is the only database fixture operation in this UI lifecycle.
  await db.query("UPDATE tpa.events SET starts_at=now()-interval '2 hours',ends_at=now()-interval '1 hour',version=version+1 WHERE id=$1",[event.id]);
  await staff.goto(base+'/admin/workspaces/events?id='+event.id);
- // Wait for the initial overview response to commit before selecting attendees.
- // That response intentionally resets selections for the newly loaded version.
- await check(staff.getByRole('region',{name:'Event command center'}).getByText(/^Received /)).toBeVisible();
- const attendance=staff.locator('#event-attendance');await attendance.locator('summary').first().click();await attendance.getByRole('checkbox',{name:/^member 2/}).check();await attendance.getByLabel('Correction note').fill('Workshop attendance desk record');
- await attendance.getByRole('button',{name:'Mark selected attended',exact:true}).click();await check(staff.getByRole('region',{name:'Event command center'}).locator('[data-operation-message]').first()).toContainText('Saved');
- await attendance.getByRole('button',{name:'Finalize attendance and mark remaining confirmed registrants absent'}).click();
- await check(attendance.getByText('Attendance finalized',{exact:true})).toBeVisible();
+ await staff.getByRole('button',{name:'Participants & attendance',exact:true}).click();
+ await staff.getByRole('button',{name:'Check in',exact:true}).click();
+ await check(staff.getByRole('button',{name:'Checked in',exact:true})).toBeVisible();
+ await operate('attendance.finalize');
  await staff.goto(base+'/admin/workspaces/payments/events/'+event.id);
  await staff.getByRole('button',{name:'Add Expense',exact:true}).click();
  const expense=staff.getByRole('group',{name:'Draft expense sheet',exact:true});
@@ -85,27 +74,21 @@ export async function operationalBrowserJourney({browser,base,cookies,db,dir,req
  await check(staff.getByText('Pending approval',{exact:true}).first()).toBeVisible();
  const sheet=(await db.query("SELECT id FROM tpa.finance_entries WHERE event_id=$1 AND kind='expenses' AND status='submitted'",[event.id])).rows[0];
  await approveFinance(db,request,event.id,sheet.id,7);
- await staff.goto(base+'/admin/workspaces/events?id='+event.id);
- await check(staff.getByRole('region',{name:'Event command center'}).getByText(/^Received /)).toBeVisible();
- await attendance.locator('summary').first().click();
- // Upload usable artifacts through the existing resource form.
  const doc=new jsPDF();doc.text('TPA Workshop Presentation and Follow-up',20,20);const bytes=Buffer.from(doc.output('arraybuffer'));
  await writeFile(dir+'/workshop-resource.pdf',bytes);
- await staff.locator('#event-resources > summary').click();
- const resources=staff.locator('.event-engagement');const resourceDetails=resources.locator('details').filter({hasText:'Event resources'}).first();await resourceDetails.locator('summary').first().click();
- for(const [type,title] of [['presentation','Workshop presentation'],['photos','Workshop photos'],['report','Workshop report'],['other','Workshop reading resource']]) {
-  await resourceDetails.locator('select').first().selectOption('');await resourceDetails.getByLabel('Resource title').fill(title);await resourceDetails.getByLabel('Resource type').selectOption(type);await resourceDetails.getByLabel('Resource eligibility').selectOption('attended');await resourceDetails.getByLabel('Resource publication').selectOption('published');
+ for(const [type,resourceTitle] of [['presentation','Workshop presentation'],['photos','Workshop photos'],['report','Workshop report'],['other','Workshop reading resource']]) {
   const data=type==='photos'?Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64'):bytes;
-  await resourceDetails.getByLabel('PDF, JPEG or PNG · up to 5 MB').setInputFiles({name:type==='photos'?'workshop.png':'workshop.pdf',mimeType:type==='photos'?'image/png':'application/pdf',buffer:data});
-  await resourceDetails.getByRole('button',{name:'Upload resource',exact:true}).click();await check(resources.locator('[aria-live=polite]')).toContainText('Event resource saved');
+  const body=new FormData();body.set('details',JSON.stringify({eventId:event.id,title:resourceTitle,description:'Workshop follow-up',type,eligibility:'attended',status:'published',selectedMembers:[]}));body.set('file',new Blob([data],{type:type==='photos'?'image/png':'application/pdf'}),type==='photos'?'workshop.png':'workshop.pdf');
+  const response=await fetch(base+'/api/staff/event-assets',{method:'POST',headers:{Cookie:'better-auth.session_token='+cookies[0],Origin:base},body});assert.equal(response.status,200);
  }
- await attendance.getByRole('checkbox',{name:'I reviewed receipts, refunds, pending amounts and expenses.'}).check();await attendance.getByRole('button',{name:'Complete event',exact:true}).click();
+ await operate('complete',{financialReviewed:true});
  await check.poll(async()=>Boolean((await db.query('SELECT completed_at FROM tpa.events WHERE id=$1',[event.id])).rows[0].completed_at)).toBe(true);
+ await staff.goto(base+'/admin/workspaces/events?id='+event.id);await check(staff.getByRole('dialog')).toContainText('Completed');
  await member.reload();await check(card).toContainText('Attendance');await check(card).toContainText('badge');
  await card.getByText('Resources, perks and receipt history',{exact:true}).click();
  await check(member.getByRole('link',{name:'Workshop presentation',exact:true}).first()).toBeVisible();
  const download=member.waitForEvent('download');await member.getByRole('link',{name:'Workshop presentation',exact:true}).first().click();await (await download).saveAs(dir+'/member-presentation.pdf');
  await member.screenshot({path:dir+'/member-completed-workshop.png',fullPage:true});await staff.screenshot({path:dir+'/admin-completed-workshop.png',fullPage:true});
- assert.deepEqual(errors,[]);pass('UI attendance, expenses, four resource uploads, completion, badge, member history and authorized download');
+ assert.deepEqual(errors,[]);pass('UI check-in and expenses; API resource uploads and completion; member badge, history and authorized download');
  await memberContext.close();await staffContext.close();
 }

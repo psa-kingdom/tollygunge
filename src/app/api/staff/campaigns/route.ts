@@ -55,7 +55,25 @@ export async function GET(request: Request) {
     return {
       campaigns: (
         await getDatabase().query(
-          "SELECT * FROM tpa.campaign_drafts WHERE ($1='all' OR status=$1) ORDER BY updated_at DESC,id LIMIT 100",
+          `SELECT c.*, coalesce(s.dispatch_count,0)::int AS dispatch_count,
+            s.last_sent_version, s.all_cancelled,
+            coalesce(s.recipient_count,0)::int AS recipient_count,
+            coalesce(s.accepted_count,0)::int AS accepted_count,
+            coalesce(s.queued_count,0)::int AS queued_count
+          FROM tpa.campaign_drafts c
+          LEFT JOIN LATERAL (
+            SELECT count(DISTINCT d.id) AS dispatch_count,
+              max(d.campaign_version) AS last_sent_version,
+              bool_and(d.cancelled_at IS NOT NULL) AS all_cancelled,
+              count(j.id) AS recipient_count,
+              count(j.id) FILTER(WHERE j.status='accepted') AS accepted_count,
+              count(j.id) FILTER(WHERE j.status IN ('queued','leased') AND d.cancelled_at IS NULL) AS queued_count
+            FROM tpa.email_dispatches d
+            LEFT JOIN tpa.email_jobs j ON j.dispatch_id=d.id
+            WHERE d.campaign_id=c.id AND d.campaign_version=c.version
+          ) s ON true
+          WHERE ($1='all' OR c.status=$1)
+          ORDER BY c.updated_at DESC,c.id LIMIT 100`,
           [status],
         )
       ).rows,
@@ -100,11 +118,24 @@ export async function POST(request: Request) {
         const client = await getDatabase().connect();
         try {
           await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
-          const counts = (await client.query("SELECT now() AS as_of,count(*)::int AS matched,count(*) FILTER(WHERE n.status='confirmed' AND s.email IS NULL)::int AS eligible,count(*) FILTER(WHERE n.status='unsubscribed')::int AS unsubscribed,count(*) FILTER(WHERE n.status='pending')::int AS unverified,count(*) FILTER(WHERE n.status='confirmed' AND s.email IS NOT NULL)::int AS preference_blocked FROM tpa.public_subscribers n LEFT JOIN tpa.email_suppressions s ON s.email=n.email")).rows[0];
-          const sample = (await client.query("SELECT '' AS name,n.email FROM tpa.public_subscribers n LEFT JOIN tpa.email_suppressions s ON s.email=n.email WHERE n.status='confirmed' AND s.email IS NULL ORDER BY n.id LIMIT 20")).rows;
+          const counts = (
+            await client.query(
+              "SELECT now() AS as_of,count(*)::int AS matched,count(*) FILTER(WHERE n.status='confirmed' AND s.email IS NULL)::int AS eligible,count(*) FILTER(WHERE n.status='unsubscribed')::int AS unsubscribed,count(*) FILTER(WHERE n.status='pending')::int AS unverified,count(*) FILTER(WHERE n.status='confirmed' AND s.email IS NOT NULL)::int AS preference_blocked FROM tpa.public_subscribers n LEFT JOIN tpa.email_suppressions s ON s.email=n.email",
+            )
+          ).rows[0];
+          const sample = (
+            await client.query(
+              "SELECT '' AS name,n.email FROM tpa.public_subscribers n LEFT JOIN tpa.email_suppressions s ON s.email=n.email WHERE n.status='confirmed' AND s.email IS NULL ORDER BY n.id LIMIT 20",
+            )
+          ).rows;
           await client.query("COMMIT");
           return { ...counts, sample, audience, deliveryEnabled: false };
-        } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
+        } catch (error) {
+          await client.query("ROLLBACK");
+          throw error;
+        } finally {
+          client.release();
+        }
       }
       const values = [audience.city, audience.profession];
       const base =

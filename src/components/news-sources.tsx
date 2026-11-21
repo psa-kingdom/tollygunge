@@ -20,7 +20,9 @@ type Revision = {
   snapshot: Source;
 };
 const blank = { name: "", url: "", type: "website", notes: "" };
-export function NewsSources() {
+export function NewsSources({
+  onDirty,
+}: { onDirty?: (dirty: boolean) => void } = {}) {
   const [sources, setSources] = useState<Source[]>([]),
     [entry, setEntry] = useState<Source>(),
     [form, setForm] = useState(blank),
@@ -41,6 +43,10 @@ export function NewsSources() {
         : blank,
     );
   useEffect(() => {
+    onDirty?.(dirty);
+  }, [dirty, onDirty]);
+  useEffect(() => {
+    if (onDirty) return;
     const prevent = (e: BeforeUnloadEvent) => {
       if (dirty) {
         e.preventDefault();
@@ -64,7 +70,7 @@ export function NewsSources() {
       window.removeEventListener("beforeunload", prevent);
       document.removeEventListener("click", navigate, true);
     };
-  }, [dirty]);
+  }, [dirty, onDirty]);
   async function load(id?: string) {
     const data = await api<{
       sources: Source[];
@@ -186,7 +192,12 @@ export function NewsSources() {
         </button>
       </div>
       {!sources.length && (
-        <WorkspaceEmptyState compact icon="file" title="No sources yet" description="Add an editorial source below for administrator review. Approval does not fetch or publish content." />
+        <WorkspaceEmptyState
+          compact
+          icon="file"
+          title="No sources yet"
+          description="Add an editorial source below for administrator review. Approval does not fetch or publish content."
+        />
       )}
       <div className="action-row">
         {sources.map((source) => (

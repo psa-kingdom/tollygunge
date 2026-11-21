@@ -1,5 +1,6 @@
 import Link from "@/components/navigation-link";
 import { DashboardAttention } from "./dashboard-attention";
+import { DashboardActivity } from "./dashboard-activity";
 import { PortalIcon } from "@/components/portal-icon";
 import { dashboardMetricPresentation } from "@/domain/dashboard-presentation";
 import type { ReactNode } from "react";
@@ -38,8 +39,6 @@ export type AdminDashboardViewProps = {
 };
 
 export function AdminDashboardView({
-  adminName,
-  badge,
   subsections,
   metrics,
   attentionItems,
@@ -80,22 +79,7 @@ export function AdminDashboardView({
 
       <DashboardAttention live={liveAttention} initialItems={attentionItems.map(item => ({ ...item, count: item.count ?? 0 }))} workspaceCount={workspaceCount} />
 
-      {activity.length > 0 && (
-        <section className="bento-card" id="activity" style={{ marginTop: 16 }}>
-          <h2>Recent activity</h2>
-          <ul className="portal-activity-list">
-            {activity.map((a, index) => (
-              <li key={index}>
-                <div>
-                  <strong>{a.name || "System"}</strong>
-                  <span> · {a.action}</span>
-                </div>
-                <time>{a.time}</time>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {activity.length > 0 && <DashboardActivity activity={activity} />}
 
       {extraSections}
     </main>

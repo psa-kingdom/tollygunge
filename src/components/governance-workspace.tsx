@@ -16,7 +16,7 @@ type Data = {
   biographyTemplate:string;
 };
 const emptyGroup = { name: "", page: "governance", section: 0, order: 0 };
-export function GovernanceWorkspace() {
+export function GovernanceWorkspace({ initialId }: { initialId?: string } = {}) {
   const [data, setData] = useState<Data>(),
     [selected, setSelected] = useState<PersonEntry | null>(null),
     [tab, setTab] = useState("people"),
@@ -55,7 +55,7 @@ export function GovernanceWorkspace() {
           initialized.current=true;
           const params = new URLSearchParams(window.location.search);
           if (params.get("review") === "pending") setFilter("pending");
-          const id = params.get("id");
+          const id = initialId ?? params.get("id");
           if (id) {
             setFilter("all");
             void api<Data>(`/api/staff/governance?id=${encodeURIComponent(id)}`)
@@ -74,7 +74,7 @@ export function GovernanceWorkspace() {
     return () => {
       active = false;
     };
-  }, [directoryUrl]);
+  }, [directoryUrl,initialId]);
   async function openPerson(p: PersonEntry) {
     try {
       const details = await api<Data>(`/api/staff/governance?id=${p.id}`);

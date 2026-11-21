@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
-/** Enhance native disclosures; navigation and disclosure semantics work without JS. */
+/** Mark active page links and close the mobile menu after navigation or Escape. */
 export function PublicHeaderBehavior() {
   const marker = useRef<HTMLSpanElement>(null);
   const pathname = usePathname();
@@ -12,7 +12,7 @@ export function PublicHeaderBehavior() {
     const header = marker.current?.closest("header");
     if (!header) return;
     const disclosures = () => [
-      ...header.querySelectorAll<HTMLDetailsElement>(".nav-menu, .mobile-nav"),
+      ...header.querySelectorAll<HTMLDetailsElement>(".mobile-nav"),
     ];
     const close = (restoreFocus = false) => {
       const open = disclosures().filter((detail) => detail.open);
@@ -22,15 +22,14 @@ export function PublicHeaderBehavior() {
         detail.open = false;
       });
     };
-    header.querySelectorAll<HTMLElement>("[data-nav-href]").forEach((item) => {
-      const current = item.dataset.navHref === pathname;
-      item.dataset.currentPage = String(current);
-      const link = item.matches("a")
-        ? item
-        : item.querySelector(".nav-overview");
-      if (current) link?.setAttribute("aria-current", "page");
-      else link?.removeAttribute("aria-current");
-    });
+    header
+      .querySelectorAll<HTMLAnchorElement>("a[data-nav-href]")
+      .forEach((link) => {
+        const current = link.dataset.navHref === pathname;
+        link.dataset.currentPage = String(current);
+        if (current) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
     const pointer = (event: PointerEvent) => {
       header.dataset.input = "pointer";
       if (
