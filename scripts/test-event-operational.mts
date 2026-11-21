@@ -200,7 +200,15 @@ try {
 }catch(error){results.failures.push(String(error));throw error;}finally{
  await browser?.close();server?.kill();if(server&&server.exitCode===null)await new Promise(r=>server!.once('exit',r));
  if(storage)await new Promise<void>((r,reject)=>storage!.close(error=>error?reject(error):r()));objects.clear();
- await db.end();if(created){await root.query(`DROP DATABASE ${name} WITH (FORCE)`);assert.equal((await root.query('SELECT count(*)::int n FROM pg_database WHERE datname=$1',[name])).rows[0].n,0);results.cleanup=true;}await root.end();
+ await db.end();if(created){
+  let connections=0;
+  for(let attempt=0;attempt<100;attempt++) {
+   connections=(await root.query("SELECT count(*)::int n FROM pg_stat_activity WHERE datname=$1",[name])).rows[0].n;
+   if(!connections)break;
+   await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  assert.equal(connections,0,'Owned fixture connections must close before database retirement');
+  await root.query(`DROP DATABASE ${name}`);assert.equal((await root.query('SELECT count(*)::int n FROM pg_database WHERE datname=$1',[name])).rows[0].n,0);results.cleanup=true;}await root.end();
  const storagePath=resolve(dir,'files');assert.ok(storagePath.startsWith(dir+sep));await rm(storagePath,{recursive:true,force:true});
  await mkdir(dir,{recursive:true});await writeFile(dir+'/acceptance.json',JSON.stringify(results,null,2));console.log('Evidence: '+dir);
 }

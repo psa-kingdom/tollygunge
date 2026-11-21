@@ -678,16 +678,14 @@ try {
     ).toHaveValue("Career and contribution");
     await openWorkspace("/admin/workspaces/website");
     await expect(p).toHaveURL(base + "/admin/workspaces/content");
-    await p.locator("summary").filter({hasText:"Find content on this page"}).click();
-    await p.getByRole("button",{name:"Heading line 1",exact:false}).click();
+    await p.frameLocator("iframe").getByRole("button",{name:"Edit Hero · Heading line 1",exact:true}).click();
     const title=p.getByRole("textbox",{name:"Hero · Heading line 1",exact:true});
     await expect(title).toHaveValue("Managed homepage headline");
     await title.fill("UI managed homepage");
     await p.getByRole("button",{name:"Save draft",exact:true}).click();
     await expect(p.getByRole("status")).toContainText("Draft saved");
     await openWorkspace("/admin/workspaces/content",true);
-    await p.locator("summary").filter({hasText:"Find content on this page"}).click();
-    await p.getByRole("button",{name:"Heading line 1",exact:false}).click();
+    await p.frameLocator("iframe").getByRole("button",{name:"Edit Hero · Heading line 1",exact:true}).click();
     await expect(title).toHaveValue("UI managed homepage");
     await p.getByRole("button",{name:"Publish changes",exact:true}).click();
     await expect(p.getByRole("status")).toContainText("Page published");
@@ -776,6 +774,15 @@ try {
   }
   await new Promise<void>((r) => (storage ? storage.close(() => r()) : r()));
   await db.end();
-  if (created) await root.query("DROP DATABASE " + name + " WITH (FORCE)");
+  if (created) {
+    let connections=0;
+    for(let attempt=0;attempt<100;attempt++) {
+      connections=(await root.query("SELECT count(*)::int n FROM pg_stat_activity WHERE datname=$1",[name])).rows[0].n;
+      if(!connections) break;
+      await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    assert.equal(connections,0,"Owned fixture connections must close before database retirement");
+    await root.query("DROP DATABASE " + name);
+  }
   await root.end();
 }
