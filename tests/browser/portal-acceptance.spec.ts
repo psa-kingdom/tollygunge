@@ -563,6 +563,7 @@ test("member detail popup fits desktop and phone layouts", async ({ page }, info
       const rect = element.getBoundingClientRect();
       return rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1 && element.scrollWidth <= element.clientWidth + 1;
     })).toBe(true);
+    if (width <= 390) expect(await panel.locator("dl").first().evaluate(element => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length)).toBe(1);
     await page.screenshot({ path: info.outputPath(`member-details-${width}.png`), animations: "disabled" });
   }
   await panel.getByRole("button", { name: "Application review", exact: true }).click();
