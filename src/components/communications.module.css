@@ -231,6 +231,7 @@
   font-size: 13px;
 }
 .tableWrap {
+  position: relative;
   border: 1px solid var(--line);
   border-radius: var(--comm-radius);
   overflow: auto;

@@ -659,7 +659,7 @@ test("participant details open in a searchable event popup (synthetic API respon
  await dialog.getByRole("button",{name:"Participants & attendance",exact:true}).click();
  await expect(dialog.getByRole("region",{name:"Event participants",exact:true})).toContainText("Synthetic event guest");
  await expect(dialog.getByRole("button",{name:"Check in",exact:true})).toBeDisabled();
- await dialog.getByRole("textbox",{name:"Search participants",exact:true}).fill("no matching person");
+ await dialog.getByRole("searchbox",{name:"Search participants",exact:true}).fill("no matching person");
  await expect(dialog.getByRole("heading",{name:"No matching participants",exact:true})).toBeVisible();
  await page.keyboard.press("Escape");await expect(dialog).toHaveCount(0);
 });
