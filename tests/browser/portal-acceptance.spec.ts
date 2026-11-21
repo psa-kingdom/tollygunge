@@ -661,6 +661,10 @@ test("participant details open in a searchable event popup (synthetic API respon
  await expect(dialog.getByRole("button",{name:"Check in",exact:true})).toBeDisabled();
  await dialog.getByRole("searchbox",{name:"Search participants",exact:true}).fill("no matching person");
  await expect(dialog.getByRole("heading",{name:"No matching participants",exact:true})).toBeVisible();
+ // Native search inputs consume Escape to clear a nonempty query first.
+ await page.keyboard.press("Escape");
+ await expect(dialog.getByRole("searchbox",{name:"Search participants",exact:true})).toHaveValue("");
+ await dialog.getByRole("button",{name:"Close popup",exact:true}).focus();
  await page.keyboard.press("Escape");await expect(dialog).toHaveCount(0);
 });
 
