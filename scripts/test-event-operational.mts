@@ -163,7 +163,7 @@ try {
   for(const width of [1440,768,390]) {
    const context=await browser.newContext({viewport:{width,height:1000}});await context.addCookies([{name:'better-auth.session_token',value:cookies[0],url:base}]);
    const page=await context.newPage();const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
-   await page.goto(base+'/admin/workspaces/events?id='+event.id);await check(page.getByRole('region',{name:'Event command center',exact:true})).toBeVisible();
+   await page.goto(base+'/admin/workspaces/events?id='+event.id);await check(page.getByRole('dialog',{name:event.title,exact:true})).toBeVisible();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);assert.deepEqual(errors,[]);
    await page.addScriptTag({path:resolve('node_modules/axe-core/axe.min.js')});
    const accessibility=await page.evaluate(async()=>{
@@ -174,7 +174,7 @@ try {
    assert.deepEqual(accessibility.violations,[],`Accessibility violations at ${width}px`);
    const image=`command-center-${width}.png`;await page.screenshot({path:dir+'/'+image,fullPage:true});results.screenshots.push(image);await context.close();
   }
-  pass('Command center renders at desktop, tablet and phone sizes without overflow or runtime errors');
+  pass('Event details render at desktop, tablet and phone sizes without overflow or runtime errors');
   async function communications(eventId:string,stage:'promotion'|'reminder') {
    if(stage==='promotion') {
     await scheduleEventPromotions(db,new Date(),env);await scheduleEventPromotions(db,new Date(),env);
@@ -183,7 +183,7 @@ try {
     const deps={quota:async()=>({daily:{used:0,limit:1000,resets_at:new Date(Date.now()+86400000).toISOString()},monthly:{used:0,limit:10000,resets_at:new Date(Date.now()+86400000).toISOString()}}),request:async()=>({id:'synthetic-operational-promotion-'+(++sends)})};
     for(const job of jobs){await db.query("UPDATE tpa.email_jobs SET status='leased',lease_owner='operational',lease_until=now()+interval '2 minutes' WHERE id=$1",[job.id]);await processEmailJob(db,job.id,'operational',env,deps);}
     assert.equal(sends,3);assert.equal((await db.query("SELECT count(*)::int n FROM tpa.email_jobs j JOIN tpa.event_promotions p ON p.dispatch_id=j.dispatch_id WHERE p.event_id=$1 AND j.status='accepted'",[eventId])).rows[0].n,3);
-    pass('UI-reviewed promotion schedules once and is accepted by mocked transport for three eligible synthetic members');
+    pass('API-reviewed promotion schedules once and is accepted by mocked transport for three eligible synthetic members');
    } else {
     const e=(await db.query('SELECT starts_at FROM tpa.events WHERE id=$1',[eventId])).rows[0],clock=new Date(new Date(e.starts_at).getTime()-3600000);
     await scheduleEventReminders(db,clock,env);await scheduleEventReminders(db,clock,env);

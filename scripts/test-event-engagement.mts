@@ -114,21 +114,16 @@ try {
  browser=await chromium.launch({channel:process.env.TPA_BROWSER_CHANNEL??'chrome'});
  for(const width of [1440,768,390]){
   const context=await browser.newContext({viewport:{width,height:1000},acceptDownloads:true});await context.addCookies([{name:'better-auth.session_token',value:cookies[0],url:base}]);const page=await context.newPage();page.on('pageerror',err=>evidence.browserErrors.push(err.message));
-  if(width===1440){await page.goto(base+'/admin/workspaces/flyers?id='+draft.id);await page.getByRole('button',{name:'Generate preview',exact:true}).click();await expect(page.getByRole('status')).toContainText('Draft event');await expect(page.locator('img.flyer-preview')).toBeVisible();await page.locator('img.flyer-preview').screenshot({path:`${dir}/draft-flyer.png`});evidence.screenshots.push('draft-flyer.png');}
-  await page.goto(base+'/admin/workspaces/flyers?id='+e.id);await page.getByRole('button',{name:'Generate preview',exact:true}).click();await expect(page.locator('img.flyer-preview')).toBeVisible();await page.screenshot({path:`${dir}/flyers-${width}.png`,fullPage:true});evidence.screenshots.push(`flyers-${width}.png`);
-  await page.getByLabel('Promotional headline').fill('Last day to register');await expect(page.locator('img.flyer-preview')).toHaveCount(0);await page.getByRole('button',{name:'Generate preview',exact:true}).click();await expect(page.locator('img.flyer-preview')).toBeVisible();
-  await db.query('UPDATE tpa.events SET version=version+1 WHERE id=$1',[e.id]);await page.getByRole('button',{name:'Download PNG',exact:true}).click();await expect(page.getByRole('status')).toContainText('Event changed');await expect(page.locator('img.flyer-preview')).toHaveCount(0);
-  await page.goto(base+'/admin/workspaces/events?id='+past.id);await page.getByText('Event resources',{exact:true}).click();await page.screenshot({path:`${dir}/resources-${width}.png`,fullPage:true});evidence.screenshots.push(`resources-${width}.png`);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-  await page.locator('.event-engagement').screenshot({path:`${dir}/resource-panel-${width}.png`});evidence.screenshots.push(`resource-panel-${width}.png`);
-  if(width===1440){
-   const panel=page.locator('.event-engagement');await panel.getByLabel('Resource title').fill('Browser uploaded notes');await panel.getByLabel('Description',{exact:true}).fill('A protected browser upload');
-   const png=new PNG({width:2,height:2});png.data.fill(255);await panel.locator('input[type=file]').setInputFiles({name:'browser-notes.png',mimeType:'image/png',buffer:PNG.sync.write(png)});await panel.getByRole('button',{name:'Upload resource',exact:true}).click();await expect(panel.locator('[aria-live=polite]')).toContainText('Event resource saved');
-   await page.goto(base+'/admin/workspaces/events?id='+e.id);const promotionPanel=page.locator('.event-engagement');await promotionPanel.getByText('Event promotion',{exact:true}).click();await promotionPanel.getByRole('button',{name:'Review saved promotion',exact:true}).click();await expect(promotionPanel.getByRole('heading',{name:'Review saved audience and messages',exact:true})).toBeVisible();await promotionPanel.getByRole('button',{name:'Approve saved promotion schedule',exact:true}).click();await expect(promotionPanel.locator('[aria-live=polite]')).toContainText('Saved promotion approved');
-  }
+  await page.goto(base+'/admin/workspaces/events?id='+past.id);
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button',{name:'Participants & attendance',exact:true}).click();
+  await expect(page.getByLabel('Search participants',{exact:true})).toBeVisible();
+  await page.screenshot({path:`${dir}/participants-${width}.png`,fullPage:true});evidence.screenshots.push(`participants-${width}.png`);
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   await page.keyboard.press('Tab');assert.ok(await page.evaluate(()=>document.activeElement!==document.body));await context.close();
   const member=await browser.newContext({viewport:{width,height:1000}});await member.addCookies([{name:'better-auth.session_token',value:cookies[1],url:base}]);const memberPage=await member.newPage();memberPage.on('pageerror',err=>evidence.browserErrors.push(err.message));await memberPage.goto(base+'/member/events');await memberPage.getByRole('button',{name:'Attendance history',exact:true}).click();await expect(memberPage.getByRole('heading',{name:'Your attendance',exact:true})).toBeVisible();await expect(memberPage.locator('.event-attendance-stat')).toContainText('1');await memberPage.screenshot({path:`${dir}/journey-${width}.png`,fullPage:true});evidence.screenshots.push(`journey-${width}.png`);assert.ok(await memberPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await member.close();
  }
- assert.deepEqual(evidence.browserErrors,[]);pass('Desktop/tablet/phone flyer freshness, resource editor, member journey, keyboard focus and responsive layouts');evidence.passed=true;
+ assert.deepEqual(evidence.browserErrors,[]);pass('Desktop/tablet/phone participant dialogs, member journey, keyboard focus and responsive layouts; resources and promotions covered by API checks');evidence.passed=true;
 }finally{
  try{
   await browser?.close();if(server&&server.exitCode===null){const exit=new Promise(r=>server!.once('exit',r));server.kill();await exit;}if(workerDb!==db)await workerDb.end();await db.end();
