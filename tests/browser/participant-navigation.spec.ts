@@ -23,10 +23,10 @@ test('online task links keep the selected event and source',async({page})=>{
  const href=await nav.getByRole('link',{name:label,exact:true}).getAttribute('href');const url=new URL(href!,'http://portal.test');expect(url.searchParams.get('eventId')).toBe('example');expect(url.searchParams.get('source')).toBe('live');
  }
 });
-test('members keeps its own sections with an explicit event shortcut',async({page})=>{
+test('members keeps its own sections without the removed event shortcut',async({page})=>{
  await open(page,'/admin/workspaces/members');
  await expect(page.getByRole('navigation',{name:'Staff navigation'}).getByRole('link',{name:'Members',exact:true})).toHaveAttribute('aria-current','page');
  await expect(page.getByRole('navigation',{name:'Members sections'}).getByRole('link',{name:'Directory',exact:true})).toBeVisible();
- await expect(page.getByRole('link',{name:'Event attendance & participants →'})).toBeVisible();
+ await expect(page.getByRole('link',{name:'Event attendance & participants →'})).toHaveCount(0);
  await expect(page.getByRole('combobox')).toHaveCount(0);
 });

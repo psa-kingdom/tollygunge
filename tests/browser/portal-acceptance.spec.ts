@@ -308,6 +308,7 @@ test("all staff roles retain navigation, direct route, API and preview boundarie
         .getByRole("button", { name: "Open full details →" })
         .click();
       await expect(page.locator(".portal-inspector")).toBeVisible();
+      if (hasPermission([role], "staff:manage")) await page.getByRole("button", {name:"Manage membership",exact:true}).click();
       await expect(
         page.getByText("Edit member contact and professional details", {
           exact: true,
@@ -328,6 +329,7 @@ test("inspector resize and nested dismissal preserve unsaved member edits", asyn
   const first = page.locator(".member-record-button").first();
   await first.click();
   const panel = page.locator(".portal-inspector");
+  await panel.getByRole("button", {name:"Manage membership",exact:true}).click();
   await panel
     .getByText("Edit member contact and professional details", { exact: true })
     .click();
@@ -340,7 +342,7 @@ test("inspector resize and nested dismissal preserve unsaved member edits", asyn
   await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(field).toBeFocused();
   await expect(field).toHaveValue("Unsaved synthetic change");
-  expect(await panel.evaluate((el) => el.matches(":modal"))).toBe(false);
+  expect(await panel.evaluate((el) => el.matches(":modal"))).toBe(true);
   await panel
     .getByRole("button", { name: "Close details", exact: true })
     .click();
@@ -545,6 +547,32 @@ test("quick cards fit viewport edges and explicit keyboard close stays dismissed
   await expect(card).toHaveCount(0);
 });
 
+test("member detail popup fits desktop and phone layouts", async ({ page }, info) => {
+  await signInPortal(page, "administrator");
+  await page.goto("/admin/workspaces/members");
+  await showMembershipRecords(page);
+  await expect(page.getByRole("link", { name: "Event attendance & participants →", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Import / retry member records", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Select all who can be invited", exact: true })).toHaveCount(0);
+  await page.locator(".member-record-button").first().click();
+  const panel = page.locator(".portal-inspector");
+  await expect(panel.getByRole("button", { name: "Summary", exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const width of [1204, 390, 320]) {
+    await page.setViewportSize({ width, height: 760 });
+    await expect.poll(() => panel.evaluate(element => {
+      const rect = element.getBoundingClientRect();
+      return rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1 && element.scrollWidth <= element.clientWidth + 1;
+    })).toBe(true);
+    if (width <= 390) expect(await panel.locator("dl").first().evaluate(element => getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length)).toBe(1);
+    await page.screenshot({ path: info.outputPath(`member-details-${width}.png`), animations: "disabled" });
+  }
+  await panel.getByRole("button", { name: "Application review", exact: true }).click();
+  await expect(panel.getByRole("heading", { name: /Profile verification/ })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Confirm profile verification", exact: true })).toHaveCount(0);
+  await panel.getByRole("button", { name: "Close details", exact: true }).click();
+  await expect(panel).toHaveCount(0);
+});
+
 test("combined association directory keeps membership and account identities distinct", async ({
   page,
 }) => {
@@ -609,6 +637,7 @@ test("combined association directory keeps membership and account identities dis
       exact: true,
     }),
   ).toHaveCount(0);
+  await inspector.getByRole("button", { name: "Manage membership", exact: true }).click();
   await expect(
     inspector.getByRole("combobox", { name: "Membership status", exact: true }),
   ).toBeDisabled();

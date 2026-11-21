@@ -199,11 +199,15 @@ export function ProfileInspector({
   label,
   onClose,
   returnFocus,
+  modal = false,
+  closeDisabled = false,
 }: {
   children: React.ReactNode;
   label: string;
   onClose: () => void;
   returnFocus?: RefObject<HTMLElement | null>;
+  modal?: boolean;
+  closeDisabled?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const first = useRef<HTMLElement | null>(null);
@@ -220,7 +224,7 @@ export function ProfileInspector({
       if (!surface) return;
       const focused = document.activeElement instanceof HTMLElement && surface.contains(document.activeElement) ? document.activeElement : null;
       const scrollTop = surface.scrollTop;
-      if (media.matches) {
+      if (media.matches && !modal) {
         surface.close();
         surface.setAttribute("open", "");
       } else {
@@ -250,11 +254,12 @@ export function ProfileInspector({
       document.removeEventListener("keydown", key);
       if (originalTrigger?.isConnected) originalTrigger.focus();
     };
-  }, [returnFocus]);
+  }, [returnFocus, modal]);
   return (
     <dialog
       ref={dialog}
-      className={`${styles.inspector} portal-inspector`}
+      data-modal={modal || undefined}
+      className={`${styles.inspector} ${modal ? styles.modalInspector : ""} portal-inspector`}
       aria-label={label}
       onCancel={(event) => {
         event.preventDefault();
@@ -265,7 +270,7 @@ export function ProfileInspector({
     >
       <div className={styles.inspectorBar}>
         <span>Profile details</span>
-        <button type="button" onClick={onClose} aria-label="Close details">
+        <button type="button" onClick={onClose} disabled={closeDisabled} aria-label="Close details">
           ×
         </button>
       </div>

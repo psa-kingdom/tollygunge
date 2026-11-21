@@ -9,6 +9,7 @@ import { api } from "./operations-client";
 import { InvitationReleaseReview } from "./invitation-release-review";
 import { ProfilePreview, ProfileInspector } from "./profile-preview";
 import { CopyValue, StatusBadge } from "./portal-values";
+import styles from "./member-review.module.css";
 import { WorkspaceEmptyState } from "./workspace-ui";
 import { useEmailEditGuard } from "./email-edit-guard";
 type Member = {
@@ -57,13 +58,19 @@ export function MemberRegister({
   canViewPayments?: boolean;
 }) {
   const searchParams = useSearchParams();
+  const [detailTab, setDetailTab] = useState("Summary");
+  const [invitationMode, setInvitationMode] = useState(
+    Boolean(searchParams.get("invitationReview")),
+  );
   const personId = searchParams.get("personId");
   const actionParam = searchParams.get("action");
   const newParam = searchParams.get("new");
   const [editorDirty, setEditorDirty] = useState(false);
   const editorGuard = useEmailEditGuard(editorDirty);
-  const createRequested = canManage && (actionParam === "create" || newParam === "true");
-  const [previousCreateRequest, setPreviousCreateRequest] = useState(createRequested);
+  const createRequested =
+    canManage && (actionParam === "create" || newParam === "true");
+  const [previousCreateRequest, setPreviousCreateRequest] =
+    useState(createRequested);
   const [isCreating, setIsCreating] = useState(createRequested);
   const createButton = useRef<HTMLButtonElement | null>(null);
   const createHeading = useRef<HTMLHeadingElement>(null);
@@ -162,7 +169,10 @@ export function MemberRegister({
         if (!active || request !== requestSerial.current) return;
         setInvitation(held ? "held" : "all");
         setData(result);
-        if (personId) setSelected(result.rows[0]);
+        if (personId) {
+          setDetailTab("Summary");
+          setSelected(result.rows[0]);
+        }
       })
       .catch((e) => {
         if (active && request === requestSerial.current) setMessage(e.message);
@@ -295,49 +305,60 @@ export function MemberRegister({
             >
               + Create member
             </button>
-            <Link
+            <button
+              type="button"
               className="button secondary"
-              href="/admin/workspaces/onboarding"
+              aria-pressed={invitationMode}
+              onClick={() => {
+                setInvitationMode(!invitationMode);
+                setChosen([]);
+              }}
             >
-              Import / retry member records
-            </Link>
+              {invitationMode ? "Done selecting" : "Send invitations"}
+            </button>
           </div>
         )}
       </div>
-      <div className="member-register-bulk">
-        <InvitationReleaseReview
-          personIds={chosen}
-          canManage={canManage}
-          onComplete={() => {
-            void load();
-            setChosen([]);
-          }}
-        />
-        <button
-          className="button secondary"
-          disabled={!canManage || busy}
-          onClick={() =>
-            setChosen((old) => [
-              ...new Set([
-                ...old,
-                ...(data?.rows ?? [])
-                  .filter(
-                    (m) =>
-                      m.person_id &&
-                      m.record_kind !== "account" &&
-                      m.user_id &&
-                      !["accepted", "active account"].includes(
-                        m.invitation_status,
-                      ),
-                  )
-                  .map((m) => m.person_id!),
-              ]),
-            ])
-          }
-        >
-          Select eligible accounts on this page
-        </button>
-      </div>
+      {invitationMode && (
+        <div className="member-register-bulk">
+          <p>
+            Select members to review and send account invitations. This does not
+            approve membership.
+          </p>
+          <InvitationReleaseReview
+            personIds={chosen}
+            canManage={canManage}
+            onComplete={() => {
+              void load();
+              setChosen([]);
+            }}
+          />
+          <button
+            className="button secondary"
+            disabled={!canManage || busy}
+            onClick={() =>
+              setChosen((old) => [
+                ...new Set([
+                  ...old,
+                  ...(data?.rows ?? [])
+                    .filter(
+                      (m) =>
+                        m.person_id &&
+                        m.record_kind !== "account" &&
+                        m.user_id &&
+                        !["accepted", "active account"].includes(
+                          m.invitation_status,
+                        ),
+                    )
+                    .map((m) => m.person_id!),
+                ]),
+              ])
+            }
+          >
+            Select all who can be invited
+          </button>
+        </div>
+      )}
       <div className="profile-results-layout">
         <div>
           <div
@@ -349,9 +370,11 @@ export function MemberRegister({
             <table className="operations-table">
               <thead>
                 <tr>
-                  <th scope="col">
-                    <span className="sr-only">Select member</span>
-                  </th>
+                  {invitationMode && (
+                    <th scope="col">
+                      <span className="sr-only">Select member</span>
+                    </th>
+                  )}
                   <th scope="col">Person</th>
                   <th scope="col">Membership no.</th>
                   <th scope="col">Membership</th>
@@ -369,37 +392,41 @@ export function MemberRegister({
                         : ""
                     }
                   >
-                    <td>
-                      <label className="member-register-select">
-                        <input
-                          type="checkbox"
-                          disabled={
-                            !canManage ||
-                            busy ||
-                            !m.person_id ||
-                            m.record_kind === "account" ||
-                            !m.user_id ||
-                            ["accepted", "active account"].includes(
-                              m.invitation_status,
-                            )
-                          }
-                          checked={Boolean(
-                            m.person_id && chosen.includes(m.person_id),
-                          )}
-                          onChange={(e) => {
-                            const personId = m.person_id;
-                            if (!personId || m.record_kind === "account")
-                              return;
-                            setChosen((old) =>
-                              e.target.checked
-                                ? [...old, personId]
-                                : old.filter((id) => id !== personId),
-                            );
-                          }}
-                        />
-                        <span className="sr-only">Select {m.person.name}</span>
-                      </label>
-                    </td>
+                    {invitationMode && (
+                      <td>
+                        <label className="member-register-select">
+                          <input
+                            type="checkbox"
+                            disabled={
+                              !canManage ||
+                              busy ||
+                              !m.person_id ||
+                              m.record_kind === "account" ||
+                              !m.user_id ||
+                              ["accepted", "active account"].includes(
+                                m.invitation_status,
+                              )
+                            }
+                            checked={Boolean(
+                              m.person_id && chosen.includes(m.person_id),
+                            )}
+                            onChange={(e) => {
+                              const personId = m.person_id;
+                              if (!personId || m.record_kind === "account")
+                                return;
+                              setChosen((old) =>
+                                e.target.checked
+                                  ? [...old, personId]
+                                  : old.filter((id) => id !== personId),
+                              );
+                            }}
+                          />
+                          <span className="sr-only">
+                            Select {m.person.name}
+                          </span>
+                        </label>
+                      </td>
+                    )}
                     <td>
                       <ProfilePreview
                         key={
@@ -430,6 +457,7 @@ export function MemberRegister({
                             selectedButton.current = trigger;
                             setEditorDirty(false);
                             setIsCreating(false);
+                            setDetailTab("Summary");
                             setSelected(m);
                           })
                         }
@@ -538,9 +566,13 @@ export function MemberRegister({
         </div>
         {isCreating && (
           <ProfileInspector
+            modal
             returnFocus={createButton}
             label="Create new member"
-            onClose={closeDetails}
+            closeDisabled={busy}
+            onClose={() => {
+              if (!busy) closeDetails();
+            }}
           >
             {editorGuard.dialog}
             <section
@@ -589,9 +621,13 @@ export function MemberRegister({
         )}
         {selected && !isCreating && (
           <ProfileInspector
+            modal
             returnFocus={selectedButton}
             label={`${selected.person.name} member details`}
-            onClose={closeDetails}
+            closeDisabled={busy}
+            onClose={() => {
+              if (!busy) closeDetails();
+            }}
           >
             {editorGuard.dialog}
             <section
@@ -604,239 +640,326 @@ export function MemberRegister({
                   {selected.person.name}
                 </h3>
               </div>
-              <dl>
-                <dt>Membership number</dt>
-                <dd>
-                  <CopyValue
-                    value={selected.membership_number}
-                    label="membership number"
-                  />
-                </dd>
-                <dt>Email</dt>
-                <dd>
-                  <CopyValue value={selected.email} />
-                </dd>
-                <dt>Mobile</dt>
-                <dd>
-                  <CopyValue value={selected.mobile} />
-                </dd>
-                <dt>Organization</dt>
-                <dd>{selected.person.organization || "Not supplied"}</dd>
-                <dt>Designation</dt>
-                <dd>{selected.person.jobTitle || "Not supplied"}</dd>
-                <dt>Membership plan</dt>
-                <dd>{selected.type || "Not recorded"}</dd>
-                <dt>Membership status</dt>
-                <dd>{selected.status || "Not recorded"}</dd>
-                <dt>Invitation</dt>
-                <dd>
-                  {selected.invitation_status} · delivery:{" "}
-                  {selected.delivery_status || "not sent"}
-                </dd>
-                <dt>Address completion</dt>
-                <dd>
-                  {selected.address_completion_required
-                    ? "Required after activation"
-                    : "See recorded addresses"}
-                </dd>
-                <dt>Account</dt>
-                <dd>
-                  {selected.user_id ? "Linked account" : "No login account"}
-                </dd>
-                <dt>Pending event payments</dt>
-                <dd>
-                  {selected.pending_payments}{" "}
-                  {canViewPayments && (
-                    <Link href="/admin/workspaces/payments">
-                      Inspect payments
-                    </Link>
-                  )}
-                </dd>
-                <dt>Reviewed profile</dt>
-                <dd>
-                  {selected.professional_verified ? "Verified" : "Unverified"}
-                </dd>
-              </dl>
-              {selected.person_id && <MemberAttendanceHistory key={selected.person_id} personId={selected.person_id} />}
-              {canManage && <MemberVerificationReview
-                key={recordKey(selected)}
-                personId={selected.person_id}
-                userId={selected.user_id}
-                name={selected.person.name}
-                verified={selected.professional_verified}
-                disabled={busy || editorDirty}
-                onApproved={async () => {
-                  await load(0);
-                  setSelected(undefined);
-                  setMessage("Profile verification approved.");
-                }}
-              />}
-              <div className="action-row">
-                <button
-                  className="button secondary"
-                  disabled={
-                    !canManage ||
-                    busy ||
-                    editorDirty ||
-                    !selected.person_id ||
-                    selected.record_kind === "account" ||
-                    !selected.user_id ||
-                    ["accepted", "active account"].includes(
-                      selected.invitation_status,
-                    )
-                  }
-                  onClick={() => {
-                    if (
-                      selected.person_id &&
-                      selected.record_kind !== "account"
-                    ) {
-                      setChosen([selected.person_id]);
-                      setSelected(undefined);
-                    }
-                  }}
+              <div className={styles.identity}>
+                <StatusBadge
+                  tone={selected.status === "active" ? "active" : "neutral"}
                 >
-                  Review this member invitation
-                </button>
-                <label>
-                  Membership status
-                  <select
-                    value={selected.status || "unknown"}
-                    disabled={
-                      !canManage ||
-                      busy ||
-                      editorDirty ||
-                      selected.record_kind === "account"
-                    }
-                    onChange={async (e) => {
-                      if (
-                        !selected.person_id ||
-                        selected.record_kind === "account"
-                      )
-                        return;
-                      const next = e.target.value;
-                      if (
-                        !window.confirm(
-                          `Change ${selected.person.name}'s membership to ${next}?`,
-                        )
-                      )
-                        return;
-                      setBusy(true);
-                      try {
-                        await api("/api/staff/member-actions", {
-                          action: "membership",
-                          personId: selected.person_id,
-                          version: selected.membership_version,
-                          status: next,
-                        });
-                        await load();
-                        setSelected(undefined);
-                        setMessage("Membership status saved.");
-                      } catch (e) {
-                        setMessage((e as Error).message);
-                      } finally {
-                        setBusy(false);
-                      }
-                    }}
-                  >
-                    <option value="unknown" disabled>
-                      Not recorded
-                    </option>
-                    {["active", "expired", "suspended", "resigned"].map((v) => (
-                      <option key={v}>{v}</option>
-                    ))}
-                  </select>
-                </label>
+                  {selected.status || "Not recorded"}
+                </StatusBadge>
+                <span>
+                  {selected.type || "No membership plan"} ·{" "}
+                  {selected.membership_number || "No membership number"}
+                </span>
               </div>
-              {canManage &&
-                selected.person_id &&
-                selected.record_kind !== "account" && (
-                  <MemberEditor
-                    key={selected.person_id + selected.person_version}
-                    member={{ ...selected, person_id: selected.person_id }}
-                    onDirtyChange={setEditorDirty}
-                    onSaved={() => {
-                      setEditorDirty(false);
-                      void load(
-                        0,
-                        {
-                          q,
-                          status,
-                          invitation,
-                          kind,
-                          verification,
-                          contact,
-                          review,
-                        },
-                        true,
-                      );
-                      setSelected(undefined);
-                    }}
-                  />
-                )}
-              <details>
-                <summary>Recorded addresses</summary>
-                {Object.entries(
-                  (selected.person.addresses as Record<
-                    string,
-                    Record<string, string>
-                  >) ?? {},
-                ).map(([kind, a]) => (
-                  <p key={kind}>
-                    <strong>{kind}</strong>
-                    <br />
-                    {[
-                      a.line1,
-                      a.line2,
-                      a.city,
-                      a.district,
-                      a.state,
-                      a.postalCode,
-                      a.country,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </p>
-                ))}
-              </details>
-              {canManage && selected.person_id && selected.record_kind !== "account" && (
-                <button
-                  type="button"
-                  className="button danger"
-                  disabled={busy || editorDirty}
-                  onClick={async () => {
-                    if (!window.confirm(
-                      `Delete ${selected.person.name} from the member directory? Their profile will be archived and removed from public view. Their login account, payment records and history will be retained. You can restore the profile from Publishing → Committees & people → Archived.`,
-                    )) return;
-                    setBusy(true);
-                    try {
-                      await api("/api/staff/member-actions", {
-                        action: "delete",
-                        personId: selected.person_id,
-                        personVersion: selected.person_version,
-                        version: selected.membership_version,
-                      });
-                      setChosen((previous) => previous.filter((id) => id !== selected.person_id));
-                      setSelected(undefined);
-                      await load(0);
-                      setMessage("Member deleted from the directory. Their archived profile can be restored from Publishing → Committees & people.");
-                      createButton.current?.focus();
-                    } catch (error) {
-                      setMessage(error instanceof Error ? error.message : "Unable to delete member. Try again.");
-                    } finally {
-                      setBusy(false);
+              <nav className={styles.tabs} aria-label="Member details sections">
+                {[
+                  "Summary",
+                  ...(canManage ? ["Application review"] : []),
+                  "Attendance",
+                  ...(canManage ? ["Manage membership"] : []),
+                ].map((tab) => (
+                  <button
+                    type="button"
+                    key={tab}
+                    disabled={busy}
+                    aria-pressed={detailTab === tab}
+                    onClick={() =>
+                      editorGuard.proceed(() => {
+                        setEditorDirty(false);
+                        setDetailTab(tab);
+                      })
                     }
-                  }}
-                >
-                  Delete member
-                </button>
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </nav>
+              {detailTab === "Summary" && (
+                <div className={styles.summary}>
+                  <h4>Contact & membership</h4>
+                  <dl>
+                    <dt>Membership number</dt>
+                    <dd>
+                      <CopyValue
+                        value={selected.membership_number}
+                        label="membership number"
+                      />
+                    </dd>
+                    <dt>Email</dt>
+                    <dd>
+                      <CopyValue value={selected.email} />
+                    </dd>
+                    <dt>Mobile</dt>
+                    <dd>
+                      <CopyValue value={selected.mobile} />
+                    </dd>
+                    <dt>Organization</dt>
+                    <dd>{selected.person.organization || "Not supplied"}</dd>
+                    <dt>Designation</dt>
+                    <dd>{selected.person.jobTitle || "Not supplied"}</dd>
+                    <dt>Invitation</dt>
+                    <dd>
+                      {selected.invitation_status} · delivery:{" "}
+                      {selected.delivery_status || "not sent"}
+                    </dd>
+                    <dt>Address completion</dt>
+                    <dd>
+                      {selected.address_completion_required
+                        ? "Required after activation"
+                        : "See recorded addresses"}
+                    </dd>
+                    <dt>Account</dt>
+                    <dd>
+                      {selected.user_id ? "Linked account" : "No login account"}
+                    </dd>
+                    <dt>Pending event payments</dt>
+                    <dd>
+                      {selected.pending_payments}{" "}
+                      {canViewPayments && (
+                        <Link href="/admin/workspaces/payments">
+                          Inspect payments
+                        </Link>
+                      )}
+                    </dd>
+                    <dt>Reviewed profile</dt>
+                    <dd>
+                      {selected.professional_verified
+                        ? "Verified"
+                        : "Unverified"}
+                    </dd>
+                  </dl>
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() => setDetailTab("Application review")}
+                    hidden={!canManage}
+                  >
+                    Review application
+                  </button>
+                </div>
               )}
-              {selected.person_id && (
-                <Link
-                  className="button secondary"
-                  href={"/admin/workspaces/governance?id=" + selected.person_id}
-                >
-                  Open profile
-                </Link>
+              {detailTab === "Attendance" && (
+                <section className={styles.section}>
+                  {selected.person_id ? (
+                    <MemberAttendanceHistory
+                      key={selected.person_id}
+                      personId={selected.person_id}
+                    />
+                  ) : (
+                    <p>No membership record is linked to this account.</p>
+                  )}
+                </section>
+              )}
+              {detailTab === "Application review" && (
+                <section className={styles.section}>
+                  <h4>Application review</h4>
+                  <p>
+                    Check the submitted details and evidence, then approve or
+                    request changes. Profile verification and membership status
+                    are separate decisions.
+                  </p>
+                  {canManage && (
+                    <MemberVerificationReview
+                      onBusyChange={setBusy}
+                      autoOpen
+                      key={recordKey(selected)}
+                      personId={selected.person_id}
+                      userId={selected.user_id}
+                      name={selected.person.name}
+                      verified={selected.professional_verified}
+                      disabled={busy || editorDirty}
+                      onApproved={async () => {
+                        await load(0);
+                      }}
+                    />
+                  )}
+                </section>
+              )}
+              {detailTab === "Manage membership" && (
+                <section className={styles.section}>
+                  <h4>Manage membership</h4>
+                  <p>
+                    Update membership status or edit the member’s recorded
+                    details.
+                  </p>
+                  <div className="action-row">
+                    <button
+                      className="button secondary"
+                      disabled={
+                        !canManage ||
+                        busy ||
+                        editorDirty ||
+                        !selected.person_id ||
+                        selected.record_kind === "account" ||
+                        !selected.user_id ||
+                        ["accepted", "active account"].includes(
+                          selected.invitation_status,
+                        )
+                      }
+                      onClick={() => {
+                        if (
+                          selected.person_id &&
+                          selected.record_kind !== "account"
+                        ) {
+                          setInvitationMode(true);
+                          setChosen([selected.person_id]);
+                          setSelected(undefined);
+                        }
+                      }}
+                    >
+                      Review this member invitation
+                    </button>
+                    <label>
+                      Membership status
+                      <select
+                        value={selected.status || "unknown"}
+                        disabled={
+                          !canManage ||
+                          busy ||
+                          editorDirty ||
+                          selected.record_kind === "account"
+                        }
+                        onChange={async (e) => {
+                          if (
+                            !selected.person_id ||
+                            selected.record_kind === "account"
+                          )
+                            return;
+                          const next = e.target.value;
+                          if (
+                            !window.confirm(
+                              `Change ${selected.person.name}'s membership to ${next}?`,
+                            )
+                          )
+                            return;
+                          setBusy(true);
+                          try {
+                            await api("/api/staff/member-actions", {
+                              action: "membership",
+                              personId: selected.person_id,
+                              version: selected.membership_version,
+                              status: next,
+                            });
+                            await load();
+                            setSelected(undefined);
+                            setMessage("Membership status saved.");
+                          } catch (e) {
+                            setMessage((e as Error).message);
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        <option value="unknown" disabled>
+                          Not recorded
+                        </option>
+                        {["active", "expired", "suspended", "resigned"].map(
+                          (v) => (
+                            <option key={v}>{v}</option>
+                          ),
+                        )}
+                      </select>
+                    </label>
+                  </div>
+                  {canManage &&
+                    selected.person_id &&
+                    selected.record_kind !== "account" && (
+                      <MemberEditor
+                        key={selected.person_id + selected.person_version}
+                        member={{ ...selected, person_id: selected.person_id }}
+                        onDirtyChange={setEditorDirty}
+                        onSaved={() => {
+                          setEditorDirty(false);
+                          void load(
+                            0,
+                            {
+                              q,
+                              status,
+                              invitation,
+                              kind,
+                              verification,
+                              contact,
+                              review,
+                            },
+                            true,
+                          );
+                          setSelected(undefined);
+                        }}
+                      />
+                    )}
+                  <details>
+                    <summary>Recorded addresses</summary>
+                    {Object.entries(
+                      (selected.person.addresses as Record<
+                        string,
+                        Record<string, string>
+                      >) ?? {},
+                    ).map(([kind, a]) => (
+                      <p key={kind}>
+                        <strong>{kind}</strong>
+                        <br />
+                        {[
+                          a.line1,
+                          a.line2,
+                          a.city,
+                          a.district,
+                          a.state,
+                          a.postalCode,
+                          a.country,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    ))}
+                  </details>
+                  {canManage &&
+                    selected.person_id &&
+                    selected.record_kind !== "account" && (
+                      <button
+                        type="button"
+                        className="button danger"
+                        disabled={busy || editorDirty}
+                        onClick={async () => {
+                          if (
+                            !window.confirm(
+                              `Delete ${selected.person.name} from the member directory? Their profile will be archived and removed from public view. Their login account, payment records and history will be retained. You can restore the profile from Publishing → Committees & people → Archived.`,
+                            )
+                          )
+                            return;
+                          setBusy(true);
+                          try {
+                            await api("/api/staff/member-actions", {
+                              action: "delete",
+                              personId: selected.person_id,
+                              personVersion: selected.person_version,
+                              version: selected.membership_version,
+                            });
+                            setChosen((previous) =>
+                              previous.filter(
+                                (id) => id !== selected.person_id,
+                              ),
+                            );
+                            setSelected(undefined);
+                            await load(0);
+                            setMessage(
+                              "Member deleted from the directory. Their archived profile can be restored from Publishing → Committees & people.",
+                            );
+                            createButton.current?.focus();
+                          } catch (error) {
+                            setMessage(
+                              error instanceof Error
+                                ? error.message
+                                : "Unable to delete member. Try again.",
+                            );
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        Delete member
+                      </button>
+                    )}
+                </section>
               )}
               {selected.user_id && (
                 <Link
@@ -849,6 +972,7 @@ export function MemberRegister({
                   Open account details →
                 </Link>
               )}
+              {message && <p role="status">{message}</p>}
             </section>
           </ProfileInspector>
         )}

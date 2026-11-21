@@ -341,10 +341,10 @@
   border-radius: 50%;
 }
 @media (min-width: 1280px) {
-  .horizontal :global(.profile-results-layout:has(> .portal-inspector)) {
+  .horizontal :global(.profile-results-layout:has(> .portal-inspector:not([data-modal]))) {
     grid-template-columns: minmax(0, 1fr) minmax(340px, 380px);
   }
-  .horizontal :global(.directory-layout:has(> .portal-inspector)) {
+  .horizontal :global(.directory-layout:has(> .portal-inspector:not([data-modal]))) {
     grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
   }
 }

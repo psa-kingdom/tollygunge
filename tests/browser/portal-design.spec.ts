@@ -421,10 +421,13 @@ test("admin dashboard updates signup and application notifications without appro
   await expect(dashboard.getByRole("link", { name: /2 new sign-ups/ })).toBeVisible();
   items = [{ id: "verification", label: "1 applications awaiting profile review", href: "/admin/workspaces/verification", category: "Verification", priority: "Normal", count: 1 }];
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect(dashboard.getByRole("link", { name: /1 applications awaiting profile review/ })).toBeVisible();
+  await expect(dashboard.getByRole("button", { name: /1 applications awaiting profile review/ })).toBeVisible();
   await expect(dashboard.getByRole("link", { name: /2 new sign-ups/ })).toHaveCount(0);
-  await dashboard.getByRole("link", { name: /1 applications awaiting profile review/ }).click();
-  await expect(page.getByRole("heading", { name: "Verification", exact: true })).toBeVisible();
+  await dashboard.getByRole("button", { name: /1 applications awaiting profile review/ }).click();
+  const reviewPopup = page.getByRole("dialog", {name:"Review membership applications",exact:true});
+  await expect(reviewPopup.getByRole("heading", {name:"Membership application review",exact:true})).toBeVisible();
+  await expect(page).toHaveURL(/\/admin$/);
+  await reviewPopup.getByRole("button", {name:"Close details",exact:true}).click();
   await page.goto("/admin/workspaces/members?view=accounts");
   await expect(page.getByRole("link", { name: "Directory", exact: true })).toHaveAttribute("aria-current", "page");
 });
@@ -456,14 +459,14 @@ test("dashboard semantic colors cover themes, completion states and interactive 
   await page.reload();
   for (const mode of ["light", "dark"]) {
     await page.evaluate(value => document.documentElement.setAttribute("data-color-mode", value), mode);
-    await expect(page.getByRole("region", { name: "Needs attention", exact: true }).getByRole("link", { name: /2 applications/ })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Needs attention", exact: true }).getByRole("button", { name: /2 applications/ })).toBeVisible();
     await layoutFits(page);
     if (!baseline) {
       await dashboardTextContrast(page);
-      await expect(page.locator('#attention').getByRole('link',{name:/2 applications/})).toHaveCount(1);
+      await expect(page.locator('#attention').getByRole('button',{name:/2 applications/})).toHaveCount(1);
       const metrics = await page.locator(".service-metrics > a").evaluateAll(elements => elements.map(el => ({ count: Number(el.querySelector("strong")!.textContent), tone: el.getAttribute("data-tone") })));
       expect(metrics.every(metric => metric.count !== 0 || metric.tone !== "warning")).toBeTruthy();
-      const row=page.locator('#attention').getByRole('link',{name:/2 applications/});
+      const row=page.locator('#attention').getByRole('button',{name:/2 applications/});
       await row.scrollIntoViewIfNeeded();await row.focus();
       await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
       expect(await row.evaluate(el=>el.matches(':focus-visible'))).toBeTruthy();
@@ -524,7 +527,9 @@ test("member previews support copying, stable pinning and accessible dismissal",
   await expect(details).toBeVisible();
   const name = await details.getByRole("heading").first().textContent();
   if (info.project.name === "desktop" && await records.getByRole("button", {name:/^Open .* details$/}).count() > 1) {
-    await records.getByRole("button", {name:/^Open .* details$/}).nth(1).hover();
+    expect(await details.evaluate(element => element.matches(":modal"))).toBe(true);
+    await page.keyboard.press("Tab");
+    expect(await details.evaluate(element => element.contains(document.activeElement))).toBe(true);
     await expect(page.getByRole("dialog", {name:/quick preview/})).toHaveCount(0);
     await expect(details.getByRole("heading").first()).toHaveText(name!);
   }

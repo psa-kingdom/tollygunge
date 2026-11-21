@@ -15,7 +15,6 @@ export function PortalNavigation({
   groups,
   subsections = false,
   staff = false,
-  canViewParticipants = false,
 }: {
   groups: PortalGroup[];
   subsections?: boolean;
@@ -151,7 +150,6 @@ export function PortalNavigation({
   return (
     <div className="member-section-navigation">
       {navigation}
-      {canViewParticipants && <Link className="participant-shortcut" href="/admin/workspaces/events?view=participants">Event attendance & participants →</Link>}
     </div>
   );
 }

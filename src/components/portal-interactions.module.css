@@ -252,6 +252,30 @@
     height: 44px;
   }
 }
+.inspector.modalInspector {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(880px, calc(100vw - 32px));
+  height: min(820px, calc(100dvh - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 24px 80px #0e203b30;
+  overflow: auto;
+}
+.modalInspector .inspectorBar {
+  top: -24px;
+  margin: -24px -24px 24px;
+  padding: 14px 24px;
+}
+@media (max-width: 600px) {
+  .inspector.modalInspector { width: calc(100vw - 16px); height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); padding: 18px; border-radius: 12px; }
+  .modalInspector .inspectorBar { top: -18px; margin: -18px -18px 18px; padding: 12px 18px; }
+}
 @keyframes appear {
   from {
     opacity: 0;

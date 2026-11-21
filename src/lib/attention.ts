@@ -95,7 +95,7 @@ export async function attentionFor(actor: Actor) {
       "profile-reviews",
       "SELECT count(*)::int n FROM tpa.profile_reviews WHERE status='pending'",
       "personal profile changes awaiting review",
-      "/admin/workspaces/governance?review=pending",
+      "/admin?review=profile-reviews",
       "Verification",
     );
   if (hasPermission(actor.roles, "content:publish"))
