@@ -1,6 +1,8 @@
 import { policy } from "@/lib/verification-service";
 import { randomUUID } from "node:crypto";
 import { currentActor } from "@/lib/actor";
+import { hasPermission } from "@/domain/access";
+import { applicable, type VerificationField } from "@/domain/verification";
 import { getDatabase } from "@/lib/database";
 import { isSameOrigin } from "@/lib/request-policy";
 import {
@@ -41,6 +43,7 @@ export async function POST(request: Request) {
     kind: string,
     contentType: string,
     fieldId = "",
+    memberUserId = "",
     applicationVersion = 0;
   try {
     const body = await boundedBody(request, MAX_DOCUMENT_BYTES + 64 * 1024);
@@ -50,6 +53,7 @@ export async function POST(request: Request) {
     const file = form.get("file");
     kind = String(form.get("kind") ?? "");
     fieldId = String(form.get("fieldId") ?? "");
+    memberUserId = String(form.get("memberUserId") ?? "");
     applicationVersion = Number(form.get("applicationVersion") ?? 0);
     if (!(file instanceof File)) throw new Error();
     contentType = file.type;
@@ -65,6 +69,14 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  if (memberUserId && !hasPermission(actor.roles, "staff:manage"))
+    return Response.json({ error: "Access denied." }, { status: 403 });
+  if (memberUserId && (!fieldId || memberUserId.length > 200))
+    return Response.json(
+      { error: "Choose a member evidence field." },
+      { status: 400 },
+    );
+  const ownerId = memberUserId || actor.id;
   const id = randomUUID();
   if (!privateStorageConfigured())
     return Response.json(
@@ -75,23 +87,33 @@ export async function POST(request: Request) {
   try {
     await client.query("BEGIN");
     await client.query('SELECT id FROM public."user" WHERE id=$1 FOR UPDATE', [
-      actor.id,
+      ownerId,
     ]);
     if (fieldId) {
-      const p = await policy(client),
-        field = p.fields.find(
-          (f) =>
-            f.id === fieldId &&
-            f.type === "document" &&
-            f.visible &&
-            f.documentKind === kind,
-        );
       const draft = (
         await client.query(
           "SELECT * FROM tpa.application_drafts WHERE user_id=$1 FOR UPDATE",
-          [actor.id],
+          [ownerId],
         )
       ).rows[0];
+      const fields: VerificationField[] = memberUserId
+        ? draft
+          ? ((
+              await client.query(
+                "SELECT fields FROM tpa.verification_policies WHERE version=$1",
+                [draft.requirement_version],
+              )
+            ).rows[0]?.fields ?? [])
+          : []
+        : (await policy(client)).fields;
+      const field = fields.find(
+        (f) =>
+          f.id === fieldId &&
+          f.type === "document" &&
+          f.documentKind === kind &&
+          applicable(f, draft?.category) &&
+          (!memberUserId || (f.step !== 4 && !/signature/i.test(f.id))),
+      );
       if (
         !field ||
         !draft ||
@@ -112,12 +134,12 @@ export async function POST(request: Request) {
     // Write metadata transaction first, then storage. Failed storage/commit removes only this request's object.
     await client.query(
       "INSERT INTO tpa.private_documents(id,owner_user_id,kind,content_type,byte_size) VALUES($1,$2,$3,$4,$5)",
-      [id, actor.id, kind, contentType, bytes.byteLength],
+      [id, ownerId, kind, contentType, bytes.byteLength],
     );
     if (fieldId)
       await client.query(
         "INSERT INTO tpa.application_documents(application_id,document_id) SELECT id,$2 FROM tpa.application_drafts WHERE user_id=$1",
-        [actor.id, id],
+        [ownerId, id],
       );
     await uploadWithCleanup({
       store: () => storePrivateDocument(id, bytes, contentType),

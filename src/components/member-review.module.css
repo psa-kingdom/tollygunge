@@ -55,6 +55,100 @@
   align-items: center;
   gap: 8px;
 }
+.detailPair {
+  display: contents;
+}
+.applicationDetails {
+  margin-block-start: 24px;
+}
+.applicationFields {
+  display: grid;
+  gap: 16px;
+  border: 0;
+  margin: 0 0 16px;
+  padding: 0;
+  min-inline-size: 0;
+}
+.applicationFields > section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 8px 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+.applicationFields .addressField {
+  grid-column: 1 / -1;
+}
+.applicationFields > section > div {
+  min-width: 0;
+}
+.applicationFields fieldset:not(:global(.address-form)) {
+  min-width: 0;
+}
+.evidenceUpload {
+  margin-block-start: 6px;
+  font-weight: 600;
+}
+.section :global(form.member-settings.member-details-editor) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 185px), 1fr));
+  align-items: start;
+  gap: 8px 14px;
+  max-width: none;
+  margin-block: 12px 0;
+}
+.section :global(.member-details-editor > label) {
+  margin: 0;
+  min-width: 0;
+}
+.section :global(.member-details-editor > button),
+.section :global(.member-details-editor > p) {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin: 0;
+}
+.section :global(.member-details-editor > p:empty) {
+  display: none;
+}
+.applicationFields h5 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 14px;
+}
+.applicationFields dl,
+.applicationFields dd {
+  margin: 0;
+}
+.applicationFields dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.applicationFields label {
+  display: block;
+}
+.applicationFields input:not([type="checkbox"]),
+.applicationFields select,
+.applicationFields textarea {
+  display: block;
+  width: 100%;
+  margin-block-start: 4px;
+}
+.membershipControls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 16px;
+}
+.membershipControls label {
+  display: grid;
+  gap: 4px;
+}
+.deleteMember {
+  margin-block-start: 16px;
+}
 .summary dt {
   color: var(--muted);
 }

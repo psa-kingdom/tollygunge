@@ -339,11 +339,8 @@ export function MemberEditor({
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   return (
-    <><a className="text-link" href={`/admin/workspaces/governance?id=${member.person_id}`}>Manage person and committee profile →</a>
-    <details>
-      <summary>Edit member contact and professional details</summary>
       <form
-        className="member-settings"
+        className="member-settings member-details-editor"
         onChange={() => onDirtyChange?.(true)}
         onSubmit={async (e) => {
           e.preventDefault();
@@ -419,6 +416,5 @@ export function MemberEditor({
         </button>
         <p role="status">{message}</p>
       </form>
-    </details></>
   );
 }

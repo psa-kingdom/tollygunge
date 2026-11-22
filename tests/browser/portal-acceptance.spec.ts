@@ -308,9 +308,8 @@ test("all staff roles retain navigation, direct route, API and preview boundarie
         .getByRole("button", { name: "Open full details →" })
         .click();
       await expect(page.locator(".portal-inspector")).toBeVisible();
-      if (hasPermission([role], "staff:manage")) await page.getByRole("button", {name:"Manage membership",exact:true}).click();
       await expect(
-        page.getByText("Edit member contact and professional details", {
+        page.getByRole("button", { name: "Edit details",
           exact: true,
         }),
       ).toHaveCount(hasPermission([role], "staff:manage") ? 1 : 0);
@@ -329,9 +328,8 @@ test("inspector resize and nested dismissal preserve unsaved member edits", asyn
   const first = page.locator(".member-record-button").first();
   await first.click();
   const panel = page.locator(".portal-inspector");
-  await panel.getByRole("button", {name:"Manage membership",exact:true}).click();
   await panel
-    .getByText("Edit member contact and professional details", { exact: true })
+    .getByRole("button", { name: "Edit details", exact: true })
     .click();
   const field = panel.getByLabel("First name", { exact: true });
   await field.fill("Unsaved synthetic change");
@@ -556,7 +554,7 @@ test("member detail popup fits desktop and phone layouts", async ({ page }, info
   await expect(page.getByRole("button", { name: "Select all who can be invited", exact: true })).toHaveCount(0);
   await page.locator(".member-record-button").first().click();
   const panel = page.locator(".portal-inspector");
-  await expect(panel.getByRole("button", { name: "Summary", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(panel.getByRole("button", { name: "Member details", exact: true })).toHaveAttribute("aria-pressed", "true");
   for (const width of [1204, 390, 320]) {
     await page.setViewportSize({ width, height: 760 });
     await expect.poll(() => panel.evaluate(element => {
@@ -632,11 +630,8 @@ test("combined association directory keeps membership and account identities dis
   await page.locator(".member-record-button").first().click();
   const inspector = page.locator(".portal-inspector");
   await expect(inspector).toBeVisible();
-  await expect(
-    inspector.getByText("Edit member contact and professional details", {
-      exact: true,
-    }),
-  ).toHaveCount(0);
+  await inspector.getByRole("button", { name: "Edit details", exact: true }).click();
+  await expect(inspector.getByRole("button", { name: "Save member details", exact: true })).toHaveCount(0);
   await inspector.getByRole("button", { name: "Manage membership", exact: true }).click();
   await expect(
     inspector.getByRole("combobox", { name: "Membership status", exact: true }),

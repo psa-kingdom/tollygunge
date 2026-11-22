@@ -1,4 +1,5 @@
 "use client";
+import { MemberApplicationDetails } from "./member-application-details";
 import { MemberEditor, MemberCreator } from "./member-editor";
 import { MemberAttendanceHistory } from "./member-attendance-history";
 import { MemberVerificationReview } from "./member-verification-review";
@@ -50,6 +51,78 @@ const recordKey = (record: Member) =>
   record.record_kind === "account"
     ? "account:" + record.user_id
     : "member:" + record.person_id;
+
+type LinkedAccount = {
+  email: string;
+  phone: string;
+  email_verified: boolean;
+  staff_account: boolean;
+  organization: string;
+  profession: string;
+  job_title: string;
+  city: string;
+  created_at: string;
+};
+
+function LinkedAccountDetails({ userId }: { userId: string }) {
+  const [account, setAccount] = useState<LinkedAccount>();
+  const [status, setStatus] = useState("Loading account details…");
+  useEffect(() => {
+    let active = true;
+    api<{ rows: LinkedAccount[] }>(
+      "/api/staff/members?id=" + encodeURIComponent(userId),
+    )
+      .then(({ rows }) => {
+        if (!active) return;
+        setAccount(rows[0]);
+        setStatus(rows[0] ? "" : "Account details are unavailable.");
+      })
+      .catch(() => {
+        if (active) setStatus("Could not load account details.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  return (
+    <section className={styles.summary} aria-label="Linked account details">
+      <h4>Linked account details</h4>
+      {status && <p role="status">{status}</p>}
+      {account && (
+        <dl>
+          <dt>Account type</dt>
+          <dd>{account.staff_account ? "Staff account" : "Member account"}</dd>
+          <dt>Login email</dt>
+          <dd>
+            <CopyValue value={account.email} />
+          </dd>
+          <dt>Email verification</dt>
+          <dd>{account.email_verified ? "Verified" : "Unverified"}</dd>
+          <dt>Account phone</dt>
+          <dd>
+            <CopyValue value={account.phone} />
+          </dd>
+          {[
+            ["Organization", account.organization],
+            ["Profession", account.profession],
+            ["Job title", account.job_title],
+            ["City", account.city],
+            [
+              "Account created",
+              new Date(account.created_at).toLocaleDateString("en-IN"),
+            ],
+          ].map(([label, value]) => (
+            <div className={styles.detailPair} key={label}>
+              <dt>{label}</dt>
+              <dd>{value || "Not supplied"}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
+  );
+}
 export function MemberRegister({
   canManage = false,
   canViewPayments = false,
@@ -58,14 +131,16 @@ export function MemberRegister({
   canViewPayments?: boolean;
 }) {
   const searchParams = useSearchParams();
-  const [detailTab, setDetailTab] = useState("Summary");
+  const [detailTab, setDetailTab] = useState("Member details");
   const [invitationMode, setInvitationMode] = useState(
     Boolean(searchParams.get("invitationReview")),
   );
   const personId = searchParams.get("personId");
   const actionParam = searchParams.get("action");
   const newParam = searchParams.get("new");
-  const [editorDirty, setEditorDirty] = useState(false);
+  const [memberDirty, setEditorDirty] = useState(false);
+  const [applicationDirty, setApplicationDirty] = useState(false);
+  const editorDirty = memberDirty || applicationDirty;
   const editorGuard = useEmailEditGuard(editorDirty);
   const createRequested =
     canManage && (actionParam === "create" || newParam === "true");
@@ -77,6 +152,7 @@ export function MemberRegister({
   const closeDetails = () =>
     editorGuard.proceed(() => {
       setEditorDirty(false);
+      setApplicationDirty(false);
       setSelected(undefined);
       setIsCreating(false);
     });
@@ -111,6 +187,7 @@ export function MemberRegister({
     if (editorDirty && !discard) {
       editorGuard.proceed(() => {
         setEditorDirty(false);
+        setApplicationDirty(false);
         setSelected(undefined);
         setIsCreating(false);
         void load(offset, filters, true);
@@ -170,7 +247,7 @@ export function MemberRegister({
         setInvitation(held ? "held" : "all");
         setData(result);
         if (personId) {
-          setDetailTab("Summary");
+          setDetailTab("Member details");
           setSelected(result.rows[0]);
         }
       })
@@ -299,6 +376,7 @@ export function MemberRegister({
                 editorGuard.proceed(() => {
                   setSelected(undefined);
                   setEditorDirty(false);
+                  setApplicationDirty(false);
                   setIsCreating(true);
                 });
               }}
@@ -371,11 +449,16 @@ export function MemberRegister({
               <thead>
                 <tr>
                   {invitationMode && (
-                    <th scope="col" className="member-register-selection-column">
+                    <th
+                      scope="col"
+                      className="member-register-selection-column"
+                    >
                       <span className="sr-only">Select member</span>
                     </th>
                   )}
-                  <th scope="col" className="member-register-person-column">Person</th>
+                  <th scope="col" className="member-register-person-column">
+                    Person
+                  </th>
                   <th scope="col">Membership no.</th>
                   <th scope="col">Membership</th>
                   <th scope="col">Account</th>
@@ -456,8 +539,9 @@ export function MemberRegister({
                           editorGuard.proceed(() => {
                             selectedButton.current = trigger;
                             setEditorDirty(false);
+                            setApplicationDirty(false);
                             setIsCreating(false);
-                            setDetailTab("Summary");
+                            setDetailTab("Member details");
                             setSelected(m);
                           })
                         }
@@ -514,7 +598,10 @@ export function MemberRegister({
                 ))}
                 {data && !data.rows.length && (
                   <tr>
-                    <td colSpan={invitationMode ? 6 : 5} className="member-register-empty">
+                    <td
+                      colSpan={invitationMode ? 6 : 5}
+                      className="member-register-empty"
+                    >
                       <WorkspaceEmptyState
                         icon="people"
                         title="No records match these filters"
@@ -591,6 +678,7 @@ export function MemberRegister({
                 onCancel={closeDetails}
                 onSaved={async (newPersonId) => {
                   setEditorDirty(false);
+                  setApplicationDirty(false);
                   setIsCreating(false);
                   await load(
                     0,
@@ -653,7 +741,7 @@ export function MemberRegister({
               </div>
               <nav className={styles.tabs} aria-label="Member details sections">
                 {[
-                  "Summary",
+                  "Member details",
                   ...(canManage ? ["Application review"] : []),
                   "Attendance",
                   ...(canManage ? ["Manage membership"] : []),
@@ -666,6 +754,7 @@ export function MemberRegister({
                     onClick={() =>
                       editorGuard.proceed(() => {
                         setEditorDirty(false);
+                        setApplicationDirty(false);
                         setDetailTab(tab);
                       })
                     }
@@ -674,7 +763,29 @@ export function MemberRegister({
                   </button>
                 ))}
               </nav>
-              {detailTab === "Summary" && (
+              {detailTab === "Member details" && canManage && (
+                <div className={styles.detailActions}>
+                  {(selected.user_id ||
+                    (selected.person_id &&
+                      selected.record_kind !== "account")) && (
+                    <button
+                      type="button"
+                      className="button"
+                      onClick={() => setDetailTab("Edit details")}
+                    >
+                      Edit details
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() => setDetailTab("Application review")}
+                  >
+                    Review application
+                  </button>
+                </div>
+              )}
+              {detailTab === "Member details" && (
                 <div className={styles.summary}>
                   <h4>Contact & membership</h4>
                   <dl>
@@ -728,6 +839,12 @@ export function MemberRegister({
                         : "Unverified"}
                     </dd>
                   </dl>
+                  {selected.user_id && (
+                    <LinkedAccountDetails
+                      key={selected.user_id}
+                      userId={selected.user_id}
+                    />
+                  )}
                 </div>
               )}
               {detailTab === "Attendance" && (
@@ -771,10 +888,9 @@ export function MemberRegister({
                 <section className={styles.section}>
                   <h4>Manage membership</h4>
                   <p>
-                    Update membership status or edit the member’s recorded
-                    details.
+                    Update membership status or review the recorded addresses.
                   </p>
-                  <div className="action-row">
+                  <div className={styles.membershipControls}>
                     <button
                       className="button secondary"
                       disabled={
@@ -853,32 +969,6 @@ export function MemberRegister({
                       </select>
                     </label>
                   </div>
-                  {canManage &&
-                    selected.person_id &&
-                    selected.record_kind !== "account" && (
-                      <MemberEditor
-                        key={selected.person_id + selected.person_version}
-                        member={{ ...selected, person_id: selected.person_id }}
-                        onDirtyChange={setEditorDirty}
-                        onSaved={() => {
-                          setEditorDirty(false);
-                          void load(
-                            0,
-                            {
-                              q,
-                              status,
-                              invitation,
-                              kind,
-                              verification,
-                              contact,
-                              review,
-                            },
-                            true,
-                          );
-                          setSelected(undefined);
-                        }}
-                      />
-                    )}
                   <details>
                     <summary>Recorded addresses</summary>
                     {Object.entries(
@@ -909,7 +999,7 @@ export function MemberRegister({
                     selected.record_kind !== "account" && (
                       <button
                         type="button"
-                        className="button danger"
+                        className={`button danger ${styles.deleteMember}`}
                         disabled={busy || editorDirty}
                         onClick={async () => {
                           if (
@@ -953,30 +1043,60 @@ export function MemberRegister({
                     )}
                 </section>
               )}
-              {((detailTab === "Summary" && canManage) || selected.user_id) && (
-                <div className={styles.detailActions}>
-                  {detailTab === "Summary" && canManage && (
-                    <button
-                      type="button"
-                      className="button"
-                      onClick={() => setDetailTab("Application review")}
-                    >
-                      Review application
-                    </button>
-                  )}
-                  {selected.user_id && (
-                    <Link
-                      className="button secondary"
-                      href={
-                        "/admin/workspaces/members?view=accounts&id=" +
-                        encodeURIComponent(selected.user_id)
-                      }
-                    >
-                      Open account details →
-                    </Link>
-                  )}
-                </div>
+              {detailTab === "Edit details" && (
+                <section className={styles.section}>
+                  <h4>Edit member details</h4>
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() =>
+                      editorGuard.proceed(() => {
+                        setEditorDirty(false);
+                        setApplicationDirty(false);
+                        setDetailTab("Member details");
+                      })
+                    }
+                  >
+                    Back to member details
+                  </button>
+                  {canManage &&
+                    selected.person_id &&
+                    selected.record_kind !== "account" && (
+                      <MemberEditor
+                        key={selected.person_id + selected.person_version}
+                        member={{ ...selected, person_id: selected.person_id }}
+                        onDirtyChange={setEditorDirty}
+                        onSaved={() => {
+                          setEditorDirty(false);
+                          void load(
+                            data?.offset ?? 0,
+                            {
+                              q,
+                              status,
+                              invitation,
+                              kind,
+                              verification,
+                              contact,
+                              review,
+                            },
+                            true,
+                          );
+                        }}
+                      />
+                    )}
+                </section>
               )}
+              {canManage &&
+                selected.user_id &&
+                (detailTab === "Member details" ||
+                  detailTab === "Edit details") && (
+                  <MemberApplicationDetails
+                    key={selected.user_id + detailTab}
+                    userId={selected.user_id}
+                    editing={detailTab === "Edit details"}
+                    onDirtyChange={setApplicationDirty}
+                  />
+                )}
               {message && <p role="status">{message}</p>}
             </section>
           </ProfileInspector>

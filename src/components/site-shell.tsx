@@ -43,20 +43,32 @@ export function Brand({
   settings = sharedDefaults,
   compact = false,
 }: { settings?: SharedSettings; compact?: boolean } = {}) {
+  const organisation = settings.organisation.replace(/\s+/g, " ").trim();
+  const showWordmark =
+    !compact &&
+    organisation.toLowerCase() === "tollygunge professional association";
+
   return (
     <Link
       href="/"
       className="brand"
-      aria-label={`${settings.organisation.replace(/\s+/g, " ").trim()} homepage`}
+      aria-label={`${organisation} homepage`}
     >
       <TpaLogo
         src={
           settings.logoMediaId ? `/media/${settings.logoMediaId}` : undefined
         }
       />
-      <span className="brand-name" style={{ whiteSpace: "pre-line" }}>
-        {compact ? "TPA" : settings.organisation}
-      </span>
+      {showWordmark ? (
+        <span className="brand-wordmark">
+          <span className="brand-wordmark-name">Tollygunge</span>
+          <span className="brand-wordmark-description">Professional Association</span>
+        </span>
+      ) : (
+        <span className="brand-name" style={{ whiteSpace: "pre-line" }}>
+          {compact ? "TPA" : settings.organisation}
+        </span>
+      )}
     </Link>
   );
 }
