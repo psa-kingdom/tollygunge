@@ -34,7 +34,12 @@ const server = spawn(
     "--port",
     "3000",
   ],
-  { env, stdio: "inherit" },
+  {
+    // This compatibility suite creates legacy accounts and checks their
+    // verification links. The integration tests above exercise required OTP.
+    env: { ...env, TPA_SIGNUP_OTP_REQUIRED: "false" },
+    stdio: "inherit",
+  },
 );
 try {
   let ready = false;
