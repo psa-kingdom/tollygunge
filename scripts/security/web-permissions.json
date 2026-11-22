@@ -185,6 +185,12 @@
     "SELECT",
     "UPDATE"
   ],
+  "tpa.event_banners": [
+    "DELETE",
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
   "tpa.events": [
     "INSERT",
     "SELECT",
@@ -375,6 +381,11 @@
     "SELECT"
   ],
   "tpa.profile_reviews": [
+    "INSERT",
+    "SELECT",
+    "UPDATE"
+  ],
+  "tpa.registration_codes": [
     "INSERT",
     "SELECT",
     "UPDATE"
