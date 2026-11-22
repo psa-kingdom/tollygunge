@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import Link from "./navigation-link";
 import { verificationSteps } from "@/domain/verification";
 import { api } from "./operations-client";
+import { VerifyEmail } from "./onboarding-auth";
 import { PortalIcon } from "./portal-icon";
 import { StatusBadge } from "./portal-values";
 type Status = {
   email: string;
+  emailVerified: boolean;
   verified: boolean;
-  membershipStatus: string | null;
   updateRequested: boolean;
   missing: string[];
   progress: { total: number; completed: number; percent: number; remaining: { id: string; label: string; step: number; href: string }[] };
@@ -33,7 +34,17 @@ export function MemberOnboarding({
   const pending =
     review?.status === "submitted" || review?.status === "pending";
   const ready = s?.progress.percent === 100 && !pending && !s?.verified && !next;
-  const active = s?.membershipStatus === "active";
+  const label = s?.verified
+    ? s.updateRequested
+      ? "Verified · Update requested"
+      : "Verified"
+    : pending
+      ? "Under review"
+      : review?.status === "corrections"
+        ? "Corrections requested"
+        : review?.status === "rejected"
+          ? "Review feedback"
+          : "Not verified";
   return (
     <section
       className="member-card member-verification" data-portal-primary
@@ -45,8 +56,8 @@ export function MemberOnboarding({
           <h2 id="verification-title">Your profile verification</h2>
         </div>
         {s && (
-          <StatusBadge tone={active ? "success" : "neutral"}>
-            {active ? "Active" : "Not active"}
+          <StatusBadge tone={s.verified ? "success" : review?.status === "rejected" ? "error" : "pending"}>
+            {label}
           </StatusBadge>
         )}
       </div>
@@ -70,8 +81,8 @@ export function MemberOnboarding({
               <p>
                 {s.verified
                   ? s.updateRequested
-                    ? "Complete the requested updates. This does not change your membership status."
-                    : "Your application has been approved. You can update your details whenever needed."
+                    ? "Complete the requested updates. Your verified badge stays active."
+                    : "Your reviewed profile is verified. You can update your details whenever needed."
                   : pending
                     ? "Your details are with the review team. We’ll let you know if anything needs attention."
                     : "Complete your details and evidence, then submit your profile for review."}
@@ -86,6 +97,7 @@ export function MemberOnboarding({
               </Link>
               </div>
             </div>
+            {!s.emailVerified && <VerifyEmail email={s.email} verified={false} />}
           </div>
           {review?.reason && (
             <div className="member-review-feedback">

@@ -123,7 +123,6 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - run: node scripts/verify-onboarding-ci.mjs
-      - run: node --import tsx scripts/verify-member-journey.mjs
       - run: mkdir -p .local && node --import tsx scripts/test-member-foundation.mts
       - run: node --import tsx scripts/test-approved-accounts.mts
       - run: node --import tsx scripts/test-member-import-jobs.mts --http

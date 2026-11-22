@@ -5,7 +5,6 @@ import { Pool } from "pg";
 import { createAuth } from "../src/lib/auth-options";
 import { databaseOptions } from "../src/lib/database-options";
 import { openMail } from "../src/lib/onboarding-mail";
-import { issueRegistrationCode } from "../src/lib/registration-code";
 test(
   "signup, verification mail, session limits and reset use real auth/database paths",
   { skip: !process.env.TPA_DATABASE_NAME?.startsWith("tpa_onboarding_test_") },
@@ -13,7 +12,7 @@ test(
     const db = new Pool(databaseOptions()),
       email = randomUUID() + "@example.invalid",
       password = randomBytes(6).toString("hex");
-    const auth = createAuth(db, { ...process.env, ONBOARDING_ENABLED: "true", TPA_SIGNUP_OTP_REQUIRED: "false" });
+    const auth = createAuth(db, { ...process.env, ONBOARDING_ENABLED: "true" });
     const request = (path: string, body: object, keep = false) =>
       auth.handler(
         new Request(process.env.BETTER_AUTH_URL + "/api/auth/" + path, {
@@ -111,65 +110,6 @@ test(
         200,
       );
     } finally {
-      await db.end();
-    }
-  },
-);
-
-test(
-  "registration requires a chosen plan and a single-use code before sign-in",
-  { skip: !process.env.TPA_DATABASE_NAME?.startsWith("tpa_onboarding_test_") },
-  async () => {
-    const db = new Pool(databaseOptions());
-    const email = randomUUID() + "@example.invalid";
-    const password = "Apply!123";
-    const origin = process.env.BETTER_AUTH_URL!;
-    const auth = createAuth(db, {
-      ...process.env,
-      ONBOARDING_ENABLED: "true",
-      TPA_SIGNUP_OTP_REQUIRED: "true",
-    });
-    const request = (path: string, body: object) =>
-      auth.handler(new Request(origin + "/api/auth/" + path, {
-        method: "POST",
-        headers: { origin, "content-type": "application/json", "x-forwarded-for": "192.0.2.44" },
-        body: JSON.stringify(body),
-      }));
-    try {
-      const signup = { name: "Registration code test", email, password };
-      assert.equal((await request("sign-up/email", signup)).status, 400);
-      const details = { ...signup, requestedMembershipPlan: "Patron" };
-      assert.equal((await request("sign-up/email", details)).status, 400);
-      const connection = await db.connect();
-      try {
-        await connection.query("BEGIN");
-        await issueRegistrationCode(connection, email, process.env.BETTER_AUTH_SECRET!);
-        await connection.query("COMMIT");
-      } finally {
-        connection.release();
-      }
-      const { rows: [job] } = await db.query(
-        "SELECT payload FROM tpa.onboarding_mail WHERE recipient=$1 AND kind='verification'",
-        [email],
-      );
-      const otp = openMail(job.payload).text.match(/\b\d{6}\b/)?.[0];
-      assert.ok(otp);
-      const incorrect = otp === "000000" ? "111111" : "000000";
-      assert.equal((await request("sign-up/email", { ...details, registrationCode: incorrect })).ok, false);
-      assert.equal((await db.query('SELECT 1 FROM public."user" WHERE email=$1', [email])).rowCount, 0);
-      const verified = await request("sign-up/email", { ...details, registrationCode: otp });
-      assert.equal(verified.status, 200, await verified.clone().text());
-      assert.equal(verified.headers.has("set-cookie"), true);
-      assert.equal((await request("sign-up/email", { ...details, registrationCode: otp })).ok, false);
-      const { rows: [user] } = await db.query(
-        'SELECT "requestedMembershipPlan","emailVerified" FROM public."user" WHERE email=$1',
-        [email],
-      );
-      assert.deepEqual(user, { requestedMembershipPlan: "Patron", emailVerified: true });
-    } finally {
-      await db.query("DELETE FROM tpa.onboarding_mail WHERE recipient=$1", [email]);
-      await db.query("DELETE FROM tpa.registration_codes WHERE email=$1", [email]);
-      await db.query('DELETE FROM public."user" WHERE email=$1', [email]);
       await db.end();
     }
   },

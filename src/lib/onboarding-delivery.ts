@@ -54,7 +54,7 @@ export async function runOnboardingTick(
   )
     return;
   await pool.query(
-    "UPDATE tpa.onboarding_mail SET status='failed',reason='link_expired',lease_until=NULL WHERE status IN ('queued','leased') AND ((kind='recovery' AND created_at<now()-interval '15 minutes') OR (kind='verification' AND ((dedupe LIKE 'signup-code-%' AND created_at<now()-interval '10 minutes') OR created_at<now()-interval '24 hours')) OR (kind='invitation' AND created_at<now()-interval '48 hours'))",
+    "UPDATE tpa.onboarding_mail SET status='failed',reason='link_expired',lease_until=NULL WHERE status IN ('queued','leased') AND ((kind='recovery' AND created_at<now()-interval '15 minutes') OR (kind='verification' AND created_at<now()-interval '24 hours') OR (kind='invitation' AND created_at<now()-interval '48 hours'))",
   );
   await pool.query(
     "UPDATE tpa.onboarding_mail SET status='failed',reason='uncertain_send_expired' WHERE status IN ('queued','leased') AND first_attempt_at<now()-interval '23 hours'",

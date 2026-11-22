@@ -220,14 +220,6 @@ export async function saveMember(
     : null;
   if (personId && !row)
     throw new OperationError("Member not found.", 404, "member_not_found");
-  const membership = row
-    ? (
-        await c.query(
-          "SELECT * FROM tpa.memberships WHERE person_id=$1 FOR UPDATE",
-          [row.id],
-        )
-      ).rows[0]
-    : null;
   const supplied = raw.member as Record<string, unknown> | undefined;
   const unchangedMobile =
     !!row && supplied?.mobile === (row.accepted.mobile ?? row.accepted.phone);
@@ -241,12 +233,18 @@ export async function saveMember(
       ...(unchangedPrefix ? { prefix: undefined } : {}),
       ...(unchangedAddresses ? { addresses: undefined } : {}),
     },
-    true,
-    membership?.membership_number !== null,
   );
   if (unchangedMobile) input.mobile = String(supplied!.mobile ?? "");
   if (unchangedPrefix) input.prefix = String(supplied!.prefix ?? "");
   if (unchangedAddresses) input.addresses = row.accepted.addresses ?? {};
+  const membership = row
+    ? (
+        await c.query(
+          "SELECT * FROM tpa.memberships WHERE person_id=$1 FOR UPDATE",
+          [row.id],
+        )
+      ).rows[0]
+    : null;
   if (
     row &&
     (row.version !== raw.personVersion ||
@@ -379,7 +377,7 @@ export async function saveMember(
     [
       membership?.id ?? randomUUID(),
       id,
-      input.membershipNumber || null,
+      input.membershipNumber,
       detail.type,
       detail.status,
       detail.from,

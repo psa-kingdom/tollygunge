@@ -407,7 +407,7 @@ test(
       await page
         .getByRole("button", { name: "Create account", exact: true })
         .click();
-      await expect(page).toHaveURL(/\/member\/application$/);
+      await expect(page).toHaveURL(/\/member\/events$/);
       await expect(page.getByRole("heading",{name:"Edit person",exact:true})).toHaveCount(0);
       await page.goto("/member/application?step=0");
       await expect(page.getByRole("navigation",{name:"Application steps"}).getByRole("button")).toHaveCount(3);
@@ -648,7 +648,7 @@ test("failed saves recover locally, reconnect saves, and stale tabs cannot overw
   await page
     .getByRole("button", { name: "Create account", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/member\/application$/);
+  await expect(page).toHaveURL(/\/member\/events$/);
   await page.goto("/member/application?step=0");
   const qualification = page.getByLabel("Qualification *");
   await qualification.fill("Server baseline");

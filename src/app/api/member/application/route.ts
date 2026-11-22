@@ -68,11 +68,7 @@ export async function POST(r: Request) {
           "Your draft changed in another tab. Reload before saving.",
           409,
         );
-      const { rows: [account] } = await c.query(
-        'SELECT "requestedMembershipPlan" AS plan FROM public."user" WHERE id=$1',
-        [a.id],
-      );
-      const savedPlan = existing?.plan ?? account?.plan ?? "Life";
+      const savedPlan = existing?.plan ?? "Life";
       if (i.plan !== savedPlan)
         throw new OperationError("Only an administrator can assign your membership plan.", 400, "plan_read_only");
       const p = await policy(c);

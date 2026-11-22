@@ -503,7 +503,7 @@ for (const role of ["ADMIN", "MEMBER"] as const) {
   });
 }
 
-test("member rows support copying, direct opening and accessible dismissal", async ({page, context}, info) => {
+test("member previews support copying, stable pinning and accessible dismissal", async ({page, context}, info) => {
   await signIn(page, "ADMIN");
   await page.goto("/admin/workspaces/members");
   const records = page.getByRole("region", {name: "Member register records", exact:true});
@@ -512,13 +512,16 @@ test("member rows support copying, direct opening and accessible dismissal", asy
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   if (info.project.name === "desktop") {
     await first.hover();
-    await expect(page.getByRole("dialog", {name:/quick preview/})).toHaveCount(0);
-    const copy = first.locator("xpath=ancestor::tr").getByRole("button", {name:/^Copy .*@/}).first();
+    const quick = page.getByRole("dialog", {name:/quick preview/});
+    await expect(quick).toBeVisible();
+    await quick.hover();
+    await expect(quick).toBeVisible();
+    const copy = quick.getByRole("button", {name:/^Copy .*@/}).first();
     const copiedValue = (await copy.getAttribute("aria-label"))!.slice(5);
     await copy.click();
-    await expect(page.getByRole("dialog", {name:/member details$/})).toHaveCount(0);
+    await expect(quick.getByRole("status").filter({hasText:"Copied"})).toBeVisible();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(copiedValue);
-    await first.click();
+    await quick.getByRole("button", {name:"Open full details →"}).click();
   } else await first.click();
   const details = page.getByRole("dialog", {name:/member details$/});
   await expect(details).toBeVisible();

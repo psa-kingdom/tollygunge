@@ -1,6 +1,7 @@
 "use client";
 import { SignatureInput } from "./signature-input";
 import { DocumentPreview } from "./document-preview";
+import { VerifyEmail } from "./onboarding-auth";
 import { prefillApplicationPhone } from "@/domain/application-contact";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -19,7 +20,6 @@ import {
 import { recovery } from "./draft-recovery";
 import { CheckboxDropdown } from "./checkbox-dropdown";
 import { AddressForm } from "./address-form";
-import { StatusBadge } from "./portal-values";
 import {
   emptyAddress,
   copyOfficeToResidence,
@@ -48,7 +48,6 @@ type Status = {
   emailVerified: boolean;
   registeredContact?: { email: string; phone: string };
   verified: boolean;
-  membershipStatus: string | null;
   updateRequested: boolean;
   missing: string[];
   reviews: { status: string; reason: string; created_at: string }[];
@@ -57,13 +56,11 @@ export function ApplicationDraft({
   name,
   userId,
   initialStep,
-  membershipPlan,
   navigation,
 }: {
   name: string;
   userId: string;
   initialStep?: number;
-  membershipPlan?: string;
   navigation?: React.ReactNode;
 }) {
   const router = useRouter();
@@ -74,7 +71,7 @@ export function ApplicationDraft({
   const [submitted, setSubmitted] = useState<SubmittedApplication | null>(null);
   const [draft, setDraft] = useState<Draft>({
       version: 0,
-      plan: membershipPlan ?? "Life",
+      plan: "Life",
       category: "Professional",
       details: { fullName: name },
       documentIds: [],
@@ -499,11 +496,9 @@ export function ApplicationDraft({
       ids: ["fatherName", "spouseName", "bloodGroup", "spouseBloodGroup"],
     },
   ];
-  const interestIds = ["contributions", "contributionsOther", "interests", "interestsOther"];
-  const showInterestField = (field: VerificationField) => !interestIds.includes(field.id) || field.required;
   const activeFields =
     status?.policy.fields.filter(
-      (f) => showInterestField(f) && !/^(proposer|seconder)/.test(f.id) && ! ["correspondenceAddress", "deliveryPreference"].includes(f.id) && memberApplicationFieldStep(f) === memberApplicationStep(draft.step) && applicable(f, draft.category),
+      (f) => !/^(proposer|seconder)/.test(f.id) && ! ["correspondenceAddress", "deliveryPreference"].includes(f.id) && memberApplicationFieldStep(f) === memberApplicationStep(draft.step) && applicable(f, draft.category),
     ) ?? [];
   const photographIndex = activeFields.findIndex(field => field.id === "photograph");
   const registrationIndex = activeFields.findIndex(field => field.id === "registration");
@@ -538,14 +533,15 @@ export function ApplicationDraft({
         status.policy.fields,
         draft.details,
         draft.category,
-        true,
+        status.emailVerified,
       )
     : [];
-  const progress = status ? verificationProgress(status.policy.fields, draft.details, draft.category, true, false) : null;
+  const progress = status ? verificationProgress(status.policy.fields, draft.details, draft.category, status.emailVerified) : null;
   const standardPersonalIds = ["gender", "fullName", "dateOfBirth", "photograph"];
   const standardContactIds = ["phone", "officePhone", "residencePhone", "fax"];
   const preferenceIds = ["correspondenceAddress", "deliveryPreference"];
   const professionalIds = ["qualification", "professionalStatus", "organization", "professionalBody", "registration", "certificate"];
+  const interestIds = ["contributions", "contributionsOther", "interests", "interestsOther"];
   const directFields = activeFields.filter(field => !optionalIds.includes(field.id) || isRequired(field));
   function orderedFields(ids: string[]) {
     return ids.flatMap(id => directFields.filter(field => field.id === id)).map(renderField);
@@ -583,7 +579,6 @@ export function ApplicationDraft({
         submission={completedSubmission}
         fields={completedSubmission.fields ?? status.policy.fields}
         reviewStatus={submitted ? "pending" : status.reviews[0]?.status}
-        membershipActive={status.membershipStatus === "active"}
         successOpen={successOpen}
         onDismiss={() => setSuccessOpen(false)}
         onEdit={() => {
@@ -607,9 +602,6 @@ export function ApplicationDraft({
       </div>
       {status && (
         <>
-          <StatusBadge tone={status.membershipStatus === "active" ? "success" : "neutral"}>
-            {status.membershipStatus === "active" ? "Active" : "Not active"}
-          </StatusBadge>
           {status.reviews[0] && (
             <p>
               Latest review: {status.reviews[0].status}{" "}
@@ -713,7 +705,7 @@ export function ApplicationDraft({
             <section className="application-form-section">
               <h3>Membership</h3>
               <div className="form-grid">
-                <label>Membership plan<input value={draft.plan} readOnly /><small>Your current membership choice.</small></label>
+                <label>Membership plan<input value={draft.plan} readOnly /><small>Assigned by your administrator.</small></label>
 
               </div>
             </section>
@@ -757,18 +749,18 @@ export function ApplicationDraft({
                 .filter(f => !/^(proposer|seconder)/.test(f.id) && !["correspondenceAddress", "deliveryPreference"].includes(f.id) && memberApplicationFieldStep(f) !== 4 && applicable(f, draft.category) && (draft.details[f.id] || isRequired(f)))
                 .map(f => {
                   const label = f.id === "officeAddress" ? "Correspondence address" : f.id === "residenceAddress" ? "Permanent address" : f.label;
-                  const editing = showInterestField(f) && reviewEditing === f.id;
+                  const editing = reviewEditing === f.id;
                   return <div key={f.id} className="application-review-row">
                     <dt><strong>{label}</strong></dt>
                     <dd>
                       <div className="application-review-value">
                         {f.type === "document" && draft.details[f.id] ? <DocumentPreview id={draft.details[f.id]} label={f.label} /> : <span>{draft.details[f.id] ? verificationAnswer(f, draft.details[f.id]) : "Not provided"}</span>}
-                        {showInterestField(f) && <button className="text-button" type="button" aria-label={`${editing ? "Close editor for" : "Edit"} ${label}`} aria-expanded={editing} aria-controls={`review-edit-${f.id}`} disabled={!ready || busy || conflict} onClick={async () => {
+                        <button className="text-button" type="button" aria-label={`${editing ? "Close editor for" : "Edit"} ${label}`} aria-expanded={editing} aria-controls={`review-edit-${f.id}`} disabled={!ready || busy || conflict} onClick={async () => {
                           if (!(await save())) return;
                           if (!editing && f.id === "residenceAddress") setSameAddress(false);
                           setReviewEditing(editing ? null : f.id);
                           if (!editing) requestAnimationFrame(() => document.getElementById(`review-edit-${f.id}`)?.querySelector<HTMLElement>("input,select,textarea,summary,button")?.focus());
-                        }}>{editing ? "Close" : "Edit"}</button>}
+                        }}>{editing ? "Close" : "Edit"}</button>
                       </div>
                       {editing && <fieldset id={`review-edit-${f.id}`} className="application-review-editor" disabled={!ready || busy || conflict}>
                         {renderField(f)}
@@ -781,6 +773,7 @@ export function ApplicationDraft({
                 })}
             </dl>
             <h3>Before submission</h3>
+            {status && !status.emailVerified && <VerifyEmail email={status.email} verified={false} />}
             {missing.length ? (
               <ul>
                 {missing.map((x) => (

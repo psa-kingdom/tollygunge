@@ -317,14 +317,6 @@
 .form {
   padding: 0 28px 26px;
 }
-.banner {
-  display: block;
-  width: 100%;
-  max-height: 320px;
-  object-fit: contain;
-  margin-block-end: 16px;
-  border-radius: 8px;
-}
 .form > p {
   color: var(--muted);
   margin: 0 0 24px;

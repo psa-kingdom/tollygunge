@@ -139,43 +139,6 @@ p {
   font-size: 12px;
   align-items: center;
 }
-.brand-wordmark {
-  display: grid;
-  gap: 1px;
-  line-height: 1.1;
-}
-.brand-wordmark-name {
-  width: fit-content;
-  color: #795315;
-  font: 400 clamp(24px, 2.35vw, 33px)/1.08 Georgia, serif;
-  letter-spacing: -0.045em;
-}
-@supports (background-clip: text) {
-  .brand-wordmark-name {
-    background-image: linear-gradient(112deg, #61400d, #9c741e 32%, #795315 58%, #ae852b 78%, #68440e);
-    background-clip: text;
-    color: transparent;
-  }
-}
-.brand-wordmark-description {
-  color: #173753;
-  font-size: clamp(12px, 1.18vw, 18px);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-}
-html[data-color-mode="dark"] .brand-wordmark-name {
-  color: #edcb81;
-  background-image: none;
-}
-html[data-color-mode="dark"] .brand-wordmark-description {
-  color: #d3e4f5;
-}
-@media (forced-colors: active) {
-  .brand-wordmark-name {
-    background-image: none;
-    color: LinkText;
-  }
-}
 .nav-menu {
   position: relative;
 }

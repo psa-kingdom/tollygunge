@@ -317,9 +317,6 @@
 .portal :global(.member-register-table .member-register-selection-column) { width: 42px; padding-inline-end: 0; }
 .portal :global(.member-register-table .member-register-person-column) { width: 32%; min-width: 220px; }
 .portal :global(.member-register-table td) { vertical-align: middle; }
-.portal :global(.member-register-table [data-member-record]) { cursor: pointer; }
-.portal :global(.member-register-table [data-member-record]:hover) { background: var(--portal-hover); }
-.portal :global(.member-register-table [data-member-record] .member-record-button) { gap: 8px; }
 .portal :global(.member-register-table tr.is-selected) { background: var(--portal-active); }
 .portal :global(.member-register-select) { display: flex; align-items: center; min-height: 32px; }
 .portal :global(.workspace-main .member-record-button) { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--ink); text-align: left; }
@@ -1041,27 +1038,23 @@
 .portal :global(.contact-number-fields) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 20px; min-width:0; }
 @media(max-width:600px) { .portal :global(.contact-number-fields) { grid-template-columns:minmax(0,1fr); } }
 
-.portal :global(.application-form-sections) { display:grid; gap:16px; }
+.portal :global(.application-form-sections) { display:grid; gap:28px; }
 .portal :global(.application-form-section) { min-width:0; }
 .portal :global(.application-form-section + .application-form-section) { border-top:1px solid var(--line); padding-top:24px; }
-.portal :global(.application-form-section h3) { margin:0 0 10px; font-size:15px; line-height:1.5; color:var(--ink); }
+.portal :global(.application-form-section h3) { margin:0 0 16px; font-size:15px; line-height:1.5; color:var(--ink); }
 .portal :global(.application-section-heading) { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px 20px; margin-bottom:16px; }
 .portal :global(.application-section-heading h3) { margin:0; }
 .portal.portal.portal :global(.application-section-heading .address-same-toggle) { display:flex; flex-direction:row; align-items:center; gap:8px; margin:0; font-size:12px; font-weight:400; }
 .portal :global(.application-section-heading .address-same-toggle input) { margin:0; flex:none; }
-.portal.portal :global(.application-form-section > .form-grid) {
-  grid-template-columns:repeat(auto-fit,minmax(min(100%,185px),1fr));
-  align-items:start;
-  gap:8px 14px;
+.portal :global(.application-personal-grid label:has(#verification-fullName)) { grid-column:auto; }
+@media(min-width:1051px) {
+  .portal.portal :global(.application-personal-grid) { grid-template-columns:minmax(100px,1fr) minmax(0,2fr); }
+  .portal :global(.application-personal-grid label:has(#verification-dateOfBirth)) { grid-column:1 / -1; max-width:calc(50% - 10px); }
 }
+@media(max-width:600px) { .portal :global(.application-form-sections) { gap:24px; } }
 
 .portal.portal :global(.application-form-sections > .application-form-section) { padding:0; border-bottom:0; margin:0; }
-.portal.portal :global(.application-form-sections > .application-form-section + .application-form-section) { padding-top:12px; border-top:1px solid var(--line); }
-.portal.portal :global(.application-form-section .address-pair-grid) { gap:12px; }
-.portal.portal.portal :global(.application-form-section .address-pair-grid .address-location-grid) {
-  grid-template-columns:repeat(auto-fit,minmax(min(100%,120px),1fr));
-  gap:8px 12px;
-}
+.portal.portal :global(.application-form-sections > .application-form-section + .application-form-section) { padding-top:24px; border-top:1px solid var(--line); }
 .portal :global(.member-event-views) { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 20px; }
 .portal :global(.member-event-views button[aria-pressed=true]) { background:var(--gold); color:#1a2238; border-color:var(--gold); }
 .portal :global(.member-upcoming-intro h2) { margin:0 0 12px; font-size:20px; }

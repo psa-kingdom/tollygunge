@@ -24,7 +24,7 @@ const base = "http://127.0.0.1:" + (process.env.TPA_EVENT_TEST_PORT || "3144");
 const dir = ".local/event-flow/" + new Date().toISOString().replaceAll(":","-");
 const url = new URL(process.env.DATABASE_URL!); url.pathname = "/" + database;
 const env = {...process.env, DATABASE_URL:url.href, TPA_DATABASE_NAME:database, BETTER_AUTH_URL:base,
-  BETTER_AUTH_SECRET:"synthetic-event-flow-secret-over-32-characters", ONBOARDING_ENABLED:"true", TPA_SIGNUP_OTP_REQUIRED:"true", TPA_MAIL_SINK:"true",
+  BETTER_AUTH_SECRET:"synthetic-event-flow-secret-over-32-characters", ONBOARDING_ENABLED:"true", TPA_MAIL_SINK:"true",
   RESEND_WEBHOOK_SECRET:"whsec_"+randomBytes(32).toString("base64"),
   EVENT_REMINDERS_ENABLED:"true",
   RESEND_DOMAIN_VERIFIED:"false", EMAIL_OPERATIONS_ENABLED:"false", MEMBER_IMPORT_WORKER_ENABLED:"false"};
@@ -269,16 +269,7 @@ try {
       const signupContext=await browser.newContext({viewport});const signup=await signupContext.newPage();
       await signup.goto(base+"/signup?returnTo="+encodeURIComponent(`/member/events?eventId=${browserEvent.id}`));
       await signup.getByLabel("Full name").fill("Synthetic event signup");await signup.getByLabel("Email",{exact:true}).fill("event-signup@example.invalid");await signup.getByLabel("Password",{exact:true}).fill(syntheticPassword);
-      await signup.getByLabel("Membership type").selectOption("Life");
-      await signup.getByRole("button",{name:"Send registration code",exact:true}).click();
-      const registrationCode=signup.getByLabel("Registration code",{exact:true});
-      await check(registrationCode).toBeVisible();
-      const {rows:[signupMail]}=await db.query("SELECT payload FROM tpa.onboarding_mail WHERE recipient=$1 AND dedupe LIKE 'signup-code-%' ORDER BY created_at DESC LIMIT 1",["event-signup@example.invalid"]);
-      const code=signupMail && openMail(signupMail.payload,env.BETTER_AUTH_SECRET).text.match(/\b\d{6}\b/)?.[0];
-      assert.ok(code,"Synthetic signup must queue a registration code");
-      await registrationCode.fill(code);
-      await signup.getByRole("button",{name:"Confirm code and create account",exact:true}).click();
-      await check(signup).toHaveURL(base+"/member/events?eventId="+browserEvent.id);
+      await signup.getByRole("button",{name:"Create account",exact:true}).click();await check(signup).toHaveURL(base+"/member/events?eventId="+browserEvent.id);
       await check(signup.locator("article").first()).toContainText(browserEvent.title);await signupContext.close();
       pass("Anonymous event link and real password sign-in and signup preserve the selected event");
     }

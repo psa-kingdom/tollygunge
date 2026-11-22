@@ -27,7 +27,7 @@ export default async function Page({
   }
   const event = (
     await getDatabase().query(
-      "SELECT status,booking_closed,completed_at,archived_at,id,title,description,speakers,location,starts_at,ends_at,fee_paise,registration_starts_at,registration_ends_at,EXISTS(SELECT 1 FROM tpa.event_banners b WHERE b.event_id=events.id) AS has_banner FROM tpa.events WHERE id=$1 AND status='published' AND visibility='public'",
+      "SELECT status,booking_closed,completed_at,archived_at,id,title,description,speakers,location,starts_at,ends_at,fee_paise,registration_starts_at,registration_ends_at FROM tpa.events WHERE id=$1 AND status='published' AND visibility='public'",
       [id],
     )
   ).rows[0];
@@ -37,10 +37,6 @@ export default async function Page({
       <main id="main" className="page-content">
         <PublicBreadcrumbs section="Events" href="/events" title={event.title} />
         <h1>{event.title}</h1>
-        {event.has_banner && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={"/api/event-banners/" + id} alt="" style={{ display: "block", width: "100%", maxHeight: 420, objectFit: "contain", marginBlock: 16 }} />
-        )}
         {event.fee_paise > 0 && <p className="notice">Payment is manually verified. Your registration is confirmed after staff checks payment.</p>}
         <p>{eventTime(event.starts_at)} to {eventTime(event.ends_at)}</p>
         <p>{bookingLabel(event)}</p>

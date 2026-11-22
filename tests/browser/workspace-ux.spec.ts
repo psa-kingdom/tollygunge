@@ -287,7 +287,7 @@ test("verification reasons belong to one record and corrections preserve an exis
       .filter({ hasText: marker + " 0" })
       .click();
     await expect(page.locator(".review-detail")).toContainText(
-      "This account remains active while you review the update.",
+      "Existing verified badge remains active.",
     );
     await page
       .getByRole("button", { name: "Request corrections", exact: true })

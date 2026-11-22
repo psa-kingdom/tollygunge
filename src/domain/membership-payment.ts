@@ -21,7 +21,7 @@ export function membershipPaymentEmail(payment: { id: string; name: string; memb
     `Membership number: ${payment.membershipNumber}`, `Membership type: ${payment.membershipType}`,
     `Amount received: INR ${(payment.amountPaise / 100).toFixed(2)}`, `Payment date: ${payment.paidOn}`,
     `Payment method: ${payment.method}`, `Transaction / receipt reference: ${payment.reference}`, `Confirmation ID: ${payment.id}`, '',
-    'This confirms payment receipt. It does not change the membership status.', '',
+    'This confirms payment receipt. Membership approval and profile verification are recorded separately.', '',
     'Thank you,', 'Tollygunge Professional Association',
   ];
   const escape = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
