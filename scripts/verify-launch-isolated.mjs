@@ -19,7 +19,8 @@ const env = { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot,
   TEMP: process.env.TEMP, TMP: process.env.TMP, USERPROFILE: process.env.USERPROFILE,
   DATABASE_URL: url.href, DATABASE_SSL: "false", TPA_DATABASE_NAME: name,
   BETTER_AUTH_URL: `http://127.0.0.1:${port}`, BETTER_AUTH_SECRET: "synthetic-launch-isolated-secret-32-characters",
-  ONBOARDING_ENABLED: "true", TPA_MAIL_SINK: "true", TPA_DEPLOYMENT_ENV: "testing", TPA_BROWSER_CHANNEL: process.env.TPA_BROWSER_CHANNEL ?? "",
+  // The shared browser fixtures also exercise accounts with legacy email links.
+  ONBOARDING_ENABLED: "true", TPA_SIGNUP_OTP_REQUIRED: "false", TPA_MAIL_SINK: "true", TPA_DEPLOYMENT_ENV: "testing", TPA_BROWSER_CHANNEL: process.env.TPA_BROWSER_CHANNEL ?? "",
   TPA_TEST_URL: `http://127.0.0.1:${port}`, TPA_PRIVATE_HEADER_TEST_URL: `http://127.0.0.1:${port}`, TPA_DESIGN_QA_OUTPUT: process.env.TPA_DESIGN_QA_OUTPUT, TPA_TEST_STORAGE: "false", TPA_TEST_EXPECT_STORAGE_DISABLED: "true",
   TPA_RESTRICTED_ROLE_TESTS:process.env.TPA_RESTRICTED_ROLE_TESTS,TPA_ROLE_EVIDENCE_DIR:process.env.TPA_ROLE_EVIDENCE_DIR,
   RESEND_WEBHOOK_SECRET: "whsec_" + Buffer.from("synthetic-disposable-secret").toString("base64") };
