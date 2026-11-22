@@ -17,7 +17,7 @@ test('confirmation email contains receipt facts, escapes HTML and does not appro
   const email = membershipPaymentEmail({ ...membershipPaymentInput(input), name: '<script>alert(1)</script>', membershipNumber: 'L-12', membershipType: 'Life' });
   assert.match(email.text, /INR 1000.50/);
   assert.match(email.text, /UTR-123/);
-  assert.match(email.text, /approval and profile verification are recorded separately/);
+  assert.match(email.text, /does not change the membership status/);
   assert.ok(!email.html.includes('<script>'));
 });
 function db(row: object | undefined = member, existing?: object) {
@@ -50,7 +50,7 @@ test('retry returns existing confirmation without inserting payment or email aga
   await assert.rejects(confirmMembershipPayment(db(member, { id: input.id, membership_id: 'other' }).client, 'staff', input), /different payment details/);
 });
 test('missing, stale or undeliverable member cannot create a payment', async () => {
-  for (const row of [null, { ...member, version: 4 }, { ...member, email: '' }, { ...member, type: null }]) {
+  for (const row of [null, { ...member, version: 4 }, { ...member, email: '' }, { ...member, type: null }, { ...member, membership_number: null }]) {
     const d = db(row ?? undefined);
     if (!row) { d.client.query = (async () => ({ rows: [] })) as unknown as PoolClient['query']; }
     await assert.rejects(confirmMembershipPayment(d.client, 'staff', input));

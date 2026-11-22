@@ -130,7 +130,7 @@ export function MemberVerificationReview({
                   <div className="action-row">
                     {[
                       ...(canApprove
-                        ? [{ action: "approve", label: "Approve verification" }]
+                        ? [{ action: "approve", label: "Approve account" }]
                         : []),
                       { action: "corrections", label: "Request corrections" },
                       ...(canApprove
@@ -162,10 +162,8 @@ export function MemberVerificationReview({
                         ? "Confirm that the submitted details and evidence meet the requirements."
                         : "Explain what the member needs to change. Your feedback will be recorded with this decision."}
                     </p>
-                    <label>
-                      {decision === "approve"
-                        ? "Approval note (optional)"
-                        : "Reason (required)"}
+                    {decision !== "approve" && <label>
+                      Reason (required)
                       <textarea
                         rows={3}
                         maxLength={2000}
@@ -173,7 +171,7 @@ export function MemberVerificationReview({
                         disabled={busy || disabled}
                         onChange={(event) => setReason(event.target.value)}
                       />
-                    </label>
+                    </label>}
                     <div className="action-row">
                       <button
                         type="button"
@@ -198,7 +196,7 @@ export function MemberVerificationReview({
                             setDecision("");
                             setMessage(
                               decision === "approve"
-                                ? "Profile verification approved."
+                                ? "Account approval saved."
                                 : decision === "corrections"
                                   ? "Corrections requested."
                                   : "Submission rejected.",
@@ -219,7 +217,7 @@ export function MemberVerificationReview({
                         {busy
                           ? "Saving decision…"
                           : decision === "approve"
-                            ? "Confirm profile verification"
+                            ? "Confirm account approval"
                             : decision === "corrections"
                               ? "Confirm corrections request"
                               : "Confirm rejection"}

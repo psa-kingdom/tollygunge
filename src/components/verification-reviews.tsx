@@ -4,15 +4,18 @@ import { useEffect, useState, useRef } from "react";
 import { SubmittedDetails } from "./verification-submitted-details";
 import { WorkspaceEmptyState } from "./workspace-ui";
 import type { VerificationData } from "./verification-workspace";
+import styles from "./member-review.module.css";
 export function VerificationReviews({
   data,
   busy,
   action,
+  pendingOnly = false,
 }: {
   data: VerificationData | null;
   busy: boolean;
   action: (body: unknown) => Promise<boolean>;
   load: (page?: number) => Promise<void>;
+  pendingOnly?: boolean;
 }) {
   const [records, setRecords] = useState<VerificationData | null>(null),
     [view, setView] = useState("reviews"),
@@ -27,21 +30,31 @@ export function VerificationReviews({
     [deepId, setDeepId] = useState<string | null>(null);
   const detailHeading = useRef<HTMLHeadingElement>(null),
     lastRecord = useRef<HTMLButtonElement>(null),
-    reasonInput = useRef<HTMLTextAreaElement>(null);
+    searchInput = useRef<HTMLInputElement>(null),
+    returningToQueue = useRef(false),
+    reasonInput = useRef<HTMLTextAreaElement>(null),
+    confirmDecision = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (selected) detailHeading.current?.focus();
-    else lastRecord.current?.focus();
-  }, [selected]);
+    if (selected) {
+      returningToQueue.current = true;
+      detailHeading.current?.focus();
+    } else if (pendingOnly && returningToQueue.current) {
+      returningToQueue.current = false;
+      searchInput.current?.focus();
+    } else lastRecord.current?.focus();
+  }, [selected, pendingOnly]);
   useEffect(() => {
-    if (decision) reasonInput.current?.focus();
+    if (decision === "approve") confirmDecision.current?.focus();
+    else if (decision) reasonInput.current?.focus();
   }, [decision]);
   useEffect(() => {
+    if (pendingOnly) return;
     queueMicrotask(() => {
       const id = new URLSearchParams(location.search).get("id");
       setDeepId(id);
       if (id) setStatus("all");
     });
-  }, []);
+  }, [pendingOnly]);
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(async () => {
@@ -112,254 +125,335 @@ export function VerificationReviews({
     }
   }
   return (
-    <section className="verification-browser">
-      <div className="review-toolbar">
-        <div className="segmented">
-          <button
-            aria-pressed={view === "reviews"}
-            onClick={() => {
-              setView("reviews");
-              choose("");
-            }}
-          >
-            Applications
-          </button>
-          <button
-            aria-pressed={view === "verified"}
-            onClick={() => {
-              setDeepId(null);
-              setView("verified");
-              choose("");
-            }}
-          >
-            Verified profiles
-          </button>
-        </div>
-        <label>
-          Search names or email
-          <input
-            value={query}
-            onChange={(e) => {
-              setDeepId(null);
-              setQuery(e.target.value);
-              setPage(1);
-              setVerifiedPage(1);
-              choose("");
-            }}
-          />
-        </label>
-        {view === "reviews" && (
-          <label>
-            Status
-            <select
-              value={status}
-              onChange={(e) => {
-                setDeepId(null);
-                setStatus(e.target.value);
-                setPage(1);
-                choose("");
-              }}
-            >
-              {[
-                "pending",
-                "all",
-                "approved",
-                "corrections",
-                "rejected",
-                "superseded",
-              ].map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
-          </label>
-        )}
-      </div>
-      {error && <p role="alert">{error}</p>}
-      <div className={"review-layout" + (selected ? " has-selection" : "") + (records && !(view === "reviews" ? records.reviews : records.verified).length ? " is-empty" : "")}>
-        <div
-          className="review-list"
-          role="group"
-          aria-label="Verification records"
-        >
-          {(view === "reviews" ? records?.reviews : records?.verified)?.map(
-            (r) => (
-              <div className="portal-person-record" key={r.id}><button
-                className={`link-button portal-person-trigger ${selected === r.id ? "selected" : ""}`}
-                aria-pressed={selected === r.id}
-                onClick={(e) => {
-                  lastRecord.current = e.currentTarget;
-                  choose(r.id);
+    <section
+      className={pendingOnly ? styles.pendingReview : "verification-browser"}
+    >
+      {(!pendingOnly || !selected) && (
+        <div className="review-toolbar">
+          {!pendingOnly && (
+            <div className="segmented">
+              <button
+                aria-pressed={view === "reviews"}
+                onClick={() => {
+                  setView("reviews");
+                  choose("");
                 }}
               >
-                <strong>{r.name}</strong>
-                <span>
-                  {"status" in r
-                    ? r.status
-                    : r.verification_update_requested
-                      ? "Verified · Update requested"
-                      : "Verified"}
-                </span>
-              </button><CopyValue value={r.email} /></div>
-            ),
+                Applications
+              </button>
+              <button
+                aria-pressed={view === "verified"}
+                onClick={() => {
+                  setDeepId(null);
+                  setView("verified");
+                  choose("");
+                }}
+              >
+                Verified profiles
+              </button>
+            </div>
           )}
-          {records &&
-            (view === "reviews" ? records.reviews : records.verified).length ===
-              0 && <WorkspaceEmptyState icon="shield" title={query || status !== "pending" ? "No records match this filter" : view === "reviews" ? "No profiles waiting for review" : "No verified accounts yet"} description={view === "reviews" ? "Submitted profiles appear here for review. You can also browse accounts that are already verified." : "Profiles will appear here after verification is approved."} actionLabel={query || status !== "pending" ? "Reset filters" : view === "reviews" ? "View verified accounts" : "Open review queue"} onAction={() => {setQuery("");setStatus("pending");setDeepId(null);setPage(1);setVerifiedPage(1);choose("");if (!query && status === "pending") setView(view === "reviews" ? "verified" : "reviews");}} />}
-          <div className="action-row">
-            <button
-              disabled={(view === "reviews" ? page : verifiedPage) <= 1}
-              onClick={() => {
+          <label>
+            Search names or email
+            <input
+              ref={searchInput}
+              value={query}
+              onChange={(e) => {
+                setDeepId(null);
+                setQuery(e.target.value);
+                setPage(1);
+                setVerifiedPage(1);
                 choose("");
-                if (view === "reviews") setPage(page - 1);
-                else setVerifiedPage(verifiedPage - 1);
               }}
-            >
-              Previous
-            </button>
-            <span>Page {view === "reviews" ? page : verifiedPage}</span>
-            <button
-              disabled={
-                !(view === "reviews"
-                  ? records?.reviewsMore
-                  : records?.verifiedMore)
-              }
-              onClick={() => {
-                choose("");
-                if (view === "reviews") setPage(page + 1);
-                else setVerifiedPage(verifiedPage + 1);
-              }}
-            >
-              Next
-            </button>
-          </div>
+            />
+          </label>
+          {!pendingOnly && view === "reviews" && (
+            <label>
+              Status
+              <select
+                value={status}
+                onChange={(e) => {
+                  setDeepId(null);
+                  setStatus(e.target.value);
+                  setPage(1);
+                  choose("");
+                }}
+              >
+                {[
+                  "pending",
+                  "all",
+                  "approved",
+                  "corrections",
+                  "rejected",
+                  "superseded",
+                ].map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
-        <article className="review-detail">
-          {selected && (
-            <button className="review-back" onClick={() => choose("")}>
-              ← Back to records
-            </button>
-          )}
-          {review && view === "reviews" ? (
-            <>
-              <h2 tabIndex={-1} ref={detailHeading}>
-                {review.name}
-              </h2>
-              <p>
-                <CopyValue value={review.email} /> · {review.status} · Requirements v
-                {review.requirement_version}
-              </p>
-              {review.accepted_verified && (
-                <p>Existing verified badge remains active.</p>
-              )}
-              <SubmittedDetails review={review} />
-              {review.reason && (
-                <p className="review-feedback">
-                  Review feedback: {review.reason}
-                </p>
-              )}
-              {review.status === "pending" && (
-                <div className="action-row">
-                  {(data?.admin
-                    ? ["approve", "corrections", "reject"]
-                    : ["corrections"]
-                  ).map((a) => (
-                    <button
-                      className={a === "reject" ? "button danger" : "button secondary"}
-                      key={a}
-                      onClick={() => {
-                        setDecision(a);
-                        setReason("");
-                      }}
-                    >
-                      {a === "approve"
-                        ? "Approve verification"
-                        : a === "corrections"
-                          ? "Request corrections"
-                          : "Reject submission"}
-                    </button>
-                  ))}
+      )}
+      {error && <p role="alert">{error}</p>}
+      <div
+        className={
+          "review-layout" +
+          (selected ? " has-selection" : "") +
+          (records &&
+          !(view === "reviews" ? records.reviews : records.verified).length
+            ? " is-empty"
+            : "")
+        }
+      >
+        {(!pendingOnly || !selected) && (
+          <div
+            className="review-list"
+            role="group"
+            aria-label="Verification records"
+          >
+            {(view === "reviews" ? records?.reviews : records?.verified)?.map(
+              (r) => (
+                <div className="portal-person-record" key={r.id}>
+                  <button
+                    className={`link-button portal-person-trigger ${selected === r.id ? "selected" : ""}`}
+                    aria-pressed={selected === r.id}
+                    onClick={(e) => {
+                      lastRecord.current = e.currentTarget;
+                      choose(r.id);
+                    }}
+                  >
+                    <strong>{r.name}</strong>
+                    <span>
+                      {"status" in r
+                        ? r.status
+                        : r.verification_update_requested
+                          ? "Verified · Update requested"
+                          : "Verified"}
+                    </span>
+                  </button>
+                  {!pendingOnly && <CopyValue value={r.email} />}
                 </div>
-              )}
-            </>
-          ) : person && view === "verified" ? (
-            <>
-              <h2 tabIndex={-1} ref={detailHeading}>
-                {person.name}
-              </h2>
-              <p><CopyValue value={person.email} /></p>
-              <p>
-                {person.verification_version
-                  ? `Approved requirements v${person.verification_version}`
-                  : "Legacy approval"}
-              </p>
-              {person.verification_update_requested && (
-                <p>Update requested. Verified badge retained.</p>
-              )}
-              {data?.admin && (
-                <button
-                  className="button danger"
-                  onClick={() => {
-                    setDecision("revoke");
-                    setReason("");
+              ),
+            )}
+            {records &&
+              (view === "reviews" ? records.reviews : records.verified)
+                .length === 0 &&
+              (pendingOnly ? (
+                <p>
+                  {query
+                    ? "No pending applications match your search."
+                    : "No applications are waiting for review."}
+                </p>
+              ) : (
+                <WorkspaceEmptyState
+                  icon="shield"
+                  title={
+                    query || status !== "pending"
+                      ? "No records match this filter"
+                      : view === "reviews"
+                        ? "No profiles waiting for review"
+                        : "No verified accounts yet"
+                  }
+                  description={
+                    view === "reviews"
+                      ? "Submitted profiles appear here for review. You can also browse accounts that are already verified."
+                      : "Profiles will appear here after verification is approved."
+                  }
+                  actionLabel={
+                    query || status !== "pending"
+                      ? "Reset filters"
+                      : view === "reviews"
+                        ? "View verified accounts"
+                        : "Open review queue"
+                  }
+                  onAction={() => {
+                    setQuery("");
+                    setStatus("pending");
+                    setDeepId(null);
+                    setPage(1);
+                    setVerifiedPage(1);
+                    choose("");
+                    if (!query && status === "pending")
+                      setView(view === "reviews" ? "verified" : "reviews");
                   }}
-                >
-                  Revoke verification
-                </button>
-              )}
-            </>
-          ) : (
-            <WorkspaceEmptyState compact icon="shield" title="Select a record" description="Choose a profile from the queue to review its submitted details and private evidence before making a decision." />
-          )}
-          {decision && (
-            <section className="decision-panel">
-              <h3>
-                {decision === "approve"
-                  ? "Approve this profile"
-                  : decision === "corrections"
-                    ? "Request updated details"
-                    : decision === "reject"
-                      ? "Reject this submission"
-                      : "Revoke this verified profile"}
-              </h3>
-              <p>
-                {decision === "approve"
-                  ? "Confirm that the submitted evidence meets its published requirements."
-                  : decision === "revoke"
-                    ? "This removes the badge and withdraws its public profile. Record the reason."
-                    : "Explain the decision and the details the member needs to address. Existing accepted details and badges remain preserved."}
-              </p>
-              <label>
-                Reason {decision === "approve" ? "(optional)" : "(required)"}
-                <textarea
-                  ref={reasonInput}
-                  rows={4}
-                  maxLength={2000}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
                 />
-              </label>
-              <small>{reason.length}/2,000 characters</small>
+              ))}
+            {(!pendingOnly || page > 1 || records?.reviewsMore) && (
               <div className="action-row">
                 <button
-                  className="button"
-                  disabled={busy || (decision !== "approve" && !reason.trim())}
-                  onClick={() => void submit()}
-                >
-                  Confirm decision
-                </button>
-                <button
-                  className="button secondary"
+                  disabled={(view === "reviews" ? page : verifiedPage) <= 1}
                   onClick={() => {
-                    setDecision("");
-                    setReason("");
+                    choose("");
+                    if (view === "reviews") setPage(page - 1);
+                    else setVerifiedPage(verifiedPage - 1);
                   }}
                 >
-                  Cancel
+                  Previous
+                </button>
+                <span>Page {view === "reviews" ? page : verifiedPage}</span>
+                <button
+                  disabled={
+                    !(view === "reviews"
+                      ? records?.reviewsMore
+                      : records?.verifiedMore)
+                  }
+                  onClick={() => {
+                    choose("");
+                    if (view === "reviews") setPage(page + 1);
+                    else setVerifiedPage(verifiedPage + 1);
+                  }}
+                >
+                  Next
                 </button>
               </div>
-            </section>
-          )}
-        </article>
+            )}
+          </div>
+        )}
+        {(!pendingOnly || selected) && (
+          <article className="review-detail">
+            {selected && (
+              <button className="review-back" onClick={() => choose("")}>
+                ← Back to records
+              </button>
+            )}
+            {review && view === "reviews" ? (
+              <>
+                <h2 tabIndex={-1} ref={detailHeading}>
+                  {review.name}
+                </h2>
+                <p>
+                  <CopyValue value={review.email} /> · {review.status} ·
+                  Requirements v{review.requirement_version}
+                </p>
+                {review.accepted_verified && (
+                  <p>This account remains active while you review the update.</p>
+                )}
+                <SubmittedDetails review={review} compact={pendingOnly} />
+                {review.reason && (
+                  <p className="review-feedback">
+                    Review feedback: {review.reason}
+                  </p>
+                )}
+                {review.status === "pending" && (
+                  <div className="action-row">
+                    {(data?.admin
+                      ? ["approve", "corrections", "reject"]
+                      : ["corrections"]
+                    ).map((a) => (
+                      <button
+                        className={
+                          a === "reject" ? "button danger" : "button secondary"
+                        }
+                        key={a}
+                        onClick={() => {
+                          setDecision(a);
+                          setReason("");
+                        }}
+                      >
+                        {a === "approve"
+                          ? "Approve account"
+                          : a === "corrections"
+                            ? "Request corrections"
+                            : "Reject submission"}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : person && view === "verified" ? (
+              <>
+                <h2 tabIndex={-1} ref={detailHeading}>
+                  {person.name}
+                </h2>
+                <p>
+                  <CopyValue value={person.email} />
+                </p>
+                <p>
+                  {person.verification_version
+                    ? `Approved requirements v${person.verification_version}`
+                    : "Legacy approval"}
+                </p>
+                {person.verification_update_requested && (
+                  <p>Update requested. The account remains active.</p>
+                )}
+                {data?.admin && (
+                  <button
+                    className="button danger"
+                    onClick={() => {
+                      setDecision("revoke");
+                      setReason("");
+                    }}
+                  >
+                    Revoke verification
+                  </button>
+                )}
+              </>
+            ) : (
+              <WorkspaceEmptyState
+                compact
+                icon="shield"
+                title="Select a record"
+                description="Choose a profile from the queue to review its submitted details and private evidence before making a decision."
+              />
+            )}
+            {decision && (
+              <section className="decision-panel">
+                <h3>
+                  {decision === "approve"
+                    ? "Activate this account"
+                    : decision === "corrections"
+                      ? "Request updated details"
+                      : decision === "reject"
+                        ? "Reject this submission"
+                        : "Revoke this verified profile"}
+                </h3>
+                <p>
+                  {decision === "approve"
+                    ? "Confirm that the submitted evidence meets its published requirements."
+                    : decision === "revoke"
+                      ? "This removes the badge and withdraws its public profile. Record the reason."
+                      : "Explain the decision and the details the member needs to address. Existing accepted details and badges remain preserved."}
+                </p>
+                {decision !== "approve" && (
+                  <>
+                    <label>
+                      Reason (required)
+                      <textarea
+                        ref={reasonInput}
+                        rows={4}
+                        maxLength={2000}
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                      />
+                    </label>
+                    <small>{reason.length}/2,000 characters</small>
+                  </>
+                )}
+                <div className="action-row">
+                  <button
+                    className="button"
+                    disabled={
+                      busy || (decision !== "approve" && !reason.trim())
+                    }
+                    ref={confirmDecision}
+                    onClick={() => void submit()}
+                  >
+                    Confirm decision
+                  </button>
+                  <button
+                    className="button secondary"
+                    onClick={() => {
+                      setDecision("");
+                      setReason("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </section>
+            )}
+          </article>
+        )}
       </div>
     </section>
   );

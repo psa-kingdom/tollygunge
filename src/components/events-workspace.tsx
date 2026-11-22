@@ -20,6 +20,7 @@ type Event = {
   version: number;
   title: string;
   description: string;
+  has_banner?: boolean;
   location: string;
   starts_at: string;
   ends_at: string;
@@ -439,7 +440,7 @@ function EventForm({
         setBusy(true);
         setError("");
         try {
-          await api("/api/staff/events", {
+          const payload = {
             action: "save",
             id: event?.id,
             version: event?.version ?? 0,
@@ -454,6 +455,7 @@ function EventForm({
             feePaise: event?.fee_paise ?? 0,
             registrationStartsAt: event?.registration_starts_at ?? null,
             registrationEndsAt: event?.registration_ends_at ?? null,
+            removeBanner: data.get("removeBanner") === "on",
             ...(!event
               ? {
                   reminders: disabledReminders,
@@ -461,7 +463,22 @@ function EventForm({
                   paymentAccountIds: [],
                 }
               : {}),
-          });
+          };
+          const banner = data.get("banner");
+          if (banner instanceof File && banner.size) {
+            if (banner.size > 2097152)
+              throw new Error("Choose a banner up to 2 MB.");
+            const upload = new FormData();
+            upload.set("details", JSON.stringify(payload));
+            upload.set("banner", banner);
+            const response = await fetch("/api/staff/events", { method: "POST", body: upload });
+            if (!response.ok) {
+              const result = await response.json().catch(() => null);
+              throw new Error(result?.error || "Could not save the event banner.");
+            }
+          } else {
+            await api("/api/staff/events", payload);
+          }
           await saved();
         } catch (err) {
           setError((err as Error).message);
@@ -518,6 +535,16 @@ function EventForm({
             placeholder="Where will the event take place?"
           />
         </label>
+        <label>
+          <span>Display image or banner <span className={styles.optional}>(optional)</span></span>
+          <input name="banner" type="file" accept="image/jpeg,image/png" />
+          <small>JPEG or PNG, up to 2 MB. A wide image works best.</small>
+        </label>
+        {event?.has_banner && (
+          <label>
+            <span><input type="checkbox" name="removeBanner" /> Remove current banner</span>
+          </label>
+        )}
         <label>
           <span>
             Description <span className={styles.optional}>(optional)</span>
@@ -718,6 +745,10 @@ function EventDetails({
             )}
             {tab === "Details" ? (
               <>
+                {event?.has_banner && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className={styles.banner} src={`/api/event-banners/${event.id}?v=${event.version}`} alt="" />
+                )}
                 <dl className={styles.details}>
                   <div>
                     <dt>Date & time</dt>

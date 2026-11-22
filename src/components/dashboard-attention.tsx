@@ -246,16 +246,13 @@ export function DashboardAttention({
           ) : (
             <section>
               <h2>Membership application review</h2>
-              <p>
-                Review the submitted profile and evidence here. Membership
-                status and payments are managed separately.
-              </p>
               {reviewMessage && <p role="status">{reviewMessage}</p>}
               {!reviewData && !reviewMessage && (
                 <p role="status">Loading applications…</p>
               )}
               {reviewData && (
                 <VerificationReviews
+                  pendingOnly
                   data={reviewData}
                   busy={reviewBusy}
                   load={loadReviews}

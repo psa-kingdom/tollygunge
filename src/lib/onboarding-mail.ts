@@ -9,6 +9,13 @@ import type { Pool, PoolClient } from "pg";
 export const hashToken = (token: string) =>
   createHash("sha256").update(token).digest("hex");
 export function onboardingEmail(kind: string, url: string) {
+  if (kind === "verification" && /^\d{6}$/.test(url)) {
+    return {
+      subject: "Your TPA registration code",
+      text: `Your TPA registration code is ${url}. Enter it on the registration page within 10 minutes.`,
+      html: `<p>Your TPA registration code is <strong>${url}</strong>.</p><p>Enter it on the registration page within 10 minutes.</p>`,
+    };
+  }
   const subjects: Record<string, string> = {
     welcome: "Welcome to TPA",
     verification: "Verify your TPA email",
@@ -18,7 +25,7 @@ export function onboardingEmail(kind: string, url: string) {
   };
   const messages: Record<string, string> = {
     welcome:
-      "Your account is ready; your profile is not yet verified. Verify your email, then complete your details and evidence to request administrator review. Account creation does not approve membership.",
+      "Complete your details and evidence to request administrator approval. Your account becomes active after approval.",
     verification:
       "Verify your email using the link below. This link expires in 24 hours.",
     recovery:
@@ -26,7 +33,7 @@ export function onboardingEmail(kind: string, url: string) {
     invitation:
       "TPA has created an account for you. Set your password using this single-use link within 48 hours, then complete your details and documents to request verification.",
     update:
-      "Your Verified badge remains active. Please complete the newly required details in your portal.",
+      "Your account remains active. Please complete the newly required details in your portal.",
   };
   if (!subjects[kind]) throw Error("Unsupported transactional email.");
   const escaped = (s: string) =>

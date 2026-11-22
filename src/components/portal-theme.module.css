@@ -317,6 +317,9 @@
 .portal :global(.member-register-table .member-register-selection-column) { width: 42px; padding-inline-end: 0; }
 .portal :global(.member-register-table .member-register-person-column) { width: 32%; min-width: 220px; }
 .portal :global(.member-register-table td) { vertical-align: middle; }
+.portal :global(.member-register-table [data-member-record]) { cursor: pointer; }
+.portal :global(.member-register-table [data-member-record]:hover) { background: var(--portal-hover); }
+.portal :global(.member-register-table [data-member-record] .member-record-button) { gap: 8px; }
 .portal :global(.member-register-table tr.is-selected) { background: var(--portal-active); }
 .portal :global(.member-register-select) { display: flex; align-items: center; min-height: 32px; }
 .portal :global(.workspace-main .member-record-button) { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--ink); text-align: left; }

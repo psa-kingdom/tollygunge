@@ -1,5 +1,6 @@
 import { passwordPolicy, existingPasswordMaximum, newCredentialError } from "@/domain/password-policy";
 import { betterAuth } from "better-auth";
+import { consumeRegistrationCode } from "./registration-code";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { email as memberEmail } from "@/domain/member-foundation";
 import type { Pool } from "pg";
@@ -11,6 +12,7 @@ export function createAuth(
   env: Record<string, string | undefined> = process.env,
   recoverySender?: (email: string, url: string, token: string) => Promise<void>,
 ) {
+  const signupOtp = env.TPA_SIGNUP_OTP_REQUIRED !== "false";
   const invitationHeld = async (userId: string) =>
     Boolean(
       (
@@ -25,6 +27,11 @@ export function createAuth(
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     trustedOrigins: env.BETTER_AUTH_URL ? [env.BETTER_AUTH_URL] : [],
+    user: {
+      additionalFields: {
+        requestedMembershipPlan: { type: "string", required: false },
+      },
+    },
     hooks: {
       before: createAuthMiddleware(async (context) => {
         const credentialError = newCredentialError(context.path, context.body);
@@ -34,6 +41,15 @@ export function createAuth(
             : (String(context.body?.password).length < passwordPolicy.minimum ? "PASSWORD_TOO_SHORT" : "PASSWORD_TOO_LONG"),
           message: credentialError,
         });
+        if (context.path === "/sign-up/email" && signupOtp && env.ONBOARDING_ENABLED === "true") {
+          if (!["Life", "Patron"].includes(context.body?.requestedMembershipPlan))
+            throw new APIError("BAD_REQUEST", { message: "Choose a Life or Patron membership." });
+          const email = memberEmail(context.body?.email, true);
+          if (!env.BETTER_AUTH_SECRET || !await consumeRegistrationCode(database, email, context.body?.registrationCode, env.BETTER_AUTH_SECRET))
+            throw new APIError("BAD_REQUEST", { message: "The registration code is incorrect or expired." });
+        }
+        if (context.path === "/update-user" && context.body?.requestedMembershipPlan !== undefined)
+          throw new APIError("BAD_REQUEST", { message: "The registration plan cannot be changed here." });
         if (
           !["/request-password-reset", "/send-verification-email"].includes(
             context.path,
@@ -41,6 +57,12 @@ export function createAuth(
           typeof context.body?.email !== "string"
         )
           return;
+        if (context.path === "/send-verification-email" && signupOtp &&
+            (await database.query(
+              'SELECT 1 FROM public."user" WHERE lower(email)=$1 AND "requestedMembershipPlan" IS NOT NULL',
+              [context.body.email.trim().toLowerCase()],
+            )).rowCount)
+          return context.json({ status: true });
         const held = (
           await database.query(
             'SELECT 1 FROM public."user" u JOIN tpa.account_invitation_holds h ON h.user_id=u.id WHERE lower(btrim(u.email))=$1 AND h.released_at IS NULL',
@@ -59,7 +81,7 @@ export function createAuth(
     databaseHooks: {
       user: {
         create: {
-          before: async (user) => {
+          before: async (user, context) => {
             const normalized = memberEmail(user.email, true);
             if (
               (
@@ -73,7 +95,7 @@ export function createAuth(
                 message:
                   "A member record already exists. Ask staff to link or invite your website account.",
               });
-            return { data: { ...user, email: normalized } };
+            return { data: { ...user, email: normalized, ...(signupOtp && context?.path === "/sign-up/email" ? { emailVerified: true } : {}) } };
           },
           after: async (user) => {
             if (env.ONBOARDING_ENABLED === "true")
@@ -81,7 +103,7 @@ export function createAuth(
                 "UPDATE tpa.onboarding_mail SET user_id=$1 WHERE user_id IS NULL AND recipient=$2 AND kind='verification'",
                 [user.id, user.email.toLowerCase()],
               );
-            if (env.ONBOARDING_ENABLED === "true")
+            if (env.ONBOARDING_ENABLED === "true" && !signupOtp)
               await queueOnboardingMail(
                 database,
                 user.id,
@@ -101,6 +123,12 @@ export function createAuth(
                 message:
                   "Account access is awaiting invitation release by TPA.",
               });
+            const awaitingCode = await database.query(
+              'SELECT 1 FROM public."user" WHERE id=$1 AND NOT "emailVerified" AND "requestedMembershipPlan" IS NOT NULL',
+              [session.userId],
+            );
+            if (awaitingCode.rowCount)
+              throw new APIError("FORBIDDEN", { message: "Finish entering your registration code on the signup page." });
             const staff = (
               await database.query(
                 "SELECT 1 FROM tpa.staff_roles WHERE user_id=$1",
@@ -201,7 +229,7 @@ export function createAuth(
         : {},
     emailVerification: {
       expiresIn: 86400,
-      sendOnSignUp: env.ONBOARDING_ENABLED === "true",
+      sendOnSignUp: env.ONBOARDING_ENABLED === "true" && !signupOtp,
       sendOnSignIn: false,
       sendVerificationEmail: async ({ user, url, token }) => {
         if (env.ONBOARDING_ENABLED !== "true") return;

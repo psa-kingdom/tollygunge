@@ -1,7 +1,6 @@
 "use client";
 import { SignatureInput } from "./signature-input";
 import { DocumentPreview } from "./document-preview";
-import { VerifyEmail } from "./onboarding-auth";
 import { prefillApplicationPhone } from "@/domain/application-contact";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -20,6 +19,7 @@ import {
 import { recovery } from "./draft-recovery";
 import { CheckboxDropdown } from "./checkbox-dropdown";
 import { AddressForm } from "./address-form";
+import { StatusBadge } from "./portal-values";
 import {
   emptyAddress,
   copyOfficeToResidence,
@@ -48,6 +48,7 @@ type Status = {
   emailVerified: boolean;
   registeredContact?: { email: string; phone: string };
   verified: boolean;
+  membershipStatus: string | null;
   updateRequested: boolean;
   missing: string[];
   reviews: { status: string; reason: string; created_at: string }[];
@@ -56,11 +57,13 @@ export function ApplicationDraft({
   name,
   userId,
   initialStep,
+  membershipPlan,
   navigation,
 }: {
   name: string;
   userId: string;
   initialStep?: number;
+  membershipPlan?: string;
   navigation?: React.ReactNode;
 }) {
   const router = useRouter();
@@ -71,7 +74,7 @@ export function ApplicationDraft({
   const [submitted, setSubmitted] = useState<SubmittedApplication | null>(null);
   const [draft, setDraft] = useState<Draft>({
       version: 0,
-      plan: "Life",
+      plan: membershipPlan ?? "Life",
       category: "Professional",
       details: { fullName: name },
       documentIds: [],
@@ -535,10 +538,10 @@ export function ApplicationDraft({
         status.policy.fields,
         draft.details,
         draft.category,
-        status.emailVerified,
+        true,
       )
     : [];
-  const progress = status ? verificationProgress(status.policy.fields, draft.details, draft.category, status.emailVerified) : null;
+  const progress = status ? verificationProgress(status.policy.fields, draft.details, draft.category, true, false) : null;
   const standardPersonalIds = ["gender", "fullName", "dateOfBirth", "photograph"];
   const standardContactIds = ["phone", "officePhone", "residencePhone", "fax"];
   const preferenceIds = ["correspondenceAddress", "deliveryPreference"];
@@ -580,6 +583,7 @@ export function ApplicationDraft({
         submission={completedSubmission}
         fields={completedSubmission.fields ?? status.policy.fields}
         reviewStatus={submitted ? "pending" : status.reviews[0]?.status}
+        membershipActive={status.membershipStatus === "active"}
         successOpen={successOpen}
         onDismiss={() => setSuccessOpen(false)}
         onEdit={() => {
@@ -603,6 +607,9 @@ export function ApplicationDraft({
       </div>
       {status && (
         <>
+          <StatusBadge tone={status.membershipStatus === "active" ? "success" : "neutral"}>
+            {status.membershipStatus === "active" ? "Active" : "Not active"}
+          </StatusBadge>
           {status.reviews[0] && (
             <p>
               Latest review: {status.reviews[0].status}{" "}
@@ -706,7 +713,7 @@ export function ApplicationDraft({
             <section className="application-form-section">
               <h3>Membership</h3>
               <div className="form-grid">
-                <label>Membership plan<input value={draft.plan} readOnly /><small>Assigned by your administrator.</small></label>
+                <label>Membership plan<input value={draft.plan} readOnly /><small>Your current membership choice.</small></label>
 
               </div>
             </section>
@@ -774,7 +781,6 @@ export function ApplicationDraft({
                 })}
             </dl>
             <h3>Before submission</h3>
-            {status && !status.emailVerified && <VerifyEmail email={status.email} verified={false} />}
             {missing.length ? (
               <ul>
                 {missing.map((x) => (

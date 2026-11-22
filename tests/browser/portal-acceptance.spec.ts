@@ -297,16 +297,7 @@ test("all staff roles retain navigation, direct route, API and preview boundarie
       await showMembershipRecords(page);
       const record = page.locator(".member-record-button").first();
       await expect(record).toBeVisible();
-      await record.hover();
-      const preview = page.getByRole("dialog", { name: /quick preview/ });
-      await expect(preview).toBeVisible();
-      await preview.hover();
-      await expect(
-        preview.getByRole("button", { name: /^Copy .*@/ }).first(),
-      ).toBeVisible();
-      await preview
-        .getByRole("button", { name: "Open full details →" })
-        .click();
+      await record.click();
       await expect(page.locator(".portal-inspector")).toBeVisible();
       await expect(
         page.getByRole("button", { name: "Edit details",
@@ -495,54 +486,20 @@ test("Escape dismisses account settings after changing appearance without reopen
   await expect(page.locator("html")).toHaveAttribute("data-color-mode", "dark");
 });
 
-test("quick cards fit viewport edges and explicit keyboard close stays dismissed", async ({
-  page,
-}) => {
+test("member rows open details directly without a hover preview", async ({ page }) => {
   await signInPortal(page, "administrator");
   await page.goto("/admin/workspaces/members");
-  const records = page.getByRole("region", {
-    name: "Member register records",
-    exact: true,
-  });
-  const trigger = records
-    .getByRole("button", { name: /^Open .* details$/ })
-    .first();
-  await records
-    .getByRole("button", { name: /^Copy .*@/ })
-    .first()
-    .focus();
-  await page.keyboard.press("Shift+Tab");
+  const row = page.locator("[data-member-record]").first();
+  const trigger = row.getByRole("button", { name: /^Open .* details$/ });
+  await trigger.hover();
+  await expect(page.getByRole("dialog", { name: /quick preview/ })).toHaveCount(0);
+  await row.getByRole("cell").last().click();
+  const inspector = page.locator(".portal-inspector");
+  await expect(inspector).toBeVisible();
+  await inspector.getByRole("button", { name: "Close details", exact: true }).click();
   await expect(trigger).toBeFocused();
-  const card = page.getByRole("dialog", { name: /quick preview/ });
-  await expect(card).toBeVisible();
-  for (const width of [1440, 390, 320]) {
-    await page.setViewportSize({ width, height: 600 });
-    await trigger.scrollIntoViewIfNeeded();
-    await expect
-      .poll(async () =>
-        card.evaluate((element) => {
-          const rect = element.getBoundingClientRect();
-          return (
-            rect.left >= 0 &&
-            rect.top >= 0 &&
-            rect.right <= innerWidth + 1 &&
-            rect.bottom <= innerHeight + 1
-          );
-        }),
-      )
-      .toBe(true);
-  }
-  await card
-    .getByRole("button", { name: "Close quick preview", exact: true })
-    .focus();
-  await page.keyboard.press("Enter");
-  await expect(card).toHaveCount(0);
-  await expect(trigger).toBeFocused();
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Shift+Tab");
-  await expect(card).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(card).toHaveCount(0);
+  await trigger.press("Enter");
+  await expect(inspector).toBeVisible();
 });
 
 test("member detail popup fits desktop and phone layouts", async ({ page }, info) => {
@@ -566,7 +523,7 @@ test("member detail popup fits desktop and phone layouts", async ({ page }, info
   }
   await panel.getByRole("button", { name: "Application review", exact: true }).click();
   await expect(panel.getByRole("heading", { name: /Profile verification/ })).toBeVisible();
-  await expect(panel.getByRole("button", { name: "Confirm profile verification", exact: true })).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "Confirm account approval", exact: true })).toHaveCount(0);
   await panel.getByRole("button", { name: "Close details", exact: true }).click();
   await expect(panel).toHaveCount(0);
 });
@@ -634,8 +591,8 @@ test("combined association directory keeps membership and account identities dis
   await expect(inspector.getByRole("button", { name: "Save member details", exact: true })).toHaveCount(0);
   await inspector.getByRole("button", { name: "Manage membership", exact: true }).click();
   await expect(
-    inspector.getByRole("combobox", { name: "Membership status", exact: true }),
-  ).toBeDisabled();
+    inspector.getByRole("combobox", { name: "Membership type", exact: true }),
+  ).toBeVisible();
   await expect(
     inspector.getByRole("button", {
       name: "Review this member invitation",

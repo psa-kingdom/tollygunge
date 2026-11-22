@@ -108,11 +108,11 @@ test("member detail reviews evidence and approves the exact submission version",
   ).toHaveAttribute("href", "/api/documents/document-1");
   expect(writes).toHaveLength(0);
   await page
-    .getByRole("button", { name: "Approve verification", exact: true })
+    .getByRole("button", { name: "Approve account", exact: true })
     .click();
-  await page.getByLabel("Approval note (optional)").fill("Evidence checked");
+  await expect(page.locator("textarea")).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Confirm profile verification", exact: true })
+    .getByRole("button", { name: "Confirm account approval", exact: true })
     .click();
   await expect(
     page.getByText("Directory refreshed after approval"),
@@ -122,7 +122,7 @@ test("member detail reviews evidence and approves the exact submission version",
       action: "approve",
       id: "submission-1",
       version: 4,
-      reason: "Evidence checked",
+      reason: "",
     },
   ]);
 });
@@ -138,7 +138,7 @@ test("no submission explains the prerequisite without allowing approval", async 
   ).toBeVisible();
   await expect(
     page.getByRole("button", {
-      name: "Confirm profile verification",
+      name: "Confirm account approval",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -158,7 +158,7 @@ test("non-administrator cannot approve from the detail review", async ({
   ).toBeVisible();
   await expect(
     page.getByRole("button", {
-      name: "Confirm profile verification",
+      name: "Confirm account approval",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -171,10 +171,10 @@ test("stale submission stays open and shows the server error", async ({
     .getByRole("button", { name: "Approve profile verification", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Approve verification", exact: true })
+    .getByRole("button", { name: "Approve account", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Confirm profile verification", exact: true })
+    .getByRole("button", { name: "Confirm account approval", exact: true })
     .click();
   await expect(page.getByText("Review changed. Reload.")).toBeVisible();
   await expect(
@@ -191,7 +191,7 @@ test("closing a review makes no approval request", async ({ page }) => {
     .click();
   await expect(
     page.getByRole("button", {
-      name: "Confirm profile verification",
+      name: "Confirm account approval",
       exact: true,
     }),
   ).toHaveCount(0);

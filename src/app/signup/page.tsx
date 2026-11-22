@@ -27,7 +27,7 @@ export default async function Page({
         description="Start with an account. Complete your profile and apply for membership when you’re ready."
       >
         {process.env.ONBOARDING_ENABLED === "true" ? (
-          <Signup returnTo={returnTo} />
+          <Signup returnTo={returnTo} otpRequired={process.env.TPA_SIGNUP_OTP_REQUIRED !== "false"} />
         ) : (
           <div className="notice">
             <p>

@@ -13,6 +13,7 @@ import { useSearchParams } from "next/navigation";
 import { FallbackPanel } from "./fallback-screen";
 import { LoadingScreen } from "./loading-screen";
 type Event = {
+  has_banner?: boolean;
   id: string;
   booking_closed: boolean;
   completed_at: string | null;
@@ -121,6 +122,10 @@ export function MemberEvents() {
             <p>
               {eventTime(event.starts_at)} · {event.location}
             </p>
+            {event.has_banner && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={"/api/event-banners/" + event.id} alt="" style={{ width: "100%", maxHeight: 320, objectFit: "contain" }} />
+            )}
             <p>{event.description}</p>
             {event.checked_in_at && (
               <p>Attendance date: {eventTime(event.checked_in_at)}</p>

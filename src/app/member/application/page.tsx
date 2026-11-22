@@ -28,6 +28,7 @@ export default async function Page({
         <ApplicationDraft
           navigation={<PortalSubsections />}
           name={actor.name}
+          membershipPlan={actor.plan}
           userId={actor.id}
           initialStep={initialStep}
         />

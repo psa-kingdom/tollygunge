@@ -43,6 +43,7 @@ export async function memberVerification(actor: Actor) {
       actor.id,
     ])
   ).rows[0];
+  const registrationCodeRequired = process.env.TPA_SIGNUP_OTP_REQUIRED !== "false";
   const draft = (
     await db.query("SELECT * FROM tpa.application_drafts WHERE user_id=$1", [
       actor.id,
@@ -50,7 +51,7 @@ export async function memberVerification(actor: Actor) {
   ).rows[0];
   const person = (
     await db.query(
-      "SELECT accepted_verified,verification_version,verification_update_requested,contact_email,mobile_normalized,accepted FROM tpa.people WHERE user_id=$1",
+      "SELECT p.accepted_verified,p.verification_version,p.verification_update_requested,p.contact_email,p.mobile_normalized,p.accepted,m.status AS membership_status FROM tpa.people p LEFT JOIN tpa.memberships m ON m.person_id=p.id WHERE p.user_id=$1 AND p.archived_at IS NULL",
       [actor.id],
     )
   ).rows[0];
@@ -74,6 +75,7 @@ export async function memberVerification(actor: Actor) {
     email: actor.email,
     registeredContact: registeredApplicationContact(person, actor.email),
     verified: !!person?.accepted_verified,
+    membershipStatus: person?.membership_status ?? null,
     updateRequested: !!person?.verification_update_requested,
     approvedVersion: person?.verification_version ?? null,
     reviews,
@@ -81,13 +83,14 @@ export async function memberVerification(actor: Actor) {
       p.fields,
       draft?.details ?? {},
       draft?.category ?? "Professional",
-      !!user?.emailVerified,
+      registrationCodeRequired || !!user?.emailVerified,
+      !registrationCodeRequired,
     ),
     missing: missingFields(
       p.fields,
       draft?.details ?? {},
       draft?.category ?? "Professional",
-      !!user?.emailVerified,
+      registrationCodeRequired || !!user?.emailVerified,
     ),
   };
 }
@@ -123,7 +126,7 @@ export async function submitVerification(
       p.fields,
       answers,
       draft.category,
-      !!user.emailVerified,
+      process.env.TPA_SIGNUP_OTP_REQUIRED !== "false" || !!user.emailVerified,
     );
   await validatePostalAddresses(answers, {}, client, false);
   if (missing.length)
@@ -204,6 +207,10 @@ export async function reviewVerification(
       "UPDATE tpa.people SET accepted_verified=false,published=NULL,status='unverified',version=version+1,updated_at=now() WHERE id=$1",
       [person.id],
     );
+    await client.query(
+      "UPDATE tpa.memberships SET status='suspended',version=version+1,updated_at=now() WHERE person_id=$1 AND status='active'",
+      [person.id],
+    );
     await audit(client, actor.id, "verification.revoked", person.id);
     await client.query(
       "INSERT INTO tpa.person_revisions(id,person_id,version,action,body,actor_id) VALUES($1,$2,$3,$4,$5,$6)",
@@ -243,7 +250,7 @@ export async function reviewVerification(
         [r.user_id],
       )
     ).rows[0];
-    if (!verified?.emailVerified)
+    if (process.env.TPA_SIGNUP_OTP_REQUIRED === "false" && !verified?.emailVerified)
       throw new OperationError("Account email must be verified.");
     const current = await policy(client);
     const updateRequested =
@@ -262,6 +269,16 @@ export async function reviewVerification(
         updateRequested,
         r.person_snapshot.mobile ?? r.person_snapshot.phone ?? null,
       ],
+    );
+    await client.query(
+      `INSERT INTO tpa.memberships(id,person_id,type,status,source)
+       SELECT gen_random_uuid(),$1,u."requestedMembershipPlan",'active','staff'
+       FROM public."user" u WHERE u.id=$2
+       ON CONFLICT(person_id) DO UPDATE
+       SET type=coalesce(tpa.memberships.type,excluded.type),
+           status=CASE WHEN $3 THEN coalesce(tpa.memberships.status,excluded.status) ELSE excluded.status END,
+           version=tpa.memberships.version+1,updated_at=now()`,
+      [r.person_id, r.user_id, person.accepted_verified],
     );
     if (updateRequested) {
       const account = (

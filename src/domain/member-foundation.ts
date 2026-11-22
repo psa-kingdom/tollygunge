@@ -70,7 +70,7 @@ export function memberDisplayName(input:Pick<MemberInput,"prefix"|"firstName"|"l
   const plain=[previous.firstName,previous.lastName].filter(Boolean).join(" ");
   return previous.name===generated || previous.name===plain ? next : previous.name;
 }
-export function memberInput(value: unknown, required = true): MemberInput {
+export function memberInput(value: unknown, required = true, requireMembershipNumber = required): MemberInput {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new MemberValidationError({ member: "Provide member details." });
   const i = value as Record<string, unknown>, errors: Record<string, string> = {};
@@ -94,8 +94,10 @@ export function memberInput(value: unknown, required = true): MemberInput {
   };
   if (out.membershipNumber && !/^[\p{L}\p{N}][\p{L}\p{N} /_.-]*$/u.test(out.membershipNumber))
     errors.membershipNumber = "Use a membership number containing letters, digits or ordinary separators.";
-  if (required) for (const k of ["firstName", "lastName", "email", "membershipNumber"] as const)
+  if (required) for (const k of ["firstName", "lastName", "email"] as const)
     if (!out[k] && !errors[k]) errors[k] = "This field is required.";
+  if (requireMembershipNumber && !out.membershipNumber && !errors.membershipNumber)
+    errors.membershipNumber = "This field is required.";
   if(memberDisplayName(out).length>120) errors.firstName="The combined display name must be at most 120 characters.";
   if (i.addresses !== undefined) {
     if (!i.addresses || typeof i.addresses !== "object" || Array.isArray(i.addresses)) errors.addresses = "Provide structured addresses.";

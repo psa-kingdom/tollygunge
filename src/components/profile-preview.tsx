@@ -17,6 +17,7 @@ import {
 } from "@floating-ui/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CopyValue, StatusBadge } from "./portal-values";
+import { PortalIcon } from "./portal-icon";
 import styles from "./portal-interactions.module.css";
 export type ProfileSummary = {
   name: string;
@@ -270,8 +271,8 @@ export function ProfileInspector({
     >
       <div className={styles.inspectorBar}>
         <span>Profile details</span>
-        <button type="button" onClick={onClose} disabled={closeDisabled} aria-label="Close details">
-          ×
+        <button type="button" className={styles.inspectorClose} onClick={onClose} disabled={closeDisabled} aria-label="Close details">
+          <PortalIcon name="close" />
         </button>
       </div>
       {children}

@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { api } from "./operations-client";
 import { InvitationReleaseReview } from "./invitation-release-review";
-import { ProfilePreview, ProfileInspector } from "./profile-preview";
+import { ProfileInspector } from "./profile-preview";
 import { CopyValue, StatusBadge } from "./portal-values";
 import styles from "./member-review.module.css";
 import { WorkspaceEmptyState } from "./workspace-ui";
@@ -35,11 +35,10 @@ type Member = {
   };
   email: string;
   mobile: string;
-  membership_number: string;
+  membership_number: string | null;
   type: string | null;
   status: string | null;
   professional_verified: boolean;
-  email_verified: boolean | null;
 };
 type Register = {
   rows: Member[];
@@ -55,7 +54,6 @@ const recordKey = (record: Member) =>
 type LinkedAccount = {
   email: string;
   phone: string;
-  email_verified: boolean;
   staff_account: boolean;
   organization: string;
   profession: string;
@@ -97,8 +95,6 @@ function LinkedAccountDetails({ userId }: { userId: string }) {
           <dd>
             <CopyValue value={account.email} />
           </dd>
-          <dt>Email verification</dt>
-          <dd>{account.email_verified ? "Verified" : "Unverified"}</dd>
           <dt>Account phone</dt>
           <dd>
             <CopyValue value={account.phone} />
@@ -163,8 +159,7 @@ export function MemberRegister({
     [chosen, setChosen] = useState<string[]>([]),
     [invitation, setInvitation] = useState("all"),
     [kind, setKind] = useState("all"),
-    [verification, setVerification] = useState("all"),
-    [review, setReview] = useState("all"),
+    [plan, setPlan] = useState("all"),
     [contact, setContact] = useState("all"),
     [message, setMessage] = useState(""),
     [selected, setSelected] = useState<Member>();
@@ -181,7 +176,7 @@ export function MemberRegister({
   }
   async function load(
     offset = 0,
-    filters = { q, status, invitation, kind, verification, review, contact },
+    filters = { q, status, invitation, kind, plan, contact },
     discard = false,
   ) {
     if (editorDirty && !discard) {
@@ -208,8 +203,7 @@ export function MemberRegister({
           "&records=all&" +
           new URLSearchParams({
             kind: filters.kind,
-            verification: filters.verification,
-            review: filters.review,
+            plan: filters.plan,
             contact: filters.contact,
           }) +
           (personId ? "&id=" + encodeURIComponent(personId) : ""),
@@ -281,18 +275,12 @@ export function MemberRegister({
           />
         </label>
         <label>
-          Membership status
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            {[
-              "all",
-              "active",
-              "expired",
-              "suspended",
-              "resigned",
-              "unknown",
-            ].map((v) => (
-              <option key={v}>{v}</option>
-            ))}
+          Membership type
+          <select value={plan} onChange={(e) => setPlan(e.target.value)}>
+            <option value="all">All plans</option>
+            <option value="Life">Life member</option>
+            <option value="Patron">Patron member</option>
+            <option value="Annual">Annual (legacy)</option>
           </select>
         </label>
         <label>
@@ -317,22 +305,21 @@ export function MemberRegister({
           Search register
         </button>
         <details className="directory-extra-filters">
-          <summary>
-            Account &amp; verification filters
-            {[verification, contact, review].some((value) => value !== "all")
-              ? " · Active"
-              : ""}
-          </summary>
+          <summary>More filters</summary>
           <div className="form-grid">
             <label>
-              Email verification
-              <select
-                value={verification}
-                onChange={(e) => setVerification(e.target.value)}
-              >
-                <option value="all">All email states</option>
-                <option value="verified">Email verified</option>
-                <option value="unverified">Email unverified</option>
+              Membership status
+              <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                {[
+                  "all",
+                  "active",
+                  "expired",
+                  "suspended",
+                  "resigned",
+                  "unknown",
+                ].map((v) => (
+                  <option key={v}>{v}</option>
+                ))}
               </select>
             </label>
             <label>
@@ -344,21 +331,6 @@ export function MemberRegister({
                 <option value="all">Any</option>
                 <option value="phone">Phone supplied</option>
                 <option value="no-phone">No phone</option>
-              </select>
-            </label>
-            <label>
-              Profile review
-              <select
-                value={review}
-                onChange={(e) => setReview(e.target.value)}
-              >
-                {["all", "unverified", "pending", "verified", "rejected"].map(
-                  (value) => (
-                    <option key={value} value={value}>
-                      {value === "all" ? "Any review state" : value}
-                    </option>
-                  ),
-                )}
               </select>
             </label>
           </div>
@@ -460,15 +432,21 @@ export function MemberRegister({
                     Person
                   </th>
                   <th scope="col">Membership no.</th>
-                  <th scope="col">Membership</th>
-                  <th scope="col">Account</th>
-                  <th scope="col">Verification</th>
+                  <th scope="col">Membership type</th>
+                  <th scope="col">Account status</th>
                 </tr>
               </thead>
               <tbody>
                 {data?.rows.map((m) => (
                   <tr
                     key={recordKey(m)}
+                    data-member-record
+                    onClick={(event) => {
+                      if (!(event.target instanceof Element) ||
+                          event.target.closest("button, a, input, select, textarea, label")) return;
+                      if (window.getSelection()?.toString()) return;
+                      event.currentTarget.querySelector<HTMLButtonElement>(".member-record-button")?.click();
+                    }}
                     className={
                       selected && recordKey(selected) === recordKey(m)
                         ? "is-selected"
@@ -511,31 +489,13 @@ export function MemberRegister({
                       </td>
                     )}
                     <td>
-                      <ProfilePreview
-                        key={
-                          q +
-                          status +
-                          invitation +
-                          kind +
-                          verification +
-                          contact +
-                          review
-                        }
-                        profile={{
-                          name: m.person.name,
-                          email: m.email,
-                          phone: m.mobile,
-                          number: m.membership_number,
-                          organization: m.person.organization,
-                          emailVerified: m.email_verified,
-                          profileVerified: m.professional_verified,
-                          membershipStatus: m.status,
-                        }}
+                      <button
+                        type="button"
+                        className="link-button member-record-button"
+                        aria-label={"Open " + m.person.name + " details"}
                         disabled={Boolean(selected || isCreating)}
-                        selected={Boolean(
-                          selected && recordKey(selected) === recordKey(m),
-                        )}
-                        onPin={(trigger) =>
+                        onClick={(event) => {
+                          const trigger = event.currentTarget;
                           editorGuard.proceed(() => {
                             selectedButton.current = trigger;
                             setEditorDirty(false);
@@ -543,9 +503,14 @@ export function MemberRegister({
                             setIsCreating(false);
                             setDetailTab("Member details");
                             setSelected(m);
-                          })
-                        }
-                      />
+                          });
+                        }}
+                      >
+                        <span className="member-record-avatar" aria-hidden="true">
+                          {m.person.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("")}
+                        </span>
+                        <strong>{m.person.name}</strong>
+                      </button>
                       <div className="member-record-contact">
                         <CopyValue value={m.email} />
                       </div>
@@ -556,42 +521,10 @@ export function MemberRegister({
                         label="membership number"
                       />
                     </td>
+                    <td>{m.type || "No plan"}</td>
                     <td>
-                      <StatusBadge
-                        tone={
-                          m.status === "active"
-                            ? "active"
-                            : m.status === "suspended"
-                              ? "error"
-                              : "neutral"
-                        }
-                      >
-                        {m.record_kind === "account"
-                          ? "Account only"
-                          : m.status || "Not recorded"}
-                      </StatusBadge>
-                    </td>
-                    <td>
-                      <span className="member-register-account">
-                        {m.user_id ? "Account linked" : "No account"}
-                      </span>
-                    </td>
-                    <td className="directory-verification">
-                      <StatusBadge
-                        tone={m.email_verified ? "success" : "neutral"}
-                      >
-                        {m.email_verified
-                          ? "Email verified"
-                          : m.user_id
-                            ? "Email unverified"
-                            : "No login account"}
-                      </StatusBadge>
-                      <StatusBadge
-                        tone={m.professional_verified ? "success" : "pending"}
-                      >
-                        {m.professional_verified
-                          ? "Profile verified"
-                          : "Profile unverified"}
+                      <StatusBadge tone={m.status === "active" ? "success" : "neutral"}>
+                        {m.status === "active" ? "Active" : "Not active"}
                       </StatusBadge>
                     </td>
                   </tr>
@@ -599,7 +532,7 @@ export function MemberRegister({
                 {data && !data.rows.length && (
                   <tr>
                     <td
-                      colSpan={invitationMode ? 6 : 5}
+                      colSpan={invitationMode ? 5 : 4}
                       className="member-register-empty"
                     >
                       <WorkspaceEmptyState
@@ -612,17 +545,15 @@ export function MemberRegister({
                           setStatus("all");
                           setInvitation("all");
                           setKind("all");
-                          setVerification("all");
+                          setPlan("all");
                           setContact("all");
-                          setReview("all");
                           void load(0, {
                             q: "",
                             status: "all",
                             invitation: "all",
                             kind: "all",
-                            verification: "all",
+                            plan: "all",
                             contact: "all",
-                            review: "all",
                           });
                         }}
                       />
@@ -687,9 +618,8 @@ export function MemberRegister({
                       status: "all",
                       invitation: "all",
                       kind: "all",
-                      verification: "all",
+                      plan: "all",
                       contact: "all",
-                      review: "all",
                     },
                     true,
                   );
@@ -732,7 +662,7 @@ export function MemberRegister({
                 <StatusBadge
                   tone={selected.status === "active" ? "active" : "neutral"}
                 >
-                  {selected.status || "Not recorded"}
+                  {selected.status === "active" ? "Active" : "Not active"}
                 </StatusBadge>
                 <span>
                   {selected.type || "No membership plan"} ·{" "}
@@ -832,11 +762,9 @@ export function MemberRegister({
                         </Link>
                       )}
                     </dd>
-                    <dt>Reviewed profile</dt>
+                    <dt>Account status</dt>
                     <dd>
-                      {selected.professional_verified
-                        ? "Verified"
-                        : "Unverified"}
+                      {selected.status === "active" ? "Active" : "Not active"}
                     </dd>
                   </dl>
                   {selected.user_id && (
@@ -864,8 +792,7 @@ export function MemberRegister({
                   <h4>Application review</h4>
                   <p>
                     Check the submitted details and evidence, then approve or
-                    request changes. Profile verification and membership status
-                    are separate decisions.
+                    request changes. Approval activates the membership.
                   </p>
                   {canManage && (
                     <MemberVerificationReview
@@ -888,7 +815,7 @@ export function MemberRegister({
                 <section className={styles.section}>
                   <h4>Manage membership</h4>
                   <p>
-                    Update membership status or review the recorded addresses.
+                    Account approval activates the membership. Choose a plan if the member did not select one.
                   </p>
                   <div className={styles.membershipControls}>
                     <button
@@ -918,54 +845,33 @@ export function MemberRegister({
                       Review this member invitation
                     </button>
                     <label>
-                      Membership status
+                      Membership type
                       <select
-                        value={selected.status || "unknown"}
-                        disabled={
-                          !canManage ||
-                          busy ||
-                          editorDirty ||
-                          selected.record_kind === "account"
-                        }
-                        onChange={async (e) => {
-                          if (
-                            !selected.person_id ||
-                            selected.record_kind === "account"
-                          )
-                            return;
-                          const next = e.target.value;
-                          if (
-                            !window.confirm(
-                              `Change ${selected.person.name}'s membership to ${next}?`,
-                            )
-                          )
-                            return;
+                        value={selected.type ?? ""}
+                        disabled={busy || editorDirty || !selected.user_id || selected.type === "Life" || selected.type === "Patron"}
+                        onChange={async (event) => {
+                          const plan = event.target.value;
+                          if (!selected.user_id || !["Life", "Patron"].includes(plan)) return;
                           setBusy(true);
                           try {
                             await api("/api/staff/member-actions", {
-                              action: "membership",
-                              personId: selected.person_id,
-                              version: selected.membership_version,
-                              status: next,
+                              action: "membership-plan",
+                              userId: selected.user_id,
+                              plan,
                             });
-                            await load();
-                            setSelected(undefined);
-                            setMessage("Membership status saved.");
-                          } catch (e) {
-                            setMessage((e as Error).message);
+                            await load(data?.offset ?? 0);
+                            setMessage("Membership type saved.");
+                          } catch (error) {
+                            setMessage((error as Error).message);
                           } finally {
                             setBusy(false);
                           }
                         }}
                       >
-                        <option value="unknown" disabled>
-                          Not recorded
-                        </option>
-                        {["active", "expired", "suspended", "resigned"].map(
-                          (v) => (
-                            <option key={v}>{v}</option>
-                          ),
-                        )}
+                        <option value="" disabled>Choose Life or Patron</option>
+                        {selected.type === "Annual" && <option value="Annual" disabled>Annual (legacy)</option>}
+                        <option value="Life">Life member</option>
+                        <option value="Patron">Patron member</option>
                       </select>
                     </label>
                   </div>
@@ -1075,9 +981,8 @@ export function MemberRegister({
                               status,
                               invitation,
                               kind,
-                              verification,
+                              plan,
                               contact,
-                              review,
                             },
                             true,
                           );

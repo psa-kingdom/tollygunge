@@ -247,7 +247,7 @@ export function MemberApplicationDetails({
                   <div
                     key={field.id}
                     className={
-                      addressKeys.some((key) => key === field.id)
+                      editing && addressKeys.some((key) => key === field.id)
                         ? styles.addressField
                         : undefined
                     }

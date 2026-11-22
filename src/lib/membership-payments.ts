@@ -22,6 +22,7 @@ export async function confirmMembershipPayment(c: PoolClient, actorId: string, v
   }
   if (member.version !== input.membershipVersion) throw new OperationError('Membership changed. Look up the member again.', 409);
   if (!member.type) throw new OperationError('Record the membership type before confirming payment.', 409);
+  if (!String(member.membership_number ?? '').trim()) throw new OperationError('Assign a membership number in Members → Edit details before confirming payment.', 409);
   const recipient = String(member.email ?? '').trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) throw new OperationError('Record a valid member email before confirming payment.', 409);
   const mailId = randomUUID();

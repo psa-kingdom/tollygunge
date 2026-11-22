@@ -1,28 +1,39 @@
 import { verificationSteps } from "@/domain/verification";
 import type { Review } from "./verification-workspace";
-export function SubmittedDetails({ review }: { review: Review }) {
+import styles from "./member-review.module.css";
+export function SubmittedDetails({
+  review,
+  compact = false,
+}: {
+  review: Review;
+  compact?: boolean;
+}) {
   return (
-    <div className="submitted-sections">
+    <div className={compact ? styles.submittedReview : "submitted-sections"}>
       {verificationSteps.map((step, i) => {
         const entries = Object.entries(review.snapshot.details).filter(
           ([id]) =>
             review.requirement_fields.find((f) => f.id === id)?.step === i,
         );
-        return entries.length ? (
-          <details key={step} open={i === 0}>
-            <summary>
-              {i + 1}. {step}
-            </summary>
-            <dl>
-              {entries.map(([id, value]) => (
-                <div key={id}>
-                  <dt>
-                    {review.requirement_fields.find((f) => f.id === id)
-                      ?.label || id}
-                  </dt>
+        if (!entries.length) return null;
+        const values = (
+          <dl>
+            {entries.map(([id, value]) => {
+              const field = review.requirement_fields.find((f) => f.id === id);
+              const wide =
+                field?.type === "multiline" ||
+                id === "declaration" ||
+                value.length > 100;
+              return (
+                <div
+                  key={id}
+                  className={
+                    compact && wide ? styles.reviewWideField : undefined
+                  }
+                >
+                  <dt>{field?.label || id}</dt>
                   <dd>
-                    {review.requirement_fields.find((f) => f.id === id)
-                      ?.type === "document" ? (
+                    {value && field?.type === "document" ? (
                       <a
                         href={"/api/documents/" + encodeURIComponent(value)}
                         target="_blank"
@@ -30,15 +41,34 @@ export function SubmittedDetails({ review }: { review: Review }) {
                       >
                         View private evidence ↗
                       </a>
+                    ) : compact && field?.type === "checkbox" && value ? (
+                      value === "true" ? (
+                        "Yes"
+                      ) : (
+                        "No"
+                      )
                     ) : (
                       value || "Not supplied"
                     )}
                   </dd>
                 </div>
-              ))}
-            </dl>
+              );
+            })}
+          </dl>
+        );
+        return compact ? (
+          <section key={step}>
+            <h3>{step}</h3>
+            {values}
+          </section>
+        ) : (
+          <details key={step} open={i === 0}>
+            <summary>
+              {i + 1}. {step}
+            </summary>
+            {values}
           </details>
-        ) : null;
+        );
       })}
       {Object.entries(review.snapshot.details)
         .filter(([id]) => !review.requirement_fields.some((f) => f.id === id))

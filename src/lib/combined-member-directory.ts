@@ -14,24 +14,26 @@ export async function combinedMemberDirectory(
 ) {
   const status = params.get("status") ?? "all",
     invitation = params.get("invitation") ?? "all",
-    kind = params.get("kind") ?? "all";
+    kind = params.get("kind") ?? "all",
+    plan = params.get("plan") ?? "all";
   if (
     !["all", "active", "expired", "suspended", "resigned", "unknown"].includes(
       status,
     ) ||
     !["all", "held"].includes(invitation) ||
-    !["all", "member", "account"].includes(kind)
+    !["all", "member", "account"].includes(kind) ||
+    !["all", "Life", "Patron", "Annual"].includes(plan)
   )
     throw new OperationError("Choose valid directory filters.");
   const records = `WITH records AS (
  SELECT p.id AS person_id,p.user_id,p.version AS person_version,p.accepted AS person,
  p.contact_email AS email,p.mobile_normalized AS mobile,p.accepted_verified AS professional_verified,u."emailVerified" AS email_verified,
- coalesce(p.status,'unverified') AS profile_review,m.id AS membership_id,m.version AS membership_version,m.membership_number,m.type,m.status,'member'::text AS record_kind
+ coalesce(p.status,'unverified') AS profile_review,m.id AS membership_id,m.version AS membership_version,m.membership_number,coalesce(m.type,u."requestedMembershipPlan") AS type,m.status,'member'::text AS record_kind
  FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id LEFT JOIN public."user" u ON u.id=p.user_id
  WHERE p.archived_at IS NULL
  UNION ALL
  SELECT p.id,u.id,coalesce(p.version,0),coalesce(p.accepted,'{}'::jsonb)||jsonb_build_object('name',coalesce(p.accepted->>'name',u.name),'organization',coalesce(p.accepted->>'organization',mp.organization,''),'jobTitle',coalesce(p.accepted->>'jobTitle',mp.job_title,'')),
- u.email,coalesce(nullif(p.mobile_normalized,''),mp.phone,''),coalesce(p.accepted_verified,false),u."emailVerified",coalesce(p.status,'unverified'),NULL::uuid,0,NULL::text,NULL::text,NULL::text,'account'::text
+ u.email,coalesce(nullif(p.mobile_normalized,''),mp.phone,''),coalesce(p.accepted_verified,false),u."emailVerified",coalesce(p.status,'unverified'),NULL::uuid,0,NULL::text,u."requestedMembershipPlan",NULL::text,'account'::text
  FROM public."user" u LEFT JOIN tpa.people p ON p.user_id=u.id LEFT JOIN tpa.member_profiles mp ON mp.user_id=u.id
  WHERE p.archived_at IS NULL AND NOT EXISTS(SELECT 1 FROM tpa.people member_person JOIN tpa.memberships membership ON membership.person_id=member_person.id WHERE member_person.user_id=u.id)
  ), filtered AS (SELECT r.* FROM records r WHERE
@@ -42,7 +44,8 @@ export async function combinedMemberDirectory(
  AND ($5='all' OR r.email_verified=($5='verified'))
  AND ($6='all' OR ($6='phone' AND coalesce(r.mobile,'')<>'') OR ($6='no-phone' AND coalesce(r.mobile,'')=''))
  AND ($7='all' OR r.profile_review=$7)
- AND ($8::text IS NULL OR r.person_id::text=$8))`;
+ AND ($8::text IS NULL OR r.person_id::text=$8)
+ AND ($9='all' OR r.type=$9))`;
   const values = [
     `%${filters.q.replace(/[\\%_]/g, "\\$&")}%`,
     status,
@@ -52,6 +55,7 @@ export async function combinedMemberDirectory(
     filters.contact,
     filters.review,
     id,
+    plan,
   ];
   const client = await getDatabase().connect();
   try {
@@ -70,7 +74,7 @@ export async function combinedMemberDirectory(
    EXISTS(SELECT 1 FROM tpa.account_invitation_holds h WHERE h.user_id=r.user_id AND h.address_completion_required) AS address_completion_required,
    (SELECT status FROM tpa.onboarding_mail mail WHERE mail.user_id=r.user_id AND kind='invitation' ORDER BY created_at DESC LIMIT 1) AS delivery_status,
    (SELECT count(*)::int FROM tpa.event_registrations registration WHERE registration.user_id=r.user_id AND payment_status='pending') AS pending_payments
-   FROM filtered r ORDER BY lower(r.person->>'name'),r.person_id NULLS LAST,r.user_id LIMIT 25 OFFSET $9`,
+   FROM filtered r ORDER BY lower(r.person->>'name'),r.person_id NULLS LAST,r.user_id LIMIT 25 OFFSET $10`,
         [...values, offset],
       )
     ).rows;

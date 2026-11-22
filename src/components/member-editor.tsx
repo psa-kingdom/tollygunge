@@ -1,4 +1,5 @@
 "use client";
+import styles from "./member-review.module.css";
 import { useState, type FormEvent } from "react";
 import { api, ApiError } from "./operations-client";
 import { prefixes } from "@/domain/member-foundation";
@@ -9,7 +10,7 @@ type Editable = {
   membership_version: number;
   email: string;
   mobile: string;
-  membership_number: string;
+  membership_number: string | null;
   type: string | null;
   status: string | null;
   person: {
@@ -67,7 +68,7 @@ export function MemberCreator({
 
   return (
     <form
-      className="member-settings"
+      className={`member-settings ${styles.memberDetailsEditor}`}
       onSubmit={async (e: FormEvent) => {
         e.preventDefault();
         setBusy(true);
@@ -332,28 +333,26 @@ export function MemberEditor({
       mobile: member.mobile || "",
       organization: member.person.organization || "",
       designation: member.person.jobTitle || "",
-      membershipNumber: member.membership_number,
+      membershipNumber: member.membership_number ?? "",
       addresses: member.person.addresses || {},
-      type: member.type || "Life",
+
     }),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   return (
       <form
-        className="member-settings member-details-editor"
+        className={`member-settings ${styles.memberDetailsEditor}`}
         onChange={() => onDirtyChange?.(true)}
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
           try {
-            const { type, ...memberData } = form;
             await api("/api/staff/members", {
               action: "update",
               personId: member.person_id,
               personVersion: member.person_version,
               membershipVersion: member.membership_version,
-              member: memberData,
-              membership: { type },
+              member: form,
             });
             setMessage("Member details saved.");
             onDirtyChange?.(false);
@@ -392,25 +391,13 @@ export function MemberEditor({
             }
             <input
               type={key === "email" ? "email" : "text"}
-              required={["email", "membershipNumber"].includes(key)}
+              required={key === "email" || (key === "membershipNumber" && Boolean(member.membership_number))}
               maxLength={200}
               value={form[key]}
               onChange={(e) => setForm({ ...form, [key]: e.target.value })}
             />
           </label>
         ))}
-        <label>
-          Member type
-          <select
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-          >
-
-            {form.type === "Annual" && <option value="Annual" disabled>Historical Annual membership — select Life or Patron to change</option>}
-          <option value="Life">Life member</option>
-            <option value="Patron">Patron member</option>
-          </select>
-        </label>
         <button className="button" disabled={busy}>
           Save member details
         </button>
