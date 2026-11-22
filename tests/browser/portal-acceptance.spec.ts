@@ -581,7 +581,7 @@ test("combined association directory keeps membership and account identities dis
   await expect(
     page
       .getByRole("region", { name: "Member register records", exact: true })
-      .getByText("Account only", { exact: true })
+      .getByText("Not active", { exact: true })
       .first(),
   ).toBeVisible();
   await page.locator(".member-record-button").first().click();
