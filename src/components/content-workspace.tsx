@@ -10,21 +10,23 @@ import { useUnsavedProfile } from "./use-unsaved-profile";
 import ui from "./communications.module.css";
 import styles from "./publishing.module.css";
 import cms from "./cms-workspace.module.css";
-type View = "pages" | "articles" | "members" | "media" | "resources";
-const main = [
-  { id: "pages", label: "Website pages", icon: "panel" },
-  { id: "articles", label: "Articles & news", icon: "file" },
-  { id: "members", label: "Member profiles", icon: "people" },
-] as const;
 const tools = [
   { id: "media", label: "Media library", icon: "image" },
   { id: "resources", label: "Downloads & links", icon: "file" },
 ] as const;
+const navigation = [
+  { id: "pages", label: "Website pages", icon: "panel" },
+  ...tools,
+  { id: "articles", label: "Articles & news", icon: "file" },
+  { id: "members", label: "Member profiles", icon: "people" },
+] as const;
+type View = (typeof navigation)[number]["id"];
+
 export function ContentWorkspace({ initialView, initialId }: {
   initialView?: string;
   initialId?: string;
 } = {}) {
-  const startView = initialView === "media" || initialView === "members" ? initialView : "pages";
+  const startView = navigation.find((item) => item.id === initialView)?.id ?? "pages";
   const [view, setView] = useState<View>(startView),
     [dirty, setDirty] = useState(false),
     [recordId, setRecordId] = useState<string | undefined>(startView === "pages" ? undefined : initialId);
@@ -43,16 +45,12 @@ export function ContentWorkspace({ initialView, initialId }: {
         <aside className={ui.sidebar}>
           <nav className={styles.navigation} aria-label="Publishing tools">
             <span className={ui.navGroup}>CONTENT</span>
-            {main.map((item) => (
+            {navigation.map((item) => (
               <div key={item.id}>
                 <button
-                  className="text-button"
-                  aria-current={
-                    view === item.id ||
-                    (item.id === "pages" && tools.some((t) => t.id === view))
-                      ? "page"
-                      : undefined
-                  }
+                  type="button"
+                  className={ui.navItem}
+                  aria-current={view === item.id ? "page" : undefined}
                   onClick={() => navigate(item.id)}
                 >
                   <PortalIcon name={item.icon} />
@@ -73,36 +71,13 @@ export function ContentWorkspace({ initialView, initialId }: {
             <div className={styles.pages}>
               <header className={ui.sectionHeading}>
                 <div>
-                  <h2>Website pages</h2>
-                  <p>
-                    Edit a page or manage the images, downloads and links used
-                    across your website.
-                  </p>
+                  <h2>{navigation.find((item) => item.id === view)?.label}</h2>
+                  {view === "pages" && <p>Edit and publish pages across your website.</p>}
+                  {view === "resources" && (
+                    <p>Published downloads and links appear on the Resources page.</p>
+                  )}
                 </div>
               </header>
-              <div
-                className={ui.tabs}
-                role="group"
-                aria-label="Website page tools"
-              >
-                <button
-                  className="text-button"
-                  aria-pressed={view === "pages"}
-                  onClick={() => navigate("pages")}
-                >
-                  Page editor
-                </button>
-                {tools.map((item) => (
-                  <button
-                    className="text-button"
-                    key={item.id}
-                    aria-pressed={view === item.id}
-                    onClick={() => navigate(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
               {view === "pages" ? (
                 <>
                   <div className={cms.workspace}>
@@ -148,27 +123,18 @@ export function ContentWorkspace({ initialView, initialId }: {
                   </section>
                 </>
               ) : view === "media" ? (
-                <section className={styles.pageTool}>
-                  <h3>Media library</h3>
-                  <MediaWorkspace
-                    key={recordId ?? "media"}
-                    initialId={recordId}
-                    onDirty={setDirty}
-                  />
-                </section>
-              ) : view === "resources" ? (
-                <section className={styles.pageTool}>
-                  <h3>Downloads & links</h3>
-                  <p>
-                    Published downloads and links appear on the Resources page.
-                  </p>
-                  <WebsiteControl
-                    initialTab="document"
-                    resourcesOnly
-                    onDirty={setDirty}
-                  />
-                </section>
-              ) : null}
+                <MediaWorkspace
+                  key={recordId ?? "media"}
+                  initialId={recordId}
+                  onDirty={setDirty}
+                />
+              ) : (
+                <WebsiteControl
+                  initialTab="document"
+                  resourcesOnly
+                  onDirty={setDirty}
+                />
+              )}
             </div>
           ) : view === "articles" ? (
             <ArticleWorkspace onDirty={setDirty} />

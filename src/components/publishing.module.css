@@ -352,22 +352,6 @@
 .editorialTools summary {
   cursor: pointer;
 }
-.pageTool {
-  padding-top: 25px;
-}
-.pageTool > h3 {
-  font-size: 20px;
-  margin: 0 0 12px;
-}
-.pageTool > p {
-  font-size: 13px;
-  line-height: 1.8;
-  color: var(--muted);
-  margin-bottom: 24px;
-}
-.pages [aria-label="Website page tools"] {
-  margin-bottom: 20px;
-}
 @media (max-width: 600px) {
   .libraryGrid {
     grid-template-columns: minmax(0, 1fr);
