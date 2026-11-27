@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     try {
       if (id) {
         const row = (
-          await client.query("SELECT * FROM tpa.people WHERE id=$1", [uuid(id)])
+          await client.query("SELECT * FROM tpa.people WHERE id=$1 AND publishing_deleted_at IS NULL", [uuid(id)])
         ).rows[0];
         if (!row) throw new OperationError("Profile no longer available.", 404);
         return { record: await enriched(client, row, actor) };
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
       const rows = (
         await client.query(
           `SELECT r.id, r.person_id, r.created_at, r.body->>'name' AS name
-        FROM tpa.profile_reviews r WHERE r.status='pending'
+        FROM tpa.profile_reviews r JOIN tpa.people p ON p.id=r.person_id WHERE r.status='pending' AND p.publishing_deleted_at IS NULL
         ORDER BY r.created_at, r.id LIMIT 26 OFFSET $1`,
           [(page - 1) * 25],
         )

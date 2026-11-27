@@ -1,4 +1,4 @@
-import { text } from "./operations";
+import { record, text } from "./operations";
 export type FinanceLine = {
   header: string;
   description: string;
@@ -27,17 +27,24 @@ export function financeAmount(value: unknown) {
     throw Error("Enter an amount from ₹0.01 to ₹10,00,000.");
   return value;
 }
-export function expenseLines(value: unknown): FinanceLine[] {
+export function financeToday() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+}
+export function expenseLines(value: unknown, date = financeToday()): FinanceLine[] {
   if (!Array.isArray(value) || !value.length || value.length > 200)
     throw Error("Add between 1 and 200 expense lines.");
-  return value.map((v) => ({
-    header: text(v.header, "Expense header", 160, 1),
-    description: text(v.description, "Description", 1000, 1),
-    date: financeDate(v.date),
-    amountPaise: financeAmount(v.amountPaise),
-    vendor: text(v.vendor ?? "", "Vendor", 160),
-    note: text(v.note ?? "", "Note", 1000),
-  }));
+  return value.map((item) => {
+    const v = record(item);
+    const header = text(v.header, "Expense header", 160, 1);
+    return {
+      header,
+      description: text(v.description ?? header, "Description", 1000, 1),
+      date: financeDate(v.date ?? date),
+      amountPaise: financeAmount(v.amountPaise),
+      vendor: text(v.vendor ?? "", "Vendor", 160),
+      note: text(v.note ?? "", "Note", 1000),
+    };
+  });
 }
 export const rupees = (paise: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(

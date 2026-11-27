@@ -28,10 +28,6 @@ const workspaces: Record<string, { title: string; description: string }> = {
     title: "Payment Instructions",
     description: "Association bank details, UPI ID configurations, and verified payee QR snapshots.",
   },
-  governance: {
-    title: "Governance & Committees",
-    description: "Manage leadership profiles, committee rosters, and verified portraits.",
-  },
   access: {
     title: "Staff Access & Security",
     description: "Operational role assignments, session revocation, and immutable audit logs.",
@@ -39,10 +35,6 @@ const workspaces: Record<string, { title: string; description: string }> = {
   reports: {
     title: "Scoped Reports & Exports",
     description: "Role-scoped analytics, attendance logs, and verified CSV/XLSX data exports.",
-  },
-  media: {
-    title: "Editorial Media Library",
-    description: "Normalized WebP imagery, EXIF metadata removal, and accessible asset publication.",
   },
   flyers: {
     title: "Flyer Builder",

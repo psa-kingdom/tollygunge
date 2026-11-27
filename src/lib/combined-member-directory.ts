@@ -36,11 +36,13 @@ export async function combinedMemberDirectory(
  p.contact_email AS email,p.mobile_normalized AS mobile,p.accepted_verified AS professional_verified,u."emailVerified" AS email_verified,
  coalesce(p.status,'unverified') AS profile_review,m.id AS membership_id,m.version AS membership_version,m.membership_number,coalesce(m.type,u."requestedMembershipPlan") AS type,m.status,'member'::text AS record_kind,p.archived_at,m.pending_plan
  FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id LEFT JOIN public."user" u ON u.id=p.user_id
+ WHERE p.directory_deleted_at IS NULL
  UNION ALL
  SELECT p.id,u.id,coalesce(p.version,0),coalesce(p.accepted,'{}'::jsonb)||jsonb_build_object('name',coalesce(p.accepted->>'name',u.name),'organization',coalesce(p.accepted->>'organization',mp.organization,''),'jobTitle',coalesce(p.accepted->>'jobTitle',mp.job_title,'')),
  u.email,coalesce(nullif(p.mobile_normalized,''),mp.phone,''),coalesce(p.accepted_verified,false),u."emailVerified",coalesce(p.status,'unverified'),NULL::uuid,0,NULL::text,u."requestedMembershipPlan",NULL::text,'account'::text,p.archived_at,NULL::text
  FROM public."user" u LEFT JOIN tpa.people p ON p.user_id=u.id LEFT JOIN tpa.member_profiles mp ON mp.user_id=u.id
- WHERE NOT EXISTS(SELECT 1 FROM tpa.people member_person JOIN tpa.memberships membership ON membership.person_id=member_person.id WHERE member_person.user_id=u.id)
+ WHERE p.directory_deleted_at IS NULL
+ AND NOT EXISTS(SELECT 1 FROM tpa.people member_person JOIN tpa.memberships membership ON membership.person_id=member_person.id WHERE member_person.user_id=u.id)
  ), directory AS (
  SELECT r.*,
  EXISTS(SELECT 1 FROM public."account" a WHERE a."userId"=r.user_id AND a."providerId"='credential' AND nullif(a.password,'') IS NOT NULL) AS login_ready

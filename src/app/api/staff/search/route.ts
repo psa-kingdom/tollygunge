@@ -48,7 +48,7 @@ export async function GET(request: Request) {
             href: source.path.endsWith("/")
               ? source.path + encodeURIComponent(row.id)
               : source.path +
-                "?" +
+                (source.path.includes("?") ? "&" : "?") +
                 (source.parameter || "id") +
                 "=" +
                 encodeURIComponent(row.id),

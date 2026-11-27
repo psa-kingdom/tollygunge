@@ -29,8 +29,6 @@ const admin: PortalGroup[] = [
     label: "Publishing",
     items: [
       workspace("Content", "content"),
-      workspace("Media library", "media"),
-      workspace("Committees & people", "governance"),
     ],
   },
   {

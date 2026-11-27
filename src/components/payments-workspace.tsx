@@ -8,6 +8,7 @@ import {
   financeTotals,
   financeEventPeriod,
   financeMonths,
+  financeToday,
   financePeriodLabel,
   matchesFinanceEvent,
   rupees,
@@ -106,14 +107,8 @@ type Data = {
     pendingExpenses: number;
   };
 };
-const emptyLine = (): FinanceLine => ({
-  header: "",
-  description: "",
-  date: new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }),
-  amountPaise: 0,
-  vendor: "",
-  note: "",
-});
+type ExpenseLineDraft = Pick<FinanceLine, "header" | "amountPaise"> & Partial<FinanceLine>;
+const emptyLine = (): ExpenseLineDraft => ({ header: "", amountPaise: 0 });
 export function PaymentsWorkspace() {
   const [view, setView] = useState("Event payments");
   const views = ["Event payments", "Membership payments"];
@@ -155,7 +150,7 @@ export function FinanceWorkspace({
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [sheet, setSheet] = useState<Entry | null>(),
-    [lines, setLines] = useState<FinanceLine[]>([emptyLine()]),
+    [lines, setLines] = useState<ExpenseLineDraft[]>([emptyLine()]),
     [editReceipt, setEditReceipt] = useState<Entry | null>(null),
     [review, setReview] = useState<Entry | null>(null),
     [showCollection, setShowCollection] = useState(false),
@@ -184,16 +179,17 @@ export function FinanceWorkspace({
       active = false;
     };
   }, [path]);
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (
+    action: () => Promise<unknown>,
+    success = "Saved. Entries awaiting approval are shown separately from approved totals.",
+  ) => {
     setBusy(true);
     setMessage("");
     try {
       await action();
       await reload();
       await onSaved?.();
-      setMessage(
-        "Saved. Entries awaiting approval are shown separately from approved totals.",
-      );
+      setMessage(success);
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
@@ -278,7 +274,10 @@ export function FinanceWorkspace({
   const selectedRegistration = formData?.registrations.find(
     (r) => r.id === collectionParticipant,
   );
+  const newSheetId = useRef<string>(null);
   function beginSheet(e?: Entry) {
+    newSheetId.current = crypto.randomUUID();
+    setMessage("");
     setShowCollection(false);
     setReview(null);
     setSheet(e ?? null);
@@ -511,7 +510,7 @@ export function FinanceWorkspace({
           </div>
         )}
       </div>
-      {message && !review && <p role="status">{message}</p>}
+      {message && !review && (tab !== "Expenses" || sheet === undefined) && <p role="status">{message}</p>}
       {!data && <p>Loading finance…</p>}
       {closed && (
         <p className="notice">
@@ -990,15 +989,17 @@ export function FinanceWorkspace({
                             timeZone: "Asia/Kolkata",
                           })}
                           <span>
-                            {e.archived_at
-                              ? "Archived"
-                              : e.completed_at
-                                ? "Completed"
-                                : e.status === "draft"
-                                  ? "Draft"
-                                  : e.status === "cancelled"
-                                    ? "Cancelled"
-                                    : "Event"}
+                            {e.status === "historical"
+                              ? "Past"
+                              : e.archived_at
+                                ? "Archived"
+                                : e.completed_at
+                                  ? "Completed"
+                                  : e.status === "draft"
+                                    ? "Draft"
+                                    : e.status === "cancelled"
+                                      ? "Cancelled"
+                                      : "Event"}
                           </span>
                         </div>
                         <h3>{e.title}</h3>
@@ -1351,7 +1352,7 @@ export function FinanceWorkspace({
                   void run(async () => {
                     await api("/api/staff/finance", {
                       action: sheet ? "sheet.save" : "sheet.add",
-                      id: crypto.randomUUID(),
+                      id: newSheetId.current,
                       eventId,
                       existingId:
                         sheet && ["draft", "returned"].includes(sheet.status)
@@ -1363,13 +1364,13 @@ export function FinanceWorkspace({
                           ? sheet.id
                           : sheet?.replaces_id,
                       void: lines.length === 0 && !!sheet,
-                      date: lines[0]?.date ?? emptyLine().date,
+                      date: lines[0]?.date ?? sheet?.entry_date,
                       lines,
-                      note: f.get("note"),
+                      note: f.get("note") ?? sheet?.note ?? "",
                       submit,
                     });
                     setSheet(undefined);
-                  });
+                  }, submit ? "Expenses submitted for approval." : "Expense draft saved.");
                 }}
               >
                 <fieldset disabled={busy}>
@@ -1381,64 +1382,25 @@ export function FinanceWorkspace({
                   {lines.map((l, index) => (
                     <div key={index} className={styles.line}>
                       <strong>Line {index + 1}</strong>
-                      {(
-                        [
-                          "header",
-                          "description",
-                          "date",
-                          "amountPaise",
-                          "vendor",
-                          "note",
-                        ] as const
-                      ).map((key) => (
-                        <label key={key}>
-                          {
-                            {
-                              header: "Expense header",
-                              description: "Description",
-                              date: "Expense date",
-                              amountPaise: "Amount (₹)",
-                              vendor: "Vendor (optional)",
-                              note: "Note (optional)",
-                            }[key]
-                          }
-                          <input
-                            type={
-                              key === "date"
-                                ? "date"
-                                : key === "amountPaise"
-                                  ? "number"
-                                  : "text"
-                            }
-                            required={!["vendor", "note"].includes(key)}
-                            min={key === "amountPaise" ? "0.01" : undefined}
-                            step={key === "amountPaise" ? "0.01" : undefined}
-                            maxLength={key === "amountPaise" ? undefined : 1000}
-                            value={
-                              key === "amountPaise"
-                                ? l.amountPaise / 100 || ""
-                                : l[key]
-                            }
-                            onChange={(e) =>
-                              setLines(
-                                lines.map((row, i) =>
-                                  i !== index
-                                    ? row
-                                    : {
-                                        ...row,
-                                        [key]:
-                                          key === "amountPaise"
-                                            ? Math.round(
-                                                Number(e.target.value) * 100,
-                                              )
-                                            : e.target.value,
-                                      },
-                                ),
-                              )
-                            }
-                          />
-                        </label>
-                      ))}
+                      <label>
+                        Expense header
+                        <input required maxLength={160} value={l.header}
+                          onChange={(e) => {
+                            const header = e.target.value;
+                            setLines((rows) => rows.map((row, i) => i === index ? {
+                              ...row, header, description: row.description === row.header ? header : row.description,
+                            } : row));
+                          }} />
+                      </label>
+                      <label>
+                        Amount (₹)
+                        <input type="number" required min="0.01" max="1000000" step="0.01"
+                          value={l.amountPaise / 100 || ""}
+                          onChange={(e) => {
+                            const amountPaise = Math.round(Number(e.target.value) * 100);
+                            setLines((rows) => rows.map((row, i) => i === index ? { ...row, amountPaise } : row));
+                          }} />
+                      </label>
                       <button
                         type="button"
                         disabled={lines.length === 1}
@@ -1463,21 +1425,20 @@ export function FinanceWorkspace({
                       {rupees(lines.reduce((n, l) => n + l.amountPaise, 0))}
                     </strong>
                   </p>
-                  <label>
-                    Sheet note / correction reason
-                    <textarea
-                      name="note"
-                      maxLength={1000}
-                      required={sheet?.status === "approved"}
-                      minLength={sheet?.status === "approved" ? 3 : undefined}
-                    />
-                  </label>
+                  {(sheet?.status === "approved" || sheet?.replaces_id) && (
+                    <label>
+                      Correction reason
+                      <textarea name="note" maxLength={1000} required minLength={3}
+                        defaultValue={sheet.status === "approved" ? "" : sheet.note} />
+                    </label>
+                  )}
+                  {message && <p role="alert">{message}</p>}
                   <div className="action-row">
-                    <button value="draft">Save draft</button>
-                    <button className="button" value="submit">
+                    <button type="submit" value="draft">Save draft</button>
+                    <button type="submit" className="button" value="submit">
                       Submit expenses for approval
                     </button>
-                    <button type="button" onClick={() => setSheet(undefined)}>
+                    <button type="button" onClick={() => { setMessage(""); setSheet(undefined); }}>
                       Cancel edit
                     </button>
                   </div>
@@ -1770,7 +1731,7 @@ export function FinanceWorkspace({
                         replacesId: review.id,
                         void: true,
                         submit: true,
-                        date: emptyLine().date,
+                        date: financeToday(),
                         lines: [],
                         amountPaise: 0,
                         label: review.label,

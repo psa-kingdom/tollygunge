@@ -394,9 +394,9 @@ function AccountDirectory() {
                     <p>
                       <a
                         className="text-link"
-                        href={`/admin/workspaces/governance?id=${selected.person_id}`}
+                        href={`/admin/workspaces/members?personId=${selected.person_id}`}
                       >
-                        Edit / review personal details
+                        Open directory record
                       </a>
                     </p>
                   )}

@@ -20,10 +20,14 @@ const tools = [
   { id: "media", label: "Media library", icon: "image" },
   { id: "resources", label: "Downloads & links", icon: "file" },
 ] as const;
-export function ContentWorkspace() {
-  const [view, setView] = useState<View>("pages"),
+export function ContentWorkspace({ initialView, initialId }: {
+  initialView?: string;
+  initialId?: string;
+} = {}) {
+  const startView = initialView === "media" || initialView === "members" ? initialView : "pages";
+  const [view, setView] = useState<View>(startView),
     [dirty, setDirty] = useState(false),
-    [recordId, setRecordId] = useState<string>();
+    [recordId, setRecordId] = useState<string | undefined>(startView === "pages" ? undefined : initialId);
   const { guard, dialog } = useUnsavedProfile(dirty);
   function navigate(next: View, id?: string) {
     guard(() => {

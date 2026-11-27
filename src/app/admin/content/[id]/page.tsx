@@ -31,7 +31,7 @@ export default async function Page({
   }
   const row = (
     await getDatabase().query(
-      "SELECT draft,slug,kind FROM tpa.content_entries WHERE id=$1",
+      "SELECT draft,slug,kind FROM tpa.content_entries WHERE id=$1 AND deleted_at IS NULL",
       [id],
     )
   ).rows[0];

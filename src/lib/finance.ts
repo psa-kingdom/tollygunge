@@ -9,11 +9,13 @@ import {
   expenseLines,
   financeAmount,
   financeDate,
+  financeToday,
   financeTotals,
   type FinanceLine,
 } from "@/domain/finance";
 import { text, uuid, version } from "@/domain/operations";
 import { queueEventMail } from "./event-mail";
+import { historicalFinanceEvents } from "./finance-events";
 export type FinanceActor = { id: string; roles: readonly string[] };
 export async function financeHistory(
   c: PoolClient,
@@ -91,13 +93,14 @@ export async function financeRead(params: URLSearchParams) {
     entries: rows,
     totals: financeTotals(rows),
     filters: { eventId, from, to },
-    events: (
-      await db.query(
+    events: [
+      ...(await db.query(
         `SELECT e.id,e.title,e.starts_at,e.ends_at,e.location,e.status,e.completed_at,e.archived_at,
  (SELECT count(*)::int FROM tpa.event_registrations r WHERE r.event_id=e.id AND r.status='registered') AS participant_count
- FROM tpa.events e ORDER BY e.starts_at DESC,e.id`,
-      )
-    ).rows,
+ FROM tpa.events e WHERE e.historical_finance_date IS NULL ORDER BY e.starts_at DESC,e.id`,
+      )).rows,
+      ...await historicalFinanceEvents(),
+    ].sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()),
     registrations: eventId
       ? (
           await db.query(
@@ -212,7 +215,7 @@ async function requireSuperAdmin(c: PoolClient) {
     ).rowCount
   )
     throw new OperationError(
-      "Set up the super admin before submitting finances.",
+      "A super admin must be set up before you can submit finances for approval. You can save a draft now.",
       409,
     );
 }
@@ -479,12 +482,17 @@ export async function financeMutation(
     method = "",
     reference = "",
     note = text(i.note ?? "", "Note", 1000);
-  const date = financeDate(i.date);
+  const expenseSheet = action === "sheet.save" || action === "sheet.add";
+  const date = financeDate(expenseSheet ? i.date ?? financeToday() : i.date);
   let replacesId = existing?.replaces_id ?? null;
   let manualParticipant: string | null =
     existing?.manual_participant_name ?? null;
-  if (action === "sheet.save" || action === "sheet.add") {
-    lines = i.void === true ? [] : expenseLines(i.lines);
+  if (expenseSheet) {
+    try {
+      lines = i.void === true ? [] : expenseLines(i.lines, date);
+    } catch (error) {
+      throw new OperationError(error instanceof Error ? error.message : "Check the expense lines.");
+    }
     if (
       i.void === true &&
       (!i.replacesId || !text(i.note, "Void reason", 1000, 3))

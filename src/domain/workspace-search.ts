@@ -2,7 +2,6 @@ import { hasPermission, type Permission } from "./access";
 export type SearchSource = {
   group: string;
   permission: Permission;
-  alternativePermission?: Permission;
   sql: string;
   path: string;
   parameter?: string;
@@ -13,7 +12,7 @@ export const searchSources: SearchSource[] = [
   {
     group: "Members",
     permission: "members:review",
-    sql: `SELECT id::text id,name title,email summary FROM public."user" WHERE (coalesce(name,'') || ' ' || coalesce(email,'') || ' ' || coalesce(id::text,'')) ILIKE $1 ESCAPE '\\' ORDER BY name LIMIT 4`,
+    sql: `SELECT id::text id,name title,email summary FROM public."user" u WHERE NOT EXISTS (SELECT 1 FROM tpa.people p WHERE p.user_id=u.id AND p.directory_deleted_at IS NOT NULL) AND (coalesce(name,'') || ' ' || coalesce(email,'') || ' ' || coalesce(id::text,'')) ILIKE $1 ESCAPE '\\' ORDER BY name LIMIT 4`,
     path: "/admin/workspaces/members",
   },
   {
@@ -45,20 +44,20 @@ export const searchSources: SearchSource[] = [
   {
     group: "Content",
     permission: "content:publish",
-    sql: `SELECT id::text id,coalesce(draft->>'title',slug) title,slug summary FROM tpa.content_entries WHERE ((coalesce(slug,'') || ' ' || coalesce(draft->>'title','') || ' ' || coalesce(draft->>'summary','') || ' ' || coalesce(id::text,'')) ILIKE $1 ESCAPE '\\' OR draft->>'intro' ILIKE $1 OR EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(draft->'sections','[]')) section WHERE section->>'text' ILIKE $1 OR section->>'title' ILIKE $1)) ORDER BY updated_at DESC LIMIT 4`,
+    sql: `SELECT id::text id,coalesce(draft->>'title',slug) title,slug summary FROM tpa.content_entries WHERE deleted_at IS NULL AND ((coalesce(slug,'') || ' ' || coalesce(draft->>'title','') || ' ' || coalesce(draft->>'summary','') || ' ' || coalesce(id::text,'')) ILIKE $1 ESCAPE '\\' OR draft->>'intro' ILIKE $1 OR EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(draft->'sections','[]')) section WHERE section->>'text' ILIKE $1 OR section->>'title' ILIKE $1)) ORDER BY updated_at DESC LIMIT 4`,
     path: "/admin/content/",
   },
   {
     group: "Events",
     permission: "events:manage",
-    sql: `SELECT id::text id,title,location summary FROM tpa.events WHERE deleted_at IS NULL AND (coalesce(title,'') || ' ' || coalesce(description,'') || ' ' || coalesce(location,'') || ' ' || coalesce(id::text,'')) ILIKE $1 ESCAPE '\\' ORDER BY starts_at DESC LIMIT 4`,
+    sql: `SELECT id::text id,title,location summary FROM tpa.events WHERE deleted_at IS NULL AND historical_finance_date IS NULL AND (coalesce(title,'') || ' ' || coalesce(description,'') || ' ' || coalesce(location,'') || ' ' || coalesce(id::text,'')) ILIKE $1 ESCAPE '\\' ORDER BY starts_at DESC LIMIT 4`,
     path: "/admin/workspaces/events",
   },
   {
     group: "Media",
     permission: "content:publish",
     sql: `SELECT id::text id,title,category summary FROM tpa.public_media WHERE (coalesce(title,'') || ' ' || coalesce(alt_text,'') || ' ' || coalesce(category,'') || ' ' || coalesce(id::text,'')) ILIKE $1 ESCAPE '\\' ORDER BY created_at DESC LIMIT 4`,
-    path: "/admin/workspaces/media",
+    path: "/admin/workspaces/content?view=media",
   },
   {
     group: "Documents",
@@ -75,11 +74,10 @@ export const searchSources: SearchSource[] = [
   },
 ];
 searchSources.push({
-  group: "Governance",
+  group: "Website profiles",
   permission: "content:publish",
-  alternativePermission: "members:review",
-  sql: `SELECT id::text id,coalesce(draft->>'name','Profile') title,coalesce(draft->>'organization','') summary FROM tpa.people WHERE (coalesce(draft->>'name','') || ' ' || coalesce(draft->>'organization','') || ' ' || coalesce(id::text,'')) ILIKE $1 ORDER BY id LIMIT 4`,
-  path: "/admin/workspaces/governance",
+  sql: `SELECT id::text id,coalesce(draft->>'name','Profile') title,coalesce(draft->>'organization','') summary FROM tpa.people WHERE directory_deleted_at IS NULL AND publishing_deleted_at IS NULL AND (coalesce(draft->>'name','') || ' ' || coalesce(draft->>'organization','') || ' ' || coalesce(id::text,'')) ILIKE $1 ORDER BY id LIMIT 4`,
+  path: "/admin/workspaces/content?view=members",
 });
 searchSources.push(
   {
@@ -105,12 +103,7 @@ searchSources.push(
 );
 
 export function permittedSearchSources(roles: string[]) {
-  return searchSources.filter(
-    (s) =>
-      hasPermission(roles, s.permission) ||
-      (!!s.alternativePermission &&
-        hasPermission(roles, s.alternativePermission)),
-  );
+  return searchSources.filter((source) => hasPermission(roles, source.permission));
 }
 export function searchPattern(q: string) {
   return "%" + q.replace(/[\\%_]/g, "\\$&") + "%";

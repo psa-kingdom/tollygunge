@@ -39,7 +39,6 @@ const previewGroups: PortalGroup[] = [
     label: "Publishing",
     items: [
       { label: "Content", href: "/preview/admin/workspaces/content" },
-      { label: "Governance & People", href: "/preview/admin/workspaces/governance" },
     ],
   },
   {

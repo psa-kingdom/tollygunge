@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       const search = (params.get("q") ?? "").trim();
       const filter = params.get("filter") ?? "all";
       if (!Number.isSafeInteger(page) || page < 1 || search.length > 200 || !["all","association","pending","unverified","verified","rejected","published","archived"].includes(filter)) throw new OperationError("Choose valid directory filters.");
-      const where = `($1::uuid IS NULL OR p.id=$1) AND ($1::uuid IS NOT NULL OR CASE WHEN $2='archived' THEN p.archived_at IS NOT NULL ELSE p.archived_at IS NULL END)
+      const where = `p.directory_deleted_at IS NULL AND p.publishing_deleted_at IS NULL AND ($1::uuid IS NULL OR p.id=$1) AND ($1::uuid IS NOT NULL OR CASE WHEN $2='archived' THEN p.archived_at IS NOT NULL ELSE p.archived_at IS NULL END)
         AND ($1::uuid IS NOT NULL OR $2 IN ('all','archived') OR ($2='association' AND (p.published IS NOT NULL OR jsonb_array_length(coalesce(p.draft->'assignments','[]'))>0)) OR ($2='published' AND p.published IS NOT NULL) OR p.status=$2)
         AND ($3='' OR strpos(lower(concat_ws(' ',p.draft->>'name',p.draft->>'organization',p.draft->>'biography',p.draft->'assignments')),lower($3))>0)`;
       const args=[id,filter,search];

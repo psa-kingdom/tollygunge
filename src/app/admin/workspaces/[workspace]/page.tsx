@@ -21,8 +21,6 @@ import { OperationsReports } from "@/components/operations-reports";
 import { CommunicationsWorkspace } from "@/components/communications-workspace";
 import { HistoryImport } from "@/components/history-import";
 import { StaffAccess } from "@/components/staff-access";
-import { MediaWorkspace } from "@/components/media-workspace";
-import { GovernanceWorkspace } from "@/components/governance-workspace";
 import { staffWorkspaceLabel } from "@/domain/staff-navigation";
 import { MembersWorkspace } from "@/components/members-workspace";
 import { WorkspacePageHeading } from "@/components/workspace-ui";
@@ -43,8 +41,6 @@ const permissions: Record<string, Permission> = {
   flyers: "events:manage",
   imports: "events:manage",
   access: "staff:manage",
-  media: "content:publish",
-  governance: "content:publish",
   website: "content:publish",
 };
 export const dynamic = "force-dynamic";
@@ -61,9 +57,10 @@ export async function generateMetadata({
 }
 export default async function Workspace({
   params,
+  searchParams,
 }: {
   params: Promise<{ workspace: string }>;
-  searchParams: Promise<{ view?: string; tab?: string }>;
+  searchParams: Promise<{ view?: string; id?: string }>;
 }) {
   const actor = await currentActor();
   if (!actor) redirect("/login");
@@ -72,21 +69,19 @@ export default async function Workspace({
   if (
     workspace === "reports"
       ? !actor.roles.length
-      : workspace === "governance"
-        ? !hasPermission(actor.roles, "content:publish") &&
-          !hasPermission(actor.roles, "members:review")
-        : !permissions[workspace] ||
-          !hasPermission(actor.roles, permissions[workspace])
+      : !permissions[workspace] ||
+        !hasPermission(actor.roles, permissions[workspace])
   )
     notFound();
   if (workspace === "website") redirect("/admin/workspaces/content");
+  const publishing = workspace === "content" ? await searchParams : undefined;
   const settings = ["payment-details", "access", "membership-plans"].includes(workspace);
   return (
     <main
       id="main"
       className={`workspace-main workspace-page ${workspace === "members" ? review.review : ""}`}
     >
-      {!["events", "content", "communications"].includes(workspace) && !settings && (
+      {!["events", "content", "communications", "crm"].includes(workspace) && !settings && (
         <div className="portal-page-intro">
           <WorkspacePageHeading
             workspace={workspace}
@@ -113,10 +108,6 @@ export default async function Workspace({
           <BulkOnboarding />
         ) : workspace === "onboarding-email" ? (
           <OnboardingEmailSettings />
-        ) : workspace === "governance" ? (
-          <GovernanceWorkspace />
-        ) : workspace === "media" ? (
-          <MediaWorkspace />
         ) : workspace === "imports" ? (
           <HistoryImport />
         ) : workspace === "communications" ? (
@@ -125,7 +116,11 @@ export default async function Workspace({
             localPreview={process.env.TPA_MAIL_SINK === "true"}
           />
         ) : workspace === "content" ? (
-          <ContentWorkspace />
+          <ContentWorkspace
+            key={JSON.stringify([publishing?.view, publishing?.id])}
+            initialView={publishing?.view}
+            initialId={publishing?.id}
+          />
         ) : workspace === "events" ? (
           <EventsWorkspace
             historicalEvents={await loadWorkbookAttendance()}

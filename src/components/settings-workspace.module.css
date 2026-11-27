@@ -77,7 +77,7 @@
   padding: 0;
   margin: 0;
 }
-.form.form label:not(:global(.check-label)):not(:global(.payment-confirm)) {
+.form.form label:not(:global(.check-label)):not(:global(.payment-confirm)):not(.role) {
   display: grid;
   gap: 8px;
   font-size: 13px;
@@ -173,43 +173,156 @@
 .search input {
   width: 100%;
 }
-.roleList {
+.accessDetail.accessDetail {
   display: grid;
-  gap: 10px;
-  margin: 24px 0;
+  gap: 16px;
+  padding: clamp(16px, 3vw, 24px);
+}
+.backToStaff {
+  justify-self: start;
+}
+.backToStaff svg {
+  width: 16px;
+  height: 16px;
+  transform: rotate(180deg);
+}
+.accountSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-block-end: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.accountSummary .account > span {
+  width: 46px;
+  height: 46px;
+  color: var(--ink);
+}
+.accountSummary .account h2 {
+  margin: 0 0 4px;
+}
+.accessNote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.accessNote svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.accessDetail .accessForm {
+  gap: 12px;
+}
+.roleList,
+.assignedRoles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
   padding: 0;
   border: 0;
 }
+.assignedRoles {
+  list-style: none;
+}
 .roleList legend {
-  font-size: 14px;
+  padding: 0;
+  margin-bottom: 10px;
+  font-size: 15px;
   font-weight: 600;
-  margin-bottom: 14px;
 }
 .role.role {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+.accessDetail .accessForm .role:has(> input[type="checkbox"]) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   cursor: pointer;
 }
-.role input {
-  margin-top: 4px;
+label.role:has(input:checked) {
+  background: var(--surface-muted);
 }
-.role span {
+label.role:has(input:disabled) {
+  cursor: default;
+}
+.role input {
+  margin: 5px 0 0;
+}
+.role .roleIcon {
   display: grid;
-  gap: 5px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+.roleIcon svg {
+  width: 16px;
+  height: 16px;
+}
+.role strong,
+.role small {
+  display: block;
+  overflow-wrap: anywhere;
 }
 .role strong {
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 600;
   text-transform: capitalize;
 }
 .role small {
+  margin-top: 3px;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.45;
   font-size: 12px;
+}
+.setup {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.setup summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.setup summary::after {
+  content: "+";
+  margin-inline-start: auto;
+}
+.setup[open] summary::after {
+  content: "−";
+}
+.setup summary svg {
+  width: 16px;
+  height: 16px;
+}
+.setup p {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (max-width: 650px) {
+  .roleList,
+  .assignedRoles {
+    grid-template-columns: 1fr;
+  }
 }
 .activity {
   margin-top: 24px;

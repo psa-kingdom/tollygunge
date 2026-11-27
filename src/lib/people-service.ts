@@ -176,6 +176,7 @@ export async function changePerson(
       "link",
       "archive",
       "restore",
+      "delete-public-profile",
     ].includes(action)
   )
     throw new OperationError("Choose a profile action.");
@@ -207,6 +208,22 @@ export async function changePerson(
     );
   if (!row && action !== "save")
     throw new OperationError("Save the profile first.");
+  if (row?.directory_deleted_at || (!ownerOnly && row?.publishing_deleted_at))
+    throw new OperationError("Profile not found.", 404);
+  if (action === "delete-public-profile") {
+    if (!hasPermission(actor.roles, "content:publish"))
+      throw new OperationError("Access denied.", 403);
+    await client.query(
+      "UPDATE tpa.people SET publishing_deleted_at=now(),published=NULL,version=version+1,updated_at=now() WHERE id=$1",
+      [row.id],
+    );
+    await client.query(
+      "INSERT INTO tpa.person_revisions(id,person_id,version,action,body,actor_id) SELECT $1,id,version,'delete-public-profile',draft,$2 FROM tpa.people WHERE id=$3",
+      [randomUUID(), actor.id, row.id],
+    );
+    await audit(client, actor.id, "person.public_profile_deleted", row.id);
+    return { deleted: true };
+  }
   if (row?.archived_at && action !== "restore" && !ownerOnly) throw new OperationError("Restore this archived profile before editing.",409);
   if (action === "archive" || action === "restore") {
     if (ownerOnly || !hasPermission(actor.roles,"content:publish")) throw new OperationError("Access denied.",403);

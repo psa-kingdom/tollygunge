@@ -102,9 +102,9 @@ export async function attentionFor(actor: Actor) {
   if (hasPermission(actor.roles, "content:publish"))
     await add(
       "profile-publication",
-      "SELECT count(*)::int n FROM tpa.people WHERE archived_at IS NULL AND accepted_verified AND (published IS NULL OR (jsonb_set(accepted,'{links}',coalesce((SELECT jsonb_agg(l) FROM jsonb_array_elements(coalesce(accepted->'links','[]')) l WHERE l->>'public'='true'),'[]'))-'phone')<>(published-'verified'-'phone')) AND jsonb_array_length(coalesce(accepted->'assignments','[]'))>0",
+      "SELECT count(*)::int n FROM tpa.people WHERE archived_at IS NULL AND publishing_deleted_at IS NULL AND accepted_verified AND (published IS NULL OR (jsonb_set(accepted,'{links}',coalesce((SELECT jsonb_agg(l) FROM jsonb_array_elements(coalesce(accepted->'links','[]')) l WHERE l->>'public'='true'),'[]'))-'phone')<>(published-'verified'-'phone')) AND jsonb_array_length(coalesce(accepted->'assignments','[]'))>0",
       "association profiles awaiting publication",
-      "/admin/workspaces/governance",
+      "/admin/workspaces/content?view=members",
       "Publication",
       "Low",
     );

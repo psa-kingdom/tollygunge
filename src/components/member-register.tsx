@@ -176,6 +176,32 @@ export function MemberRegister({
   const detailHeading = useRef<HTMLHeadingElement>(null);
   const selectedButton = useRef<HTMLButtonElement | null>(null);
   const selectedKey = selected ? recordKey(selected) : null;
+  async function resolveArchivedRecord(member: Member, action: "restore" | "delete-archived") {
+    const restoring = action === "restore";
+    if (!restoring && !window.confirm(
+      `Delete the archived record for ${member.person.name}? It will be removed from the directory and cannot be restored there. The login account, payments and history will be retained.`,
+    )) return;
+
+    setBusy(true);
+    setMessage("");
+    try {
+      await api("/api/staff/member-actions", {
+        action,
+        personId: member.person_id,
+        personVersion: member.person_version,
+        version: member.membership_version,
+      });
+      setChosen((previous) => previous.filter((id) => id !== member.person_id));
+      setSelected(undefined);
+      await load();
+      setMessage(restoring ? "Member record restored." : "Archived member record deleted.");
+      createButton.current?.focus();
+    } catch (error) {
+      setMessage((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   useEffect(() => {
     if (selectedKey) detailHeading.current?.focus();
   }, [selectedKey]);
@@ -686,6 +712,18 @@ export function MemberRegister({
                 <div className={styles.summary}>
                   <div className={styles.contactHeading}>
                     <h4>Contact &amp; membership</h4>
+                    {canManage && selected.archived_at && selected.person_id && (
+                      <div className={styles.contactActions}>
+                        <button type="button" className="button secondary" disabled={busy}
+                          onClick={() => void resolveArchivedRecord(selected, "restore")}>
+                          Restore member
+                        </button>
+                        <button type="button" className="button danger" disabled={busy}
+                          onClick={() => void resolveArchivedRecord(selected, "delete-archived")}>
+                          Delete archived record
+                        </button>
+                      </div>
+                    )}
                     {canManageDetails && (
                       <div className={styles.contactActions}>
                         {(selected.user_id || selected.person_id) && (
@@ -702,7 +740,7 @@ export function MemberRegister({
                               onClick={async () => {
                                 if (
                                   !window.confirm(
-                                    `Delete ${selected.person.name} from the member directory? Their profile will be archived and removed from public view. Their login account, payment records and history will be retained. You can restore the profile from Publishing  Committees & people  Archived.`,
+                                    `Delete ${selected.person.name} from the member directory? Their profile will be archived and removed from public view. Their login account, payment records and history will be retained. You can restore the profile from Archived records in the member directory.`,
                                   )
                                 )
                                   return;
@@ -723,7 +761,7 @@ export function MemberRegister({
                                   setSelected(undefined);
                                   await load(0);
                                   setMessage(
-                                    "Member deleted from the directory. Their archived profile can be restored from Publishing  Committees & people.",
+                                    "Member archived. You can restore the profile from Archived records.",
                                   );
                                   createButton.current?.focus();
                                 } catch (error) {

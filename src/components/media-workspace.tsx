@@ -43,11 +43,10 @@ export function MediaWorkspace({
     onDirty?.(dirty);
   }, [dirty, onDirty]);
   useEffect(() => {
-    api<Library>("/api/staff/media" + (location.search || ""))
+    api<Library>("/api/staff/media")
       .then((data) => {
         setLibrary(data);
-        const id = initialId ?? new URLSearchParams(location.search).get("id");
-        const asset = data.assets.find((a) => a.id === id);
+        const asset = data.assets.find((a) => a.id === initialId);
         if (asset) {
           setSelected(asset);
           setForm(asset.draft);

@@ -110,6 +110,10 @@ export function PublicProfileEditor({
           confirmPublication: confirmed,
         },
       );
+      if (action === "delete-public-profile") {
+        onClose();
+        return;
+      }
       setEntry(row);
       setBody(row.draft);
       setConfirmed(false);
@@ -153,6 +157,19 @@ export function PublicProfileEditor({
           </p>
         </div>
         <div className={ui.headerActions}>
+          {entry && data.canPublish && (
+            <button
+              type="button"
+              className="button danger"
+              disabled={busy}
+              onClick={() => {
+                if (window.confirm(`Delete the website profile for ${entry.draft.name}? It will be removed from Publishing and the public website. Any linked membership and login will be kept.`))
+                  void action("delete-public-profile");
+              }}
+            >
+              Delete website profile
+            </button>
+          )}
           <button
             className="button secondary"
             disabled={locked || !!validation || (!dirty && !!entry)}
@@ -432,11 +449,12 @@ export function PublicProfileEditor({
                 </p>
                 {needsMemberReview ? (
                   <p>
-                    Name or member details changed.{" "}
-                    <Link href={`/admin/workspaces/governance?id=${entry!.id}`}>
-                      Open member review
-                    </Link>{" "}
-                    before publishing.
+                    Name or member details changed and need administrator review before publishing.
+                    {data.canReview && (
+                      <>
+                        {" "}<Link href="/admin?review=profile-reviews">Open profile reviews</Link>
+                      </>
+                    )}
                   </p>
                 ) : data.canReview ? (
                   <>

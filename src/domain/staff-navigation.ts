@@ -67,18 +67,6 @@ const groups: {
         icon: "file",
         permission: "content:publish",
       },
-      {
-        label: "Media library",
-        href: "/admin/workspaces/media",
-        icon: "image",
-        permission: "content:publish",
-      },
-      {
-        label: "Committees & people",
-        href: "/admin/workspaces/governance",
-        icon: "people",
-        permission: "content:publish",
-      },
     ],
   },
   {
@@ -125,10 +113,7 @@ export function staffNavigation(roles: readonly string[]) {
       ...group,
       items: group.items.filter(
         (item) =>
-          !item.permission ||
-          hasPermission(roles, item.permission) ||
-          (item.href === "/admin/workspaces/governance" &&
-            hasPermission(roles, "members:review")),
+          !item.permission || hasPermission(roles, item.permission),
       ),
     }))
     .filter((group) => group.items.length);

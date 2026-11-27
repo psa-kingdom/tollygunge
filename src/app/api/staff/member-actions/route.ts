@@ -8,7 +8,7 @@ import {
   OperationError,
 } from "@/lib/operation-api";
 import { uuid, version } from "@/domain/operations";
-import { archiveAccountRecord, deleteMember } from "@/lib/member-deletion";
+import { archiveAccountRecord, deleteMember, resolveArchivedMember } from "@/lib/member-deletion";
 export async function POST(request: Request) {
   return operation(async () => {
     const actor = await authorized(request, "staff:manage", true),
@@ -98,6 +98,12 @@ export async function POST(request: Request) {
       );
     }
     const id = uuid(input.personId);
+    if (input.action === "restore" || input.action === "delete-archived") {
+      const action = input.action;
+      return transaction((client) =>
+        resolveArchivedMember(client, actor.id, id, version(input.personVersion), version(input.version), action),
+      );
+    }
     if (["invite", "resend", "release"].includes(input.action))
       throw new OperationError(
         "Review recipients and the approved template before confirming invitations.",

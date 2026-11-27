@@ -61,7 +61,7 @@ export async function reportQuery(
     values = dates;
   } else if (name === "content") {
     sql =
-      "SELECT kind,count(*)::int AS total,count(published)::int AS published FROM tpa.content_entries GROUP BY kind ORDER BY kind";
+      "SELECT kind,count(*)::int AS total,count(published)::int AS published FROM tpa.content_entries WHERE deleted_at IS NULL GROUP BY kind ORDER BY kind";
     values = [];
   } else {
     sql =

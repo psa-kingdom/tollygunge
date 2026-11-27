@@ -5,7 +5,7 @@ import { PortalIcon } from "./portal-icon";
 import { useUnsavedProfile } from "./use-unsaved-profile";
 import ui from "./communications.module.css";
 import styles from "./settings-workspace.module.css";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { api } from "./operations-client";
 import { staffRoleLabel, type StaffRole } from "@/domain/access";
 type Person = {
@@ -32,7 +32,8 @@ type Entry = {
   actor_name: string | null;
 };
 type Audit = { entries: Entry[]; next: string | null };
-const roleDescriptions: Record<string, string> = {
+const roleDescriptions: Record<StaffRole, string> = {
+  super_administrator: "Manage staff roles and review financial submissions.",
   administrator:
     "Manage operations across members, content, events, communications and finance.",
   membership_reviewer:
@@ -44,6 +45,16 @@ const roleDescriptions: Record<string, string> = {
   finance_operator:
     "Manage collection accounts and verify member payment receipts.",
 };
+const roleIcons: Record<StaffRole, string> = {
+  super_administrator: "shield",
+  administrator: "shield",
+  membership_reviewer: "people",
+  content_editor: "file",
+  event_operator: "calendar",
+  communications_operator: "message",
+  finance_operator: "wallet",
+};
+
 export function StaffAccess() {
   const [directory, setDirectory] = useState<Directory>(),
     [search, setSearch] = useState(""),
@@ -59,6 +70,28 @@ export function StaffAccess() {
     JSON.stringify([...chosen].sort()) !==
       JSON.stringify([...selected.roles].sort());
   const { guard, dialog } = useUnsavedProfile(dirty);
+  const selectedId = selected?.id;
+  const heading = useRef<HTMLHeadingElement>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const opener = useRef<string>(null);
+  const roleId = useId();
+  const canEdit = !!selected && !!directory?.canManageRoles &&
+    !selected.roles.includes("super_administrator") &&
+    selectedId !== directory.actorId && (selected.eligible || selected.roles.length > 0);
+  const accessNote = selected?.roles.includes("super_administrator")
+    ? "Super-admin access is managed through operator setup."
+    : selectedId === directory?.actorId
+      ? "Your own access must be changed by another authorized administrator."
+      : !directory?.canManageRoles
+        ? "Only the super admin can change staff access."
+        : "";
+  useEffect(() => {
+    if (selectedId) heading.current?.focus();
+    else if (opener.current) {
+      (document.getElementById(opener.current) ?? searchInput.current)?.focus();
+      opener.current = null;
+    }
+  }, [selectedId]);
   useEffect(() => {
     Promise.all([
       api<Directory>("/api/staff/access"),
@@ -111,6 +144,7 @@ export function StaffAccess() {
             <label>
               Find an existing account
               <input
+                ref={searchInput}
                 maxLength={120}
                 placeholder="Search name or email…"
                 value={search}
@@ -176,8 +210,10 @@ export function StaffAccess() {
                     <td>
                       <button
                         className="button secondary"
+                        id={`staff-access-${person.id}`}
                         disabled={busy}
-                        onClick={() => {
+                        onClick={(event) => {
+                          opener.current = event.currentTarget.id;
                           setSelected(person);
                           setChosen([...person.roles]);
                           setMessage("");
@@ -206,176 +242,160 @@ export function StaffAccess() {
           </div>
         </>
       ) : (
-        <section className={styles.panel}>
-          <div className={styles.editorHeader}>
-            <button
-              type="button"
-              className="button secondary"
-              disabled={busy}
-              onClick={() =>
-                guard(() => {
-                  setSelected(undefined);
-                  setMessage("");
-                })
-              }
-            >
-               All staff
-            </button>
+        <section className={`${styles.panel} ${styles.accessDetail}`} aria-labelledby={`${roleId}-account`}>
+          <button
+            type="button"
+            className={`button secondary ${styles.backToStaff}`}
+            disabled={busy}
+            onClick={() =>
+              guard(() => {
+                setSelected(undefined);
+                setMessage("");
+              })
+            }
+          >
+            <PortalIcon name="arrow" />
+            All staff
+          </button>
+          <div className={styles.accountSummary}>
+            <div className={styles.account}>
+              <span><PortalIcon name="profile" /></span>
+              <div>
+                <h2 ref={heading} tabIndex={-1} id={`${roleId}-account`}>{selected.name}</h2>
+                <CopyValue value={selected.email} />
+              </div>
+            </div>
             <StatusBadge tone={selected.eligible ? "success" : "pending"}>
               {selected.eligible ? "Verified account" : "Verification needed"}
             </StatusBadge>
           </div>
-          <form
-            className={`member-settings ${styles.form}`}
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setBusy(true);
-              try {
-                const result = await api<{ changed: boolean }>(
-                  "/api/staff/access",
-                  {
+          {accessNote && (
+            <p className={styles.accessNote}>
+              <PortalIcon name="shield" />
+              {accessNote}
+            </p>
+          )}
+          {!selected.eligible && (
+            <p className={styles.accessNote}>Verify this account before granting staff access.</p>
+          )}
+
+          {canEdit ? (
+            <form
+              className={`${styles.form} ${styles.accessForm}`}
+              onSubmit={async (event) => {
+                event.preventDefault();
+                if (busy || !dirty || (!selected.eligible && chosen.length > 0)) return;
+                setBusy(true);
+                setMessage("");
+                try {
+                  const result = await api<{ changed: boolean }>("/api/staff/access", {
                     id: selected.id,
                     expectedRoles: selected.roles,
                     roles: chosen,
-                  },
-                );
-                setSelected({ ...selected, roles: [...chosen].sort() });
-                setDirectory(
-                  await api<Directory>(
+                  });
+                  setSelected({ ...selected, roles: [...chosen].sort() });
+                  setDirectory(await api<Directory>(
                     `/api/staff/access?q=${encodeURIComponent(appliedSearch)}`,
-                  ),
-                );
-                setHistory(await api<Audit>("/api/staff/audit"));
-                setCursors([null]);
-                setMessage(
-                  result.changed
+                  ));
+                  setHistory(await api<Audit>("/api/staff/audit"));
+                  setCursors([null]);
+                  setMessage(result.changed
                     ? "Access updated. Account sessions revoked."
-                    : "No access changes to save.",
-                );
-              } catch (e) {
-                setMessage(e instanceof Error ? e.message : "Save failed.");
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            <h2>{selected.name}</h2>
-            <p>
-              <CopyValue value={selected.email} />
-            </p>
-            {selected.roles.includes("super_administrator") ? (
-              <p className={styles.readOnly}>
-                Super-admin access is managed through operator setup. It cannot
-                be changed here.
-              </p>
-            ) : selected.id === directory?.actorId ? (
-              <p className={styles.readOnly}>
-                Another authorized administrator must change your access.
-              </p>
-            ) : (
-              !directory?.canManageRoles && (
-                <p className={styles.readOnly}>
-                  Only the super admin can change staff responsibilities.
-                </p>
-              )
-            )}
-            {!selected.eligible && (
-              <p className="notice">
-                This account must verify its identity before receiving staff
-                access.
-              </p>
-            )}
-            {directory?.canCreateSuperAdmin && (
-              <details className={styles.section}>
-                <summary>Initial super admin setup</summary>
-                <p>
-                  The super admin manages staff roles and reviews financial
-                  submissions. You can assign one verified account during
-                  initial setup.
-                </p>
-                <button
-                  type="button"
-                  className="button"
-                  disabled={busy || !selected.verified}
-                  onClick={async () => {
-                    setBusy(true);
-                    try {
-                      await api("/api/staff/access", {
-                        action: "create_super_admin",
-                        id: selected.id,
-                      });
-                      setDirectory(await api<Directory>("/api/staff/access"));
-                      setSelected(undefined);
-                      setMessage(
-                        "Super admin assigned. That account must sign in again.",
-                      );
-                    } catch (e) {
-                      setMessage((e as Error).message);
-                    } finally {
-                      setBusy(false);
-                    }
-                  }}
-                >
-                  Make this account super admin
-                </button>
-              </details>
-            )}
-            <fieldset
-              className={styles.roleList}
-              disabled={
-                !directory?.canManageRoles ||
-                busy ||
-                selected.roles.includes("super_administrator") ||
-                selected.id === directory?.actorId ||
-                (!selected.eligible && !selected.roles.length)
-              }
-            >
-              <legend>Staff responsibilities</legend>
-              {directory?.roles
-                .filter((role) => role !== "super_administrator")
-                .map((role) => (
-                  <label className={`check-label ${styles.role}`} key={role}>
-                    <input
-                      type="checkbox"
-                      disabled={!selected.eligible && !chosen.includes(role)}
-                      checked={chosen.includes(role)}
-                      onChange={(e) =>
-                        setChosen(
-                          e.target.checked
-                            ? [...chosen, role]
-                            : chosen.filter((r) => r !== role),
-                        )
-                      }
-                    />
-                    <span>
-                      <strong>{staffRoleLabel(role)}</strong>
-                      <small>{roleDescriptions[role]}</small>
-                    </span>
-                  </label>
-                ))}
-            </fieldset>
-            <div className={styles.formFooter}>
-              <p>
-                Saving access changes signs this account out on all devices.
-              </p>
-              <button
-                className="button gold"
-                disabled={
-                  !directory?.canManageRoles ||
-                  busy ||
-                  !dirty ||
-                  selected.roles.includes("super_administrator") ||
-                  selected.id === directory?.actorId ||
-                  (!selected.eligible && chosen.length > 0)
+                    : "No access changes to save.");
+                } catch (error) {
+                  setMessage(error instanceof Error ? error.message : "Save failed.");
+                } finally {
+                  setBusy(false);
                 }
+              }}
+            >
+              <fieldset className={styles.roleList} disabled={busy}>
+                <legend>Staff responsibilities</legend>
+                {directory?.roles
+                  .filter((role) => role !== "super_administrator")
+                  .map((role) => (
+                    <label className={styles.role} key={role}>
+                      <span className={styles.roleIcon}><PortalIcon name={roleIcons[role]} /></span>
+                      <span>
+                        <strong id={`${roleId}-${role}`}>{staffRoleLabel(role)}</strong>
+                        <small id={`${roleId}-${role}-description`}>{roleDescriptions[role]}</small>
+                      </span>
+                      <input
+                        type="checkbox"
+                        aria-labelledby={`${roleId}-${role}`}
+                        aria-describedby={`${roleId}-${role}-description`}
+                        disabled={!selected.eligible && !chosen.includes(role)}
+                        checked={chosen.includes(role)}
+                        onChange={(event) => {
+                          const checked = event.target.checked;
+                          setChosen((current) => checked
+                            ? [...current, role]
+                            : current.filter((item) => item !== role));
+                        }}
+                      />
+                    </label>
+                  ))}
+              </fieldset>
+              <div className={styles.formFooter}>
+                <p>Saving signs this account out on all devices.</p>
+                <button type="submit" className="button gold"
+                  disabled={busy || !dirty || (!selected.eligible && chosen.length > 0)}>
+                  {busy ? "Saving…" : "Save access changes"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <section aria-labelledby={`${roleId}-responsibilities`}>
+              <h3 id={`${roleId}-responsibilities`}>Staff responsibilities</h3>
+              {selected.roles.length ? (
+                <ul className={styles.assignedRoles}>
+                  {selected.roles.map((role) => (
+                    <li className={styles.role} key={role}>
+                      <span className={styles.roleIcon}><PortalIcon name={roleIcons[role]} /></span>
+                      <span><strong>{staffRoleLabel(role)}</strong><small>{roleDescriptions[role]}</small></span>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className={styles.helper}>No staff access assigned.</p>}
+            </section>
+          )}
+
+          {directory?.canCreateSuperAdmin && (
+            <details className={styles.setup}>
+              <summary><PortalIcon name="shield" />Initial super admin setup</summary>
+              <p>Assign one verified account to manage staff roles and review financial submissions.</p>
+              <button
+                type="button"
+                className="button"
+                disabled={busy || !selected.verified}
+                onClick={async () => {
+                  setBusy(true);
+                  setMessage("");
+                  try {
+                    await api("/api/staff/access", {
+                      action: "create_super_admin",
+                      id: selected.id,
+                    });
+                    setDirectory(await api<Directory>(
+                      `/api/staff/access?q=${encodeURIComponent(appliedSearch)}`,
+                    ));
+                    setSelected(undefined);
+                    setMessage("Super admin assigned. That account must sign in again.");
+                  } catch (error) {
+                    setMessage((error as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
               >
-                {busy ? "Saving…" : "Save access changes"}
+                Make this account super admin
               </button>
-            </div>
-          </form>
+            </details>
+          )}
+          {message && <p className={styles.message} role="status">{message}</p>}
         </section>
       )}
-      {message && (
+      {!selected && message && (
         <p className={styles.message} role="status">
           {message}
         </p>

@@ -87,7 +87,7 @@ test("staff workspaces keep compact layouts, usable mobile navigation and keyboa
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: /Search workspace/ })).toBeFocused();
-  const routes = ["/admin", ...["reports","members","verification","onboarding","events","flyers","imports","content","media","governance","communications","crm","onboarding-email","payments","website","access"].map(slug => "/admin/workspaces/"+slug)];
+  const routes = ["/admin", ...["reports","members","verification","onboarding","events","flyers","imports","content","communications","crm","onboarding-email","payments","website","access"].map(slug => "/admin/workspaces/"+slug)];
   for (const route of routes.filter(route => route !== "/admin")) {
     await page.goto(route);
     await layoutFits(page);

@@ -56,6 +56,16 @@ test("expense headers are custom and currency and dates are validated", () => {
     assert.throws(() => financeDate(value));
   assert.throws(() => expenseLines([]));
 });
+test("new expense lines take a header and amount and retain optional legacy details", () => {
+  const date = "2026-11-27";
+  const [brief, legacy] = expenseLines([
+    { header: "Lighting", amountPaise: 20000 },
+    { header: "Banner", amountPaise: 5000, description: "Stage banner", date: "2026-11-26", vendor: "Print shop", note: "Paid" },
+  ], date);
+  assert.deepEqual(brief, { header: "Lighting", amountPaise: 20000, description: "Lighting", date, vendor: "", note: "" });
+  assert.deepEqual(legacy, { header: "Banner", amountPaise: 5000, description: "Stage banner", date: "2026-11-26", vendor: "Print shop", note: "Paid" });
+});
+
 test("approval and staff role administration are reserved for super admin", () => {
   assert.equal(hasPermission(["administrator"], "finance:approve"), false);
   assert.equal(hasPermission(["finance_operator"], "finance:approve"), false);

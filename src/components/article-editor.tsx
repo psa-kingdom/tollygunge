@@ -77,6 +77,10 @@ export function ArticleEditor({
         slug,
         body,
       });
+      if (action === "delete") {
+        onClose();
+        return;
+      }
       setEntry(row);
       setBody(row.draft);
       setKind(row.kind);
@@ -122,6 +126,19 @@ export function ArticleEditor({
           </p>
         </div>
         <div className={ui.headerActions}>
+          {entry && (
+            <button
+              type="button"
+              className="button danger"
+              disabled={busy}
+              onClick={() => {
+                if (window.confirm(`Delete “${entry.draft.title}”? It will be removed from Publishing and the public website. Unsaved edits will be discarded.`))
+                  void action("delete");
+              }}
+            >
+              Delete article
+            </button>
+          )}
           <button
             className="button secondary"
             disabled={locked || !!validation || (!dirty && !!entry)}

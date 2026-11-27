@@ -49,8 +49,8 @@ test("appearance separates preference from resolved mode and follows cross-tab/O
 });
 test("search permissions exclude unrelated record sources for every staff role", () => {
   const expected: Record<string, string[]> = {
-    membership_reviewer: ["Members", "Verification", "Documents", "Governance"],
-    content_editor: ["Content", "Media", "Governance", "News sources"],
+    membership_reviewer: ["Members", "Verification", "Documents"],
+    content_editor: ["Content", "Media", "Website profiles", "News sources"],
     event_operator: ["Events", "Flyers"],
     communications_operator: [
       "Inquiries",

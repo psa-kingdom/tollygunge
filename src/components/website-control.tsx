@@ -250,8 +250,7 @@ export function WebsiteControl({
         <details className="website-workspace-directory">
           <summary>Manage other website content</summary>
           <p>
-            These shortcuts open separate staff workspaces. Use the tabs above
-            for website settings, homepage settings, links and downloads.
+            Open Publishing tools or related event workspaces.
           </p>
           <nav
             className="workspace-related-links"
@@ -261,13 +260,13 @@ export function WebsiteControl({
               <strong>Pages and articles </strong>
               <span>Edit page text, insights and news summaries.</span>
             </Link>
-            <Link prefetch={false} href="/admin/workspaces/governance">
+            <Link prefetch={false} href="/admin/workspaces/content?view=members">
               <strong>People and committees </strong>
               <span>
                 Manage profiles, committee members and their publication.
               </span>
             </Link>
-            <Link prefetch={false} href="/admin/workspaces/media">
+            <Link prefetch={false} href="/admin/workspaces/content?view=media">
               <strong>Media library </strong>
               <span>Upload and manage website images and files.</span>
             </Link>

@@ -31,6 +31,45 @@ export async function deleteMember(
   return { deleted: true, recoverable: true };
 }
 
+export async function resolveArchivedMember(
+  client: Pick<PoolClient, "query">,
+  actorId: string,
+  personId: string,
+  personVersion: number,
+  membershipVersion: number,
+  action: "restore" | "delete-archived",
+) {
+  const { rows: [person] } = await client.query(
+    "SELECT version,archived_at,directory_deleted_at FROM tpa.people WHERE id=$1 FOR UPDATE",
+    [personId],
+  );
+  if (!person || person.directory_deleted_at)
+    throw new OperationError("Archived record not found.", 404);
+
+  const { rows: [membership] } = await client.query(
+    "SELECT version FROM tpa.memberships WHERE person_id=$1 FOR UPDATE",
+    [personId],
+  );
+  if (!person.archived_at || person.version !== personVersion || (membership?.version ?? 0) !== membershipVersion)
+    throw new OperationError("Member record changed. Reload before continuing.", 409);
+
+  const restoring = action === "restore";
+  await client.query(
+    `UPDATE tpa.people SET
+      archived_at=CASE WHEN $2 THEN NULL ELSE archived_at END,
+      directory_deleted_at=CASE WHEN $2 THEN NULL ELSE now() END,
+      published=NULL,version=version+1,updated_at=now()
+      WHERE id=$1`,
+    [personId, restoring],
+  );
+  await client.query(
+    "INSERT INTO tpa.person_revisions(id,person_id,version,action,body,actor_id) SELECT $1,id,version,$2,draft,$3 FROM tpa.people WHERE id=$4",
+    [randomUUID(), restoring ? "restore" : "delete", actorId, personId],
+  );
+  await audit(client as PoolClient, actorId, restoring ? "person.restore" : "member.archived_record_deleted", personId);
+  return { saved: true };
+}
+
 export async function archiveAccountRecord(
   client: PoolClient,
   actorId: string,

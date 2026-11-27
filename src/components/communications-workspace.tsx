@@ -197,7 +197,7 @@ export function CommunicationsWorkspace({
                     <span className={styles.navGroup}>MANAGE</span>
                   )}
                   <button
-                    className="text-button"
+                    className={`text-button ${styles.navItem}`}
                     type="button"
                     aria-current={view === item.id ? "page" : undefined}
                     onClick={() => navigate(item.id)}
@@ -207,19 +207,21 @@ export function CommunicationsWorkspace({
                   </button>
                 </div>
               ))}
+            <div>
+              <Link className={styles.navItem} href="/admin/workspaces/crm">
+                <PortalIcon name="message" />
+                Website inquiries
+              </Link>
+            </div>
           </nav>
-          <div className={styles.sidebarLinks}>
-            <Link href="/admin/workspaces/crm">
-
-              Website inquiries
-            </Link>
-            {canManageInvitations && (
+          {canManageInvitations && (
+            <div className={styles.sidebarLinks}>
               <Link href="/admin/workspaces/onboarding-email">
                 <PortalIcon name="shield" />
                 Email settings
               </Link>
-            )}
-          </div>
+            </div>
+          )}
           <div className={styles.sendingState}>
             <span className={styles.statusDot} />
             <strong>

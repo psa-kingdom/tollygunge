@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     const id = value ? uuid(value) : null;
     return (
       await getDatabase().query(
-        "SELECT e.id,e.title,e.location,e.starts_at,e.fee_paise,e.visibility,e.status,e.booking_closed,e.completed_at,e.archived_at,e.registration_starts_at,e.registration_ends_at,e.speakers,e.version AS template_version FROM tpa.events e WHERE e.status IN ('draft','published') AND ($1::uuid IS NULL OR e.id=$1) ORDER BY e.starts_at DESC LIMIT 200",
+        "SELECT e.id,e.title,e.location,e.starts_at,e.fee_paise,e.visibility,e.status,e.booking_closed,e.completed_at,e.archived_at,e.registration_starts_at,e.registration_ends_at,e.speakers,e.version AS template_version FROM tpa.events e WHERE e.historical_finance_date IS NULL AND e.status IN ('draft','published') AND ($1::uuid IS NULL OR e.id=$1) ORDER BY e.starts_at DESC LIMIT 200",
         [id],
       )
     ).rows;
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return transaction(async (client) => {
       const event = (
         await client.query(
-          "SELECT * FROM tpa.events WHERE id=$1 AND status IN ('draft','published') FOR UPDATE",
+          "SELECT * FROM tpa.events WHERE id=$1 AND historical_finance_date IS NULL AND status IN ('draft','published') FOR UPDATE",
           [id],
         )
       ).rows[0];

@@ -129,6 +129,7 @@ export function CrmWorkspace() {
   }
   return (
     <>
+      <h1 className="sr-only">Inquiries</h1>
       <form
         className="crm-filters"
         onSubmit={(event) => {

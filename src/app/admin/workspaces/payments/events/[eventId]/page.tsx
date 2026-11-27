@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { currentActor } from "@/lib/actor";
 import { hasPermission } from "@/domain/access";
-import { getDatabase } from "@/lib/database";
+import { financeEventExists } from "@/lib/finance-events";
 import { FinanceWorkspace } from "@/components/payments-workspace";
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -21,11 +21,7 @@ export default async function EventFinancePage({
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       eventId,
     ) ||
-    !(
-      await getDatabase().query("SELECT 1 FROM tpa.events WHERE id=$1", [
-        eventId,
-      ])
-    ).rowCount
+    !(await financeEventExists(eventId))
   )
     notFound();
   return (

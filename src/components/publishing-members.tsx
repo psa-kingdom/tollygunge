@@ -73,7 +73,12 @@ export function PublishingMembers({
     void api<PublishingMembersData>(`/api/staff/governance?id=${initialId}`)
       .then((d) => {
         if (active) {
-          setSelected(d.records[0]);
+          const row = d.records[0];
+          if (!row) {
+            setError("This profile is no longer available.");
+            return;
+          }
+          setSelected(row);
           setEditing(true);
         }
       })
