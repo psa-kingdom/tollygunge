@@ -49,10 +49,7 @@ export function BulkOnboarding() {
       }[]
     >([]),
     [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false),
-    [batches, setBatches] = useState<
-      { id: string; created_at: string; committed_at: string | null }[]
-    >([]);
+    [busy, setBusy] = useState(false);
   const restore = useCallback(async (id: string) => {
     setBusy(true);
     try {
@@ -82,13 +79,8 @@ export function BulkOnboarding() {
     }
   }, []);
   useEffect(() => {
-    api<{ batches: typeof batches }>("/api/staff/onboarding-import")
-      .then((d) => {
-        setBatches(d.batches);
-        const id = new URLSearchParams(location.search).get("id");
-        if (id) void restore(id);
-      })
-      .catch(() => setMessage("Unable to load batch history."));
+    const id = new URLSearchParams(location.search).get("id");
+    if (id) void Promise.resolve().then(() => restore(id));
   }, [restore]);
   async function read() {
     if (!file) return;
@@ -237,9 +229,12 @@ export function BulkOnboarding() {
                     );
                     const sourceName = [row.source?.["First Name"], row.source?.["Last Name"]]
                       .filter(Boolean).join(" ").trim();
-                    const status = row.status === "created" ? "Ready to import"
-                      : row.status === "failed" ? "Needs correction"
-                      : row.status ?? (row.error ? "Invalid" : "Preview");
+                    const existingAccount = row.error?.startsWith("Existing account")
+                      || row.reason === "Existing account";
+                    const status = existingAccount ? "Will be skipped"
+                      : row.status === "created" ? "Ready to import"
+                      : row.status === "failed" || row.error ? "Needs correction"
+                      : row.status ?? "Ready to import";
                     return (
                       <tr key={row.sourceRow ?? index}>
                         <td>{row.sourceRow ?? index + 1}</td>
@@ -249,11 +244,16 @@ export function BulkOnboarding() {
                         </th>
                         <td>{membershipNumber || "Not supplied"}</td>
                         <td>
-                          <dl className="import-uploaded-fields">
-                            {uploadedFields.map(([field, value]) => (
-                              <div key={field}><dt>{field}</dt><dd>{value}</dd></div>
-                            ))}
-                          </dl>
+                          {uploadedFields.length > 0 && (
+                            <details className="import-fields-disclosure">
+                              <summary>View uploaded fields</summary>
+                              <dl className="import-uploaded-fields">
+                                {uploadedFields.map(([field, value]) => (
+                                  <div key={field}><dt>{field}</dt><dd>{value}</dd></div>
+                                ))}
+                              </dl>
+                            </details>
+                          )}
                         </td>
                         <td><span className="import-preview-status">{status}</span></td>
                         <td>
@@ -507,21 +507,6 @@ export function BulkOnboarding() {
           </button>
         )}
       </div>
-      <WorkspacePanel title="Recent batches" description="Reopen a saved batch to review its progress and results.">
-      {!batches.length && <WorkspaceEmptyState compact icon="upload" title="No import batches yet" description="Choose a workbook above to start your first validation preview." actionLabel="Choose workbook" onAction={() => workbookInput.current?.click()} />}
-      {batches.map((batch) => (
-        <p key={batch.id}>
-          <button
-            className="button secondary"
-            disabled={busy}
-            onClick={() => void restore(batch.id)}
-          >
-            {new Date(batch.created_at).toLocaleString("en-IN")} ·{" "}
-            {batch.committed_at ? "Committed" : "Preview"}
-          </button>
-        </p>
-      ))}
-      </WorkspacePanel>
       <p role="status">{message}</p>
     </section>
   );

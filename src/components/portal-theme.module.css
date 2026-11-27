@@ -1121,3 +1121,6 @@
 .portal :global(.import-uploaded-fields dd) { margin:0; }
 .portal :global(.import-preview-actions) { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:20px; }
 .portal :global(.import-preview-actions .button) { margin:0; min-height:40px; }
+
+.portal :global(.import-fields-disclosure > summary) { cursor:pointer; white-space:nowrap; }
+.portal :global(.import-fields-disclosure[open] .import-uploaded-fields) { margin-top:12px; }

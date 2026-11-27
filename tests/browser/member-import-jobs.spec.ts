@@ -54,6 +54,7 @@ test('member import runs independently, reload restores progress and correction 
   await page.getByRole('button', { name: 'Preview uploaded records', exact: true }).click();
   await expect(page.getByRole('table')).toContainText('Held Account');
   const uploadedRow = page.getByRole('region', { name: 'Uploaded records', exact: true }).getByRole('row').filter({ hasText: email });
+  await uploadedRow.getByText('View uploaded fields', { exact: true }).click();
   await expect(uploadedRow).toContainText(prefix + '-held');
   await expect(uploadedRow).toContainText('Custom City');
   await expect(uploadedRow).toContainText('Partner');
