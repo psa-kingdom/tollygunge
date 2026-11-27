@@ -17,29 +17,29 @@ export async function operationalOverview(roles: string[]) {
   if (hasPermission(roles, "members:review")) {
     await metric(
       "Total members",
-      "SELECT count(*)::int n FROM tpa.memberships",
+      "SELECT count(*)::int n FROM tpa.memberships m JOIN tpa.people p ON p.id=m.person_id WHERE p.archived_at IS NULL",
       "/admin/workspaces/members",
     );
     await metric(
       "Active members",
-      "SELECT count(*)::int n FROM tpa.memberships WHERE status='active' AND (valid_from IS NULL OR valid_from<=current_date) AND (valid_until IS NULL OR valid_until>=current_date)",
+      "SELECT count(*)::int n FROM tpa.memberships m JOIN tpa.people p ON p.id=m.person_id WHERE p.archived_at IS NULL AND m.status='active' AND (m.valid_from IS NULL OR m.valid_from<=current_date) AND (m.valid_until IS NULL OR m.valid_until>=current_date)",
       "/admin/workspaces/members",
     );
     await metric(
       "Membership issues",
-      "SELECT count(*)::int n FROM tpa.memberships WHERE status IS NULL OR status<>'active' OR valid_until<current_date",
+      "SELECT count(*)::int n FROM tpa.memberships m JOIN tpa.people p ON p.id=m.person_id WHERE p.archived_at IS NULL AND (m.status IS NULL OR m.status<>'active' OR m.valid_until<current_date)",
       "/admin/workspaces/members",
     );
     await metric(
       "Profiles needing review",
-      "SELECT count(*)::int n FROM tpa.verification_submissions WHERE status='pending'",
+      "SELECT count(*)::int n FROM tpa.verification_submissions s JOIN tpa.people p ON p.id=s.person_id WHERE p.archived_at IS NULL AND s.status='pending'",
       "/admin/workspaces/verification",
     );
   }
   if (hasPermission(roles, "staff:manage"))
     await metric(
       "Invitations held",
-      "SELECT count(*)::int n FROM tpa.memberships m JOIN tpa.people p ON p.id=m.person_id JOIN tpa.account_invitation_holds h ON h.user_id=p.user_id WHERE h.released_at IS NULL",
+      "SELECT count(*)::int n FROM tpa.memberships m JOIN tpa.people p ON p.id=m.person_id JOIN tpa.account_invitation_holds h ON h.user_id=p.user_id WHERE h.released_at IS NULL AND p.archived_at IS NULL",
       "/admin/workspaces/members?invitation=held",
     );
   if (hasPermission(roles, "payments:manage"))

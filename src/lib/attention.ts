@@ -53,7 +53,7 @@ export async function attentionFor(actor: Actor) {
   if (hasPermission(actor.roles, "members:review"))
     await add(
       "membership-records",
-      "SELECT count(*)::int n FROM tpa.memberships WHERE status IS NULL OR (status='active' AND valid_until<current_date)",
+      "SELECT count(*)::int n FROM tpa.memberships m JOIN tpa.people p ON p.id=m.person_id WHERE p.archived_at IS NULL AND (m.status IS NULL OR (m.status='active' AND m.valid_until<current_date))",
       "membership records need status review",
       "/admin/workspaces/members",
       "Memberships",
@@ -61,7 +61,7 @@ export async function attentionFor(actor: Actor) {
   if (hasPermission(actor.roles, "members:review"))
     await add(
       "verification",
-      "SELECT count(*)::int n FROM tpa.verification_submissions WHERE status='pending'",
+      "SELECT count(*)::int n FROM tpa.verification_submissions s JOIN tpa.people p ON p.id=s.person_id WHERE p.archived_at IS NULL AND s.status='pending'",
       count => count === 1 ? "application awaiting profile review" : "applications awaiting profile review",
       "/admin/workspaces/verification",
       "Verification",
@@ -71,6 +71,7 @@ export async function attentionFor(actor: Actor) {
       "new-signups",
       `SELECT count(*)::int n FROM public."user" u
        WHERE u."createdAt">=now()-interval '7 days'
+       AND NOT EXISTS(SELECT 1 FROM tpa.people p WHERE p.user_id=u.id AND p.archived_at IS NOT NULL)
        AND NOT EXISTS(SELECT 1 FROM tpa.staff_roles r WHERE r.user_id=u.id)
        AND NOT EXISTS(SELECT 1 FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id WHERE p.user_id=u.id)
        AND NOT EXISTS(SELECT 1 FROM tpa.account_invitation_holds h WHERE h.user_id=u.id)
