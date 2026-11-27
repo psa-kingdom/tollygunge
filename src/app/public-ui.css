@@ -765,6 +765,60 @@
   min-width: 0;
   margin: 0;
 }
+.public-resource-archive .public-content-layout {
+  margin-top: 0;
+}
+.resource-gallery-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: zoom-in;
+}
+.resource-gallery-open:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 4px;
+}
+.resource-gallery-dialog {
+  box-sizing: border-box;
+  width: min(1100px, calc(100% - 32px));
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  margin: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.resource-gallery-dialog::backdrop {
+  background: rgba(7, 18, 30, 0.78);
+}
+.resource-gallery-view {
+  padding: clamp(12px, 2vw, 20px);
+}
+.resource-gallery-view-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.resource-gallery-view-heading h2 {
+  margin: 0;
+  font-size: clamp(1rem, 2.5vw, 1.375rem);
+}
+.resource-gallery-view-heading button {
+  flex-shrink: 0;
+}
+.resource-gallery-view img {
+  display: block;
+  width: 100%;
+  height: min(70dvh, 760px);
+  object-fit: contain;
+}
 .public-information .resource-gallery-tile img {
   display: block;
   width: 100%;

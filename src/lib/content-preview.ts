@@ -2,7 +2,7 @@ import { publishedPeople } from "@/lib/public-people";
 import "server-only";
 import { publicHistoricalEvents } from "./public-historical-events";
 import { getDatabase } from "./database";
-import { publishedArticles, publishedMedia } from "./public-content";
+import { publishedArticles, publishedGalleryMedia } from "./public-content";
 import {publishedSettings,publishedResources} from './website-content';
 import {sitePages} from '@/domain/site-pages';
 import {peopleFallback} from '@/domain/people-placement';
@@ -17,7 +17,7 @@ export async function previewContext(
   const people = ["about", "governance"].includes(page)
     ? await publishedPeople()
     : [];
-  const media = page === "resources" ? await publishedMedia(4) : [];
+  const media = page === "resources" ? await publishedGalleryMedia(4) : [];
   const events =
     page === "events"
       ? (

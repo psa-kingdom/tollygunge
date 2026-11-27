@@ -26,10 +26,10 @@ export async function publishedArticles(limit?: number) {
   }[];
 }
 
-export async function publishedMedia(limit?: number) {
+export async function publishedGalleryMedia(limit?: number) {
   if (!process.env.DATABASE_URL) return [];
   return (await getDatabase().query<ResourceImage>(
-    "SELECT id,published,width,height FROM tpa.public_media WHERE published IS NOT NULL ORDER BY created_at DESC,id LIMIT $1",
+    "SELECT id,published,width,height FROM tpa.public_media WHERE published IS NOT NULL AND lower(btrim(coalesce(published->>'category',''))) <> 'stock illustration' ORDER BY created_at DESC,id LIMIT $1",
     [limit ?? null],
   )).rows;
 }

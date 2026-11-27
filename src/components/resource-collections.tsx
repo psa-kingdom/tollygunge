@@ -27,22 +27,7 @@ export function ResourceArticleCards({ articles }: { articles: ResourceArticle[]
   );
 }
 
-export function ResourceMediaGallery({ media, preview = false }: { media: ResourceImage[]; preview?: boolean }) {
-  return (
-    <div className="resource-card-grid">
-      {media.map(({ id, width, height, published }) => (
-        <figure className="resource-gallery-tile" key={id}
-          data-cms-record={preview ? `media:${id}` : undefined}>
-          <a href={`/media/${id}`} aria-label={`View ${published.title}`}>
-            <Image unoptimized src={`/media/${id}`} width={width} height={height}
-              alt={published.altText} />
-          </a>
-          <figcaption>{published.title}{published.category && <small>{published.category}</small>}</figcaption>
-        </figure>
-      ))}
-    </div>
-  );
-}
+export { ResourceMediaGallery } from "./resource-media-gallery";
 
 export function ResourceArchive({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -53,7 +38,9 @@ export function ResourceArchive({ title, children }: { title: string; children: 
           <h1>{title}</h1>
         </div>
       </div>
-      <div className="content-page">{children}</div>
+      <div className="public-content-layout">
+        <div className="content-page">{children}</div>
+      </div>
     </main>
   );
 }

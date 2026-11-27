@@ -7,7 +7,7 @@ import { publishedPeople } from "@/lib/public-people";
 import { PublicContentView } from "@/components/public-content-view";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
-import { publishedPage, publishedArticles, publishedMedia } from "@/lib/public-content";
+import { publishedPage, publishedArticles, publishedGalleryMedia } from "@/lib/public-content";
 import { getDatabase } from "@/lib/database";
 import {publishedSettings,publishedResources} from '@/lib/website-content';
 import { type PublicGovernanceEntry } from "@/components/public-governance";
@@ -55,7 +55,7 @@ export default async function ContentPage({
       ? await publishedPeople()
       : [];
   if (!live) Object.assign(data, peopleFallback(page, data, people));
-  const media = page === "resources" ? await publishedMedia(4) : [];
+  const media = page === "resources" ? await publishedGalleryMedia(4) : [];
   const allEvents =
     page === "events" && process.env.DATABASE_URL
       ? (
