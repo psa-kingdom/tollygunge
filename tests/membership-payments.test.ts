@@ -17,7 +17,7 @@ test('confirmation email contains receipt facts, escapes HTML and does not appro
   const email = membershipPaymentEmail({ ...membershipPaymentInput(input), name: '<script>alert(1)</script>', membershipNumber: 'L-12', membershipType: 'Life' });
   assert.match(email.text, /INR 1000.50/);
   assert.match(email.text, /UTR-123/);
-  assert.match(email.text, /approval and profile verification are recorded separately/);
+  assert.match(email.text, /does not change the membership status/);
   assert.ok(!email.html.includes('<script>'));
 });
 function db(row: object | undefined = member, existing?: object) {

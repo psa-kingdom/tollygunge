@@ -13,10 +13,10 @@ export default async function Page() {
   if (!(await currentActor())) redirect("/login");
   return (
     <SiteShell>
-      <main id="main" className="page-content">
+      <main id="main" className="member-content">
+        <PortalSubsections />
         <section className="login-panel">
           <h1 className="sr-only">Account security</h1>
-        <PortalSubsections />
           <PasswordUpdate signedIn />
           <p>
             <Link href="/member">Back to your account</Link>

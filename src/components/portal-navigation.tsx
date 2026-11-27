@@ -15,7 +15,6 @@ export function PortalNavigation({
   groups,
   subsections = false,
   staff = false,
-  canViewParticipants = false,
 }: {
   groups: PortalGroup[];
   subsections?: boolean;
@@ -84,7 +83,7 @@ export function PortalNavigation({
     : participants ? [] : (group?.items ?? []);
   if (subsections && participants) return <section className="participant-context" aria-label="Event participant workspace">
     <div className="participant-context-heading">
-      <Link href="/admin/workspaces/events">← All events</Link>
+      <Link href="/admin/workspaces/events"> All events</Link>
       <strong>Event participants</strong>
       <span>{historical ? "Past attendance registers" : "Online registrations"}</span>
     </div>
@@ -151,7 +150,6 @@ export function PortalNavigation({
   return (
     <div className="member-section-navigation">
       {navigation}
-      {canViewParticipants && <Link className="participant-shortcut" href="/admin/workspaces/events?view=participants">Event attendance & participants →</Link>}
     </div>
   );
 }

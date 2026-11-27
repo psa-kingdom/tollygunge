@@ -9,6 +9,7 @@ import {
 } from "@/lib/operation-api";
 import { mapMembers, memberHeaders } from "@/domain/member-import";
 import { saveMember } from "@/lib/member-register";
+import { saveMemberProfileTag } from "@/lib/member-profile-tags";
 import { directoryFilters } from "@/domain/reports";
 import {
   directoryFrom,
@@ -66,6 +67,8 @@ export async function GET(request: Request) {
         const rows = (
           await c.query(
             `SELECT p.id AS person_id,p.user_id,p.version AS person_version,p.accepted AS person,p.contact_email AS email,p.mobile_normalized AS mobile,p.accepted_verified AS professional_verified,u.\"emailVerified\" AS email_verified,m.id AS membership_id,m.version AS membership_version,m.membership_number,m.type,m.status,m.valid_from,m.valid_until,m.source,
+          u."createdAt" AS account_created_at,
+          EXISTS(SELECT 1 FROM public."account" a WHERE a."userId"=p.user_id AND a."providerId"='credential' AND nullif(a.password,'') IS NOT NULL) AS login_ready,
           CASE WHEN EXISTS(SELECT 1 FROM tpa.account_invitation_holds h WHERE h.user_id=p.user_id AND h.released_at IS NULL) THEN 'invitation held' WHEN EXISTS(SELECT 1 FROM tpa.onboarding_invitations i WHERE i.user_id=p.user_id AND i.redeemed_at IS NOT NULL) THEN 'accepted' WHEN EXISTS(SELECT 1 FROM public."account" a WHERE a."userId"=p.user_id AND a."providerId"='credential') THEN 'active account' ELSE coalesce((SELECT CASE WHEN i.expires_at<now() THEN 'expired' ELSE 'pending' END FROM tpa.onboarding_invitations i WHERE i.user_id=p.user_id ORDER BY expires_at DESC LIMIT 1),'not invited') END AS invitation_status,
           EXISTS(SELECT 1 FROM tpa.account_invitation_holds h WHERE h.user_id=p.user_id AND h.address_completion_required) AS address_completion_required,
           (SELECT status FROM tpa.onboarding_mail mail WHERE mail.user_id=p.user_id AND kind='invitation' ORDER BY created_at DESC LIMIT 1) AS delivery_status,
@@ -111,6 +114,8 @@ export async function POST(request: Request) {
   return operation(async () => {
     const actor = await authorized(request, "staff:manage", true),
       input = await jsonBody(request);
+    if (["profile-tag.create", "profile-tag.assign", "profile-tag.remove"].includes(input?.action))
+      return transaction(client => saveMemberProfileTag(client, actor.id, input));
     if (!["create", "update"].includes(input.action))
       throw new OperationError("Choose create or update.");
     const source = input.source as Record<string, string>;

@@ -33,5 +33,6 @@ test("event email distinguishes pending payment, confirmation, refunds and remin
 
 test("event continuation rejects external URLs and unrelated destinations", () => {
   assert.equal(eventReturnPath(`/member/events?eventId=${event.id}`),`/member/events?eventId=${event.id}`);
+  assert.equal(eventReturnPath(`/events/${event.id}`), `/events/${event.id}`);
   for(const value of ["https://evil.invalid","//evil.invalid","/admin","/member/events?eventId=bad","/member/events?eventId="+event.id+"&next=//evil.invalid",["/member/events"]]) assert.equal(eventReturnPath(value),undefined);
 });

@@ -3,7 +3,7 @@ import { canAccessAsset, type AssetEligibility } from '../domain/event-engagemen
 type Database = Pool | PoolClient;
 export async function activeEventMember(db:Database,userId:string|null) {
  if(!userId) return false;
- return !!(await db.query(`SELECT 1 FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id WHERE p.user_id=$1 AND m.status='active' AND (m.valid_from IS NULL OR m.valid_from<=current_date) AND (m.valid_until IS NULL OR m.valid_until>=current_date)`,[userId])).rowCount;
+ return !!(await db.query(`SELECT 1 FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id WHERE p.user_id=$1 AND m.status='active' AND m.type IS DISTINCT FROM 'Free' AND (m.valid_from IS NULL OR m.valid_from<=current_date) AND (m.valid_until IS NULL OR m.valid_until>=current_date)`,[userId])).rowCount;
 }
 export async function eventAssetAllowed(db:Database, asset:{event_id:string;eligibility:AssetEligibility;selected_members:string[];status:string}, userId:string|null) {
  if(asset.status!=='published') return false;

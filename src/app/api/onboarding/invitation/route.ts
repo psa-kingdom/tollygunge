@@ -62,6 +62,10 @@ export async function POST(r: Request) {
         [row.user_id],
       );
       await c.query(
+        "UPDATE tpa.memberships m SET status='active',version=m.version+1,updated_at=now() FROM tpa.people p WHERE m.person_id=p.id AND p.user_id=$1 AND m.status IS NULL",
+        [row.user_id],
+      );
+      await c.query(
         "UPDATE tpa.onboarding_invitations SET redeemed_at=now() WHERE token_hash=$1",
         [token],
       );

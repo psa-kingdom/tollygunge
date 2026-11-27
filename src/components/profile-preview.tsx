@@ -17,6 +17,7 @@ import {
 } from "@floating-ui/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CopyValue, StatusBadge } from "./portal-values";
+import { PortalIcon } from "./portal-icon";
 import styles from "./portal-interactions.module.css";
 export type ProfileSummary = {
   name: string;
@@ -104,7 +105,7 @@ export function ProfilePreview({
           {initials}
         </span>
         <strong>{profile.name}</strong>
-        <span aria-hidden="true">↗</span>
+
       </button>
       {open && !disabled && (
         <FloatingPortal>
@@ -183,7 +184,7 @@ export function ProfilePreview({
                   onPin(reference.current as HTMLButtonElement);
                 }}
               >
-                Open full details →
+                Open full details
               </button>
             </div>
           </FloatingFocusManager>
@@ -199,11 +200,15 @@ export function ProfileInspector({
   label,
   onClose,
   returnFocus,
+  modal = false,
+  closeDisabled = false,
 }: {
   children: React.ReactNode;
   label: string;
   onClose: () => void;
   returnFocus?: RefObject<HTMLElement | null>;
+  modal?: boolean;
+  closeDisabled?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const first = useRef<HTMLElement | null>(null);
@@ -220,7 +225,7 @@ export function ProfileInspector({
       if (!surface) return;
       const focused = document.activeElement instanceof HTMLElement && surface.contains(document.activeElement) ? document.activeElement : null;
       const scrollTop = surface.scrollTop;
-      if (media.matches) {
+      if (media.matches && !modal) {
         surface.close();
         surface.setAttribute("open", "");
       } else {
@@ -250,11 +255,12 @@ export function ProfileInspector({
       document.removeEventListener("keydown", key);
       if (originalTrigger?.isConnected) originalTrigger.focus();
     };
-  }, [returnFocus]);
+  }, [returnFocus, modal]);
   return (
     <dialog
       ref={dialog}
-      className={`${styles.inspector} portal-inspector`}
+      data-modal={modal || undefined}
+      className={`${styles.inspector} ${modal ? styles.modalInspector : ""} portal-inspector`}
       aria-label={label}
       onCancel={(event) => {
         event.preventDefault();
@@ -265,8 +271,8 @@ export function ProfileInspector({
     >
       <div className={styles.inspectorBar}>
         <span>Profile details</span>
-        <button type="button" onClick={onClose} aria-label="Close details">
-          ×
+        <button type="button" className={styles.inspectorClose} onClick={onClose} disabled={closeDisabled} aria-label="Close details">
+          <PortalIcon name="close" />
         </button>
       </div>
       {children}

@@ -29,6 +29,7 @@ import {
 import { ProfileSection } from "./profile-section";
 import { MemberProfilePreview } from "./member-profile-preview";
 import { useUnsavedProfile } from "./use-unsaved-profile";
+import profileStyles from "./account-profile.module.css";
 function normalized(p: PersonBody) {
   try {
     return JSON.stringify(personBody(p));
@@ -256,6 +257,133 @@ export function PersonEditor({
       </main>
     );
   const pending = entry?.reviews?.find((r) => r.status === "pending");
+  const portraitSection = (<ProfileSection
+                title="Portrait"
+                description="Choose a clear, professional photo for your public profile."
+              >
+                <label>
+                  Portrait selection
+                  <select
+                    value={
+                      body.portraitId
+                        ? `${body.portraitKind ?? "editorial"}:${body.portraitId}`
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const [kind, id] = e.target.value.split(":");
+                      setBody((p) => ({
+                        ...p,
+                        portraitId: id || null,
+                        portraitKind: (kind ||
+                          "editorial") as PersonBody["portraitKind"],
+                      }));
+                    }}
+                  >
+                    <option value="">Use initials</option>
+                    {editorial.map((p) => (
+                      <option key={p.id} value={`editorial:${p.id}`}>
+                        {p.title}
+                      </option>
+                    ))}
+                    {portraitData.portraits.map((p) => (
+                      <option key={p.id} value={`profile:${p.id}`}>
+                        {p.alt_text}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {!portraitData.uploadEnabled && (
+                  <p className="notice">
+                    Portrait uploads are temporarily unavailable. You can still
+                    choose an existing portrait.
+                  </p>
+                )}
+                <label>
+                  Upload / replace portrait
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    disabled={!entry || !portraitData.uploadEnabled || busy}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !entry) return;
+                      setBusy(true);
+                      try {
+                        const form = new FormData();
+                        form.set("personId", entry.id);
+                        form.set("altText", `Portrait of ${body.name}`);
+                        form.set("file", file);
+                        const res = await fetch("/api/profile-portraits", {
+                          method: "POST",
+                          body: form,
+                        });
+                        const value = await res.json();
+                        if (!res.ok) throw Error(value.error);
+                        setPortraitData(
+                          await api(
+                            `/api/profile-portraits?personId=${entry.id}`,
+                          ),
+                        );
+                        setBody((p) => ({
+                          ...p,
+                          portraitId: value.id,
+                          portraitKind: "profile",
+                        }));
+                        setMessage(
+                          "Portrait uploaded privately. Save and submit your profile for review.",
+                        );
+                      } catch (err) {
+                        setMessage((err as Error).message);
+                      } finally {
+                        setBusy(false);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                  <small>
+                    {owner
+                      ? "JPEG or PNG up to 5 MB. Your photo remains private until reviewed and published."
+                      : "Static JPEG/PNG up to 5 MB. Metadata is removed. Save a new person before uploading."}
+                  </small>
+                </label>
+              </ProfileSection>);
+  if (owner) return (
+    <section className={profileStyles.profile} aria-labelledby="account-profile-heading">
+      <header className={profileStyles.heading}>
+        <div><h2 id="account-profile-heading">Your profile</h2><p>Keep your name and introduction up to date.</p></div>
+        <span className={profileStyles.state}>{dirty ? "Unsaved changes" : pending ? "Awaiting review" : "Saved"}</span>
+      </header>
+      <form onSubmit={e => { e.preventDefault(); void act("save"); }}>
+        <fieldset disabled={busy} className={profileStyles.fields}>
+          <div className={profileStyles.grid}>
+            <label>Display name<input autoComplete="name" required maxLength={120} value={body.name} onChange={e=>field("name",e.target.value)}/></label>
+            <label>Designation<input autoComplete="organization-title" maxLength={120} value={body.jobTitle} onChange={e=>field("jobTitle",e.target.value)}/></label>
+          </div>
+          <label>About<textarea rows={5} maxLength={20000} value={body.biography} onChange={e=>setBody(p=>({...p,biography:e.target.value,biographyRich:undefined}))}/></label>
+          <section className={profileStyles.contact} aria-labelledby="profile-contact-heading">
+            <div className={profileStyles.sectionHeading}><h3 id="profile-contact-heading">Contact details</h3>{onboardingDetails && <Link href="/member/application">Edit contact details</Link>}</div>
+            <div className={profileStyles.grid}>
+              <label>Email<input type="email" autoComplete="email" value={accountEmail || ""} readOnly/><small>Your sign-in email</small></label>
+              <label>Mobile<input type="tel" autoComplete="tel" maxLength={32} value={body.phone} readOnly={onboardingDetails} onChange={e=>field("phone",e.target.value)}/>{onboardingDetails && <small>Managed in your verification form</small>}</label>
+            </div>
+          </section>
+          <details className={profileStyles.photo}><summary>Profile photo</summary>{portraitSection}</details>
+          {verificationRequired && <p className={profileStyles.help}>Complete your <Link href="/member/application">verification form</Link> before submitting profile changes.</p>}
+          {error && <p role="alert">{error}</p>}
+          <div className={profileStyles.actions}>
+            <button className="button" disabled={busy || !!error || !dirty}>{busy && activeAction === "save" ? "Saving…" : "Save changes"}</button>
+            <button type="button" className="button secondary" disabled={busy || dirty || !entry || !!error || verificationRequired || !!pending} onClick={()=>void act("submit")}>{busy && activeAction === "submit" ? "Submitting…" : "Submit for review"}</button>
+          </div>
+          <p className={profileStyles.help}>Save your changes, then submit them for administrator review.</p>
+        </fieldset>
+      </form>
+      {pending && <p className={profileStyles.help}>Your submitted changes are waiting for review.</p>}
+      {entry?.reviews?.[0]?.status === "rejected" && <p role="status">Changes requested. {entry.reviews[0].reason}</p>}
+      {message && <p role="status">{message}</p>}
+      {dialog}
+    </section>
+  );
+
   return (
     <div className={owner ? "member-profile-editor" : "person-editor"}>
       {!owner && <div className="content-editor-heading">
@@ -493,96 +621,7 @@ export function PersonEditor({
                   }
                 />
               </ProfileSection>
-              <ProfileSection
-                title="Portrait"
-                description="Choose a clear, professional photo for your public profile."
-              >
-                <label>
-                  Portrait selection
-                  <select
-                    value={
-                      body.portraitId
-                        ? `${body.portraitKind ?? "editorial"}:${body.portraitId}`
-                        : ""
-                    }
-                    onChange={(e) => {
-                      const [kind, id] = e.target.value.split(":");
-                      setBody((p) => ({
-                        ...p,
-                        portraitId: id || null,
-                        portraitKind: (kind ||
-                          "editorial") as PersonBody["portraitKind"],
-                      }));
-                    }}
-                  >
-                    <option value="">Use initials</option>
-                    {editorial.map((p) => (
-                      <option key={p.id} value={`editorial:${p.id}`}>
-                        {p.title}
-                      </option>
-                    ))}
-                    {portraitData.portraits.map((p) => (
-                      <option key={p.id} value={`profile:${p.id}`}>
-                        {p.alt_text}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {!portraitData.uploadEnabled && (
-                  <p className="notice">
-                    Portrait uploads are temporarily unavailable. You can still
-                    choose an existing portrait.
-                  </p>
-                )}
-                <label>
-                  Upload / replace portrait
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png"
-                    disabled={!entry || !portraitData.uploadEnabled || busy}
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file || !entry) return;
-                      setBusy(true);
-                      try {
-                        const form = new FormData();
-                        form.set("personId", entry.id);
-                        form.set("altText", `Portrait of ${body.name}`);
-                        form.set("file", file);
-                        const res = await fetch("/api/profile-portraits", {
-                          method: "POST",
-                          body: form,
-                        });
-                        const value = await res.json();
-                        if (!res.ok) throw Error(value.error);
-                        setPortraitData(
-                          await api(
-                            `/api/profile-portraits?personId=${entry.id}`,
-                          ),
-                        );
-                        setBody((p) => ({
-                          ...p,
-                          portraitId: value.id,
-                          portraitKind: "profile",
-                        }));
-                        setMessage(
-                          "Portrait uploaded privately. Save and submit your profile for review.",
-                        );
-                      } catch (err) {
-                        setMessage((err as Error).message);
-                      } finally {
-                        setBusy(false);
-                        e.target.value = "";
-                      }
-                    }}
-                  />
-                  <small>
-                    {owner
-                      ? "JPEG or PNG up to 5 MB. Your photo remains private until reviewed and published."
-                      : "Static JPEG/PNG up to 5 MB. Metadata is removed. Save a new person before uploading."}
-                  </small>
-                </label>
-              </ProfileSection>
+              {portraitSection}
               <ProfileSection
                 title="Social & portfolio links"
                 description="Choose the links you want to share publicly."

@@ -56,24 +56,11 @@ const groups: {
         icon: "calendar",
         permission: "events:manage",
       },
-      {
-        label: "Flyers",
-        href: "/admin/workspaces/flyers",
-        icon: "image",
-        permission: "events:manage",
-      },
-      {
-        label: "Historical imports",
-        href: "/admin/workspaces/imports",
-        icon: "upload",
-        permission: "events:manage",
-      },
     ],
   },
   {
     label: "Publishing",
     items: [
-      {label:'Website settings',href:'/admin/workspaces/website',icon:'file',permission:'content:publish'},
       {
         label: "Content",
         href: "/admin/workspaces/content",
@@ -103,7 +90,18 @@ const groups: {
         icon: "wallet",
         permission: "payments:manage",
       },
-      {label:"Collection accounts",href:"/admin/workspaces/payment-details",icon:"wallet",permission:"payments:manage"},
+      {
+        label: "Membership plans",
+        href: "/admin/workspaces/membership-plans",
+        icon: "people",
+        permission: "staff:manage",
+      },
+      {
+        label: "Collection accounts",
+        href: "/admin/workspaces/payment-details",
+        icon: "wallet",
+        permission: "payments:manage",
+      },
       {
         label: "Email settings",
         href: "/admin/workspaces/onboarding-email",

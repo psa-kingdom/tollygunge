@@ -13,7 +13,7 @@ test("new profiles start at zero and link missing items to their form steps", ()
 });
 
 test("completion includes conditional registration and selected-address requirements when correspondence is enabled", () => {
-  const fields = initialFields.map(field => field.id === "correspondenceAddress" ? { ...field, visible: true, required: true } : field);
+  const fields = initialFields.map(field => field.id === "correspondenceAddress" ? { ...field, visible: true, required: true } : field.id === "registration" ? { ...field, visible: true, regulated: true } : field);
   const answers: Record<string, string> = Object.fromEntries(initialFields.filter(f => f.required).map(f => [f.id, f.type === "checkbox" ? "true" : "Synthetic value"]));
   answers.correspondenceAddress = "Office";
   let progress = verificationProgress(fields, answers, "Professional", true);

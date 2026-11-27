@@ -16,7 +16,7 @@ type Data = {
   biographyTemplate:string;
 };
 const emptyGroup = { name: "", page: "governance", section: 0, order: 0 };
-export function GovernanceWorkspace() {
+export function GovernanceWorkspace({ initialId }: { initialId?: string } = {}) {
   const [data, setData] = useState<Data>(),
     [selected, setSelected] = useState<PersonEntry | null>(null),
     [tab, setTab] = useState("people"),
@@ -55,7 +55,7 @@ export function GovernanceWorkspace() {
           initialized.current=true;
           const params = new URLSearchParams(window.location.search);
           if (params.get("review") === "pending") setFilter("pending");
-          const id = params.get("id");
+          const id = initialId ?? params.get("id");
           if (id) {
             setFilter("all");
             void api<Data>(`/api/staff/governance?id=${encodeURIComponent(id)}`)
@@ -74,7 +74,7 @@ export function GovernanceWorkspace() {
     return () => {
       active = false;
     };
-  }, [directoryUrl]);
+  }, [directoryUrl,initialId]);
   async function openPerson(p: PersonEntry) {
     try {
       const details = await api<Data>(`/api/staff/governance?id=${p.id}`);
@@ -194,7 +194,7 @@ export function GovernanceWorkspace() {
                 ))}
             </aside>
             <div className="content-editing-area">
-              {selected && <div className="action-row">{data.canEditPrivate && (selected.membership_id ? <a className="text-link" href={`/admin/workspaces/members?personId=${selected.id}`}>View member record →</a> : selected.user_id ? <a className="text-link" href={`/admin/workspaces/members?id=${selected.user_id}`}>View account record →</a> : <span>No linked membership or account</span>)}{data.canPublish && <button className="button secondary" disabled={dirty} onClick={()=>guard(()=>{void api<PersonEntry>("/api/staff/governance",{action:selected.archived_at?"restore":"archive",id:selected.id,version:selected.version}).then(row=>{setSelected(row);return load();}).catch(e=>setMessage(e.message));})}>{selected.archived_at?"Restore profile":"Archive profile"}</button>}</div>}
+              {selected && <div className="action-row">{data.canEditPrivate && (selected.membership_id ? <a className="text-link" href={`/admin/workspaces/members?personId=${selected.id}`}>View member record </a> : selected.user_id ? <a className="text-link" href={`/admin/workspaces/members?id=${selected.user_id}`}>View account record </a> : <span>No linked membership or account</span>)}{data.canPublish && <button className="button secondary" disabled={dirty} onClick={()=>guard(()=>{void api<PersonEntry>("/api/staff/governance",{action:selected.archived_at?"restore":"archive",id:selected.id,version:selected.version}).then(row=>{setSelected(row);return load();}).catch(e=>setMessage(e.message));})}>{selected.archived_at?"Restore profile":"Archive profile"}</button>}</div>}
               {selected?.archived_at ? <p className="notice">This profile is archived and private. Restore it before editing; its membership and account remain intact.</p> : <PersonEditor
                 key={selected?.id ?? "new"}
                 entry={selected}

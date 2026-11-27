@@ -13,7 +13,7 @@ export function FallbackPanel({ kind, retry, reference, compact = false }: { kin
     <p className={styles.description}>{content.description}</p>
     <div className={styles.actions}>
       {retry && <button className={styles.primary} onClick={retry}>Try again <span aria-hidden="true">↻</span></button>}
-      <a className={retry ? styles.secondary : styles.primary} href={content.action.href}>{content.action.label}<span aria-hidden="true">→</span></a>
+      <a className={retry ? styles.secondary : styles.primary} href={content.action.href}>{content.action.label}</a>
     </div>
     {reference && /^[a-zA-Z0-9_-]{1,80}$/.test(reference) && <p className={styles.reference}>Support reference: {reference}</p>}
   </section>;
@@ -22,8 +22,8 @@ export function FallbackPanel({ kind, retry, reference, compact = false }: { kin
 /** Safe during outages: no database, session, remote assets or normal site shell. */
 export function FallbackScreen(props: Parameters<typeof FallbackPanel>[0]) {
   return <div className={styles.screen}>
-    <header className={styles.header}><a href="/" className={styles.brand} aria-label="TPA homepage"><TpaLogo /><span>TOLLYGUNGE<br />PROFESSIONAL ASSOCIATION</span></a><a className={styles.help} href="/contact">Contact TPA <span aria-hidden="true">↗</span></a></header>
-    <main id="main" className={styles.main}><FallbackPanel {...props} /><nav className={styles.links} aria-label="Helpful pages"><a href="/about">About the association <span aria-hidden="true">↗</span></a><a href="/events">Explore events <span aria-hidden="true">↗</span></a><a href="/login">Member sign-in <span aria-hidden="true">↗</span></a></nav></main>
+    <header className={styles.header}><a href="/" className={styles.brand} aria-label="TPA homepage"><TpaLogo /><span>TOLLYGUNGE<br />PROFESSIONAL ASSOCIATION</span></a><a className={styles.help} href="/contact">Contact TPA </a></header>
+    <main id="main" className={styles.main}><FallbackPanel {...props} /><nav className={styles.links} aria-label="Helpful pages"><a href="/about">About the association </a><a href="/events">Explore events </a><a href="/login">Member sign-in </a></nav></main>
     <footer className={styles.footer}><span>Connect. Learn. Collaborate.</span><span>Tollygunge Professional Association</span></footer>
   </div>;
 }

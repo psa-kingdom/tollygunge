@@ -1,5 +1,6 @@
 import { publishedPeople } from "@/lib/public-people";
 import "server-only";
+import { publicHistoricalEvents } from "./public-historical-events";
 import { getDatabase } from "./database";
 import { publishedArticles } from "./public-content";
 import {publishedSettings,publishedResources} from './website-content';
@@ -28,7 +29,7 @@ export async function previewContext(
     page === "events"
       ? (
           await db.query(
-            "SELECT id,title,starts_at,ends_at,location FROM tpa.events WHERE status='published' AND visibility='public' ORDER BY starts_at DESC LIMIT 100",
+            "SELECT id,title,starts_at,ends_at,location,EXISTS(SELECT 1 FROM tpa.event_banners b WHERE b.event_id=events.id) AS has_banner FROM tpa.events WHERE status='published' AND visibility='public' ORDER BY starts_at DESC LIMIT 100",
           )
         ).rows
       : [];
@@ -40,6 +41,7 @@ export async function previewContext(
     people,
     media,
     events,
+    pastEvents: page === "events" ? await publicHistoricalEvents() : [],
     articles: page === "resources" ? await publishedArticles() : [],
   };
 }

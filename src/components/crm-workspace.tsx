@@ -280,14 +280,14 @@ export function CrmWorkspace() {
                     {selected.name}
                     <br />
                     <CopyValue value={selected.email} />{" "}
-                    <a href={`mailto:${selected.email}`} aria-label={`Email ${selected.name}`}>Email ↗</a>
+                    <a href={`mailto:${selected.email}`} aria-label={`Email ${selected.name}`}>Email </a>
                     {selected.phone && (
                       <>
                         <br />
                         <CopyValue value={selected.phone} />{" "}<a
                           href={`tel:${selected.phone.replace(/[^+0-9]/g, "")}`}
                         >
-                          Call ↗
+                          Call
                         </a>
                       </>
                     )}

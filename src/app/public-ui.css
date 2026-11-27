@@ -280,7 +280,7 @@
   border-radius: 2px;
 }
 
-/* Information pages: shared reading width, section index and natural content height. */
+/* Information pages share the same gutters for the hero and page content. */
 .public-shell .public-information {
   --information-gutter: var(--public-gutter);
   padding-bottom: 72px;
@@ -329,15 +329,6 @@
   width: calc(100% - 2 * var(--public-gutter));
   max-width: var(--public-content-width);
   margin: 40px auto 0;
-  display: grid;
-  grid-template-columns: 216px minmax(0, 1fr);
-  gap: 64px;
-  align-items: start;
-}
-.public-page-index {
-  position: sticky;
-  top: calc(var(--member-header-offset) + 28px);
-  min-width: 0;
 }
 .page-index-label {
   display: block;
@@ -347,44 +338,6 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
-}
-.public-page-index ol {
-  list-style: none;
-  padding: 0;
-  margin: 16px 0 0;
-  display: grid;
-  gap: 4px;
-}
-.public-page-index li a {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 10px 0;
-  font-size: 0.8125rem;
-  line-height: 1.6;
-  color: var(--ink);
-  text-underline-offset: 4px;
-}
-.public-page-index li a > span {
-  color: var(--accent-text);
-  font-size: 0.6875rem;
-  font-variant-numeric: tabular-nums;
-}
-.page-index-support {
-  border-top: 1px solid var(--line);
-  margin-top: 24px;
-  padding-top: 20px;
-  font-size: 0.75rem;
-}
-.page-index-support p {
-  color: var(--muted);
-  margin: 0 0 4px;
-}
-.page-index-support a {
-  display: inline-block;
-  padding-block: 6px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
 }
 .public-shell .public-information .content-page {
   width: 100%;
@@ -430,7 +383,7 @@
   outline: 2px solid var(--accent-text);
   outline-offset: 4px;
 }
-.public-shell .public-information .public-section-body a:not(.button) {
+.public-shell .public-information .public-section-body a:not(.button):not(:where([data-governance-contacts] a)) {
   text-decoration: underline;
   text-underline-offset: 5px;
 }
@@ -586,7 +539,7 @@
 }
 .public-shell .public-information .historical-event-card > .historical-event-card-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 190px;
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 28px;
   padding: 24px 28px 28px;
@@ -652,7 +605,50 @@
   font-size: 11px;
   line-height: 1.5;
 }
+.public-shell .public-page-events #section-1 .event-row {
+  margin-top: 10px;
+}
+.public-shell .public-page-events.public-information .historical-event-card-header {
+  padding: 14px 18px;
+}
+.public-shell .public-page-events.public-information .historical-event-card .historical-event-date {
+  margin-bottom: 5px;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.public-shell .public-page-events.public-information .historical-event-card h3 {
+  max-width: none;
+  font-size: 22px;
+  line-height: 1.25;
+}
+.public-shell .public-page-events.public-information .historical-event-card > .historical-event-card-body {
+  padding: 12px 18px 16px;
+  gap: 12px;
+}
+.public-shell .public-page-events.public-information .historical-event-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+}
+.public-shell .public-page-events.public-information .historical-event-facts dt,
+.public-shell .public-page-events.public-information .historical-event-overview h4 {
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+.public-shell .public-page-events.public-information .historical-event-facts dd,
+.public-shell .public-page-events.public-information .historical-event-card .historical-event-overview p {
+  font-size: 13px;
+  line-height: 1.55;
+}
+.public-shell .public-page-events.public-information .historical-event-overview {
+  padding-top: 12px;
+}
+.public-shell .public-page-events.public-information .historical-event-card .historical-event-overview p + p {
+  margin-top: 8px;
+}
 @media (max-width: 640px) {
+  .public-shell .public-page-events.public-information .historical-event-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .public-shell .public-information .historical-event-card-header {
     padding: 22px;
   }
@@ -854,9 +850,6 @@ html[data-color-mode="dark"]
     color: var(--ink);
     text-decoration: underline;
   }
-  .public-page-index a:hover {
-    text-decoration: underline;
-  }
 }
 @media (prefers-reduced-motion: no-preference) {
   .public-shell
@@ -902,10 +895,6 @@ html[data-color-mode="dark"]
   .public-shell .site-header .brand-name {
     display: block;
   }
-  .public-content-layout {
-    grid-template-columns: 180px minmax(0, 1fr);
-    gap: 36px;
-  }
   .public-shell .site-footer.footer-complete {
     grid-template-columns: minmax(0, 1fr);
     gap: 36px;
@@ -935,34 +924,7 @@ html[data-color-mode="dark"]
     display: none;
   }
   .public-content-layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
     margin-top: 28px;
-  }
-  .public-page-index {
-    position: static;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--line);
-  }
-  .public-page-index ol {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .public-page-index li {
-    min-width: 0;
-  }
-  .public-page-index li a {
-    padding: 8px 12px;
-    min-height: 40px;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    font-size: 0.75rem;
-    gap: 8px;
-  }
-  .page-index-support {
-    display: none;
   }
   .public-shell .public-information .page-heading {
     padding: 40px 0 32px;
@@ -1075,14 +1037,17 @@ html[data-color-mode="dark"]
 }
 [dir="rtl"] .public-shell a.text-link::after { transform-origin: right; }
 
-.public-page-events .event-archive-filter { margin:0 0 32px; padding:24px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
-.public-page-events .event-archive-filter form { display:flex; align-items:flex-end; flex-wrap:wrap; gap:16px; }
-.public-page-events .event-archive-filter label { display:grid; gap:8px; font-weight:600; }
-.public-page-events .event-archive-filter input { min-height:44px; padding:10px 12px; color:var(--ink); background:var(--control); border:1px solid var(--line); border-radius:8px; font:inherit; }
-.public-page-events .event-archive-filter p { margin:16px 0 0; color:var(--muted); }
 
 .public-shell .historical-event-detail .historical-event-card h1 { font-size:clamp(26px,3.5vw,44px); line-height:1.2; margin:0; letter-spacing:-.025em; }
 .public-shell .historical-event-detail .historical-event-card { margin:24px 0 32px; }
 
 .public-event-detail-card { display: grid; gap: 1rem; padding: 1.5rem; border: 1px solid var(--border, #d6dfe5); border-radius: 12px; margin-block: 1rem; }
-.event-archive-filter form { flex-wrap: wrap; }
+
+
+.public-shell .account-controls { gap:8px; }
+.public-shell :is(.avatar-trigger,.bell-trigger) { width:36px;height:36px;border-radius:8px;background:var(--surface);color:var(--ink);border-color:var(--line); }
+.public-shell .avatar-trigger { background:var(--surface-muted);color:var(--accent-text);font-size:12px;border-radius:50%; }
+.public-shell :is(.account-menu,.attention-panel) { border-radius:10px;padding:18px;box-shadow:var(--shadow-popover);transform-origin:top right; }
+
+
+.public-shell :is(.account-menu,.attention-panel) { background:var(--popover,var(--surface)); }

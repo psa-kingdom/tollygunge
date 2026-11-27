@@ -13,11 +13,12 @@ test("personal and contact fields share one member step while saved field steps 
   assert.equal(initialFields.find(field => field.id === "phone")?.step, 2);
 });
 test("forward and backward navigation skips the combined legacy contact step", () => {
-  assert.equal(adjacentApplicationStep(0, 1), 1);
-  assert.equal(adjacentApplicationStep(1, 1), 4);
-  assert.equal(adjacentApplicationStep(2, 1), 4);
-  assert.equal(adjacentApplicationStep(3, -1), 0);
-  assert.equal(adjacentApplicationStep(2, -1), 0);
+  assert.deepEqual(memberApplicationSteps.map(({step}) => step), [1, 0, 4]);
+  assert.equal(adjacentApplicationStep(1, 1), 0);
+  assert.equal(adjacentApplicationStep(0, 1), 4);
+  assert.equal(adjacentApplicationStep(2, 1), 0);
+  assert.equal(adjacentApplicationStep(3, -1), 1);
+  assert.equal(adjacentApplicationStep(2, -1), 1);
   assert.equal(adjacentApplicationStep(4, 1), 4);
 });
 
@@ -34,7 +35,7 @@ test("evidence fields and saved evidence-step links now open membership details"
     assert.equal(memberApplicationFieldStep(initialFields.find(field => field.id === id)!), 0);
   }
   assert.equal(memberApplicationStep(3), 0);
-  assert.equal(adjacentApplicationStep(4, -1), 1);
+  assert.equal(adjacentApplicationStep(4, -1), 0);
   assert.ok(!memberApplicationSteps.some(step => step.label === "Evidence"));
 });
 

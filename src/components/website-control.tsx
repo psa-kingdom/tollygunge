@@ -12,7 +12,7 @@ import {
   footerGroups,
 } from "@/domain/website-settings";
 import { PublicFooter } from "./public-footer";
-import { homeDefaults,homeFieldLabels } from "@/domain/website-home";
+import { homeDefaults, homeFieldLabels } from "@/domain/website-home";
 import { HomeView } from "./homepage-view";
 import { ContentPreview } from "./content-preview";
 import { emptyContentContext } from "./public-content-view";
@@ -61,7 +61,8 @@ function TreeFields({
     let label = path
       .map((k) => (/^\d+$/.test(k) ? String(Number(k) + 1) : words(k)))
       .join(" · ");
-    if((path[0]==='copy'||path[0]==='links')&&homeFieldLabels[key])label=homeFieldLabels[key];
+    if ((path[0] === "copy" || path[0] === "links") && homeFieldLabels[key])
+      label = homeFieldLabels[key];
     if (key === "logoMediaId")
       return (
         <label>
@@ -131,7 +132,14 @@ function SharedPreview({ body }: { body: SharedSettings }) {
     <>
       <header className="site-header">
         <div className="brand">
-          <TpaLogo src={body.logoMediaId ? "/media/" + body.logoMediaId : undefined} alt={body.logoMediaId ? body.logoAlt : "Tollygunge Professional Association logo"} />
+          <TpaLogo
+            src={body.logoMediaId ? "/media/" + body.logoMediaId : undefined}
+            alt={
+              body.logoMediaId
+                ? body.logoAlt
+                : "Tollygunge Professional Association logo"
+            }
+          />
           <span className="brand-name" style={{ whiteSpace: "pre-line" }}>
             {body.organisation}
           </span>
@@ -158,15 +166,30 @@ function SharedPreview({ body }: { body: SharedSettings }) {
           headings for matching navigation destinations.
         </p>
       </main>
-      <div className="v3-landing"><PublicFooter settings={body} preview/></div>
+      <div className="v3-landing">
+        <PublicFooter settings={body} preview />
+      </div>
     </>
   );
 }
-export function WebsiteControl() {
-  const [tab, setTab] = useState("shared"),
+export function WebsiteControl({
+  initialTab = "shared",
+  resourcesOnly = false,
+  onDirty,
+}: {
+  initialTab?: string;
+  resourcesOnly?: boolean;
+  onDirty?: (dirty: boolean) => void;
+} = {}) {
+  const [tab, setTab] = useState(initialTab),
     [dirty, setDirty] = useState(false);
-  const { guard, dialog } = useUnsavedProfile(dirty);
-  const tabs = ["shared", "home", "link", "document"];
+  const { guard, dialog } = useUnsavedProfile(dirty, !onDirty);
+  useEffect(() => {
+    onDirty?.(dirty);
+  }, [dirty, onDirty]);
+  const tabs = resourcesOnly
+    ? ["document", "link"]
+    : ["shared", "home", "link", "document"];
   return (
     <>
       <div
@@ -201,36 +224,64 @@ export function WebsiteControl() {
           ["home", "Homepage"],
           ["link", "Important links"],
           ["document", "Downloads"],
-        ].map(([key, label]) => (
-          <button
-            role="tab"
-            aria-selected={tab === key}
-            tabIndex={tab === key ? 0 : -1}
-            id={"website-tab-" + key}
-            aria-controls="website-control-panel"
-            key={key}
-            onClick={() =>
-              guard(() => {
-                setTab(key);
-                setDirty(false);
-              })
-            }
-          >
-            {label}
-          </button>
-        ))}
+        ]
+          .filter(([key]) => tabs.includes(key))
+          .sort((a, b) => tabs.indexOf(a[0]) - tabs.indexOf(b[0]))
+          .map(([key, label]) => (
+            <button
+              role="tab"
+              aria-selected={tab === key}
+              tabIndex={tab === key ? 0 : -1}
+              id={"website-tab-" + key}
+              aria-controls="website-control-panel"
+              key={key}
+              onClick={() =>
+                guard(() => {
+                  setTab(key);
+                  setDirty(false);
+                })
+              }
+            >
+              {label}
+            </button>
+          ))}
       </div>
-      <details className="website-workspace-directory">
-        <summary>Manage other website content</summary>
-        <p>These shortcuts open separate staff workspaces. Use the tabs above for website settings, homepage settings, links and downloads.</p>
-        <nav className="workspace-related-links" aria-label="Other website content workspaces">
-          <Link prefetch={false} href="/admin/workspaces/content"><strong>Pages and articles →</strong><span>Edit page text, insights and news summaries.</span></Link>
-          <Link prefetch={false} href="/admin/workspaces/governance"><strong>People and committees →</strong><span>Manage profiles, committee members and their publication.</span></Link>
-          <Link prefetch={false} href="/admin/workspaces/media"><strong>Media library →</strong><span>Upload and manage website images and files.</span></Link>
-          <Link prefetch={false} href="/admin/workspaces/events"><strong>Events →</strong><span>Create events and manage registrations.</span></Link>
-          <Link prefetch={false} href="/admin/workspaces/flyers"><strong>Flyers →</strong><span>Prepare event flyers and export them.</span></Link>
-        </nav>
-      </details>
+      {!resourcesOnly && (
+        <details className="website-workspace-directory">
+          <summary>Manage other website content</summary>
+          <p>
+            These shortcuts open separate staff workspaces. Use the tabs above
+            for website settings, homepage settings, links and downloads.
+          </p>
+          <nav
+            className="workspace-related-links"
+            aria-label="Other website content workspaces"
+          >
+            <Link prefetch={false} href="/admin/workspaces/content">
+              <strong>Pages and articles </strong>
+              <span>Edit page text, insights and news summaries.</span>
+            </Link>
+            <Link prefetch={false} href="/admin/workspaces/governance">
+              <strong>People and committees </strong>
+              <span>
+                Manage profiles, committee members and their publication.
+              </span>
+            </Link>
+            <Link prefetch={false} href="/admin/workspaces/media">
+              <strong>Media library </strong>
+              <span>Upload and manage website images and files.</span>
+            </Link>
+            <Link prefetch={false} href="/admin/workspaces/events">
+              <strong>Events </strong>
+              <span>Create events and manage registrations.</span>
+            </Link>
+            <Link prefetch={false} href="/admin/workspaces/flyers">
+              <strong>Flyers </strong>
+              <span>Prepare event flyers and export them.</span>
+            </Link>
+          </nav>
+        </details>
+      )}
       <section
         role="tabpanel"
         id="website-control-panel"
@@ -329,16 +380,37 @@ function SettingsEditor({
   }
   const rendered: ReactNode =
     settingKey === "home" ? (
-      <div className="v3-landing"><HomeView home={draft as typeof homeDefaults} readOnly /></div>
+      <div className="v3-landing">
+        <HomeView home={draft as typeof homeDefaults} readOnly />
+      </div>
     ) : (
       <SharedPreview body={draft as SharedSettings} />
     );
   const draftFields = draft as Record<string, Tree>;
-  const generalFields = Object.entries(draftFields).filter(([, value]) => typeof value === "string");
-  const generalGroups = Array.from({ length: Math.ceil(generalFields.length / 4) }, (_, i) => `general-${i}`);
-  const settingGroups = [...generalGroups, ...Object.keys(draftFields).filter(key => typeof draftFields[key] !== "string")];
-  const activeGroup = settingGroups.includes(editingGroup) ? editingGroup : settingGroups[0];
-  const visibleFields = activeGroup?.startsWith("general-") ? Object.fromEntries(generalFields.slice(Number(activeGroup.split("-")[1]) * 4, Number(activeGroup.split("-")[1]) * 4 + 4)) : { [activeGroup]: draftFields[activeGroup] };
+  const generalFields = Object.entries(draftFields).filter(
+    ([, value]) => typeof value === "string",
+  );
+  const generalGroups = Array.from(
+    { length: Math.ceil(generalFields.length / 4) },
+    (_, i) => `general-${i}`,
+  );
+  const settingGroups = [
+    ...generalGroups,
+    ...Object.keys(draftFields).filter(
+      (key) => typeof draftFields[key] !== "string",
+    ),
+  ];
+  const activeGroup = settingGroups.includes(editingGroup)
+    ? editingGroup
+    : settingGroups[0];
+  const visibleFields = activeGroup?.startsWith("general-")
+    ? Object.fromEntries(
+        generalFields.slice(
+          Number(activeGroup.split("-")[1]) * 4,
+          Number(activeGroup.split("-")[1]) * 4 + 4,
+        ),
+      )
+    : { [activeGroup]: draftFields[activeGroup] };
   return (
     <div className="content-editor-columns website-settings-editor">
       <form
@@ -363,12 +435,44 @@ function SettingsEditor({
           </p>
         )}
         <fieldset disabled={busy || !row}>
-          {settingKey === "shared" && !(draft as SharedSettings).footer.groups && <button className="button secondary" type="button" onClick={()=>setDraft(current=>{
-            const next=structuredClone(current) as SharedSettings;
-            next.footer.groups=structuredClone(footerGroups(next.footer));
-            return next as Tree;
-          })}>Customize footer link groups</button>}
-          <label className="website-group-selector">Settings group<select value={activeGroup} onChange={e => setEditingGroup(e.target.value)}>{settingGroups.map(key => <option key={key} value={key}>{key.startsWith("general-") ? ["Brand & identity", "Page titles & descriptions", "Account & contact labels"][Number(key.split("-")[1])] || `General settings ${Number(key.split("-")[1]) + 1}` : words(key)}</option>)}</select></label>
+          {settingKey === "shared" &&
+            !(draft as SharedSettings).footer.groups && (
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() =>
+                  setDraft((current) => {
+                    const next = structuredClone(current) as SharedSettings;
+                    next.footer.groups = structuredClone(
+                      footerGroups(next.footer),
+                    );
+                    return next as Tree;
+                  })
+                }
+              >
+                Customize footer link groups
+              </button>
+            )}
+          <label className="website-group-selector">
+            Settings group
+            <select
+              value={activeGroup}
+              onChange={(e) => setEditingGroup(e.target.value)}
+            >
+              {settingGroups.map((key) => (
+                <option key={key} value={key}>
+                  {key.startsWith("general-")
+                    ? [
+                        "Brand & identity",
+                        "Page titles & descriptions",
+                        "Account & contact labels",
+                      ][Number(key.split("-")[1])] ||
+                      `General settings ${Number(key.split("-")[1]) + 1}`
+                    : words(key)}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="action-row">
             <button className="button" disabled={!!validation}>
               Save draft
@@ -391,7 +495,6 @@ function SettingsEditor({
             </button>
           </div>
           <TreeFields value={visibleFields} onChange={change} logos={logos} />
-
         </fieldset>
         <p role="status">{validation || message}</p>
         <details>
@@ -571,7 +674,16 @@ function ResourceEditor({
           >
             New {kind === "link" ? "link" : "download"}
           </button>
-          {!rows.length && !message && <WorkspaceEmptyState compact icon="file" title={kind === "link" ? "No important links yet" : "No downloads yet"} description="Create a resource draft in the editor, then review it before publication." />}
+          {!rows.length && !message && (
+            <WorkspaceEmptyState
+              compact
+              icon="file"
+              title={
+                kind === "link" ? "No important links yet" : "No downloads yet"
+              }
+              description="Create a resource draft in the editor, then review it before publication."
+            />
+          )}
           {rows.map((r) => (
             <button key={r.id} onClick={() => guard(() => select(r))}>
               <strong>{r.draft.title}</strong>
@@ -720,7 +832,7 @@ function ResourceEditor({
                   : selected.published.url
               }
             >
-              View published resource →
+              View published resource
             </a>
           )}
           <p role="status">

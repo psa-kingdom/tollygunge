@@ -83,7 +83,7 @@ export function WorkspaceEmptyState({
             (href ? (
               <Link className="button" href={href}>
                 {actionLabel}
-                <PortalIcon name="arrow" />
+
               </Link>
             ) : onAction ? (
               <button className="button" type="button" onClick={onAction}>

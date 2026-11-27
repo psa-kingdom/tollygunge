@@ -3,6 +3,37 @@ export const sitePages: Record<
   string,
   { label: string; title: string; intro: string; sections: Section[] }
 > = {
+  privacy: {
+  "label": "YOUR INFORMATION",
+  "title": "Privacy at TPA",
+  "intro": "Updated 28 October 2026. This notice describes how the Tollygunge Professional Association website handles information used to provide its services.",
+  "sections": [
+    {
+      "title": "Information you provide",
+      "text": "Account and sign-in details, profile and membership information, verification answers and documents, event registrations, payment references, attendance, inquiries and newsletter preferences may be recorded when you use those features. Please do not send passwords, identity documents or financial information through inquiry or issue-report forms."
+    },
+    {
+      "title": "How information is used",
+      "text": "TPA uses these records to operate accounts, review applications, administer membership and events, check manual payment records, respond to inquiries and maintain operational history. An account, verified email, reviewed profile, membership approval, payment status and public publication are separate decisions."
+    },
+    {
+      "title": "Private and published information",
+      "text": "Private documents are restricted to their owner and authorized reviewers. Staff access depends on their assigned role. Public articles, photographs and association profiles follow a separate publication process. Submitting an application or uploading a private document does not publish it to the public website."
+    },
+    {
+      "title": "Service providers and essential storage",
+      "text": "The platform uses Railway for hosting and database services, Cloudflare R2 for configured file storage, and Resend for configured email delivery. These services process information needed for those functions. Essential session cookies maintain sign-in; local browser storage remembers appearance and navigation preferences. This release does not add Google Analytics or advertising trackers."
+    },
+    {
+      "title": "Communications and issue reports",
+      "text": "Newsletter preferences and unsubscribe controls are separate from service messages. Website reports can optionally include a previewed page template, release version, browser family and viewport size. Query strings, session tokens and form contents are excluded from that automatic context. Public inquiry consent does not subscribe you to newsletters."
+    },
+    {
+      "title": "Records, corrections and requests",
+      "text": "Records and recovery copies support association operations, account security and audit history. This notice does not promise an automatic deletion schedule. Contact the secretariat to ask about your records, request corrections or discuss removal; TPA will review the request alongside its operational and recordkeeping requirements."
+    }
+  ]
+},
   about: {
     label: "OUR ASSOCIATION",
     title: "Individual strengths. Collective progress.",
@@ -55,7 +86,7 @@ export const sitePages: Record<
       },
       {
         title: "Membership Plans",
-        text: "Patron and Life memberships share a single application workflow. Professional applicants complete a shared eligibility and verification process. Plan fees, benefits and eligibility are awaiting approval.",
+        text: "Choose from Free, Patron and Life membership. New accounts and first-time event attendees join the Free plan. Members can explore paid membership options from their account settings.",
       },
       {
         title: "Renew Membership",

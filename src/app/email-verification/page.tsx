@@ -1,3 +1,4 @@
+import { eventReturnPath } from "@/domain/event-flow";
 import { AuthLayout } from "@/components/auth-layout";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -22,6 +23,8 @@ export default async function EmailVerification() {
     process.env.BETTER_AUTH_SECRET ?? "",
   );
   const actor = await currentActor();
+  const returnTo = eventReturnPath(result?.returnTo);
+  const continuation = returnTo ? "returnTo=" + encodeURIComponent(returnTo) : "";
   const sameAccount =
     result?.email?.toLowerCase() === actor?.email.toLowerCase();
   return (
@@ -45,7 +48,8 @@ export default async function EmailVerification() {
                     className="button"
                     href={
                       "/login?switch=1&email=" +
-                      encodeURIComponent(result.email ?? "")
+                      encodeURIComponent(result.email ?? "") +
+                      (continuation ? "&" + continuation : "")
                     }
                   >
                     Sign in to the verified account
@@ -59,7 +63,7 @@ export default async function EmailVerification() {
                   </Link>
                 </>
               ) : (
-                <Link className="button" href={actor ? "/member" : "/login"}>
+                <Link className="button" href={actor ? returnTo ?? "/member" : "/login" + (continuation ? "?" + continuation : "")}>
                   {actor
                     ? "Continue to your portal"
                     : "Sign in to your verified account"}

@@ -25,7 +25,7 @@ export async function HistoricalEventLibrary() {
                 <td>{event.rows.filter(row => row.status === "Attended").length}</td>
                 <td>{event.rows.filter(row => row.status === "Not attended").length}</td>
                 <td>{event.rows.filter(row => row.status === "Not recorded").length}</td>
-                <td><Link href={`/admin/workspaces/events?view=participants&tab=attendance&eventDate=${event.date}`} aria-label={`View attendance register for ${event.date}`}>View register →</Link><HistoricalEventEditor date={event.date} details={{ title: event.title || "Association event", description: event.description || "", location: event.location || "", speakers: event.speakers || "", version: event.version || 0 }} /></td>
+                <td><Link href={`/admin/workspaces/events?view=participants&tab=attendance&eventDate=${event.date}`} aria-label={`View attendance register for ${event.date}`}>View register </Link><HistoricalEventEditor date={event.date} details={{ title: event.title || "Association event", description: event.description || "", location: event.location || "", speakers: event.speakers || "", version: event.version || 0 }} /></td>
               </tr>
             ))}
           </tbody>

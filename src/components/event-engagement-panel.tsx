@@ -44,7 +44,7 @@ export function EventEngagementPanel({eventId,canPromote=false,canManageFinance=
     <label>Resource publication<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>{['draft','published','archived'].map(status=><option key={status}>{status}</option>)}</select></label>
     {!asset&&<><label>HTTPS recording link (optional)<input type="url" value={form.url} onChange={e=>{setForm({...form,url:e.target.value});setFile(null);}}/></label>{!form.url&&<label>PDF, JPEG or PNG · up to 5 MB<input required type="file" accept="application/pdf,image/jpeg,image/png" onChange={e=>setFile(e.target.files?.[0]??null)}/></label>}</>}
     <button className="button secondary">{asset?'Save resource':'Upload resource'}</button>
-   </fieldset></form>{asset&&<a className="text-link" href={`/api/event-assets/${asset.id}`}>Download resource →</a>}
+   </fieldset></form>{asset&&<a className="text-link" href={`/api/event-assets/${asset.id}`}>Download resource </a>}
   </details>
   <details><summary>Attendance badge rules</summary><p>Rules apply across TPA events and count verified attendance only.</p>{badges.map(b=><form key={b.id} onSubmit={e=>{e.preventDefault();void run(async()=>{await api('/api/staff/event-badges',b);setBadges(await api('/api/staff/event-badges'));setMessage('Badge rule saved.');});}}><fieldset disabled={busy}><legend>{b.name}</legend>
    <label>Badge name<input required maxLength={80} value={b.name} onChange={e=>setBadges(badges.map(r=>r.id===b.id?{...r,name:e.target.value}:r))}/></label>

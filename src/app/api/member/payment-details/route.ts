@@ -11,7 +11,7 @@ export async function GET(request: Request) {
       collectionEnabled: false,
       records: (
         await getDatabase().query(
-          "SELECT id,active_snapshot AS details FROM tpa.payment_details WHERE status='active' ORDER BY updated_at DESC",
+          "SELECT id,active_snapshot AS details FROM tpa.payment_details WHERE status='active' AND organiser IS NULL ORDER BY updated_at DESC",
         )
       ).rows,
     };

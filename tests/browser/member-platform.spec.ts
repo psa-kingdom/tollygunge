@@ -46,7 +46,7 @@ async function member(context: BrowserContext, legacyStudent = false) {
           "ALTER TABLE tpa.application_drafts DISABLE TRIGGER professional_application_write",
         );
         await client.query(
-          "INSERT INTO tpa.application_drafts(id,user_id,plan,category,details,step) VALUES($1,$2,'Annual','Student',$3,2)",
+          "INSERT INTO tpa.application_drafts(id,user_id,plan,category,details,step) VALUES($1,$2,'Life','Student',$3,2)",
           [
             randomUUID(),
             id,
@@ -536,7 +536,7 @@ test("completed professional application submits for review without publication"
   const saved = await context.request.post("/api/member/application", {
     data: {
       version: 0,
-      plan: "Annual",
+      plan: "Life",
       category: "Professional",
       details,
       documentIds: [photograph, certificate],

@@ -2,7 +2,11 @@
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
 import type { EventJourney } from "./member-event-journey";
-import { eventTime } from "@/domain/event-flow";
+import { StatusBadge } from "./portal-values";
+import styles from "./member-review.module.css";
+const attendanceDate = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata",
+});
 type History = Pick<EventJourney, "historicalAttendance" | "attendedEvents">;
 export function MemberAttendanceHistory({ personId }: { personId: string }) {
   const [result, setResult] = useState<{ personId: string; data?: History; error?: string }>();
@@ -15,15 +19,43 @@ export function MemberAttendanceHistory({ personId }: { personId: string }) {
     return () => { active = false; };
   }, [personId, retry]);
   const current = result?.personId === personId ? result : undefined;
-  const count = (current?.data?.historicalAttendance?.length ?? 0) + (current?.data?.attendedEvents?.length ?? 0);
-  return <section aria-label="Member event attendance">
-    <h3>Event attendance</h3>
+  const records = [
+    ...(current?.data?.attendedEvents ?? []).map(event => ({
+      id: event.id, title: event.title, date: event.starts_at, source: "Event check-in",
+    })),
+    ...(current?.data?.historicalAttendance ?? []).map(event => ({
+      id: "historical-" + event.date, title: event.title,
+      date: event.date + "T12:00:00+05:30", source: "Historical register",
+    })),
+  ].sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+  return <section className={styles.attendanceHistory} aria-label="Member event attendance">
+    <div className={styles.contactHeading}>
+      <h4>Event attendance</h4>
+      {current?.data && <span className={styles.attendanceCount}>{records.length} {records.length === 1 ? "record" : "records"}</span>}
+    </div>
     {current?.error ? <p role="alert">{current.error} <button type="button" onClick={() => { setResult(undefined); setRetry(value => value + 1); }}>Retry attendance</button></p> : !current?.data ? <p role="status">Loading attendance history…</p> : <>
-      <p>{count} attendance records · Platform events and historical registers</p>
-      {count ? <ul className="event-journey-list">
-        {current.data.attendedEvents?.map(event => <li key={event.id}><strong>{event.title}</strong><p>{eventTime(event.starts_at)} · Attended</p></li>)}
-        {current.data.historicalAttendance?.map(event => <li key={event.date}><strong>{event.title}</strong><p>{new Intl.DateTimeFormat("en-IN", {day:"numeric",month:"long",year:"numeric",timeZone:"Asia/Kolkata"}).format(new Date(`${event.date}T12:00:00+05:30`))} · Attended</p><small>Historical attendance register</small></li>)}
-      </ul> : <p>No attended events are recorded for this membership number. Unmarked entries are excluded.</p>}
+      {records.length ? (
+        <div className={styles.attendanceTableWrap} role="region" aria-label="Attendance history, newest first" tabIndex={0}>
+          <table className={styles.attendanceTable}>
+            <caption className="sr-only">Attended events, newest first</caption>
+            <thead><tr><th scope="col">Event</th><th scope="col">Date</th><th scope="col">Attendance</th></tr></thead>
+            <tbody>
+              {records.map(event => (
+                <tr key={event.id}>
+                  <td><strong>{event.title}</strong><small>{event.source}</small></td>
+                  <td><time dateTime={event.date}>{attendanceDate.format(new Date(event.date))}</time></td>
+                  <td><StatusBadge tone="success">Attended</StatusBadge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className={styles.attendanceEmpty}>
+          <h4>No attendance recorded yet</h4>
+          <p>Events will appear here when this member’s attendance is recorded.</p>
+        </div>
+      )}
     </>}
   </section>;
 }

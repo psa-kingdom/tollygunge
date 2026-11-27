@@ -47,6 +47,7 @@ test("member groups include verification, payments and account security at their
       "/member/payments",
       "/member/inquiries",
       "/account/profile",
+      "/member/settings",
       "/member/security",
     ],
   );

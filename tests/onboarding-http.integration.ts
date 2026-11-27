@@ -20,7 +20,7 @@ test(
       for (const id of accounts) {
         const token = randomBytes(32).toString("hex");
         await db.query(
-          'INSERT INTO public."user"(id,name,email,"emailVerified") VALUES($1,$2,$3,false)',
+          'INSERT INTO public."user"(id,name,email,"emailVerified","freeSignup") VALUES($1,$2,$3,false,true)',
           [id, "HTTP fixture", id + "@example.invalid"],
         );
         await db.query(
@@ -64,7 +64,7 @@ test(
       };
       let draft = {
         version: 0,
-        plan: "Annual",
+        plan: "Free",
         category: "Professional",
         step: 2,
         documentIds: [] as string[],
@@ -78,7 +78,6 @@ test(
           correspondenceAddress: "Residence",
           residenceAddress: "Kolkata",
           declaration: "true",
-          signature: "Test professional",
         } as Record<string, string>,
       };
       const initialProfile = await get("/api/member/profile");
@@ -94,7 +93,7 @@ test(
         200,
       );
       let r = await request("/api/member/application", 1, draft);
-      assert.equal(r.status, 200);
+      assert.equal(r.status, 200, r.status === 200 ? "Application saved" : await r.clone().text());
       draft = await r.json();
       assert.equal((await get("/api/member/application")).step, 2);
       assert.equal(
@@ -115,13 +114,13 @@ test(
         await (await request("/api/member/application", 2)).json(),
         null,
       );
-      for (const kind of ["photograph", "certificate"]) {
+      for (const kind of ["photograph", "certificate", "supporting"]) {
         const id = randomUUID();
         await db.query(
           "INSERT INTO tpa.private_documents(id,owner_user_id,kind,content_type,byte_size) VALUES($1,$2,$3,'image/png',10)",
           [id, accounts[1], kind],
         );
-        draft.details[kind] = id;
+        draft.details[kind === "supporting" ? "signatureDocument" : kind] = id;
         draft.documentIds.push(id);
       }
       await db.query(
@@ -345,13 +344,20 @@ test(
       );
       const importedUser=(await db.query('SELECT id FROM public."user" WHERE email=$1',[mail])).rows[0].id;
       assert.equal((await db.query('SELECT count(*)::int n FROM tpa.onboarding_mail WHERE user_id=$1',[importedUser])).rows[0].n,0);
-      const importedPerson=randomUUID();
-      await db.query("INSERT INTO tpa.people(id,user_id,accepted,draft,contact_email) VALUES($1,$2,'{\"name\":\"Imported\"}','{\"name\":\"Imported\"}',$3)",[importedPerson,importedUser,mail]);
-      await db.query("INSERT INTO tpa.memberships(id,person_id,membership_number,source) VALUES($1,$2,$3,'staff')",[randomUUID(),importedPerson,randomUUID()]);
+      const importedPerson=(await db.query("SELECT p.id,m.type,m.status FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id WHERE p.user_id=$1",[importedUser])).rows[0];
+      assert.equal(importedPerson.type,"Free");
+      assert.equal(importedPerson.status,"active");
+      const membershipVersion=(await db.query("SELECT version FROM tpa.memberships WHERE person_id=$1",[importedPerson.id])).rows[0].version;
+      const assign={action:"membership-plan",personId:importedPerson.id,version:membershipVersion,plan:"Life"};
+      assert.equal((await request('/api/staff/member-actions',1,assign)).status,403);
+      assert.equal((await request('/api/staff/member-actions',0,assign)).status,200);
+      assert.equal((await request('/api/staff/member-actions',0,{...assign,plan:"Free"})).status,409);
+      assert.equal((await db.query("SELECT plan FROM tpa.application_drafts WHERE user_id=$1",[importedUser])).rows[0].plan,"Life");
+      assert.equal((await request('/api/staff/member-actions',0,{...assign,version:membershipVersion+1,plan:"Free"})).status,200);
       const templateState=await get('/api/staff/invitation-templates',0);
       const templateDraft=await (await request('/api/staff/invitation-templates',0,{action:'save',revision:templateState.revision,subject:'Synthetic invitation',body:'Hello {{member_name}}\n{{setup_link}}\nExpires in {{expiry}}.'})).json();
       assert.equal((await request('/api/staff/invitation-templates',0,{action:'approve',id:templateDraft.latest_id,revision:templateDraft.revision})).status,200);
-      const invitationReview=await (await request('/api/staff/invitation-releases',0,{action:'review',personIds:[importedPerson]})).json();
+      const invitationReview=await (await request('/api/staff/invitation-releases',0,{action:'review',personIds:[importedPerson.id]})).json();
       assert.equal((await request('/api/staff/invitation-releases',0,{action:'confirm',id:invitationReview.id,idempotencyKey:invitationReview.idempotency_key})).status,200);
       const job = (
         await db.query(
@@ -389,7 +395,7 @@ test(
         ).status,
         409,
       );
-      const replacementReview=await (await request('/api/staff/invitation-releases',0,{action:'review',personIds:[importedPerson]})).json();
+      const replacementReview=await (await request('/api/staff/invitation-releases',0,{action:'review',personIds:[importedPerson.id]})).json();
       assert.equal((await request('/api/staff/invitation-releases',0,{action:'confirm',id:replacementReview.id,idempotencyKey:replacementReview.idempotency_key})).status,200);
       const reissued = (
         await db.query(

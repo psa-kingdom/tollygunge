@@ -726,3 +726,17 @@
   font-size: 0.8rem;
   white-space: nowrap;
 }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid var(--line); padding: 0 0 12px; margin-bottom: 24px; }
+.tabs button { min-height: 44px; padding: 10px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+.tabs.tabs.tabs button[aria-selected="true"] {
+  background: var(--gold, #f7c873);
+  color: #172033;
+  border-color: var(--gold, #f7c873);
+  font-weight: 700;
+  box-shadow: inset 0 -3px #172033;
+}
+.tabs button:focus-visible {
+  outline: 2px solid var(--portal-focus, var(--link));
+  outline-offset: 3px;
+}

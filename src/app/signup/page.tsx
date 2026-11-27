@@ -24,10 +24,10 @@ export default async function Page({
         portalReview
         signup
         title="Create your TPA account"
-        description="Start with an account. Complete your profile and apply for membership when you’re ready."
+        description="Create a free account to join TPA and register for public events."
       >
         {process.env.ONBOARDING_ENABLED === "true" ? (
-          <Signup returnTo={returnTo} />
+          <Signup returnTo={returnTo} otpRequired={process.env.TPA_SIGNUP_OTP_REQUIRED !== "false"} />
         ) : (
           <div className="notice">
             <p>

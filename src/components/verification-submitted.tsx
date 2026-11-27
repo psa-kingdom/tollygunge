@@ -36,6 +36,7 @@ export function VerificationSubmitted({
   submission,
   fields,
   reviewStatus,
+  membershipActive,
   successOpen,
   onDismiss,
   onEdit,
@@ -43,6 +44,7 @@ export function VerificationSubmitted({
   submission: SubmittedApplication;
   fields: VerificationField[];
   reviewStatus: string;
+  membershipActive: boolean;
   successOpen: boolean;
   onDismiss: () => void;
   onEdit: () => void;
@@ -68,16 +70,14 @@ export function VerificationSubmitted({
         </span>
         <div>
           <span className="verification-status">
-            {reviewStatus === "approved"
-              ? "Profile verified"
-              : "Submitted · Awaiting review"}
+            {membershipActive ? "Active" : "Not active"}
           </span>
           <h2 ref={heading} tabIndex={-1} id="verification-receipt-title">
             Your submitted profile
           </h2>
           <p>
             {reviewStatus === "approved"
-              ? "Your profile details have been reviewed and verified."
+              ? "Your application has been approved."
               : "Your details have been sent to the TPA team. You can review your submission below while we check your profile."}
           </p>
           {submission.submittedAt && (
@@ -95,8 +95,7 @@ export function VerificationSubmitted({
         <div>
           <h2>Details you submitted</h2>
           <p>
-            This is the copy sent for review. Membership approval and payments
-            are separate.
+            This is the copy sent for review. Payment receipts are available separately.
           </p>
         </div>
         <button className="button secondary" onClick={onEdit}>

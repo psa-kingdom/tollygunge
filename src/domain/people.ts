@@ -1,5 +1,5 @@
 import { record, text, uuid } from "./operations";
-import { type Addresses, clean } from "./member-foundation";
+import { type Addresses, clean, email, mobile } from "./member-foundation";
 import {
   validateRich,
   richText,
@@ -31,6 +31,9 @@ export type PersonBody = {
   lastName?: string;
   email?: string;
   mobile?: string;
+  publicEmail?: string;
+  publicMobile?: string;
+  publicDesignation?: string;
   addresses?: Addresses;
   name: string;
   phone: string;
@@ -48,6 +51,7 @@ export type PersonBody = {
   assignments: Assignment[];
 };
 export type PersonEntry = {
+  websiteContacts?: { email: string; mobile: string };
   archived_at?: string | null;
   membership_id?: string | null;
   id: string;
@@ -97,10 +101,15 @@ export const emptyPerson: PersonBody = {
   links: [],
   assignments: [],
 };
+export const websiteContactFields = ["publicEmail", "publicMobile", "publicDesignation"] as const;
+export const editorialProfileFields = new Set([
+  "biography", "biographyRich", "biographyTitle", "portraitId", "portraitKind",
+  "assignments", "nameSize", ...websiteContactFields,
+]);
 export function personBody(value: unknown): PersonBody {
   const p = record(value);
   const rich =
-    p.biographyRich === undefined ? undefined : validateRich(p.biographyRich);
+    p.biographyRich == null ? undefined : validateRich(p.biographyRich);
   const phone = text(p.phone ?? "", "Phone", 32);
   if (phone && !/^[+\d ().-]{5,32}$/.test(phone))
     throw Error("Check your phone number.");
@@ -157,6 +166,9 @@ export function personBody(value: unknown): PersonBody {
     ...(p.lastName === undefined ? {} : { lastName: clean(p.lastName, "lastName", 120) }),
     ...(p.email === undefined ? {} : { email: clean(p.email, "email", 254) }),
     ...(p.mobile === undefined ? {} : { mobile: clean(p.mobile, "mobile", 32) }),
+    ...(p.publicEmail === undefined ? {} : { publicEmail: email(p.publicEmail) }),
+    ...(p.publicMobile === undefined ? {} : { publicMobile: mobile(p.publicMobile) }),
+    ...(p.publicDesignation === undefined ? {} : { publicDesignation: text(p.publicDesignation, "Designation", 120) }),
     ...(p.addresses === undefined ? {} : { addresses: p.addresses as Addresses }),
     name: text(p.name, "Display name", 120, 2),
     phone,
@@ -190,6 +202,9 @@ export function redactPerson(body: PersonBody) {
   // Allow-list serialization protects historical and future private keys too.
   return {
     name: body.name, organization: body.organization, profession: body.profession,
+    ...(body.publicEmail === undefined ? {} : { publicEmail: body.publicEmail }),
+    ...(body.publicMobile === undefined ? {} : { publicMobile: body.publicMobile }),
+    ...(body.publicDesignation === undefined ? {} : { publicDesignation: body.publicDesignation }),
     jobTitle: body.jobTitle, city: body.city, biography: body.biography,
     ...(body.biographyRich ? { biographyRich: body.biographyRich } : {}),
     ...(body.biographyTitle ? { biographyTitle: body.biographyTitle } : {}),

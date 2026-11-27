@@ -201,7 +201,7 @@ export function BulkOnboarding() {
               Approved account batch � invitations held
             </option>
           )}
-          <option value="invitation">New accounts — invitations held</option>
+          <option value="invitation">New Free members — invitations held</option>
           <option value="existing-members">
             Existing members — no invitations
           </option>
@@ -210,7 +210,7 @@ export function BulkOnboarding() {
       <p>
         {mode === "existing-members"
           ? "Use the supplied 13-column member workbook. All ambiguous duplicate groups are held. No emails, passwords, paid status or verification are created."
-          : "Create ordinary unverified accounts with invitations held. Review recipients and an approved template separately before sending."}
+          : "Upload name, email and phone to create Free members with password setup pending. Other profile fields can be completed after sign-in. Invitations are held until you review the recipients and approved email template."}
         Existing accounts are skipped. No passwords or verification badges can
         be imported.
       </p>

@@ -1,3 +1,4 @@
+import { GovernanceCard, GovernanceContacts } from "./governance-card";
 import { GovernancePortrait } from "./governance-portrait";
 import { RichContent } from "./rich-content";
 import type { PersonBody } from "@/domain/people";
@@ -23,14 +24,18 @@ export type PublicGovernanceEntry = {
 export function PublicGovernance({
   entries,
   biographyTemplate='About {name}',
+  compact = false,
 }: {
   entries: PublicGovernanceEntry[];
   biographyTemplate?:string;
+  compact?: boolean;
 }) {
   return (
     <div className="people-roster">
-      {entries.map(({ id, published: p, portrait_available, portrait_alt }) => (
-        <article className="person-card" key={id}>
+      {entries.map((entry) => {
+        const { id, published: p, portrait_available, portrait_alt } = entry;
+        const content = (
+        <article className="person-card" key={id} data-cms-record={`people:${id}`}>
           <div className="person-card-identity">
             <GovernancePortrait
               name={p.name}
@@ -64,6 +69,7 @@ export function PublicGovernance({
               )}
             </div>
           </div>
+          {compact && <GovernanceContacts name={p.name} mobile={p.mobile || p.phone} email={p.email} />}
           {(p.profession || p.jobTitle || p.organization || p.city) && (
             <p className="person-profession">
               {[p.profession, p.jobTitle, p.organization, p.city]
@@ -71,12 +77,18 @@ export function PublicGovernance({
                 .join(" · ")}
             </p>
           )}
-          {p.biography && (
+          {p.biography && !compact && (
             <p>
               {p.biography.match(/^.{60,}?[.!?](?=\s|$)/)?.[0] ?? p.biography}
             </p>
           )}
-          {p.biography && (
+          {p.biography && compact && (
+            <section className="person-biography">
+              <h4>{biographyHeading(p.name,p.biographyTitle,biographyTemplate)}</h4>
+              <RichContent document={p.biographyRich} text={p.biography} />
+            </section>
+          )}
+          {p.biography && !compact && (
             <details className="person-biography">
               <summary>{biographyHeading(p.name,p.biographyTitle,biographyTemplate)}</summary>
               <RichContent document={p.biographyRich} text={p.biography} />
@@ -108,8 +120,8 @@ export function PublicGovernance({
                             Facebook: "f",
                             Discord: "D",
                             Medium: "M",
-                            Portfolio: "↗",
-                            Website: "↗",
+                            Portfolio: "",
+                            Website: "",
                           } as Record<string, string>
                         )[l.platform]
                       }
@@ -120,7 +132,9 @@ export function PublicGovernance({
             </nav>
           )}
         </article>
-      ))}
+        );
+        return compact ? <GovernanceCard key={id} entry={entry}>{content}</GovernanceCard> : content;
+      })}
     </div>
   );
 }

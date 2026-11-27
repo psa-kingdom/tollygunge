@@ -1,9 +1,11 @@
+import { eventReturnPath } from "@/domain/event-flow";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const verificationResultCookie = "tpa-email-verification-result";
 type Result = {
   status: "verified" | "expired" | "invalid";
   email?: string;
+  returnTo?: string;
   expires: number;
 };
 
@@ -87,13 +89,14 @@ export async function handleVerificationLink(
   } catch {
     /* Better Auth determines whether the token is valid. */
   }
+  const returnTo = eventReturnPath(url.searchParams.get("callbackURL"));
   url.searchParams.delete("callbackURL");
   const response = await handler(new Request(url, request));
   let result: Omit<Result, "expires"> = { status: "invalid" };
   try {
     const body = await response.clone().json();
     if (response.ok && body.status === true && email)
-      result = { status: "verified", email };
+      result = { status: "verified", email, ...(returnTo ? { returnTo } : {}) };
     else if (body.code === "TOKEN_EXPIRED") result = { status: "expired" };
   } catch {
     /* Never show success without the authentication handler's confirmation. */

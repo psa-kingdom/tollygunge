@@ -314,8 +314,12 @@
 .portal :global(.member-register-bulk .action-row) { margin: 0; }
 .portal :global(.member-register-bulk a) { font-size: 11px; color: var(--link); }
 .portal :global(.member-register-table table) { min-width: 660px; }
-.portal :global(.member-register-table :is(th, td):first-child) { width: 42px; padding-right: 0; }
+.portal :global(.member-register-table .member-register-selection-column) { width: 42px; padding-inline-end: 0; }
+.portal :global(.member-register-table .member-register-person-column) { width: 32%; min-width: 220px; }
 .portal :global(.member-register-table td) { vertical-align: middle; }
+.portal :global(.member-register-table [data-member-record]) { cursor: pointer; }
+.portal :global(.member-register-table [data-member-record]:hover) { background: var(--portal-hover); }
+.portal :global(.member-register-table [data-member-record] .member-record-button) { gap: 8px; }
 .portal :global(.member-register-table tr.is-selected) { background: var(--portal-active); }
 .portal :global(.member-register-select) { display: flex; align-items: center; min-height: 32px; }
 .portal :global(.workspace-main .member-record-button) { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--ink); text-align: left; }
@@ -742,28 +746,6 @@
 .portal :global(.member-event-card > h2) { margin-top: 0; }
 
 /* Notification controls live in the header, outside the page form styles. */
-.portal :global(.attention-panel) { width: min(380px, calc(100vw - 32px)); padding: 0; overflow: auto; }
-.portal :global(.attention-panel-header) { display: flex; align-items: start; justify-content: space-between; gap: 12px; padding: 20px 20px 16px; }
-.portal :global(.attention-panel-header h2) { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; letter-spacing: -.3px; }
-.portal :global(.attention-panel-header p) { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
-.portal :global(.attention-total) { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 6px; background: var(--surface-muted); color: var(--muted); font-size: 11px; font-weight: 500; }
-.portal :global(.attention-close) { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 7px; padding: 0; cursor: pointer; }
-.portal :global(.attention-close:hover) { background: var(--portal-hover); color: var(--ink); }
-.portal :global(.attention-category) { display: grid; gap: 6px; padding: 0 20px 16px; margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); }
-.portal :global(.attention-category select) { width: 100%; min-height: 40px; border: 1px solid var(--line); border-radius: 7px; background: var(--control); color: var(--ink); padding: 8px 10px; font: 400 13px/1.5 "TPA Jakarta", sans-serif; }
-.portal :global(.attention-panel-body) { border-top: 1px solid var(--line); }
-.portal :global(.attention-panel-body > p) { margin: 0; padding: 24px 20px; font-size: 13px; }
-.portal :global(.attention-item) { position: relative; display: block; padding: 16px 42px 16px 20px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
-.portal :global(.attention-item:last-child) { border-bottom: 0; }
-.portal :global(.attention-item:hover) { background: var(--portal-hover); }
-.portal :global(.attention-item small) { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
-.portal :global(.attention-item strong) { font-size: 13px; font-weight: 500; line-height: 1.6; }
-.portal :global(.attention-item-arrow) { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--muted); }
-.portal :global(.attention-empty) { text-align: center; padding: 28px 24px 32px; }
-.portal :global(.attention-empty-icon) { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line); background: var(--surface-muted); color: var(--accent-text); border-radius: 50%; margin-bottom: 12px; }
-.portal :global(.attention-empty h3) { margin: 0 0 6px; font-size: 14px; }
-.portal :global(.attention-empty p) { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
-
 /* A submitted application becomes a receipt, with a separate saved-draft edit path. */
 .portal :global(.verification-receipt) { display: flex; align-items: start; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px; }
 .portal :global(.verification-receipt-icon) { display: inline-grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 12px; background: var(--portal-active); color: var(--accent-text); }
@@ -1037,23 +1019,27 @@
 .portal :global(.contact-number-fields) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 20px; min-width:0; }
 @media(max-width:600px) { .portal :global(.contact-number-fields) { grid-template-columns:minmax(0,1fr); } }
 
-.portal :global(.application-form-sections) { display:grid; gap:28px; }
+.portal :global(.application-form-sections) { display:grid; gap:16px; }
 .portal :global(.application-form-section) { min-width:0; }
 .portal :global(.application-form-section + .application-form-section) { border-top:1px solid var(--line); padding-top:24px; }
-.portal :global(.application-form-section h3) { margin:0 0 16px; font-size:15px; line-height:1.5; color:var(--ink); }
+.portal :global(.application-form-section h3) { margin:0 0 10px; font-size:15px; line-height:1.5; color:var(--ink); }
 .portal :global(.application-section-heading) { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px 20px; margin-bottom:16px; }
 .portal :global(.application-section-heading h3) { margin:0; }
 .portal.portal.portal :global(.application-section-heading .address-same-toggle) { display:flex; flex-direction:row; align-items:center; gap:8px; margin:0; font-size:12px; font-weight:400; }
 .portal :global(.application-section-heading .address-same-toggle input) { margin:0; flex:none; }
-.portal :global(.application-personal-grid label:has(#verification-fullName)) { grid-column:auto; }
-@media(min-width:1051px) {
-  .portal.portal :global(.application-personal-grid) { grid-template-columns:minmax(100px,1fr) minmax(0,2fr); }
-  .portal :global(.application-personal-grid label:has(#verification-dateOfBirth)) { grid-column:1 / -1; max-width:calc(50% - 10px); }
+.portal.portal :global(.application-form-section > .form-grid) {
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,185px),1fr));
+  align-items:start;
+  gap:8px 14px;
 }
-@media(max-width:600px) { .portal :global(.application-form-sections) { gap:24px; } }
 
 .portal.portal :global(.application-form-sections > .application-form-section) { padding:0; border-bottom:0; margin:0; }
-.portal.portal :global(.application-form-sections > .application-form-section + .application-form-section) { padding-top:24px; border-top:1px solid var(--line); }
+.portal.portal :global(.application-form-sections > .application-form-section + .application-form-section) { padding-top:12px; border-top:1px solid var(--line); }
+.portal.portal :global(.application-form-section .address-pair-grid) { gap:12px; }
+.portal.portal.portal :global(.application-form-section .address-pair-grid .address-location-grid) {
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,120px),1fr));
+  gap:8px 12px;
+}
 .portal :global(.member-event-views) { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 20px; }
 .portal :global(.member-event-views button[aria-pressed=true]) { background:var(--gold); color:#1a2238; border-color:var(--gold); }
 .portal :global(.member-upcoming-intro h2) { margin:0 0 12px; font-size:20px; }

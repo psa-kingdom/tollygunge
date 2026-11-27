@@ -456,7 +456,7 @@ test("slow navigation retains the current page instead of replacing it with a lo
 
 test("member completion links to missing form steps and keeps approval separate",async({page},info)=>{
  await signIn(page,"MEMBER");
- const draft={version:1,plan:"Annual",category:"Professional",details:{fullName:"Synthetic member",phone:""},documentIds:[],step:4};
+ const draft={version:1,plan:"Life",category:"Professional",details:{fullName:"Synthetic member",phone:""},documentIds:[],step:4};
  const verification=await (await page.request.get("/api/member/verification")).json();
  await page.route("**/api/member/verification",route=>route.fulfill({json:{...verification,registeredContact:{email:verification.email,phone:""}}}));
  await page.route("**/api/member/application",async route=>{
@@ -660,7 +660,7 @@ test("profile submission confirms success, preserves the submitted copy and keep
     { id: "contributions", label: "Areas of interest", type: "multiselect", step: 2, required: false, visible: true, categories: ["Professional"], options: ["Mentoring", "Learning"] },
     { id: "declaration", label: "Declaration", type: "checkbox", step: 4, required: true, visible: true, categories: ["Professional"] },
   ];
-  const draft = { version: 1, plan: "Annual", category: "Professional", details: { fullName: "Synthetic Test Member", contributions: '["Mentoring","Learning"]', declaration: "true" }, documentIds: [], step: 4 };
+  const draft = { version: 1, plan: "Life", category: "Professional", details: { fullName: "Synthetic Test Member", contributions: '["Mentoring","Learning"]', declaration: "true" }, documentIds: [], step: 4 };
   const snapshot = { ...structuredClone(draft), submittedAt: "2026-10-28T10:00:00Z" };
   let submitted = false, fail = true;
   await page.route("**/api/member/application", route => route.fulfill({ json: draft }));

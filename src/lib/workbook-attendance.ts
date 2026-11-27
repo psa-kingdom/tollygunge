@@ -1,3 +1,5 @@
+import { getDatabase } from "./database";
+import { rosterMatches } from "@/domain/event-roster";
 import "server-only";
 import { applyHistoricalEventDetails } from "./historical-event-details";
 import ExcelJS from "exceljs";
@@ -5,12 +7,32 @@ import { access } from "node:fs/promises";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
 
-export type WorkbookAttendee = { number: string; name: string; email: string; mobile: string; designation: string; organisation: string; status: "Attended" | "Not attended" | "Not recorded"; matched: boolean };
-export type WorkbookEvent = { date: string; sheet: string; rows: WorkbookAttendee[]; title?: string; description?: string; location?: string; speakers?: string; version?: number };
+export type WorkbookAttendee = { number: string; name: string; email: string; mobile: string; designation: string; organisation: string; status: "Attended" | "Not attended" | "Not recorded"; matched: boolean; plan?: string; registrationStatus?: string };
+export type WorkbookEvent = { date: string; sheet: string; rows: WorkbookAttendee[]; title?: string; description?: string; location?: string; speakers?: string; version?: number; attendanceAvailable?: boolean };
 const normalize = (value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 const memberKey = (value: string) => value.trim().replace(/^0+(?=\d)/, "");
 export async function loadWorkbookAttendance(): Promise<WorkbookEvent[]> {
-  return applyHistoricalEventDetails(await readWorkbookAttendance());
+  const events = await applyHistoricalEventDetails(await readWorkbookAttendance());
+  if (!process.env.DATABASE_URL) return events;
+  const overrides = (await getDatabase().query("SELECT event_key,data FROM tpa.event_participant_overrides WHERE event_key=ANY($1::text[]) ORDER BY event_key,identity", [events.map(event=>event.date)])).rows;
+  for (const override of overrides) {
+    const event=events.find(event=>event.date===override.event_key);
+    if (!event) continue;
+    const data=override.data;
+    const matches=event.rows.filter(row=>rosterMatches({name:row.name,email:row.email,number:row.number,phone:row.mobile},data));
+    const previous=matches.length===1?matches[0]:undefined;
+    const updated:WorkbookAttendee={
+      number:data.number??previous?.number??"",name:data.name??previous?.name??"",
+      email:data.email??previous?.email??"",mobile:data.phone??previous?.mobile??"",
+      designation:previous?.designation??"",organisation:data.organisation??previous?.organisation??"",
+      status:data.attendance??previous?.status??"Not recorded",matched:previous?.matched??false,
+      plan:data.plan??previous?.plan,registrationStatus:data.registrationStatus??previous?.registrationStatus,
+    };
+    if(previous)event.rows[event.rows.indexOf(previous)]=updated;
+    else if(!matches.length)event.rows.push(updated);
+    event.attendanceAvailable=true;
+  }
+  return events;
 }
 async function readWorkbookAttendance(): Promise<WorkbookEvent[]> {
   // Private runtime configuration: never use a NEXT_PUBLIC variable for member data.
@@ -24,7 +46,7 @@ async function readWorkbookAttendance(): Promise<WorkbookEvent[]> {
         typeof row.matched === "boolean" && ["Attended", "Not attended", "Not recorded"].includes(row.status)
       )
     )) throw Error("The private attendance snapshot is invalid.");
-    return events as WorkbookEvent[];
+    return (events as WorkbookEvent[]).map(event => ({ ...event, attendanceAvailable: true }));
   }
   const filename = process.env.TPA_ATTENDANCE_WORKBOOK || path.join(process.cwd(), ".local/event-attendance/source.xlsx");
   try { await access(filename); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return []; throw error; }
@@ -58,6 +80,6 @@ async function readWorkbookAttendance(): Promise<WorkbookEvent[]> {
         designation: member?.getCell(7).text || "", organisation: member?.getCell(8).text || "",
         status: ["attended", "yes", "present"].includes(attendance) ? "Attended" : ["notattended", "no", "absent"].includes(attendance) ? "Not attended" : "Not recorded", matched: Boolean(member) });
     });
-    return [{ date: `20${match[3]}-${match[2]}-${match[1]}`, sheet: sheet.name, rows }];
+    return [{ date: `20${match[3]}-${match[2]}-${match[1]}`, sheet: sheet.name, rows, attendanceAvailable: true }];
   }).sort((a, b) => b.date.localeCompare(a.date));
 }

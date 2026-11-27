@@ -15,7 +15,8 @@ const groups = [
     { href: "/member/inquiries", label: "Inquiries", icon: "message" },
     { href: "/member/payments", label: "Payment details", icon: "wallet" },
   ] },
-  { label: "Account", items: [
+  { label: "Settings", items: [
+    { href: "/member/settings", label: "Membership plan", icon: "wallet" },
     { href: "/member/security", label: "Security", icon: "shield" },
   ] },
 ];

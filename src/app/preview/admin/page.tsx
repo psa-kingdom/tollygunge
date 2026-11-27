@@ -48,7 +48,7 @@ export default function AdminPreview() {
         Recent Activity
       </Link>
       <Link href="/">
-        Public Website ↗
+        Public Website
       </Link>
     </div>
   );

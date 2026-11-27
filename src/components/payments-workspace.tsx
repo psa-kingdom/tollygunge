@@ -14,7 +14,7 @@ import {
   type FinanceLine,
 } from "@/domain/finance";
 import styles from "./finance.module.css";
-import { MembershipPaymentConfirmation } from './membership-payments';
+import { MembershipPaymentList } from "./membership-payment-list";
 type Entry = {
   id: string;
   event_id: string;
@@ -115,7 +115,28 @@ const emptyLine = (): FinanceLine => ({
   note: "",
 });
 export function PaymentsWorkspace() {
-  return <FinanceWorkspace />;
+  const [view, setView] = useState("Event payments");
+  const views = ["Event payments", "Membership payments"];
+  return (
+    <section>
+      <nav className={styles.tabs} aria-label="Payment categories" role="tablist">
+        {views.map((label, index) => <button type="button" key={label} role="tab"
+          id={`payment-category-${index}`} aria-controls="payment-category-panel"
+          aria-selected={view === label} tabIndex={view === label ? 0 : -1}
+          onClick={() => setView(label)}
+          onKeyDown={event => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const next = event.key === "Home" ? 0 : event.key === "End" ? 1 : 1 - index;
+            setView(views[next]);
+            document.getElementById(`payment-category-${next}`)?.focus();
+          }}>{label}</button>)}
+      </nav>
+      <div role="tabpanel" id="payment-category-panel" aria-labelledby={`payment-category-${views.indexOf(view)}`}>
+        {view === "Event payments" ? <FinanceWorkspace /> : <MembershipPaymentList />}
+      </div>
+    </section>
+  );
 }
 export function FinanceWorkspace({
   eventId: fixedEventId,
@@ -365,11 +386,10 @@ export function FinanceWorkspace({
   );
   return (
     <div className={styles.finance}>
-      {!fixedEventId && <MembershipPaymentConfirmation />}
       {fixedEventId && (
         <header className={styles.eventHeading}>
           <div className={styles.eventIdentity}>
-            <Link href="/admin/workspaces/payments">← Back to Finance</Link>
+            <Link href="/admin/workspaces/payments"> Back to Finance</Link>
             <h1>{event?.title ?? "Event finance"}</h1>
             {event && (
               <p>

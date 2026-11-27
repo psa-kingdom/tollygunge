@@ -1,0 +1,54 @@
+.attention.attention, .activity.activity { margin-top:24px; border:1px solid var(--line); border-radius:10px; background:var(--surface); overflow:hidden; }
+.heading.heading { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:24px; border-bottom:1px solid var(--line); }
+.heading.heading h2 { margin:0; font-size:20px; line-height:1.3; letter-spacing:-.4px; }
+.heading.heading p { margin:6px 0 0; color:var(--muted); font-size:13px; }
+.summary.summary { flex-shrink:0; color:var(--muted); font-size:12px; }
+.group.group { padding:18px 24px 0; }
+.groupHeading { display:flex; align-items:baseline; gap:12px; margin-bottom:6px; }
+.groupHeading h3 { font-size:12px; margin:0; font-weight:700; }
+.groupHeading span { color:var(--muted); font-size:12px; }
+.group[data-priority="High"] .groupHeading h3 { color:var(--dashboard-warning-fg); }
+.tasks.tasks, .activityList.activityList { list-style:none; padding:0; margin:0; }
+.tasks.tasks li { display:flex; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid var(--line); }
+.tasks.tasks li:last-child { border-bottom:0; }
+.taskIcon, .activityIcon { display:grid; place-items:center; width:40px; height:40px; flex-shrink:0; border-radius:9px; color:var(--dashboard-blue-fg); background:var(--dashboard-blue-bg); }
+.group[data-priority="High"] .taskIcon { color:var(--dashboard-warning-fg); background:var(--dashboard-warning-bg); }
+.taskText { flex:1; min-width:0; display:grid; gap:5px; }
+.taskText > span { color:var(--muted); font-size:11px; }
+.taskText strong { font-size:14px; line-height:1.5; font-weight:550; overflow-wrap:anywhere; }
+.action.action.action { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:38px; padding:8px 13px; border:1px solid var(--line); border-radius:7px; color:var(--ink); background:transparent; font-size:12px; font-weight:600; line-height:1.4; text-decoration:none; cursor:pointer; white-space:nowrap; }
+.action.action.action svg { width:16px; height:16px; }
+.group[data-priority="High"] .action.action.action { background:var(--dashboard-warning-bg); color:var(--dashboard-warning-fg); border-color:var(--dashboard-warning-fg); }
+.action.action.action:hover { background:var(--surface-muted); border-color:var(--muted); }
+.action.action.action:focus-visible { outline:2px solid var(--dashboard-blue-fg); outline-offset:3px; }
+.status.status { display:flex; align-items:center; gap:9px; margin-top:14px; padding:14px 24px; border-top:1px solid var(--line); color:var(--muted); font-size:11px; }
+.status > span:last-child { margin-left:auto; }
+.status svg { width:15px; height:15px; }
+.refreshError { margin:0; padding:0 24px 16px; color:var(--muted); }
+.empty { display:flex; align-items:center; gap:16px; padding:32px 24px; }
+.empty > svg { color:var(--dashboard-success-fg); }
+.empty p { color:var(--muted); margin:6px 0 0; }
+.activityList.activityList { padding:0 24px; }
+.activityList.activityList li { display:flex; align-items:center; gap:14px; padding:16px 0; border-bottom:1px solid var(--line); }
+.activityList.activityList li:last-child { border-bottom:0; }
+.activityIcon { width:32px; height:32px; color:var(--muted); background:var(--surface-muted); }
+.activityIcon svg { width:16px; height:16px; }
+.activityList li > div { display:grid; gap:4px; flex:1; min-width:0; }
+.activityList strong { font-size:13px; font-weight:550; overflow-wrap:anywhere; }
+.activityList li > div > span, .activityList time { font-size:11px; color:var(--muted); }
+.activityList time { white-space:nowrap; }
+.footer { display:flex; justify-content:center; padding:14px 24px; border-top:1px solid var(--line); }
+@media(max-width:600px) {
+  .heading.heading { padding:20px; align-items:flex-start; flex-direction:column; gap:10px; }
+  .group.group { padding:18px 20px 0; }
+  .groupHeading { gap:8px; flex-wrap:wrap; }
+  .tasks.tasks li { gap:10px; flex-wrap:wrap; }
+  .taskText { flex-basis:calc(100% - 50px); }
+  .tasks li > .action { margin-left:50px; }
+  .status.status { padding:14px 20px; flex-wrap:wrap; }
+  .status > span:last-child { margin-left:24px; flex-basis:100%; }
+  .activityList.activityList { padding:0 20px; }
+  .activityList.activityList li { flex-wrap:wrap; gap:8px 12px; }
+  .activityList li > div { flex-basis:calc(100% - 44px); }
+  .activityList time { margin-left:44px; }
+}

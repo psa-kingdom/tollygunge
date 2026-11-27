@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { currentActor } from "@/lib/actor";
 import { AccountShell as SiteShell } from "@/components/site-shell";
 import { MemberEvents } from "@/components/member-events";
+import { VerifyEmail } from "@/components/onboarding-auth";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Your events",
@@ -12,13 +13,19 @@ export const metadata = {
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string,string|string[]|undefined>> }) {
   const query = await searchParams;
   const target = eventReturnPath(`/member/events?eventId=${query.eventId}`) ?? "/member/events";
-  if (!(await currentActor())) redirect("/login?returnTo="+encodeURIComponent(target));
+  const actor = await currentActor();
+  if (!actor) redirect("/login?returnTo="+encodeURIComponent(target));
   return (
     <SiteShell>
       <main id="main" className="page-content">
         <h1 className="sr-only">Events & attendance</h1>
         <PortalSubsections />
-        <MemberEvents />
+        {actor.plan === "Free" && !actor.emailVerified ? (
+          <>
+            <p>Verify your email to register for events.</p>
+            <VerifyEmail email={actor.email} verified={false} returnTo={target} />
+          </>
+        ) : <MemberEvents />}
       </main>
     </SiteShell>
   );

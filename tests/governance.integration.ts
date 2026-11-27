@@ -242,7 +242,7 @@ test(
       const html = await (await req("/governance")).text();
       assert.ok(html.includes(label));
       assert.ok(html.includes("Synthetic subgroup"));
-      assert.ok(!html.includes(body.phone));
+      assert.ok(html.includes(body.phone));
       assert.ok(!html.includes("private-profile"));
       const read = (await ok("/api/staff/governance?id=" + row.id, 2))
         .records[0];

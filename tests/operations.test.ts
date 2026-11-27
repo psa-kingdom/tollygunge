@@ -55,7 +55,7 @@ test("CMS preserves sitemap anchors and rejects unsafe sources and unattributed 
 });
 test("application drafts strip identity/status/payment fields and events reject legacy price and learning-hour fields", () => {
   const input = applicationInput({
-    plan: "Annual",
+    plan: "Life",
     category: "Professional",
     version: 0,
     documentIds: [],

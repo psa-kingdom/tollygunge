@@ -72,7 +72,7 @@ export function AuthLayout({
         >
           <span>Rooted in Kolkata. Connected through TPA.</span>
           <Link href="/membership">
-            Explore membership <span aria-hidden="true">↗</span>
+            Explore membership
           </Link>
         </div>
       </aside>

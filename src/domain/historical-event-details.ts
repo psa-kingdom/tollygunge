@@ -1,4 +1,9 @@
 import { record, text, version } from "./operations";
+// Event metadata can exist even when its separately stored register is missing.
+// An available, genuinely empty register must still be distinguishable from it.
+export function historicalAttendanceAvailable(event: { sheet: string; rows: readonly unknown[]; attendanceAvailable?: boolean }) {
+  return event.attendanceAvailable ?? Boolean(event.sheet || event.rows.length);
+}
 export type HistoricalEventDetails = { title: string; description: string; location: string; speakers: string; version: number };
 export function historicalEventInput(value: unknown) {
   const input = record(value);

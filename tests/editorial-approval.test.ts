@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { editorialProfile } from "../src/domain/editorial-approval";
 import { personBody } from "../src/domain/people";
+import { publicProfilePatch } from "../src/domain/publishing";
 const accepted = personBody({
   name: "Existing member",
   email: "member@example.invalid",
@@ -53,4 +54,31 @@ test("editorial review rejects identity, contact, address and professional-field
       () => editorialProfile({ ...accepted, ...change }, accepted),
       /Editorial approval cannot/,
     );
+});
+
+test("publishing edits preserve member contact data and replace About formatting only when edited", () => {
+  const rich = {
+    type: "doc",
+    content: [{ type: "paragraph", content: [{ type: "text", text: "Existing About" }] }],
+  };
+  const previous = personBody({ ...accepted, biographyRich: rich, organization: "Existing firm" });
+  const contactEdits = publicProfilePatch({
+    ...previous,
+    publicEmail: "website@example.invalid",
+    publicMobile: "9876543210",
+    publicDesignation: "Treasurer",
+  });
+  assert.equal(Object.hasOwn(contactEdits, "email"), false);
+  const approved = editorialProfile({ ...previous, ...contactEdits }, previous);
+  assert.equal(approved.email, accepted.email);
+  assert.equal(approved.organization, "Existing firm");
+  assert.equal(approved.publicEmail, "website@example.invalid");
+  assert.equal(approved.publicMobile, "+919876543210");
+  assert.equal(approved.publicDesignation, "Treasurer");
+  assert.deepEqual(approved.biographyRich, previous.biographyRich);
+
+  const newAbout = publicProfilePatch({ ...approved, biography: "New About", biographyRich: undefined });
+  const updated = editorialProfile({ ...approved, ...newAbout }, approved);
+  assert.equal(updated.biography, "New About");
+  assert.equal(updated.biographyRich, undefined);
 });

@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     return {
       records: (
         await getDatabase().query(
-          "SELECT * FROM tpa.payment_details ORDER BY updated_at DESC LIMIT 100",
+          "SELECT * FROM tpa.payment_details WHERE organiser IS NULL ORDER BY updated_at DESC LIMIT 100",
         )
       ).rows,
       revisions: (
@@ -48,6 +48,8 @@ export async function POST(request: Request) {
       ).rows[0];
       if (body.id && !existing)
         throw new OperationError("Record not found.", 404);
+      if (existing?.organiser)
+        throw new OperationError("Manage this record in UPI IDs.", 409);
       if (existing && existing.version !== expected)
         throw new OperationError(
           "This record changed. Reload before saving.",

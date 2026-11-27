@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { getDatabase } from "./database";
 import { audit, OperationError } from "./operation-api";
@@ -220,6 +221,7 @@ async function registrationTransition(
   actor: FinanceActor,
   f: Record<string, unknown>,
   event: { title: string; id: string },
+  mailState?: string,
 ) {
   if (!f.registration_id) return;
   const r = (
@@ -268,13 +270,57 @@ async function registrationTransition(
     c,
     r.user_id,
     event.title,
-    next,
+    mailState ?? next,
     `${r.id}-${r.version + 1}`,
   );
   await c.query(
     "UPDATE tpa.events SET attendance_finalized_at=NULL WHERE id=$1",
     [event.id],
   );
+}
+
+export async function recordRegistrationPayment(
+  c: PoolClient,
+  actor: FinanceActor,
+  payment: {
+    eventId: string;
+    registrationId: string;
+    source: "member" | "admin";
+    note: string;
+    version?: number;
+  },
+) {
+  const event = await lockOperationalEvent(c, payment.eventId);
+  editableEvent(event);
+  if (event.status !== "published")
+    throw new OperationError("Event is not accepting payments.", 409);
+  const member = payment.source === "member";
+  const registration = await memberRegistration(c, event.id, payment.registrationId, member ? actor.id : undefined);
+  if (payment.version !== undefined && payment.version !== registration.version)
+    throw new OperationError("Registration changed. Reload before recording payment.", 409);
+
+  const id = randomUUID();
+  const method = member ? "UPI" : "On-site";
+  const action = member ? "registration_proof_recorded" : "on_site_payment_recorded";
+  await c.query(
+    `INSERT INTO tpa.finance_entries(id,event_id,kind,source,registration_id,label,amount_paise,entry_date,method,note,status,created_by,review_note)
+     VALUES($1,$2,'receipt',$3,$4,'Participant fee',$5,(now() AT TIME ZONE 'Asia/Kolkata')::date,$6,$7,'approved',$8,$9)`,
+    [id, event.id, payment.source, registration.id, registration.fee_paise, method, payment.note, actor.id,
+      member ? "Payment recorded from the participant's registration proof." : "Payment recorded by event staff."],
+  );
+  const previous = await c.query(
+    `UPDATE tpa.finance_entries SET status='superseded',version=version+1
+     WHERE registration_id=$1 AND kind='receipt' AND status IN ('draft','submitted') RETURNING id`,
+    [registration.id],
+  );
+  for (const entry of previous.rows)
+    await financeHistory(c, entry.id, actor.id, "superseded", { receiptId: id });
+  await financeHistory(c, id, actor.id, action, { registrationId: registration.id, amount: registration.fee_paise, method, note: payment.note });
+  await registrationTransition(c, actor, {
+    kind: "receipt", registration_id: registration.id, amount_paise: registration.fee_paise, reference: "", note: payment.note,
+  }, event, member ? "paid_from_proof" : undefined);
+  await c.query("UPDATE tpa.events SET financial_reviewed_at=NULL WHERE id=$1", [event.id]);
+  return { id, registration: { ...registration, payment_status: "paid", version: registration.version + 1 } };
 }
 export async function financeMutation(
   c: PoolClient,

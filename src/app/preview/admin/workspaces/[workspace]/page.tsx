@@ -53,16 +53,16 @@ const workspaces: Record<string, { title: string; description: string }> = {
 export const metadata = { robots: { index: false, follow: false } };
 
 const previewPayments = [
-  { member: "Sample Member A", purpose: "Annual membership", amount: 2500, method: "UPI", status: "Verified" },
+  { member: "Sample Member A", purpose: "Life membership", amount: 2500, method: "UPI", status: "Verified" },
   { member: "Sample Member B", purpose: "Student membership", amount: 1000, method: "Bank transfer", status: "Pending review" },
   { member: "Sample Member C", purpose: "Tax workshop", amount: 750, method: "UPI", status: "Verified" },
   { member: "Sample Member D", purpose: "Patron membership", amount: 10000, method: "Bank transfer", status: "Verified" },
-  { member: "Sample Member E", purpose: "Annual membership", amount: 2500, method: "Cheque", status: "Pending review" },
+  { member: "Sample Member E", purpose: "Life membership", amount: 2500, method: "Cheque", status: "Pending review" },
   { member: "Sample Member F", purpose: "Professional seminar", amount: 500, method: "UPI", status: "Needs clarification" },
-  { member: "Sample Member G", purpose: "Annual membership", amount: 2500, method: "Bank transfer", status: "Verified" },
+  { member: "Sample Member G", purpose: "Life membership", amount: 2500, method: "Bank transfer", status: "Verified" },
   { member: "Sample Member H", purpose: "Student membership", amount: 1000, method: "UPI", status: "Verified" },
   { member: "Sample Member I", purpose: "Networking dinner", amount: 1500, method: "UPI", status: "Pending review" },
-  { member: "Sample Member J", purpose: "Annual membership", amount: 2500, method: "Cheque", status: "Needs clarification" },
+  { member: "Sample Member J", purpose: "Life membership", amount: 2500, method: "Cheque", status: "Needs clarification" },
   { member: "Sample Member K", purpose: "Tax workshop", amount: 750, method: "Bank transfer", status: "Verified" },
   { member: "Sample Member L", purpose: "Patron membership", amount: 10000, method: "UPI", status: "Pending review" },
 ];
@@ -136,7 +136,7 @@ export default async function Workspace({
           )}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <Link className="button" href="/preview/admin">
-              ← Return to Dashboard
+               Return to Dashboard
             </Link>
             <Link className="button secondary" href="/preview/admin/workspaces/members">
               Review Members

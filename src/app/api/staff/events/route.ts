@@ -1,3 +1,4 @@
+import { syncOrganiserPayments } from "@/lib/organiser-upi";
 import { lockOperationalEvent, editableEvent, freezeEventPayment, snapshotAccounts } from "@/lib/event-operations";
 
 import { randomUUID } from "node:crypto";
@@ -6,6 +7,8 @@ import { queueEventUpdate } from "@/lib/event-mail";
 
 import { getDatabase } from "@/lib/database";
 
+import { boundedBody } from "@/domain/request-body";
+import { matchesFileSignature } from "@/domain/documents";
 import { eventInput, record, uuid, version } from "@/domain/operations";
 
 import {
@@ -40,7 +43,7 @@ export async function GET(request: Request) {
 
       await getDatabase().query(
 
-        "SELECT e.*, (SELECT count(*)::int FROM tpa.event_registrations r WHERE r.event_id=e.id AND r.status='registered') AS registrations FROM tpa.events e WHERE ($1::uuid IS NULL OR e.id=$1) ORDER BY starts_at DESC LIMIT 200",
+        "SELECT e.*, EXISTS(SELECT 1 FROM tpa.event_banners b WHERE b.event_id=e.id) AS has_banner, ((SELECT count(*)::int FROM tpa.event_registrations r WHERE r.event_id=e.id AND r.status='registered') + (SELECT count(*)::int FROM tpa.event_participant_overrides o WHERE o.event_key=e.id::text AND o.data->>'source'='imported' AND o.data->>'registrationStatus'='registered')) AS registrations, EXISTS(SELECT 1 FROM tpa.event_registrations r WHERE r.event_id=e.id) AS has_registrations FROM tpa.events e WHERE ($1::uuid IS NULL OR e.id=$1) ORDER BY starts_at DESC LIMIT 200",
 
         [id],
 
@@ -56,9 +59,28 @@ export async function POST(request: Request) {
 
   return operation(async () => {
 
-    const actor = await authorized(request, "events:manage", true),
-
+    const actor = await authorized(request, "events:manage", true);
+    const contentType = request.headers.get("content-type") ?? "";
+    let raw: Record<string, unknown>;
+    let banner: { type: string; image: Buffer } | undefined;
+    if (contentType.startsWith("multipart/form-data")) {
+      const bytes = await boundedBody(request, 2097152 + 65536);
+      const form = await new Response(bytes as BodyInit, {
+        headers: { "Content-Type": contentType },
+      }).formData();
+      raw = record(JSON.parse(String(form.get("details"))));
+      const file = form.get("banner");
+      if (raw.action !== "save" || !(file instanceof File) ||
+          !["image/jpeg", "image/png"].includes(file.type) ||
+          !file.size || file.size > 2097152)
+        throw new OperationError("Choose a JPEG or PNG banner up to 2 MB.");
+      const image = Buffer.from(await file.arrayBuffer());
+      if (!matchesFileSignature(image, file.type))
+        throw new OperationError("The banner file does not match its image format.");
+      banner = { type: file.type, image };
+    } else {
       raw = record(await jsonBody(request, 16000));
+    }
 
     return transaction(async (client) => {
 
@@ -106,6 +128,7 @@ export async function POST(request: Request) {
 
         if(raw.action === "publish") {
 
+          row=await syncOrganiserPayments(client,{...row,status:"draft"},actor.id);
           if(row.fee_paise>0 && row.payment_account_ids !== null && !row.payment_account_ids.length) throw new OperationError("Choose a payment account.");
 
           await freezeEventPayment(client,row,actor.id,"Event publication");
@@ -254,9 +277,9 @@ export async function POST(request: Request) {
 
             schedule_revision=schedule_revision+CASE WHEN reminders IS DISTINCT FROM coalesce($3::jsonb,reminders) THEN 1 ELSE 0 END,
 
-            reminders=coalesce($3::jsonb,reminders) WHERE id=$1 RETURNING *`,
+            reminders=coalesce($3::jsonb,reminders), organiser=coalesce($4::text,organiser), registration_note=coalesce($5::text,registration_note), cpe_hours=coalesce($6::text,cpe_hours) WHERE id=$1 RETURNING *`,
 
-          [id, input.speakers === undefined ? null : JSON.stringify(input.speakers), input.reminders === undefined ? null : JSON.stringify(input.reminders)],
+          [id, input.speakers === undefined ? null : JSON.stringify(input.speakers), input.reminders === undefined ? null : JSON.stringify(input.reminders), input.organiser ?? null, input.registrationNote ?? null, input.cpeHours ?? null],
 
         )).rows[0];
 
@@ -300,6 +323,15 @@ export async function POST(request: Request) {
           row=(await client.query('UPDATE tpa.events SET payment_account_ids=$2 WHERE id=$1 RETURNING *',[row.id,ids])).rows[0];
         } else if(JSON.stringify([...ids].sort())!==JSON.stringify([...(row.payment_account_ids??[])].sort())) throw new OperationError('Use the audited event payment configuration action to change published instructions.',409);
       }
+      if(raw.action==="save") row=await syncOrganiserPayments(client,row,actor.id);
+      if (banner) {
+        await client.query(
+          "INSERT INTO tpa.event_banners(event_id,content_type,image) VALUES($1,$2,$3) ON CONFLICT(event_id) DO UPDATE SET content_type=excluded.content_type,image=excluded.image",
+          [row.id, banner.type, banner.image],
+        );
+      } else if (raw.action === "save" && raw.removeBanner === true) {
+        await client.query("DELETE FROM tpa.event_banners WHERE event_id=$1", [row.id]);
+      }
       await audit(client, actor.id, `event.${String(raw.action)}`, row.id);
 
       return row;
@@ -309,4 +341,3 @@ export async function POST(request: Request) {
   });
 
 }
-

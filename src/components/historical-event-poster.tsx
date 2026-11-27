@@ -27,6 +27,6 @@ export function HistoricalEventPoster({ date }: { date: string }) {
   if (!poster) return null;
   return <a className="historical-event-poster" href={poster.src} target="_blank" rel="noreferrer" aria-label={`Open full-size seminar poster for ${date}`}>
     <Image unoptimized src={poster.src} alt={poster.alt} width={poster.width} height={poster.height} sizes="(max-width: 600px) 85vw, 280px" />
-    <span>View full-size poster ↗</span>
+    <span>View full-size poster </span>
   </a>;
 }

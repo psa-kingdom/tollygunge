@@ -2,14 +2,16 @@ import { test, expect } from "@playwright/test";
 
 const pages = [
   "/",
+  "/about",
   "/governance",
   "/membership",
   "/events",
   "/resources",
   "/contact",
+  "/privacy",
 ];
 
-test("public pages share a responsive footer and reachable section navigation", async ({
+test("public pages have a responsive footer and no page sidebar", async ({
   page,
 }, info) => {
   for (const path of pages) {
@@ -39,23 +41,19 @@ test("public pages share a responsive footer and reachable section navigation", 
     expect(Math.abs(positions[1].y - positions[0].y)).toBeLessThan(2);
     if (page.viewportSize()!.width > 600)
       expect(positions[2].x).toBeGreaterThan(positions[1].x);
+    await expect(page.getByRole("navigation", { name: "On this page", exact: true })).toHaveCount(0);
     if (path !== "/") {
-      const index = page.getByRole("navigation", {
-        name: "On this page",
-        exact: true,
-      });
-      const hrefs = await index
-        .locator("a")
-        .evaluateAll((nodes) => nodes.map((el) => el.getAttribute("href")!));
-      for (const href of hrefs) await expect(page.locator(href)).toHaveCount(1);
-      await index.locator("a").first().click();
-      const top = await page
-        .locator("#section-0")
-        .evaluate((el) => el.getBoundingClientRect().top);
-      const headerBottom = await page
-        .locator("header.site-header")
-        .evaluate((el) => el.getBoundingClientRect().bottom);
-      expect(top).toBeGreaterThanOrEqual(headerBottom - 1);
+      const heading = await page.locator("main .page-heading").boundingBox();
+      const content = await page.locator("main .public-content-layout > .content-page").boundingBox();
+      expect(heading).not.toBeNull();
+      expect(content).not.toBeNull();
+      expect(content!.x).toBeCloseTo(heading!.x, 0);
+      expect(content!.width).toBeCloseTo(heading!.width, 0);
+    }
+    if (path === "/contact") {
+      await page.getByRole("link", { name: "Send an inquiry", exact: false }).click();
+      await expect(page).toHaveURL(/\/contact#section-3$/);
+      await expect(page.locator("#section-3")).toBeInViewport();
     }
     await footer.screenshot({
       path: info.outputPath(`${path.slice(1) || "home"}-footer.png`),

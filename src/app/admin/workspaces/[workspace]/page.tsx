@@ -1,4 +1,6 @@
-import { HistoricalEventLibrary } from "@/components/historical-event-library";
+import { OrganiserUpiManager } from "@/components/organiser-upi-manager";
+import { MembershipPlansManager } from "@/components/membership-plans-manager";
+import { EventsWorkspace } from "@/components/events-workspace";
 import { loadWorkbookAttendance } from "@/lib/workbook-attendance";
 import { StatusBadge } from "@/components/portal-values";
 import { PortalSubsections } from "@/components/portal-subsections";
@@ -14,12 +16,9 @@ import Link from "next/link";
 import { currentActor } from "@/lib/actor";
 import { hasPermission, type Permission } from "@/domain/access";
 import { ContentWorkspace } from "@/components/content-workspace";
-import { EventManager } from "@/components/event-manager";
-import { EventParticipants } from "@/components/event-participants";
 import { CrmWorkspace } from "@/components/crm-workspace";
 import { OperationsReports } from "@/components/operations-reports";
 import { CommunicationsWorkspace } from "@/components/communications-workspace";
-import { FlyerBuilder } from "@/components/flyer-builder";
 import { HistoryImport } from "@/components/history-import";
 import { StaffAccess } from "@/components/staff-access";
 import { MediaWorkspace } from "@/components/media-workspace";
@@ -27,7 +26,7 @@ import { GovernanceWorkspace } from "@/components/governance-workspace";
 import { staffWorkspaceLabel } from "@/domain/staff-navigation";
 import { MembersWorkspace } from "@/components/members-workspace";
 import { WorkspacePageHeading } from "@/components/workspace-ui";
-import { WebsiteControl } from "@/components/website-control";
+import { SettingsWorkspace } from "@/components/settings-workspace";
 import review from "@/components/portal-review.module.css";
 const permissions: Record<string, Permission> = {
   verification: "members:review",
@@ -39,6 +38,7 @@ const permissions: Record<string, Permission> = {
   communications: "communications:manage",
   payments: "payments:manage",
   "payment-details": "payments:manage",
+  "membership-plans": "staff:manage",
   crm: "communications:manage",
   flyers: "events:manage",
   imports: "events:manage",
@@ -61,7 +61,6 @@ export async function generateMetadata({
 }
 export default async function Workspace({
   params,
-  searchParams,
 }: {
   params: Promise<{ workspace: string }>;
   searchParams: Promise<{ view?: string; tab?: string }>;
@@ -69,12 +68,7 @@ export default async function Workspace({
   const actor = await currentActor();
   if (!actor) redirect("/login");
   const { workspace } = await params;
-  const query = await searchParams;
-  const participants = workspace === "events" && query.view === "participants";
-  const participantTab =
-    query.tab === "payments" || query.tab === "attendance"
-      ? query.tab
-      : "registrations";
+  if (workspace === "flyers") notFound();
   if (
     workspace === "reports"
       ? !actor.roles.length
@@ -85,26 +79,23 @@ export default async function Workspace({
           !hasPermission(actor.roles, permissions[workspace])
   )
     notFound();
+  if (workspace === "website") redirect("/admin/workspaces/content");
+  const settings = ["payment-details", "access", "membership-plans"].includes(workspace);
   return (
     <main
       id="main"
       className={`workspace-main workspace-page ${workspace === "members" ? review.review : ""}`}
     >
-      <div className="portal-page-intro">
-        <WorkspacePageHeading
-          workspace={workspace}
-          title={
-            participants ? "Event participants" : staffWorkspaceLabel(workspace)
-          }
-          description={
-            participants
-              ? "Browse registrations, event receipt status and attendance."
-              : undefined
-          }
-        />
-        <PortalSubsections />
-      </div>
-      {["communications", "onboarding-email"].includes(workspace) &&
+      {!["events", "content", "communications"].includes(workspace) && !settings && (
+        <div className="portal-page-intro">
+          <WorkspacePageHeading
+            workspace={workspace}
+            title={staffWorkspaceLabel(workspace)}
+          />
+          <PortalSubsections />
+        </div>
+      )}
+      {["onboarding-email"].includes(workspace) &&
         process.env.TPA_MAIL_SINK === "true" && (
           <p className="portal-delivery-state">
             <StatusBadge tone="testing">Mail sink</StatusBadge> Messages are
@@ -112,8 +103,10 @@ export default async function Workspace({
           </p>
         )}
       <div className="workspace-body" data-workspace={workspace}>
-        {workspace === "website" ? (
-          <WebsiteControl />
+        {settings ? (
+          <SettingsWorkspace workspace={workspace} roles={actor.roles}>
+            {workspace === "membership-plans" ? <MembershipPlansManager /> : workspace === "access" ? <StaffAccess /> : <><PaymentDetailsManager /><OrganiserUpiManager /></>}
+          </SettingsWorkspace>
         ) : workspace === "verification" ? (
           <VerificationWorkspace />
         ) : workspace === "onboarding" ? (
@@ -124,35 +117,17 @@ export default async function Workspace({
           <GovernanceWorkspace />
         ) : workspace === "media" ? (
           <MediaWorkspace />
-        ) : workspace === "access" ? (
-          <StaffAccess />
         ) : workspace === "imports" ? (
           <HistoryImport />
         ) : workspace === "communications" ? (
           <CommunicationsWorkspace
             canManageInvitations={hasPermission(actor.roles, "staff:manage")}
+            localPreview={process.env.TPA_MAIL_SINK === "true"}
           />
-        ) : workspace === "flyers" ? (
-          <FlyerBuilder />
         ) : workspace === "content" ? (
           <ContentWorkspace />
         ) : workspace === "events" ? (
-          participants ? (
-            <EventParticipants
-              key={participantTab}
-              tab={participantTab}
-              workbookEvents={await loadWorkbookAttendance()}
-              canVerifyPayments={hasPermission(actor.roles, "payments:manage")}
-            />
-          ) : (
-            <>
-              <HistoricalEventLibrary />
-              <EventManager
-                canPromote={hasPermission(actor.roles, "communications:manage")}
-                canVerifyPayments={hasPermission(actor.roles, "payments:manage")}
-              />
-            </>
-          )
+          <EventsWorkspace historicalEvents={await loadWorkbookAttendance()} />
         ) : workspace === "crm" ? (
           <CrmWorkspace />
         ) : workspace === "reports" ? (
@@ -162,8 +137,6 @@ export default async function Workspace({
             canManage={hasPermission(actor.roles, "staff:manage")}
             canViewPayments={hasPermission(actor.roles, "payments:manage")}
           />
-        ) : workspace === "payment-details" ? (
-          <PaymentDetailsManager />
         ) : workspace === "payments" ? (
           <PaymentsWorkspace />
         ) : (
@@ -174,7 +147,7 @@ export default async function Workspace({
               setup.
             </p>
             <Link href="/admin/workspaces/crm">
-              Open inquiry assignment and follow-ups →
+              Open inquiry assignment and follow-ups
             </Link>
           </>
         )}

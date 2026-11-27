@@ -57,7 +57,7 @@ const sharedBaseDefaults = {
       { label: "Become a member", href: "/membership" },
       { label: "Events & learning", href: "/events" },
     ],
-    contactLabel: "Contact the secretariat ↗",
+    contactLabel: "Contact the secretariat ",
     contactHref: "/contact",
   },
 };
@@ -99,10 +99,12 @@ export function settingsBody(
   if (!Object.hasOwn(websiteDefaults, key))
     throw Error("Choose website settings or homepage.");
   function parse(shape: Tree, input: unknown, path: string): Tree {
+    if (key === "home" && ["images","membershipContent","eventContent","newsletterContent"].includes(path) && input === undefined) return shape;
     if (typeof shape === "string") {
       const result = text(input, path, 3000);
       if (/(?:href|link)$/i.test(path)) return websiteLink(result);
       if (path.endsWith("logoMediaId") && result) uuid(result);
+      if (path.endsWith("MediaId") && result) uuid(result);
       if (typeof input !== "string" || input.length > 3000)
         throw Error("Use text up to 3,000 characters.");
       return input;

@@ -1,4 +1,6 @@
 "use client";
+import { useMembershipPlans } from "./use-membership-plans";
+import styles from "./member-review.module.css";
 import { useState, type FormEvent } from "react";
 import { api, ApiError } from "./operations-client";
 import { prefixes } from "@/domain/member-foundation";
@@ -9,7 +11,7 @@ type Editable = {
   membership_version: number;
   email: string;
   mobile: string;
-  membership_number: string;
+  membership_number: string | null;
   type: string | null;
   status: string | null;
   person: {
@@ -32,6 +34,7 @@ export function MemberCreator({
   onCancel: () => void;
   onDirtyChange?: (dirty: boolean) => void;
 }) {
+  const plans = useMembershipPlans();
   const [form, setForm] = useState({
     prefix: "",
     firstName: "",
@@ -41,8 +44,7 @@ export function MemberCreator({
     organization: "",
     designation: "",
     membershipNumber: "",
-    type: "Life",
-    status: "active",
+    type: "Free",
     provisionAccount: false,
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -67,7 +69,7 @@ export function MemberCreator({
 
   return (
     <form
-      className="member-settings"
+      className={`member-settings ${styles.memberDetailsEditor}`}
       onSubmit={async (e: FormEvent) => {
         e.preventDefault();
         setBusy(true);
@@ -96,7 +98,7 @@ export function MemberCreator({
             },
             membership: {
               type: form.type,
-              status: form.status,
+              status: null,
             },
             provisionAccount: form.provisionAccount,
           });
@@ -231,10 +233,9 @@ export function MemberCreator({
       </label>
 
       <label>
-        Membership number *
+        Membership number (optional)
         <input
           type="text"
-          required
           maxLength={80}
           placeholder="e.g. M-1042"
           value={form.membershipNumber}
@@ -250,13 +251,14 @@ export function MemberCreator({
       <label>
         Membership plan
         <select
-          value={form.type}
+          value={form.type==="Free" || plans.some(plan=>plan.code===form.type) ? form.type : ""}
+          required
           onChange={(e) => updateField("type", e.target.value)}
         >
 
-          {form.type === "Annual" && <option value="Annual" disabled>Historical Annual membership — select Life or Patron to change</option>}
-          <option value="Life">Life member</option>
-          <option value="Patron">Patron member</option>
+          <option value="" disabled>Choose a membership plan</option>
+          <option value="Free">Free</option>
+          {plans.filter(plan=>plan.code!=="Free").map(plan=><option key={plan.code} value={plan.code}>{plan.name}</option>)}
         </select>
         {fieldErrors.type && (
           <span className="field-error" role="alert">
@@ -265,23 +267,11 @@ export function MemberCreator({
         )}
       </label>
 
-      <label>
-        Membership status
-        <select
-          value={form.status}
-          onChange={(e) => updateField("status", e.target.value)}
-        >
-          <option value="active">Active</option>
-          <option value="expired">Expired</option>
-          <option value="suspended">Suspended</option>
-          <option value="resigned">Resigned</option>
-        </select>
-        {fieldErrors.status && (
-          <span className="field-error" role="alert">
-            {fieldErrors.status}
-          </span>
-        )}
-      </label>
+      <div>
+        <span>Account status</span>
+        <p>Inactive</p>
+        <small>Becomes active when the member sets their password using the invitation.</small>
+      </div>
 
       <label className="check-label consent">
         <input
@@ -332,31 +322,26 @@ export function MemberEditor({
       mobile: member.mobile || "",
       organization: member.person.organization || "",
       designation: member.person.jobTitle || "",
-      membershipNumber: member.membership_number,
+      membershipNumber: member.membership_number ?? "",
       addresses: member.person.addresses || {},
-      type: member.type || "Life",
+
     }),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   return (
-    <><a className="text-link" href={`/admin/workspaces/governance?id=${member.person_id}`}>Manage person and committee profile →</a>
-    <details>
-      <summary>Edit member contact and professional details</summary>
       <form
-        className="member-settings"
+        className={`member-settings ${styles.memberDetailsEditor}`}
         onChange={() => onDirtyChange?.(true)}
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
           try {
-            const { type, ...memberData } = form;
             await api("/api/staff/members", {
               action: "update",
               personId: member.person_id,
               personVersion: member.person_version,
               membershipVersion: member.membership_version,
-              member: memberData,
-              membership: { type },
+              member: form,
             });
             setMessage("Member details saved.");
             onDirtyChange?.(false);
@@ -395,30 +380,17 @@ export function MemberEditor({
             }
             <input
               type={key === "email" ? "email" : "text"}
-              required={["email", "membershipNumber"].includes(key)}
+              required={key === "email"}
               maxLength={200}
               value={form[key]}
               onChange={(e) => setForm({ ...form, [key]: e.target.value })}
             />
           </label>
         ))}
-        <label>
-          Member type
-          <select
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-          >
-
-            {form.type === "Annual" && <option value="Annual" disabled>Historical Annual membership — select Life or Patron to change</option>}
-          <option value="Life">Life member</option>
-            <option value="Patron">Patron member</option>
-          </select>
-        </label>
         <button className="button" disabled={busy}>
           Save member details
         </button>
         <p role="status">{message}</p>
       </form>
-    </details></>
   );
 }

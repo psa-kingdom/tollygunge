@@ -32,8 +32,8 @@ export const verificationSteps = [
 // Keep legacy policy/draft step IDs compatible while presenting three member steps.
 // Old contact links open personal details; old evidence links open membership details.
 export const memberApplicationSteps = [
-  { step: 0, label: "Membership & professional details" },
   { step: 1, label: "Personal details, contact & preferences" },
+  { step: 0, label: "Membership & professional details" },
   { step: 4, label: "Review & declaration" },
 ];
 export function memberApplicationStep(step: number) { return step === 2 ? 1 : step === 3 ? 0 : step; }
@@ -79,17 +79,20 @@ export const initialFields: VerificationField[] = [
     "Other",
   ]),
   field("organization", "Organisation", 0),
-  field("professionalBody", "Professional body", 0, false, "select", [
+  { ...field("membershipNumber", "Membership No.", 0), maxLength: 80 },
+  { ...field("designation", "Designation", 0), maxLength: 120 },
+  { ...field("professionalBody", "Professional body", 0, false, "select", [
     "None",
     "CA",
     "CS",
     "ICMAI",
     "Bar Council",
     "Other",
-  ]),
+  ]), visible: false },
   {
     ...field("registration", "Professional registration number", 0),
-    regulated: true,
+    visible: false,
+    regulated: false,
   },
   field("gender", "Gender", 1, false, "select", ["Male", "Female", "Transgender"]),
   field("fullName", "Full name", 1, true),
@@ -324,15 +327,15 @@ export function missingFields(
 }
 
 /** Completion of applicable required items; completion never grants approval. */
-export function verificationProgress(fields: VerificationField[], answers: Record<string, string>, category: string, emailVerified: boolean) {
+export function verificationProgress(fields: VerificationField[], answers: Record<string, string>, category: string, emailVerified: boolean, includeEmail = true) {
   const missing = missingFields(fields, answers, category, emailVerified);
   const tasks = fields.filter(f => applicable(f, category) && (f.required || (f.regulated && ["CA", "CS", "ICMAI", "Bar Council"].includes(answers.professionalBody)))).map(f => ({ id: f.id, label: f.label, step: memberApplicationFieldStep(f), complete: !missing.includes(f.label) }));
   if (category !== "Professional") tasks.push({ id: "category", label: "Professional category required", step: 0, complete: false });
   if (fields.some(field => field.id === "correspondenceAddress" && applicable(field, category)) && ["Office", "Residence"].includes(answers.correspondenceAddress)) tasks.push({ id: "selected-address", label: "Complete your selected correspondence address", step: 2, complete: !missing.some(label => ["Selected correspondence address", "Complete selected correspondence address", "Check selected correspondence address"].includes(label)) });
-  tasks.push({ id: "email", label: "Verify your account email", step: -1, complete: emailVerified });
+  if (includeEmail) tasks.push({ id: "email", label: "Verify your account email", step: -1, complete: emailVerified });
   const completed = tasks.filter(task => task.complete).length;
   const remaining = tasks.filter(task => !task.complete).map(({ id, label, step }) => ({ id, label, step, href: step < 0 ? "/member#verification-email-action" : `/member/application?step=${step}` }));
-  return { total: tasks.length, completed, percent: Math.round(completed / tasks.length * 100), remaining };
+  return { total: tasks.length, completed, percent: tasks.length ? Math.round(completed / tasks.length * 100) : 100, remaining };
 }
 
 export function requirementUpdateNeeded(

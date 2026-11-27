@@ -15,6 +15,6 @@ export function NewsletterLinkAction({ action }: { action: "confirm" | "unsubscr
     {token === null ? <p role="status">Checking link…</p> : !token ? <p role="alert">This link is missing. Use the complete link from your email, or request a new subscription below.</p> : !done && <button className="button" disabled={busy} onClick={async () => {
       setBusy(true); setError(""); try { await api(`/api/newsletter/${action}`, { token }); setDone(true); requestAnimationFrame(() => heading.current?.focus()); } catch(e) { setError((e as Error).message); } finally { setBusy(false); }
     }}>{busy ? "Saving…" : action === "confirm" ? "Confirm subscription" : "Unsubscribe"}</button>}
-    <p role="status">{error}</p><Link className="text-link" href="/#subscribe">Back to TPA updates →</Link>
+    <p role="status">{error}</p><Link className="text-link" href="/#subscribe">Back to TPA updates </Link>
   </main>;
 }

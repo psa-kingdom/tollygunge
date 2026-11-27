@@ -266,6 +266,15 @@
   "tpa.member_import_worker_state": [
     "SELECT"
   ],
+  "tpa.member_profile_tag_assignments": [
+    "DELETE",
+    "INSERT",
+    "SELECT"
+  ],
+  "tpa.member_profile_tags": [
+    "INSERT",
+    "SELECT"
+  ],
   "tpa.member_profiles": [
     "INSERT",
     "SELECT",

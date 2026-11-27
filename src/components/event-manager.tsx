@@ -245,11 +245,11 @@ export function EventManager({
         {selected?.status === "published" && (
           <p>
             {selected.visibility==='public' && <><Link className="text-link" href={`/events/${selected.id}`}>
-              View published event →
+              View published event
             </Link>{" "}
             ·{" "}</>}
             <Link className="text-link" href={`/admin/workspaces/flyers?id=${selected.id}`}>
-              Create event flyer →
+              Create event flyer
             </Link>
           </p>
         )}
@@ -505,7 +505,7 @@ export function EventManager({
               <label>Attendance status<select value={outcomeFilter} onChange={e=>{setOutcomeFilter(e.target.value);setAttendeePage(1);}}>{['all','attended','absent','unmarked'].map(s=><option key={s}>{s}</option>)}</select></label>
               <label>Receipt status<select value={paymentFilter} onChange={e=>{setPaymentFilter(e.target.value);setAttendeePage(1);}}>{['all','paid','pending','failed','refunded','cancelled','not_required'].map(s=><option key={s}>{s}</option>)}</select></label>
               {canVerifyPayments && (
-                <Link href="/admin/workspaces/payments">Review receipts →</Link>
+                <Link href="/admin/workspaces/payments">Review receipts </Link>
               )}
             </div>
             <div className="action-row"><button type="button" disabled={attendeePage===1} onClick={()=>setAttendeePage(attendeePage-1)}>Previous attendees</button><span>Page {attendeePage} · {filteredAttendees.length} matching attendees · 50 rows per page</span><button type="button" disabled={attendeePage*50>=filteredAttendees.length} onClick={()=>setAttendeePage(attendeePage+1)}>Next attendees</button></div>

@@ -1,0 +1,23 @@
+.workspace { display: grid; gap: 24px; }
+.actions { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; }
+.upload { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 12px; }
+.workspace label { display: grid; gap: 8px; font-size: 13px; }
+.workspace input { max-width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
+.help { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.empty { padding: 56px 24px; text-align: center; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.empty h2 { font-size: 22px; }
+.preview { padding: 20px; border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 16px; min-width: 0; }
+.table { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 10px; }
+.table table { border-collapse: collapse; width: 100%; min-width: 650px; text-align: left; }
+.table th, .table td { padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 13px; overflow-wrap: anywhere; }
+.table th { background: var(--surface-muted); }
+
+
+.importPanel { display:grid; grid-template-columns:minmax(220px,.85fr) minmax(0,1.3fr); align-items:center; gap:24px 40px; padding:24px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+.template h2 { margin:0 0 8px; font-size:18px; }
+.template p { color:var(--muted); margin:0 0 18px; font-size:13px; line-height:1.6; }
+.importPanel .help { grid-column:1/-1; border-top:1px solid var(--line); padding-top:16px; }
+.upload input[type=file] { width:100%; min-height:48px; }
+.upload button { min-height:48px; white-space:nowrap; }
+@media(max-width:900px) { .importPanel { grid-template-columns:1fr; gap:24px; } }
+@media(max-width:540px) { .upload { grid-template-columns:1fr; } .importPanel { padding:20px; } }

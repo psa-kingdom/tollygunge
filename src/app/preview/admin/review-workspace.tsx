@@ -14,7 +14,7 @@ const initial: Application[] = [
     id: "PREVIEW-001",
     name: "Sample Applicant A",
     profession: "Chartered accountant",
-    plan: "Annual",
+    plan: "Life",
     category: "Professional",
     status: "Under review",
     payment: "Paid",
@@ -23,7 +23,7 @@ const initial: Application[] = [
     id: "PREVIEW-002",
     name: "Sample Applicant B",
     profession: "Commerce student",
-    plan: "Annual",
+    plan: "Life",
     category: "Student",
     status: "Under review",
     payment: "Paid",
@@ -173,7 +173,7 @@ export function ReviewWorkspace() {
                           setNotice("");
                         }}
                       >
-                        View {r.status === "Under review" ? "& review" : ""} →
+                        View {r.status === "Under review" ? "& review" : ""}
                       </button>
                     </td>
                   </tr>
@@ -217,7 +217,7 @@ export function ReviewWorkspace() {
                 </label>
                 <div className="button-row">
                   <button className="button" onClick={() => review("Approved")}>
-                    Approve in preview →
+                    Approve in preview
                   </button>
                   <button
                     className="button secondary"

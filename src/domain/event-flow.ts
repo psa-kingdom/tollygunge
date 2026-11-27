@@ -39,5 +39,6 @@ export function bookingLabel(event: { starts_at: string; registration_starts_at?
 }
 // Event continuation is deliberately restricted to the member event route.
 export function eventReturnPath(value: unknown): string | undefined {
-  return typeof value === "string" && /^\/member\/events(?:\?eventId=[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})?$/i.test(value) ? value : undefined;
+  return typeof value === "string" && /^\/member\/events(?:\?eventId=[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})?$/i.test(value) ? value : typeof value === "string" &&
+    /^\/events\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value) ? value : undefined;
 }

@@ -1,4 +1,4 @@
-import { randomUUID, randomBytes, createHash } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { approvedAccountPolicy } from "@/domain/approved-account-batch";
 import { memberHeaders } from "@/domain/member-import";
 import {
@@ -26,7 +26,7 @@ import {
 } from "@/domain/onboarding-import";
 import { validateAnswers } from "@/domain/verification";
 import { validatePostalAddresses } from "@/lib/postal-directory";
-import { hashToken, queueOnboardingMail } from "@/lib/onboarding-mail";
+
 import { createInvitedAccount } from "@/lib/account-provisioning";
 export async function GET(r: Request) {
   try {
@@ -37,15 +37,7 @@ export async function GET(r: Request) {
         url.searchParams.get("mode") ?? "",
       )
         ? memberHeaders
-        : [
-            "name",
-            "email",
-            "category",
-            "plan",
-            "phone",
-            "qualification",
-            "organization",
-          ];
+        : ["name", "email", "phone"];
       if (url.searchParams.get("template") === "xlsx") {
         const w = new ExcelJS.Workbook();
         w.addWorksheet("Accounts").addRow(fields);
@@ -260,7 +252,7 @@ export async function POST(r: Request) {
     if (process.env.ONBOARDING_ENABLED !== "true")
       throw new OperationError("Onboarding is disabled.", 503);
     if (i.action === "reissue") throw new OperationError('Review the recipient and approved invitation template before issuing a replacement link.',409,'invitation_review_required');
-    if (i.action === "retry" || i.action === "reissue") {
+    if (i.action === "retry") {
       return transaction(async (c) => {
         const job = (
           await c.query(
@@ -269,7 +261,6 @@ export async function POST(r: Request) {
           )
         ).rows[0];
         if (!job) throw new OperationError("Invitation not found.");
-        if (i.action === "retry") {
           if (job.reason === "uncertain_send_expired")
             throw new OperationError(
               "Reconcile the previous delivery before retrying.",
@@ -283,51 +274,6 @@ export async function POST(r: Request) {
             "UPDATE tpa.onboarding_mail SET status='queued',attempts=0,available_at=now() WHERE id=$1",
             [job.id],
           );
-        } else {
-          await c.query('SELECT id FROM public."user" WHERE id=$1 FOR UPDATE', [
-            job.user_id,
-          ]);
-          if (
-            (
-              await c.query(
-                "SELECT 1 FROM tpa.onboarding_mail WHERE user_id=$1 AND kind='invitation' AND (status IN ('queued','leased') OR reason='uncertain_send_expired' OR created_at>now()-interval '10 minutes')",
-                [job.user_id],
-              )
-            ).rowCount
-          )
-            throw new OperationError(
-              "Invitation is queued, recently sent, or requires reconciliation.",
-              409,
-            );
-          if (
-            (
-              await c.query(
-                'SELECT 1 FROM public."account" WHERE "userId"=$1 AND "providerId"=\'credential\'',
-                [job.user_id],
-              )
-            ).rowCount
-          )
-            throw new OperationError(
-              "The account already has a password. Use recovery.",
-            );
-          await c.query(
-            "DELETE FROM tpa.onboarding_invitations WHERE user_id=$1 AND redeemed_at IS NULL",
-            [job.user_id],
-          );
-          const token = randomBytes(32).toString("base64url");
-          await c.query(
-            "INSERT INTO tpa.onboarding_invitations(token_hash,user_id,expires_at) VALUES($1,$2,now()+interval '48 hours')",
-            [hashToken(token), job.user_id],
-          );
-          await queueOnboardingMail(
-            c,
-            job.user_id,
-            job.recipient,
-            "invitation",
-            `${process.env.BETTER_AUTH_URL}/invitation#token=${token}`,
-            "reissue-" + randomUUID(),
-          );
-        }
         await audit(c, actor.id, "onboarding.invitation_" + i.action, job.id);
         return { saved: true };
       });
@@ -367,6 +313,7 @@ export async function POST(r: Request) {
           const inserted = await createInvitedAccount(c, {
             name: row.name,
             email: row.email,
+            freeMembership: true,
           });
           if (!inserted) {
             results.push({
@@ -378,11 +325,15 @@ export async function POST(r: Request) {
           }
           const user = inserted.accountId;
           await c.query(
+            "UPDATE tpa.people SET mobile_normalized=$2,accepted=accepted||jsonb_build_object('mobile',$2::text),draft=draft||jsonb_build_object('mobile',$2::text) WHERE user_id=$1",
+            [user, row.details.phone ?? ""],
+          );
+          await c.query(
             "INSERT INTO tpa.application_drafts(id,user_id,plan,category,details,requirement_version) VALUES($1,$2,$3,$4,$5,$6)",
             [
               randomUUID(),
               user,
-              row.plan ?? "Life",
+              "Free",
               row.category ?? "Professional",
               row.details,
               p.version,

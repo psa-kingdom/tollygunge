@@ -23,6 +23,6 @@ export default async function Page({ params }: { params: Promise<{ date: string 
   return <SiteShell><main id="main" className="public-information public-page-events historical-event-detail">
     <PublicBreadcrumbs section="Events" href="/events" title={event.title} />
     <HistoricalEventCard event={event} detail />
-    <Link className="text-link" href="/member/events">Back to my events →</Link>
+    <Link className="text-link" href="/member/events">Back to my events </Link>
   </main></SiteShell>;
 }

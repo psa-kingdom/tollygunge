@@ -8,6 +8,7 @@ import {
   personBody,
   publicPerson,
   redactPerson,
+  websiteContactFields,
   type PersonBody,
   type PersonEntry,
 } from "@/domain/people";
@@ -228,6 +229,9 @@ export async function changePerson(
   let draft: PersonBody = row?.draft;
   if (action === "save") {
     const submitted = record(input.body);
+    if ((ownerOnly || !hasPermission(actor.roles, "content:publish")) &&
+      websiteContactFields.some(field => Object.hasOwn(submitted, field)))
+      throw new OperationError("Public contact details and designation are managed in Publishing.", 403);
     if(ownerOnly&&Object.hasOwn(submitted,'biographyTitle')&&submitted.biographyTitle!==row?.draft.biographyTitle)throw new OperationError('Public presentation headings are staff-managed.',403);
     const privateKeys = [
       "email",

@@ -1,14 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
-import { personBody, type PersonBody } from "./people";
-const editorialFields = new Set([
-  "biography",
-  "biographyRich",
-  "biographyTitle",
-  "portraitId",
-  "portraitKind",
-  "assignments",
-  "nameSize",
-]);
+import { editorialProfileFields, personBody, type PersonBody } from "./people";
 export function editorialProfile(
   input: unknown,
   accepted: unknown,
@@ -20,7 +11,7 @@ export function editorialProfile(
     ...Object.keys(previous),
   ])) {
     if (
-      !editorialFields.has(key) &&
+      !editorialProfileFields.has(key) &&
       !isDeepStrictEqual(
         proposed[key as keyof PersonBody],
         previous[key as keyof PersonBody],

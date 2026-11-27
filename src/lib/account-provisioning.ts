@@ -6,7 +6,7 @@ import { OperationError } from "./operation-error";
 /** Caller owns the transaction/savepoint; existing accounts are never altered. */
 export async function createInvitedAccount(
   c: PoolClient,
-  input: { name: string; email: string },
+  input: { name: string; email: string; freeMembership?: boolean },
   hold?: { batchId: string },
 ) {
   if (process.env.ONBOARDING_ENABLED !== "true")
@@ -20,8 +20,8 @@ export async function createInvitedAccount(
     accountId = randomUUID();
   const created = (
     await c.query(
-      'INSERT INTO public."user"(id,name,email,"emailVerified","createdAt","updatedAt") VALUES($1,$2,$3,false,now(),now()) ON CONFLICT DO NOTHING RETURNING id',
-      [accountId, name, email],
+      'INSERT INTO public."user"(id,name,email,"emailVerified","createdAt","updatedAt","freeSignup","requestedMembershipPlan") VALUES($1,$2,$3,false,now(),now(),$4,CASE WHEN $4 THEN \'Free\' ELSE NULL END) ON CONFLICT DO NOTHING RETURNING id',
+      [accountId, name, email, input.freeMembership === true],
     )
   ).rows[0];
   if (!created) return null;

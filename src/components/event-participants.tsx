@@ -190,7 +190,7 @@ function LiveEventParticipants({
             className="button secondary"
             href={"/admin/workspaces/events?id=" + event.id}
           >
-            Manage this event →
+            Manage this event
           </Link>
         )}
       </div>
@@ -440,7 +440,7 @@ function LiveEventParticipants({
                     className="button secondary"
                     href="/admin/workspaces/payments"
                   >
-                    Open receipt verification →
+                    Open receipt verification
                   </Link>
                 )}
               </div>

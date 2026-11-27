@@ -7,10 +7,10 @@ import {
   type RefObject,
 } from "react";
 import Link from "./navigation-link";
+import styles from "./account-controls.module.css";
 import { SignOut } from "./auth-controls";
 import { ReportIssueLink } from "./report-issue-link";
 import { PortalIcon } from "./portal-icon";
-import { autoUpdate, flip, offset, safePolygon, shift, useDismiss, useFloating, useFocus, useHover, useInteractions } from "@floating-ui/react";
 import { CopyValue } from "./portal-values";
 
 function usePopoverPosition(
@@ -123,26 +123,17 @@ export function AccountControls({
   }, [open]);
 
   return (
-    <div className="account-controls">
-      {portal && actor && <span
-        role="img"
-        className={`header-profile-verified${actor.profileVerified === true ? "" : " is-unverified"}`}
-        aria-label={actor.profileVerified === true ? "Profile verified" : "Profile unverified"}
-        title={actor.profileVerified === true ? "Your profile has been verified by TPA" : "Your profile has not yet been verified by TPA"}
-      >
-        <PortalIcon name="shield" /><span>{actor.profileVerified === true ? "Verified" : "Unverified"}</span>
-      </span>}
+    <div className={`account-controls ${styles.controls}`}>
       {actor && !actor.id?.startsWith("preview") && <AttentionBell />}
       <div
         className="account-popover"
         ref={root}
         onPointerEnter={(e) => {
-          if (!portal || e.pointerType !== "mouse") return;
+          if (e.pointerType !== "mouse") return;
           if (hoverTimer.current) clearTimeout(hoverTimer.current);
           setOpen(true);
         }}
         onPointerLeave={() => {
-          if (!portal) return;
           if (!pinned.current) {
             hoverTimer.current = setTimeout(() => setOpen(false), 200);
           }
@@ -238,7 +229,7 @@ export function AccountControls({
                 {!portal && <Link href={actor.roles.length ? "/admin" : "/member/events"}>
                   {actor.roles.length ? "Staff workspace" : "Member portal"}
                 </Link>}
-                <Link href="/">Public website ↗</Link>
+                <Link href="/">Public website </Link>
               </>
             )}
             <ModeControl />
@@ -429,9 +420,7 @@ function AttentionBell() {
                       {x.category} · {x.priority}
                     </small>
                     <strong>{x.label}</strong>
-                    <span className="attention-item-arrow" aria-hidden="true">
-                      →
-                    </span>
+
                   </Link>
                 ))
             ) : (

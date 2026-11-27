@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { createAuth } from "../src/lib/auth-options";
 import { databaseOptions } from "../src/lib/database-options";
 import { openMail } from "../src/lib/onboarding-mail";
+import { issueRegistrationCode } from "../src/lib/registration-code";
 test(
   "signup, verification mail, session limits and reset use real auth/database paths",
   { skip: !process.env.TPA_DATABASE_NAME?.startsWith("tpa_onboarding_test_") },
@@ -26,16 +27,28 @@ test(
         }),
       );
     try {
+      const client = await db.connect();
+      try {
+        await client.query("BEGIN");
+        await issueRegistrationCode(client, email, process.env.BETTER_AUTH_SECRET!);
+        await client.query("COMMIT");
+      } finally { client.release(); }
+      const codeMail = (await db.query("SELECT payload FROM tpa.onboarding_mail WHERE recipient=$1 AND dedupe LIKE 'signup-code-%' ORDER BY created_at DESC LIMIT 1", [email])).rows[0];
+      const registrationCode = /\b\d{6}\b/.exec(openMail(codeMail.payload).text)?.[0];
+      assert.ok(registrationCode);
       const signup = await request("sign-up/email", {
         email,
         name: "Onboarding test",
         password,
+        registrationCode,
       });
       assert.equal(signup.status, 200);
       const user = (
         await db.query('SELECT * FROM public."user" WHERE email=$1', [email])
       ).rows[0];
-      assert.equal(user.emailVerified, false);
+      assert.equal(user.emailVerified, true);
+      const membership = (await db.query("SELECT m.type,m.status FROM tpa.memberships m JOIN tpa.people p ON p.id=m.person_id WHERE p.user_id=$1", [user.id])).rows[0];
+      assert.deepEqual(membership, {type:"Free",status:"active"});
       assert.equal(
         (
           await db.query("SELECT 1 FROM tpa.staff_roles WHERE user_id=$1", [
@@ -49,19 +62,7 @@ test(
           user.id,
         ])
       ).rows;
-      assert.deepEqual(jobs.map((j) => j.kind).sort(), [
-        "verification",
-        "welcome",
-      ]);
-      const verification = openMail(
-        jobs.find((j) => j.kind === "verification").payload,
-      ).text;
-      const url = verification
-        .split("\n")
-        .find((s: string) => s.startsWith("http"));
-      assert.ok(url);
-      const verify = await auth.handler(new Request(url));
-      assert.ok([200, 302].includes(verify.status));
+      assert.deepEqual(jobs.map((j) => j.kind), ["verification"]);
       assert.equal(
         (
           await db.query(

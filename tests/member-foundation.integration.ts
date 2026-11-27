@@ -99,9 +99,9 @@ test("legacy Student policy and data survive while new Student records are prohi
   try {
     await c.query("BEGIN");await c.query('INSERT INTO public."user"(id,name,email,"emailVerified") VALUES($1,\'Legacy fixture\',$2,false)',[actor,actor+"@example.invalid"]);
     await c.query("ALTER TABLE tpa.application_drafts DISABLE TRIGGER professional_application_write");
-    await c.query("INSERT INTO tpa.application_drafts(id,user_id,plan,category,details) VALUES($1,$2,'Annual','Student','{\"studentEvidence\":\"legacy\"}')",[randomUUID(),actor]);await c.query("ALTER TABLE tpa.application_drafts ENABLE TRIGGER professional_application_write");
+    await c.query("INSERT INTO tpa.application_drafts(id,user_id,plan,category,details) VALUES($1,$2,'Life','Student','{\"studentEvidence\":\"legacy\"}')",[randomUUID(),actor]);await c.query("ALTER TABLE tpa.application_drafts ENABLE TRIGGER professional_application_write");
     await c.query("UPDATE tpa.application_drafts SET details=details || '{\"fullName\":\"Legacy\"}' WHERE user_id=$1",[actor]);
-    await c.query("SAVEPOINT student");await assert.rejects(c.query("INSERT INTO tpa.application_drafts(id,user_id,plan,category,details) VALUES($1,$2,'Annual','Student','{}')",[randomUUID(),actor]),{code:"23514"});await c.query("ROLLBACK TO SAVEPOINT student");
+    await c.query("SAVEPOINT student");await assert.rejects(c.query("INSERT INTO tpa.application_drafts(id,user_id,plan,category,details) VALUES($1,$2,'Life','Student','{}')",[randomUUID(),actor]),{code:"23514"});await c.query("ROLLBACK TO SAVEPOINT student");
     await c.query("UPDATE tpa.application_drafts SET category='Professional' WHERE user_id=$1",[actor]);assert.equal((await c.query("SELECT details FROM tpa.application_drafts WHERE user_id=$1",[actor])).rows[0].details.studentEvidence,"legacy");
     // Rehearse the migration against a populated legacy schema inside a rollback-only transaction.
     await c.query("DROP TRIGGER professional_application_write ON tpa.application_drafts");await c.query("DROP FUNCTION tpa.professional_application_write()");
@@ -142,4 +142,3 @@ test("invitation hold failure rolls back account, person and membership with sav
     assert.equal((await c.query("SELECT count(*)::int n FROM tpa.onboarding_mail WHERE recipient=$1",[failEmail])).rows[0].n,0);
   } finally {await c.query("ROLLBACK");c.release();await pool.end();}
 });
-

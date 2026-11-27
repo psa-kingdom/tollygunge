@@ -27,7 +27,7 @@ export function CommunityAtlas() {
           <span className="tpa-cover-title">Welcome<br />to TPA</span>
           <span className="tpa-cover-seal" aria-hidden="true">TPA</span>
           <span>A community of knowledge.</span>
-          <span className="tpa-cover-invitation">Open the atlas <span aria-hidden="true">↗</span></span>
+          <span className="tpa-cover-invitation">Open the atlas </span>
         </button>
         <div id="tpa-atlas-spread" className="tpa-book-spread" hidden={!open}>
           <div className="tpa-book-text">
@@ -49,8 +49,8 @@ export function CommunityAtlas() {
         <p>{open ? "A little local knowledge, one page at a time." : "Rooted in Kolkata. Open to knowledge."}</p>
         <div hidden={!open} className="tpa-book-navigation">
           <button ref={close} onClick={closeBook}>Close book</button>
-          <button ref={previous} aria-label="Previous book chapter" disabled={chapter === 0} onClick={() => { setChapter(chapter - 1); if (chapter === 1) requestAnimationFrame(() => next.current?.focus()); }}>←</button>
-          <button ref={next} aria-label="Next book chapter" disabled={chapter === chapters.length - 1} onClick={() => { setChapter(chapter + 1); if (chapter === chapters.length - 2) requestAnimationFrame(() => previous.current?.focus()); }}>→</button>
+          <button ref={previous} aria-label="Previous book chapter" disabled={chapter === 0} onClick={() => { setChapter(chapter - 1); if (chapter === 1) requestAnimationFrame(() => next.current?.focus()); }}>Previous</button>
+          <button ref={next} aria-label="Next book chapter" disabled={chapter === chapters.length - 1} onClick={() => { setChapter(chapter + 1); if (chapter === chapters.length - 2) requestAnimationFrame(() => previous.current?.focus()); }}>Next</button>
         </div>
       </div>
       {open && chapter === 0 && <p className="tpa-atlas-credit">Locality outline, not an office address. <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a></p>}

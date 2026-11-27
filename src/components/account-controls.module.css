@@ -1,0 +1,234 @@
+.controls {
+  --account-surface: #f8fafc;
+  --account-control: #e4ebf3;
+  --account-line: #c5cfdb;
+  --account-text: #152d45;
+  --account-muted: #596b7e;
+}
+:global(html[data-color-mode="dark"]) .controls {
+  --account-surface: #14283c;
+  --account-control: #1c354b;
+  --account-line: #39516a;
+  --account-text: #eef4fa;
+  --account-muted: #b2c2d3;
+}
+.controls.controls.controls.controls :global(.avatar-trigger),
+.controls.controls.controls.controls :global(.bell-trigger) {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--account-line);
+  background: var(--account-control);
+  color: var(--account-text);
+  font: 600 12px var(--font-dm-sans);
+  box-shadow: none;
+}
+.controls.controls.controls.controls :global(.avatar-trigger) {
+  border-radius: 50%;
+}
+.controls.controls.controls.controls :global(.bell-trigger) {
+  border-radius: 8px;
+}
+.controls.controls.controls.controls :global(.account-menu),
+.controls.controls.controls.controls :global(.attention-panel) {
+  padding: 18px;
+  border: 1px solid var(--account-line);
+  border-radius: 10px;
+  background: var(--account-surface);
+  color: var(--account-text);
+  font: 13px/1.5 var(--font-dm-sans);
+  box-shadow: 0 16px 44px rgb(15 30 45 / 16%);
+}
+.controls.controls.controls.controls :global(.account-menu a),
+.controls.controls.controls.controls :global(.attention-panel a) {
+  color: inherit;
+}
+.controls.controls.controls.controls :global(.account-menu a:hover),
+.controls.controls.controls.controls :global(.attention-panel a:hover) {
+  background: var(--account-control);
+}
+
+.controls.controls.controls.controls :global(.attention-panel) {
+  width: min(380px, calc(100vw - 32px));
+  padding: 0;
+  overflow: auto;
+}
+.controls.controls.controls.controls :global(.attention-panel-header) {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 16px;
+}
+.controls.controls.controls.controls :global(.attention-panel-header h2) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+}
+.controls.controls.controls.controls :global(.attention-panel-header p) {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--account-muted);
+}
+.controls.controls.controls.controls :global(.attention-total) {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--account-control);
+  color: var(--account-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.controls.controls.controls.controls :global(.attention-close) {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--account-line);
+  background: var(--account-surface);
+  color: var(--account-muted);
+  border-radius: 7px;
+  padding: 0;
+  cursor: pointer;
+}
+.controls.controls.controls.controls :global(.attention-close:hover) {
+  background: var(--account-control);
+  color: var(--account-text);
+}
+.controls.controls.controls.controls :global(.attention-category) {
+  display: grid;
+  gap: 6px;
+  padding: 0 20px 16px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--account-muted);
+}
+.controls.controls.controls.controls :global(.attention-category select) {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--account-line);
+  border-radius: 7px;
+  background: var(--account-surface);
+  color: var(--account-text);
+  padding: 8px 10px;
+  font:
+    400 13px/1.5 "TPA Jakarta",
+    sans-serif;
+}
+.controls.controls.controls.controls :global(.attention-panel-body) {
+  border-top: 1px solid var(--account-line);
+}
+.controls.controls.controls.controls :global(.attention-panel-body > p) {
+  margin: 0;
+  padding: 24px 20px;
+  font-size: 13px;
+}
+.controls.controls.controls.controls :global(.attention-item) {
+  position: relative;
+  display: block;
+  padding: 16px 42px 16px 20px;
+  border-bottom: 1px solid var(--account-line);
+  color: var(--account-text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.controls.controls.controls.controls :global(.attention-item:last-child) {
+  border-bottom: 0;
+}
+.controls.controls.controls.controls :global(.attention-item:hover) {
+  background: var(--account-control);
+}
+.controls.controls.controls.controls :global(.attention-item small) {
+  color: var(--account-muted);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.controls.controls.controls.controls :global(.attention-item strong) {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.controls.controls.controls.controls :global(.attention-item-arrow) {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--account-muted);
+}
+.controls.controls.controls.controls :global(.attention-empty) {
+  text-align: center;
+  padding: 28px 24px 32px;
+}
+.controls.controls.controls.controls :global(.attention-empty-icon) {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--account-line);
+  background: var(--account-control);
+  color: var(--account-text);
+  border-radius: 50%;
+  margin-bottom: 12px;
+}
+.controls.controls.controls.controls :global(.attention-empty h3) {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+.controls.controls.controls.controls :global(.attention-empty p) {
+  margin: 0;
+  color: var(--account-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.controls.controls.controls.controls :global(.attention-panel) {
+  max-width: min(380px, calc(100vw - 32px));
+}
+.controls.controls.controls.controls :global(.attention-panel-header h2),
+.controls.controls.controls.controls :global(.attention-empty h3) {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.controls.controls.controls.controls :global(.attention-item small),
+.controls.controls.controls.controls :global(.attention-item strong) {
+  display: block;
+}
+@media (max-width: 800px) {
+  .controls.controls.controls.controls :global(.attention-close) {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+  .controls.controls.controls.controls :global(.attention-category select) {
+    font-size: 16px;
+  }
+  .controls.controls.controls.controls :global(.attention-panel) {
+    width: auto;
+  }
+}
+
+@keyframes notification-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.controls.controls.controls.controls :global(.attention-panel) {
+  animation: notification-enter 160ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .controls.controls.controls.controls :global(.attention-panel) {
+    animation: none;
+  }
+}

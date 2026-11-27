@@ -44,8 +44,8 @@ export function MemberProfile({
   return (
     <div className="member-profile-content">
       <PersonalProfile email={email} />
-      <section className="member-card profile-support-card">
-        <h2>Private documents</h2>
+      <details className="member-card profile-support-card">
+        <summary>Private documents</summary>
         {loading && <p role="status">Loading your documents…</p>}
         {loadError && (
           <p role="alert">
@@ -136,7 +136,7 @@ export function MemberProfile({
               ))}
             </ul>
           ))}
-      </section>
+      </details>
       <p role="status">{message}</p>
     </div>
   );

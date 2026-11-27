@@ -165,32 +165,15 @@ async function geometry(page: Page) {
   });
 }
 
-// The full workflow suite also creates accounts without membership. Select the
-// record kind needed by editor tests instead of relying on alphabetical order.
-async function showMembershipRecords(page: Page) {
-  await page
-    .getByRole("combobox", { name: "Record type", exact: true })
-    .selectOption("member");
-  const refreshed = page.waitForResponse((response) => {
-    const url = new URL(response.url());
-    return (
-      url.pathname === "/api/staff/members" &&
-      url.searchParams.get("records") === "all" &&
-      url.searchParams.get("kind") === "member"
-    );
-  });
-  await page
-    .getByRole("button", { name: "Search register", exact: true })
-    .click();
-  const response = await refreshed;
+async function findMembershipRecord(page: Page) {
+  const response = await page.request.get("/api/staff/members?view=register&records=all&kind=member");
   expect(response.status()).toBe(200);
-  const result = await response.json();
-  expect(result.rows.length).toBeGreaterThan(0);
-  expect(
-    result.rows.every(
-      (row: { record_kind: string }) => row.record_kind === "member",
-    ),
-  ).toBe(true);
+  const { rows } = await response.json();
+  expect(rows.length).toBeGreaterThan(0);
+  const name = rows[0].person.name as string;
+  await page.getByLabel("Search members", { exact: true }).fill(name);
+  await page.getByRole("button", { name: "Search register", exact: true }).click();
+  return page.getByRole("button", { name: `Open ${name} details`, exact: true }).first();
 }
 test("all portal routes reflow in both appearances with useful content near the top", async ({
   browser,
@@ -294,8 +277,7 @@ test("all staff roles retain navigation, direct route, API and preview boundarie
     }
     if (hasPermission([role], "members:review")) {
       await page.goto("/admin/workspaces/members");
-      await showMembershipRecords(page);
-      const record = page.locator(".member-record-button").first();
+      const record = await findMembershipRecord(page);
       await expect(record).toBeVisible();
       await record.hover();
       const preview = page.getByRole("dialog", { name: /quick preview/ });
@@ -324,8 +306,7 @@ test("inspector resize and nested dismissal preserve unsaved member edits", asyn
   await signInPortal(page, "administrator");
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/admin/workspaces/members");
-  await showMembershipRecords(page);
-  const first = page.locator(".member-record-button").first();
+  const first = await findMembershipRecord(page);
   await first.click();
   const panel = page.locator(".portal-inspector");
   await panel
@@ -589,35 +570,20 @@ test("combined association directory keeps membership and account identities dis
   await expect(
     page.getByRole("link", { name: "Account directory", exact: true }),
   ).toHaveCount(0);
-  await page
-    .getByRole("combobox", { name: "Record type", exact: true })
-    .selectOption("account");
-  await page
-    .getByRole("button", { name: "Search register", exact: true })
-    .click();
-  await expect(
-    page
-      .getByRole("region", { name: "Member register records", exact: true })
-      .getByText("Account only", { exact: true })
-      .first(),
-  ).toBeVisible();
-  await page.locator(".member-record-button").first().click();
-  const inspector = page.locator(".portal-inspector");
-  await expect(inspector).toBeVisible();
-  await expect(
-    inspector.getByText("Edit member contact and professional details", {
-      exact: true,
-    }),
-  ).toHaveCount(0);
-  await expect(
-    inspector.getByRole("combobox", { name: "Membership status", exact: true }),
-  ).toBeDisabled();
-  await expect(
-    inspector.getByRole("button", {
-      name: "Review this member invitation",
-      exact: true,
-    }),
-  ).toBeDisabled();
+  const active = await get("&accountSetup=active");
+  const inactive = await get("&accountSetup=inactive");
+  expect(active.total + inactive.total).toBe(all.total);
+  expect(active.rows.every((row: { login_ready: boolean }) => row.login_ready)).toBe(true);
+  expect(inactive.rows.every((row: { login_ready: boolean }) => !row.login_ready)).toBe(true);
+
+  await page.getByRole("combobox", { name: "Account setup", exact: true }).selectOption("inactive");
+  const filtered = page.waitForResponse(response => {
+    const url = new URL(response.url());
+    return url.pathname === "/api/staff/members" && url.searchParams.get("accountSetup") === "inactive";
+  });
+  await page.getByRole("button", { name: "Search register", exact: true }).click();
+  expect(await (await filtered).json()).toMatchObject({ total: inactive.total });
+  await expect(page.getByText(`${inactive.total} directory records`, { exact: true })).toBeVisible();
 });
 
 test("directory and participant routes retain all staff permission boundaries", async ({

@@ -72,7 +72,7 @@ test("incomplete drafts save; required evidence and category are enforced only o
     ),
   );
   assert.ok(
-    missingFields(
+    !missingFields(
       initialFields,
       { ...values, professionalBody: "CA" },
       "Professional",
@@ -99,6 +99,8 @@ test("CSV/XLSX onboarding normalises emails, detects duplicates and rejects priv
   const rows = mapImport(cells, mapping, ["organization"]);
   assert.equal(rows[0].email, "user@example.com");
   assert.equal(rows[0].name, "Test, Person");
+  assert.equal(rows[0].plan, "Free");
+  assert.equal(rows[0].error, undefined);
   assert.equal(rows[1].error, "Duplicate email in file.");
   assert.throws(() =>
     mapImport(
@@ -223,4 +225,15 @@ test("archived Fax preserves stored answers and can be restored without changing
   );
   assert.equal(restored.find((f) => f.id === "fax")?.visible, true);
   assert.equal(restored.find((f) => f.id === "fax")?.type, fax.type);
+});
+
+
+test("professional details accept membership number and optional designation", () => {
+  const answers = { membershipNumber: "012345", designation: "Consultant" };
+  assert.deepEqual(validateAnswers(answers, initialFields), answers);
+  assert.throws(() => validateAnswers({ designation: "x".repeat(121) }, initialFields));
+  for (const id of ["professionalBody", "registration"]) {
+    assert.equal(initialFields.find(field => field.id === id)?.visible, false);
+  }
+  assert.ok(!missingFields(initialFields, { professionalBody: "CA" }, "Professional", true).includes("Professional registration number"));
 });

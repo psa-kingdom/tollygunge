@@ -1,0 +1,60 @@
+.membershipCard {
+  box-sizing: border-box;
+  inline-size: min(100%, 340px);
+  min-inline-size: 0;
+  min-block-size: 176px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  padding: 16px 20px;
+  border: 1px solid #426077;
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse at 100% 0%, #244964, transparent 72%),
+    #112c41;
+  color: #f8f5ef;
+  box-shadow: 0 4px 12px rgb(12 31 46 / 18%);
+}
+
+.cardBrand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-block-end: 9px;
+  border-block-end: 1px solid rgb(248 218 151 / 25%);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.cardCrest > span {
+  inline-size: 30px;
+  block-size: 33px;
+}
+
+.membershipCard .cardPlan {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.cardPlan dt {
+  color: #f8da97;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.membershipCard .cardPlan dd {
+  margin: 0;
+  color: inherit;
+  font: 600 clamp(26px, 4vw, 36px) / 1.1 var(--font-editorial);
+  overflow-wrap: anywhere;
+}
+
+.membershipCard .cardName {
+  margin: 0;
+  color: #e0e9f0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}

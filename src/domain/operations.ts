@@ -9,6 +9,7 @@ import {
   type ContentSize,
 } from "./rich-content";
 export const pageSlugs = [
+  "privacy",
   "about",
   "governance",
   "membership",
@@ -17,6 +18,7 @@ export const pageSlugs = [
   "contact",
 ] as const;
 export const pageSections: Record<string, string[]> = {
+  privacy: ["Information you provide", "How information is used", "Private and published information", "Service providers and essential storage", "Communications and issue reports", "Records, corrections and requests"],
   about: ["About TPA", "Vision & Mission", "Founding Members"],
   governance: [
     "Executive Committee",
@@ -95,6 +97,8 @@ export function instant(value: unknown) {
   return result;
 }
 export type ContentBody = {
+  heroMediaId?: string;
+  heroAlt?: string;
   label?: string;
   displayOrder?: number;
   title: string;
@@ -103,6 +107,8 @@ export type ContentBody = {
   introRich?: RichNode;
   titleSize?: ContentSize;
   sections: {
+    mediaId?: string;
+    mediaAlt?: string;
     title: string;
     text: string;
     rich?: RichNode;
@@ -123,6 +129,7 @@ export function content(value: unknown, kind: string): ContentBody {
     const s = record(section);
     const rich = s.rich === undefined ? undefined : validateRich(s.rich);
     return {
+      ...(s.mediaId ? { mediaId: uuid(s.mediaId), mediaAlt: text(s.mediaAlt ?? "", "Image description", 240, 5) } : {}),
       title: text(s.title, "Section title", contentLimits.heading, 1),
       text: text(
         rich ? richText(rich) : s.text,
@@ -159,6 +166,7 @@ export function content(value: unknown, kind: string): ContentBody {
   )
     throw new Error("Entry exceeds 100,000 characters.");
   return {
+    ...(input.heroMediaId ? { heroMediaId: uuid(input.heroMediaId), heroAlt: text(input.heroAlt ?? "", "Image description", 240, 5) } : {}),
     title,
     intro,
     ...(input.label===undefined?{}:{label:text(input.label,"Page label",160)}),
@@ -207,7 +215,7 @@ export function applicationInput(value: unknown) {
   const input = record(value),
     details = record(input.details);
   if (
-    !["Annual", "Life", "Patron"].includes(String(input.plan)) ||
+    (typeof input.plan !== "string" || input.plan.length > 80) ||
     String(input.category) !== "Professional"
   )
     throw new Error("Choose your plan and category.");
@@ -281,6 +289,9 @@ export function eventInput(value: unknown) {
     Number(feePaise) > 100000000
   )
     throw new Error("Check the event fee.");
+  const organiser = input.organiser;
+  if (organiser !== undefined && organiser !== "CA CP Study Circle" && organiser !== "TPA")
+    throw new Error("Choose an event organiser.");
   const visibility = input.visibility ?? "public",
     deliveryMode = input.deliveryMode ?? "location";
   if (
@@ -302,6 +313,9 @@ export function eventInput(value: unknown) {
     feePaise,
     visibility,
     deliveryMode,
+    organiser,
+    cpeHours: input.cpeHours === undefined ? undefined : text(input.cpeHours, "CPE hours", 80),
+    registrationNote: input.registrationNote === undefined ? undefined : text(input.registrationNote, "Registration instructions", 1500),
     speakers: input.speakers === undefined ? undefined : speakersInput(input.speakers),
     reminders: input.reminders === undefined ? (input.id ? undefined : defaultReminders) : remindersInput(input.reminders),
   };

@@ -85,7 +85,7 @@ export function MemberOverviewActivity() {
                       "/member/events?eventId=" + encodeURIComponent(event.id)
                     }
                   >
-                    {state.action} →
+                    {state.action}
                   </Link>
                 </li>
               );
@@ -102,7 +102,7 @@ export function MemberOverviewActivity() {
         </p>
       )}
       <Link className="button secondary" href="/member/events">
-        Open events &amp; attendance →
+        Open events &amp; attendance
       </Link>
     </section>
   );

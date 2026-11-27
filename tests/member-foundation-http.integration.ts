@@ -61,9 +61,9 @@ test("member HTTP contracts enforce access, errors, register retrieval, previews
       if(mode==="existing-members") {const result=await (await request("/api/staff/onboarding-import",0,{action:"commit",id:data.id,version:1})).json();assert.equal(result.totals.created,0);assert.equal(result.totals.conflict,1);}
     }
     assert.equal((await request("/api/member/locations?pin=700001")).status,401);const lookup=await request("/api/member/locations?pin=700001",1);assert.equal(lookup.status,200);const postal=await lookup.json();assert.ok(postal.localities.length>1);assert.equal(postal.exactLocation,false);assert.ok(postal.states.length>=30);
-    assert.equal((await request("/api/member/application",1,{category:"Student",plan:"Annual",version:0,details:{},documentIds:[]})).status,400);
-    await pool.query("INSERT INTO tpa.application_drafts(id,user_id,plan,category,details) VALUES($1,$2,'Annual','Professional','{\"phone\":\"1234567890\"}')",[randomUUID(),actors[1]]);
-    const legacyDraft=await request("/api/member/application",1,{category:"Professional",plan:"Annual",version:1,details:{phone:"1234567890",fullName:" Legacy   Draft ",organization:"Example  & Co"},documentIds:[]});assert.equal(legacyDraft.status,200);const savedDraft=await legacyDraft.json();assert.equal(savedDraft.details.phone,"1234567890");assert.equal(savedDraft.details.fullName,"Legacy Draft");
+    assert.equal((await request("/api/member/application",1,{category:"Student",plan:"Life",version:0,details:{},documentIds:[]})).status,400);
+    await pool.query("INSERT INTO tpa.application_drafts(id,user_id,plan,category,details) VALUES($1,$2,'Life','Professional','{\"phone\":\"1234567890\"}')",[randomUUID(),actors[1]]);
+    const legacyDraft=await request("/api/member/application",1,{category:"Professional",plan:"Life",version:1,details:{phone:"1234567890",fullName:" Legacy   Draft ",organization:"Example  & Co"},documentIds:[]});assert.equal(legacyDraft.status,200);const savedDraft=await legacyDraft.json();assert.equal(savedDraft.details.phone,"1234567890");assert.equal(savedDraft.details.fullName,"Legacy Draft");
     const ordinary="boundary-"+prefix+"@example.invalid";
     const signup=(password:string)=>request("/api/auth/sign-up/email",undefined,{name:"Boundary synthetic",email:ordinary.replace("@",`${password.length}@`),password});
     assert.equal((await signup("a".repeat(5))).status,400);assert.equal((await signup("a".repeat(13))).status,400);assert.equal((await signup("a".repeat(6))).status,200);assert.equal((await signup("a".repeat(12))).status,200);

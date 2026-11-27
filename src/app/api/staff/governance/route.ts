@@ -2,6 +2,7 @@ import { getDatabase } from "@/lib/database";
 import { personBody, redactPerson } from "@/domain/people";
 import { uuid } from "@/domain/operations";
 import {publishedSettings} from '@/lib/website-content';
+import { publishedPeople } from "@/lib/public-people";
 import {
   authorized,
   operation,
@@ -44,11 +45,20 @@ export async function GET(request: Request) {
         )
       ).rows;
       const records = [];
-      for (const row of rows)
+      for (const row of rows) {
+        if (id) {
+          const entry = await enriched(client, row, actor);
+          const published = row.published
+            ? (await publishedPeople(id, client)).find(item => item.published.page === "governance")?.published
+            : undefined;
+          records.push({
+            ...entry,
+            ...(published ? { websiteContacts: { email: published.email ?? "", mobile: published.mobile ?? "" } } : {}),
+          });
+          continue;
+        }
         records.push(
-          id
-            ? await enriched(client, row, actor)
-            : {
+          {
                 ...Object.fromEntries(
                   Object.entries(row).filter(
                     ([key]) =>
@@ -69,8 +79,9 @@ export async function GET(request: Request) {
                 accepted: privatePeople(actor)
                   ? personBody(row.accepted)
                   : redactPerson(personBody(row.accepted)),
-              },
+          },
         );
+      }
       return {
         total, page, pageSize:50,
         biographyTemplate:(await publishedSettings('shared')).biographyHeading,

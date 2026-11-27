@@ -45,7 +45,7 @@ export async function POST(r: Request) {
     if (
       !Number.isInteger(i.version) ||
       i.version < 0 ||
-      !["Annual", "Life", "Patron"].includes(i.plan) ||
+      (typeof i.plan !== "string" || i.plan.length > 80) ||
       i.category !== "Professional" ||
       !Array.isArray(i.documentIds) ||
       i.documentIds.length > 100 ||
@@ -68,7 +68,11 @@ export async function POST(r: Request) {
           "Your draft changed in another tab. Reload before saving.",
           409,
         );
-      const savedPlan = existing?.plan ?? "Life";
+      const { rows: [account] } = await c.query(
+        'SELECT "requestedMembershipPlan" AS plan FROM public."user" WHERE id=$1',
+        [a.id],
+      );
+      const savedPlan = existing?.plan ?? account?.plan ?? a.plan ?? "Life";
       if (i.plan !== savedPlan)
         throw new OperationError("Only an administrator can assign your membership plan.", 400, "plan_read_only");
       const p = await policy(c);

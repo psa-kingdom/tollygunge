@@ -10,7 +10,7 @@ export async function applyHistoricalEventDetails(events: WorkbookEvent[]): Prom
   const details = (await db.query<HistoricalEventDetails & { date: string }>("SELECT source_date::text AS date,title,description,location,speakers,version FROM tpa.historical_event_details")).rows;
   const byDate = new Map(details.map(row => [row.date, row]));
   const known = new Set(events.map(event => event.date));
-  const allEvents = [...events, ...details.filter(detail => !known.has(detail.date)).map(detail => ({date: detail.date, sheet: "", rows: []}))];
+  const allEvents = [...events, ...details.filter(detail => !known.has(detail.date)).map(detail => ({date: detail.date, sheet: "", rows: [], attendanceAvailable: false}))];
   return allEvents.map(event => {
     const detail = byDate.get(event.date);
     return detail ? { ...event, title: detail.title, description: detail.description, location: detail.location, speakers: detail.speakers, version: detail.version } : event;

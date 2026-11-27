@@ -12,8 +12,6 @@ export function PersonalProfile({ email }: { email: string }) {
     [onboardingDetails, setOnboardingDetails] = useState(false),
     [verificationRequired, setVerificationRequired] = useState(false),
     [busy, setBusy] = useState(false),
-    [addresses, setAddresses] = useState<Record<string, string>>({}),
-    [addressError, setAddressError] = useState(false),
     [loadError, setLoadError] = useState(false);
   useEffect(() => {
     let active = true;
@@ -39,13 +37,6 @@ export function PersonalProfile({ email }: { email: string }) {
           setMessage(e.message);
           setLoadError(true);
         }
-      });
-    api<{ details?: Record<string, string> } | null>("/api/member/application")
-      .then((d) => {
-        if (active) setAddresses(d?.details || {});
-      })
-      .catch(() => {
-        if (active) setAddressError(true);
       });
     return () => {
       active = false;
@@ -79,8 +70,10 @@ export function PersonalProfile({ email }: { email: string }) {
           onSaved={setEntry}
         />
       )}
+      <details className="member-card profile-support-card">
+        <summary>Communication preferences</summary>
       <form
-        className="member-settings member-card profile-support-card"
+        className="member-settings"
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
@@ -98,7 +91,6 @@ export function PersonalProfile({ email }: { email: string }) {
           }
         }}
       >
-        <h3>Communication preferences</h3>
         <p>
           These choices take effect immediately and do not wait for profile
           review.
@@ -122,34 +114,17 @@ export function PersonalProfile({ email }: { email: string }) {
           Save communication preferences
         </button>
       </form>
+      </details>
       <section className="member-card profile-support-card">
         <div className="form-section-heading">
-          <h3>Address & verification</h3>
+          <h3>Verification details</h3>
           <p>
             Office and residential addresses are private and reviewed with your
             verification details.
           </p>
         </div>
-        {addressError ? (
-          <p role="alert">
-            Address summary is unavailable. Open verification to retry.
-          </p>
-        ) : (
-          <dl className="private-address-summary">
-            <div>
-              <dt>Office</dt>
-              <dd>{addresses.officeAddress || "No office address saved"}</dd>
-            </div>
-            <div>
-              <dt>Residence</dt>
-              <dd>
-                {addresses.residenceAddress || "No residential address saved"}
-              </dd>
-            </div>
-          </dl>
-        )}
         <Link href="/member/application" className="button secondary">
-          Manage verification & addresses
+          Manage verification
         </Link>
       </section>
       <p role="status">{message}</p>

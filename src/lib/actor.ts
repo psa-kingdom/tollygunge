@@ -39,7 +39,7 @@ export const currentActor = cache(async function currentActor(requestHeaders?: H
         "SELECT plan FROM tpa.application_drafts WHERE user_id=$1 LIMIT 1",
         [session.user.id],
       );
-      if (draftRes.rows[0]?.plan) plan = draftRes.rows[0].plan;
+      plan = draftRes.rows[0]?.plan ?? session.user.requestedMembershipPlan ?? undefined;
     }
   } catch {
     // Tolerant if table not accessible
@@ -48,6 +48,7 @@ export const currentActor = cache(async function currentActor(requestHeaders?: H
     id: session.user.id,
     name: session.user.name,
     email: session.user.email,
+    emailVerified: session.user.emailVerified,
     roles: rows.map((row) => row.role),
     plan,
     profileVerified,

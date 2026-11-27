@@ -142,12 +142,12 @@ export function mapImport(
       email = value("email").toLowerCase(),
       details: Record<string, string> = { fullName: name };
     const category = value("category") || "Professional",
-      plan = value("plan") || "Life";
+      plan = value("plan") || "Free";
     let error =
       category === "Professional" &&
-      ["Life", "Patron"].includes(plan)
+      plan === "Free"
         ? ""
-        : "Check category or plan.";
+        : "New accounts start on the Free plan. Use Professional category and assign paid plans from member details.";
     if (
       !name ||
       name.length > 120 ||

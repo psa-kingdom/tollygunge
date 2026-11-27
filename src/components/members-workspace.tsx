@@ -64,7 +64,7 @@ export function MembersWorkspace({
       ) : (
         <>
           <Link href="/admin/workspaces/members">
-            ← Back to association directory
+             Back to association directory
           </Link>
           <AccountDirectory key={recordId ?? "accounts"} />
         </>
@@ -396,7 +396,7 @@ function AccountDirectory() {
                         className="text-link"
                         href={`/admin/workspaces/governance?id=${selected.person_id}`}
                       >
-                        Edit / review personal details →
+                        Edit / review personal details
                       </a>
                     </p>
                   )}

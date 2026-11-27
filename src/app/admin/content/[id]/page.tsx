@@ -42,7 +42,7 @@ export default async function Page({
       <p className="notice">
         Private saved draft · only content staff can view this preview.
       </p>
-      <Link href="/admin/workspaces/content">← Content workspace</Link>
+      <Link href="/admin/workspaces/content"> Content workspace</Link>
       <div className="public-shell saved-content-preview">
         {row.kind === "page" ? (
           <PublicContentView

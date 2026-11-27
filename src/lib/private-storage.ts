@@ -4,6 +4,7 @@ import { parseR2Credentials } from "@/domain/r2-credentials";
 import {
   managedStorageCredentials,
   storageMode,
+  localStorageEndpoint,
 } from "@/domain/storage-configuration";
 import {
   GetObjectCommand,
@@ -35,11 +36,13 @@ function storage() {
   const credentials =
     managedStorageCredentials(process.env) ??
     parseR2Credentials(readFileSync(CLOUDFLARE_CREDENTIAL_FILE!, "utf8"));
+  const localEndpoint = localStorageEndpoint(process.env);
   return {
     bucket: R2_BUCKET_NAME,
     client: new S3Client({
       region: "auto",
-      endpoint: `https://${credentials.accountId}.r2.cloudflarestorage.com`,
+      endpoint: localEndpoint ?? `https://${credentials.accountId}.r2.cloudflarestorage.com`,
+      forcePathStyle: Boolean(localEndpoint),
       credentials: {
         accessKeyId: credentials.accessKeyId,
         secretAccessKey: credentials.secretAccessKey,

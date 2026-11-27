@@ -1,3 +1,4 @@
+import { PublicEventPopup } from "./public-event-popup";
 import Link from "./navigation-link";
 import { currentActor } from "@/lib/actor";
 import { AccountControls } from "./account-controls";
@@ -6,9 +7,7 @@ import { publishedSettings, publicNavigation } from "@/lib/website-content";
 import { sharedDefaults, type SharedSettings } from "@/domain/website-settings";
 import { TpaLogo } from "./tpa-logo";
 import { PublicFooter } from "./public-footer";
-import {
-  portalNavigation,
-} from "@/domain/portal-navigation";
+import { portalNavigation } from "@/domain/portal-navigation";
 import { PortalNavigation } from "./portal-navigation";
 import { WorkspaceSearch } from "./workspace-search";
 import { PortalIcon } from "./portal-icon";
@@ -45,20 +44,32 @@ export function Brand({
   settings = sharedDefaults,
   compact = false,
 }: { settings?: SharedSettings; compact?: boolean } = {}) {
+  const organisation = settings.organisation.replace(/\s+/g, " ").trim();
+  const showWordmark =
+    !compact &&
+    organisation.toLowerCase() === "tollygunge professional association";
+
   return (
     <Link
       href="/"
       className="brand"
-      aria-label={`${settings.organisation.replace(/\s+/g, " ").trim()} homepage`}
+      aria-label={`${organisation} homepage`}
     >
       <TpaLogo
         src={
           settings.logoMediaId ? `/media/${settings.logoMediaId}` : undefined
         }
       />
-      <span className="brand-name" style={{ whiteSpace: "pre-line" }}>
-        {compact ? "TPA" : settings.organisation}
-      </span>
+      {showWordmark ? (
+        <span className="brand-wordmark">
+          <span className="brand-wordmark-name">Tollygunge</span>
+          <span className="brand-wordmark-description">Professional Association</span>
+        </span>
+      ) : (
+        <span className="brand-name" style={{ whiteSpace: "pre-line" }}>
+          {compact ? "TPA" : settings.organisation}
+        </span>
+      )}
     </Link>
   );
 }
@@ -74,42 +85,10 @@ export async function Header() {
       <PublicHeaderBehavior />
       <Brand settings={settings} />
       <nav className="desktop-nav" aria-label="Primary">
-        {navigation.map((n, navIndex) => (
-          <details
-            className="nav-menu"
-            name="primary-navigation"
-            data-nav-href={n.href}
-            key={navIndex}
-          >
-            <summary>
-              {n.title}
-              <svg
-                className="nav-chevron"
-                width="12"
-                height="12"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <path d="m4 6 4 4 4-4" />
-              </svg>
-            </summary>
-            <div className="dropdown">
-              <Link className="nav-overview" href={n.href}>
-                {n.title} overview <span aria-hidden="true">↗</span>
-              </Link>
-              {n.links.map((label, i) => (
-                <Link key={i} href={`${n.href}#section-${i}`}>
-                  {label}
-                  <span className="nav-link-arrow" aria-hidden="true">
-                    →
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </details>
+        {navigation.map((n) => (
+          <Link key={n.href} href={n.href} data-nav-href={n.href}>
+            {n.title}
+          </Link>
         ))}
         <Link href={settings.contactHref} data-nav-href={settings.contactHref}>
           {settings.contactLabel}
@@ -119,16 +98,16 @@ export async function Header() {
         <Link href={actor ? "/account" : "/login"} className="login-link">
           {actor
             ? actor.roles.length
-              ? "Staff workspace ↗"
-              : "Your account ↗"
-            : `${settings.loginLabel} ↗`}
+              ? "Staff workspace "
+              : "Your account "
+            : `${settings.loginLabel.replace(/[→↗←↓]/g, "").trim()}`}
         </Link>
         {!actor && (
           <Link className="button small" href="/join">
-            {settings.joinLabel} <span>→</span>
+            {settings.joinLabel}
           </Link>
         )}
-        <AccountControls actor={actor} />
+        <AccountControls actor={actor} portal />
       </div>
       <details className="mobile-nav">
         <summary>
@@ -136,36 +115,10 @@ export async function Header() {
           <span>Menu</span>
         </summary>
         <nav aria-label="Mobile">
-          {navigation.map((n, navIndex) => (
-            <details
-              key={navIndex}
-              name="mobile-sections"
-              data-nav-href={n.href}
-            >
-              <summary>
-                {n.title}
-                <svg
-                  className="nav-chevron"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  aria-hidden="true"
-                >
-                  <path d="m4 6 4 4 4-4" />
-                </svg>
-              </summary>
-              <Link className="nav-overview" href={n.href}>
-                {n.title} overview <span aria-hidden="true">↗</span>
-              </Link>
-              {n.links.map((label, i) => (
-                <Link key={i} href={`${n.href}#section-${i}`}>
-                  {label}
-                </Link>
-              ))}
-            </details>
+          {navigation.map((n) => (
+            <Link key={n.href} href={n.href} data-nav-href={n.href}>
+              {n.title}
+            </Link>
           ))}
           <Link href={settings.contactHref}>{settings.contactLabel}</Link>
           <Link href={actor ? "/account" : "/login"}>
@@ -174,7 +127,7 @@ export async function Header() {
           {!actor && (
             <Link className="button" href="/join">
               {settings.joinLabel}
-              <span aria-hidden="true">→</span>
+
             </Link>
           )}
         </nav>
@@ -235,6 +188,7 @@ export function SiteShell({
       className={variant === "v3" ? "public-shell v3-landing" : "public-shell"}
     >
       <Header />
+      <PublicEventPopup />
       {children}
       <Footer />
     </div>

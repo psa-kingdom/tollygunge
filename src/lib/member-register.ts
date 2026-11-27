@@ -161,7 +161,9 @@ export async function provisionMemberAccount(
 function membershipDetails(raw: Record<string, unknown>, previousType?: string | null) {
   const type = raw.type ?? null,
     status = raw.status ?? null;
-  if (type !== null && !["Life", "Patron"].includes(String(type)) && !(type === "Annual" && previousType === "Annual"))
+  if (previousType === "Free" && type !== "Free")
+    throw new OperationError("Use the plan change review to change a Free membership.");
+  if (type !== null && (typeof type!=="string" || type.length>80))
     throw new OperationError("Check membership type.");
   if (
     status !== null &&
@@ -220,6 +222,14 @@ export async function saveMember(
     : null;
   if (personId && !row)
     throw new OperationError("Member not found.", 404, "member_not_found");
+  const membership = row
+    ? (
+        await c.query(
+          "SELECT * FROM tpa.memberships WHERE person_id=$1 FOR UPDATE",
+          [row.id],
+        )
+      ).rows[0]
+    : null;
   const supplied = raw.member as Record<string, unknown> | undefined;
   const unchangedMobile =
     !!row && supplied?.mobile === (row.accepted.mobile ?? row.accepted.phone);
@@ -233,18 +243,12 @@ export async function saveMember(
       ...(unchangedPrefix ? { prefix: undefined } : {}),
       ...(unchangedAddresses ? { addresses: undefined } : {}),
     },
+    true,
+    source === "import" && membership?.membership_number !== null,
   );
   if (unchangedMobile) input.mobile = String(supplied!.mobile ?? "");
   if (unchangedPrefix) input.prefix = String(supplied!.prefix ?? "");
   if (unchangedAddresses) input.addresses = row.accepted.addresses ?? {};
-  const membership = row
-    ? (
-        await c.query(
-          "SELECT * FROM tpa.memberships WHERE person_id=$1 FOR UPDATE",
-          [row.id],
-        )
-      ).rows[0]
-    : null;
   if (
     row &&
     (row.version !== raw.personVersion ||
@@ -356,7 +360,10 @@ export async function saveMember(
   const detail = membershipDetails({
     ...baseline,
     ...((raw.membership as Record<string, unknown>) ?? {}),
+    ...(!row && source === "staff" ? { status: null } : {}),
   }, membership?.type);
+  if (detail.type && detail.type!==membership?.type && !(await c.query("SELECT 1 FROM tpa.membership_plans WHERE code=$1 AND active",[detail.type])).rowCount)
+    throw new OperationError("Choose an available membership plan.");
   if (row)
     await c.query(
       "UPDATE tpa.people SET accepted=$2,draft=$2,contact_email=$3,mobile_normalized=$4,version=version+1,updated_at=now() WHERE id=$1",
@@ -377,7 +384,7 @@ export async function saveMember(
     [
       membership?.id ?? randomUUID(),
       id,
-      input.membershipNumber,
+      input.membershipNumber || null,
       detail.type,
       detail.status,
       detail.from,
