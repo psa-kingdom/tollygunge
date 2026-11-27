@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ProfileInspector } from "./profile-preview";
 import { api } from "./operations-client";
 import { CopyValue } from "./portal-values";
 
@@ -41,6 +42,9 @@ export function InvitationReleaseReview({
   pendingRecipients,
 }: ReviewProps) {
   const [review, setReview] = useState<Review>();
+  const [open, setOpen] = useState(false);
+  const [loadingSaved, setLoadingSaved] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -49,13 +53,21 @@ export function InvitationReleaseReview({
     const id = batchId ? savedReviewId : new URLSearchParams(location.search).get("invitationReview");
     if (!id) return;
     let active = true;
-    api<Review>("/api/staff/invitation-releases?id=" + encodeURIComponent(id))
-      .then((result) => { if (active) setReview(result); })
-      .catch((error) => { if (active) setMessage(error.message); });
+    const loadSaved = async () => {
+      if (!batchId) {
+        setOpen(true);
+        setLoadingSaved(true);
+      }
+      await api<Review>("/api/staff/invitation-releases?id=" + encodeURIComponent(id))
+        .then((result) => { if (active) setReview(result); })
+        .catch((error) => { if (active) setMessage(error.message); })
+        .finally(() => { if (active) setLoadingSaved(false); });
+    };
+    queueMicrotask(() => { if (active) void loadSaved(); });
     return () => { active = false; };
   }, [batchId, savedReviewId]);
 
-  const confirmedId = review?.confirmed_at ? review.id : null;
+  const confirmedId = review?.confirmed_at && (batchId || open) ? review.id : null;
   useEffect(() => {
     if (!confirmedId) return;
     let active = true;
@@ -67,14 +79,19 @@ export function InvitationReleaseReview({
     return () => { active = false; clearInterval(timer); };
   }, [confirmedId]);
 
-  async function create() {
+  async function create(ids = personIds, refresh = false) {
     setBusy(true);
+    setMessage("");
+    setAcknowledged(false);
+    if (!batchId) {
+      setOpen(true);
+      if (!refresh) setReview(undefined);
+    }
     try {
       const result = await api<Review>("/api/staff/invitation-releases",
-        batchId ? { action: "review-batch", batchId } : { action: "review", personIds },
+        batchId ? { action: "review-batch", batchId } : { action: "review", personIds: ids },
       );
       setReview(result);
-      setAcknowledged(false);
       if (!batchId) {
         const url = new URL(location.href);
         url.searchParams.set("invitationReview", result.id);
@@ -94,7 +111,7 @@ export function InvitationReleaseReview({
       setReview(await api<Review>("/api/staff/invitation-releases", {
         action: "confirm", id, idempotencyKey, batchId,
       }));
-      setMessage("Invitations queued.");
+      setMessage(batchId ? "Invitations queued." : "");
       onComplete();
     } catch (error) {
       setMessage((error as Error).message);
@@ -103,17 +120,36 @@ export function InvitationReleaseReview({
     }
   }
 
-  return (
+  function close() {
+    if (busy || loadingSaved) return;
+    setOpen(false);
+    setAcknowledged(false);
+    setMessage("");
+    const url = new URL(location.href);
+    url.searchParams.delete("invitationReview");
+    history.replaceState(null, "", url);
+  }
+
+  const refreshIds = personIds?.length
+    ? personIds
+    : review && [...review.recipients, ...review.exclusions].map((recipient) => recipient.person_id);
+  const reviewing = busy || loadingSaved;
+  const reviewActions = !review?.confirmed_at && (batchId || !reviewing) && (
+    <div className="action-row">
+      {(batchId || !!refreshIds?.length) && (
+        <button type="button" className="button secondary" disabled={!canManage || reviewing} onClick={() => void create(refreshIds, true)}>
+          {review ? "Refresh invitation review" : batchId ? "Review batch invitations" : "Retry review"}
+        </button>
+      )}
+      <Link href="/admin/workspaces/communications?invitationTemplate=1">Configure invitation template</Link>
+    </div>
+  );
+  const content = (
     <section className="invitation-release-review">
-      <div className="action-row">
-        {!review?.confirmed_at && (
-          <button className="button secondary" disabled={!canManage || busy || (!batchId && !personIds?.length)} onClick={() => void create()}>
-            {review ? "Refresh invitation review" : batchId ? "Review batch invitations" : `Review invitations for ${personIds?.length ?? 0} selected members`}
-          </button>
-        )}
-        {!review?.confirmed_at && <Link href="/admin/workspaces/communications?invitationTemplate=1">Configure invitation template</Link>}
-      </div>
-      {message && <p role="status">{message}</p>}
+      {!batchId && <h3 tabIndex={-1}>{review?.confirmed_at ? "Invitation delivery" : "Review invitations"}</h3>}
+      {!review && reviewing && <p role="status">Loading invitation review…</p>}
+      {batchId && reviewActions}
+      {message && <p role={batchId ? "status" : "alert"}>{message}</p>}
       {!review && !!pendingRecipients?.length && (
         <div className="table-scroll" role="region" aria-label="Imported invitation recipients" tabIndex={0}>
           <table>
@@ -126,8 +162,8 @@ export function InvitationReleaseReview({
       )}
       {review && (
         <>
-          <h3>{review.confirmed_at ? "Invitation delivery" : "Invitation recipient review"}</h3>
-          {review.confirmed_at && !batchId && <p>{review.results?.length ?? 0} invitations queued. Reopening this review does not send again.</p>}
+          {batchId && <h3>{review.confirmed_at ? "Invitation delivery" : "Invitation recipient review"}</h3>}
+          {review.confirmed_at && !batchId && <p role="status">{review.results?.length ?? 0} {review.results?.length === 1 ? "invitation" : "invitations"} queued.</p>}
           {!review.confirmed_at && <p>{review.recipients.length} eligible · {review.exclusions.length} excluded. Review expires {new Date(review.expires_at).toLocaleString()}.</p>}
           <div className="table-scroll" role="region" aria-label="Invitation recipients" tabIndex={0}>
             <table>
@@ -160,14 +196,43 @@ export function InvitationReleaseReview({
               <iframe title="Reviewed invitation email" sandbox="" srcDoc={review.rendered.html} />
               <div className="action-row">
                 <label><input type="checkbox" checked={acknowledged} disabled={busy} onChange={(event) => setAcknowledged(event.target.checked)} /> I verified the listed recipients and the approved email</label>
-                <button className="button" disabled={!canManage || busy || !acknowledged} onClick={() => void send(review.id, review.idempotency_key)}>
-                  {batchId ? `Send ${review.recipients.length} ${review.recipients.length === 1 ? "invitation" : "invitations"}` : "Confirm and send invitations"}
+                <button type="button" className="button" disabled={!canManage || reviewing || !acknowledged} onClick={() => void send(review.id, review.idempotency_key)}>
+                  {batchId ? `Send ${review.recipients.length} ${review.recipients.length === 1 ? "invitation" : "invitations"}` : busy ? "Sending…" : "Confirm and send invitations"}
                 </button>
               </div>
             </div>
           )}
         </>
       )}
+      {!batchId && reviewActions}
     </section>
+  );
+
+  if (batchId) return content;
+
+  return (
+    <>
+      <button
+        ref={trigger}
+        type="button"
+        className="button"
+        disabled={!canManage || reviewing || (!personIds?.length && !review)}
+        onClick={() => personIds?.length ? void create() : setOpen(true)}
+      >
+        {personIds?.length ? `Review invitations (${personIds.length})` : review?.confirmed_at ? "View invitation delivery" : "Review invitations"}
+      </button>
+      {open && (
+        <ProfileInspector
+          modal
+          label="Invitation review"
+          barLabel="Account invitations"
+          onClose={close}
+          returnFocus={trigger}
+          closeDisabled={reviewing}
+        >
+          {content}
+        </ProfileInspector>
+      )}
+    </>
   );
 }

@@ -202,6 +202,7 @@ export function ProfileInspector({
   returnFocus,
   modal = false,
   closeDisabled = false,
+  barLabel = "Profile details",
 }: {
   children: React.ReactNode;
   label: string;
@@ -209,6 +210,7 @@ export function ProfileInspector({
   returnFocus?: RefObject<HTMLElement | null>;
   modal?: boolean;
   closeDisabled?: boolean;
+  barLabel?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const first = useRef<HTMLElement | null>(null);
@@ -270,7 +272,7 @@ export function ProfileInspector({
       }}
     >
       <div className={styles.inspectorBar}>
-        <span>Profile details</span>
+        <span>{barLabel}</span>
         <button type="button" className={styles.inspectorClose} onClick={onClose} disabled={closeDisabled} aria-label="Close details">
           <PortalIcon name="close" />
         </button>

@@ -181,12 +181,15 @@ test("held account is visible, activates only after release, and retains private
     await expect(page.getByRole('combobox',{name:'Invitations',exact:true})).toHaveValue('held');
     await openHeldMember();
     await page.getByRole('button',{name:'Review this member invitation',exact:true}).click();
-    await page.getByRole('button',{name:'Review invitations for 1 selected members',exact:true}).click();
-    await expect(page.getByRole('heading',{name:'Invitation recipient review',exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'Review invitations (1)',exact:true}).click();
+    const invitationDialog = page.getByRole('dialog', { name: 'Invitation review' });
+    await expect(invitationDialog.getByRole('region', { name: 'Invitation recipients' })).toContainText(email);
+    await expect(invitationDialog.locator('iframe[title="Reviewed invitation email"]')).toBeVisible();
     await page.reload();
-    await expect(page.getByRole('heading',{name:'Invitation recipient review',exact:true})).toBeVisible();
-    await page.getByLabel('I verified the listed recipients and the approved email',{exact:true}).check();
-    await page.getByRole('button',{name:'Confirm and send invitations',exact:true}).click();
+    await expect(invitationDialog.getByRole('region', { name: 'Invitation recipients' })).toContainText(email);
+    await expect(invitationDialog.getByRole('button',{name:'Confirm and send invitations',exact:true})).toBeDisabled();
+    await invitationDialog.getByLabel('I verified the listed recipients and the approved email',{exact:true}).check();
+    await invitationDialog.getByRole('button',{name:'Confirm and send invitations',exact:true}).click();
     await expect
       .poll(
         async () =>
@@ -199,7 +202,7 @@ test("held account is visible, activates only after release, and retains private
       )
       .toBe(1);
     await page.reload();
-    await expect(page.getByText('1 invitations queued. Reopening this review does not send again.',{exact:true})).toBeVisible();
+    await expect(invitationDialog.getByText('1 invitation queued.',{exact:true})).toBeVisible();
     expect((await db.query('SELECT count(*)::int n FROM tpa.onboarding_mail WHERE user_id=$1',[user])).rows[0].n).toBe(1);
     const payload = (
       await db.query(
