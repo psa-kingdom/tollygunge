@@ -17,6 +17,7 @@ type Row = {
   proposedChanges?: unknown;
   warnings?: string[];
   sourceRow?: number;
+  source?: Record<string, string>;
   membershipNumber?: string;
   diagnosticIssues?: {
     code: string;
@@ -290,90 +291,96 @@ export function BulkOnboarding() {
           </button>
         </>
       )}
-      {preview?.mode === "members" && (
+      {preview && (
         <>
-          <button
-            className="button secondary"
-            onClick={() => void downloadCorrections()}
-          >
-            Download source correction template
-          </button>
-          <p>
-            Keep this original preview open when uploading its corrected
-            template. Source row numbers and original file hash must remain
-            unchanged.
-          </p>
-          <MemberImportJobProgress
-            key={preview.id}
-            batchId={preview.id}
-            version={preview.version ?? 1}
-          />
-        </>
-      )}
-      {preview && !preview.committed_at && (
-        <>
-          <ul>
-            {preview.rows.map((r, i) => (
-              <li key={i}>
-                {r.sourceRow ? `Row ${r.sourceRow} · ` : ""}
-                {r.name} · {r.email} · {r.membershipNumber} ·{" "}
-                {r.status ?? "Preview"} ·{" "}
-                {r.error ?? r.reason ?? "Ready to check at commit"}
-                {r.warnings?.length ? " · " + r.warnings.join(" ") : ""}
-                {r.fieldErrors && (
-                  <ul>
-                    {Object.entries(r.fieldErrors).map(([field, error]) => (
-                      <li key={field}>
-                        {field}: {error}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {!!r.diagnosticIssues?.length && (
-                  <details>
-                    <summary>All independently checked issues</summary>
-                    <ul>
-                      {r.diagnosticIssues.map((issue, index) => (
-                        <li key={index}>
-                          {issue.code} · {issue.field}: {issue.reason}
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
-                {!!r.normalizations?.length && (
-                  <details>
-                    <summary>Recorded normalizations</summary>
-                    <pre>{JSON.stringify(r.normalizations, null, 2)}</pre>
-                  </details>
-                )}
-                {Boolean(r.member || r.match || r.proposedChanges) && (
-                  <details>
-                    <summary>
-                      Validated fields and existing-record comparison
-                    </summary>
-                    <pre
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        overflowWrap: "anywhere",
-                      }}
-                    >
-                      {JSON.stringify(
-                        {
-                          member: r.member,
-                          match: r.match,
-                          proposedChanges: r.proposedChanges,
-                        },
-                        null,
-                        2,
-                      )}
-                    </pre>
-                  </details>
-                )}
-              </li>
-            ))}
-          </ul>
-          {preview.mode !== "members" && (
+          <div className="import-preview-heading">
+            <div>
+              <h2 id="import-preview-title">Uploaded records</h2>
+              <p>{preview.rows.length.toLocaleString()} {preview.rows.length === 1 ? "row" : "rows"} found</p>
+            </div>
+            {preview.mode === "members" && (
+              <button className="button secondary" onClick={() => void downloadCorrections()}>
+                Download source correction template
+              </button>
+            )}
+          </div>
+          {preview.rows.length > 0 && (
+            <div className="table-scroll import-preview-scroll" role="region" aria-labelledby="import-preview-title" tabIndex={0}>
+              <table className="import-preview-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Row</th>
+                    <th scope="col">Member</th>
+                    <th scope="col">Membership no.</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Validation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {preview.rows.map((row, index) => {
+                    const hasDetails = Boolean(
+                      row.fieldErrors || row.diagnosticIssues?.length ||
+                      row.normalizations?.length || row.member || row.match || row.proposedChanges,
+                    );
+                    const sourceName = [row.source?.["First Name"], row.source?.["Last Name"]]
+                      .filter(Boolean).join(" ").trim();
+                    const status = row.status === "created" ? "Ready to import"
+                      : row.status === "failed" ? "Needs correction"
+                      : row.status ?? (row.error ? "Invalid" : "Preview");
+                    return (
+                      <tr key={row.sourceRow ?? index}>
+                        <td>{row.sourceRow ?? index + 1}</td>
+                        <th scope="row">
+                          {row.name || sourceName || "Name missing"}
+                          {row.email && <span className="import-preview-email">{row.email}</span>}
+                        </th>
+                        <td>{row.membershipNumber || "—"}</td>
+                        <td><span className="import-preview-status">{status}</span></td>
+                        <td>
+                          {row.error ?? row.reason ?? "—"}
+                          {row.warnings?.map((warning, index) => <p key={index}>{warning}</p>)}
+                          {hasDetails && (
+                            <details>
+                              <summary>Validation details</summary>
+                              {Object.entries(row.fieldErrors ?? {}).map(([field, error]) => (
+                                <p key={field}><strong>{field}</strong> {error}</p>
+                              ))}
+                              {row.diagnosticIssues?.map((issue, index) => (
+                                <p key={index}><strong>{issue.field}</strong> {issue.reason}</p>
+                              ))}
+                              {!!row.normalizations?.length && (
+                                <details>
+                                  <summary>Recorded normalizations</summary>
+                                  <pre>{JSON.stringify(row.normalizations, null, 2)}</pre>
+                                </details>
+                              )}
+                              {Boolean(row.member || row.match || row.proposedChanges) && (
+                                <details>
+                                  <summary>Existing-record comparison</summary>
+                                  <pre>{JSON.stringify({
+                                    member: row.member,
+                                    match: row.match,
+                                    proposedChanges: row.proposedChanges,
+                                  }, null, 2)}</pre>
+                                </details>
+                              )}
+                            </details>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {preview.mode === "members" && (
+            <details className="import-correction-help">
+              <summary>How to upload corrections</summary>
+              <p>Keep this preview open while uploading the corrected template. Keep the original source row numbers and file hash.</p>
+            </details>
+          )}
+          {preview.mode !== "members" && !preview.committed_at && (
             <button
               className="button"
               disabled={busy}
@@ -434,6 +441,11 @@ export function BulkOnboarding() {
             </button>
           )}
         </>
+      )}
+      {preview?.mode === "members" && (
+        <div className="import-preview-footer">
+          <MemberImportJobProgress key={preview.id} batchId={preview.id} version={preview.version ?? 1} />
+        </div>
       )}
       <ul>
         {busy && preview && (
@@ -506,7 +518,7 @@ export function BulkOnboarding() {
           </li>
         ))}
       </ul>
-      {preview && (
+      {preview && (preview.mode !== "members" || results.length > 0) && (
         <button
           className="button secondary"
           disabled={busy}

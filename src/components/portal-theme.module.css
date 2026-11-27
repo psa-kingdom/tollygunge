@@ -391,6 +391,24 @@
 .portal :global(.workspace-body input[type="file"]::file-selector-button) { padding:7px 10px; margin-right:10px; border:0; border-radius:5px; background:var(--portal-active); color:var(--accent-text); font:inherit; font-weight:600; cursor:pointer; }
 .portal :global(.workspace-import-review:empty) { display:none; }
 .portal :global(.workspace-import-review:not(:empty)) { padding:24px; border:1px solid var(--line); border-radius:10px; background:var(--surface); margin-bottom:20px; }
+.portal :global(.import-preview-heading) { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+.portal :global(.import-preview-heading h2) { margin:0; font-size:20px; }
+.portal :global(.import-preview-heading p) { margin:4px 0 0; color:var(--muted); }
+.portal :global(.import-preview-scroll) { overflow-x:auto; border-radius:var(--radius-panel); }
+.portal :global(.import-preview-table) { width:100%; min-width:680px; table-layout:fixed; background:var(--paper); }
+.portal :global(.import-preview-table th:first-child) { width:9%; }
+.portal :global(.import-preview-table th:nth-child(2)) { width:25%; }
+.portal :global(.import-preview-table th:nth-child(3)) { width:17%; }
+.portal :global(.import-preview-table th:nth-child(4)) { width:13%; }
+.portal :global(.import-preview-table :is(th,td)) { padding:12px; vertical-align:top; text-align:left; overflow-wrap:anywhere; }
+.portal :global(.import-preview-table thead) { background:var(--surface-muted); }
+.portal :global(.import-preview-table :is(p, details)) { margin:6px 0 0; }
+.portal :global(.import-preview-table pre) { white-space:pre-wrap; overflow-wrap:anywhere; margin:6px 0 0; }
+.portal :global(.import-preview-email) { display:block; color:var(--muted); font-weight:400; margin-top:3px; }
+.portal :global(.import-preview-status) { font-weight:650; text-transform:capitalize; }
+.portal :global(.import-correction-help) { margin-top:12px; color:var(--muted); }
+.portal :global(.import-preview-footer) { margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+.portal :global(.import-preview-footer section > p:first-child) { margin-top:0; color:var(--muted); }
 .portal :global(.workspace-notice-disclosure) { border:1px solid var(--line); border-radius:8px; padding:0; margin:0 0 20px; background:var(--surface); font-size:12px; }
 .portal :global(.workspace-notice-disclosure > summary) { color:var(--muted); font-weight:500; min-height:44px; padding:12px 16px; }
 .portal :global(.workspace-notice-disclosure[open] > :not(summary)) { margin:0 16px 16px; }

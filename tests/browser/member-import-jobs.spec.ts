@@ -18,6 +18,12 @@ test('member import runs independently, reload restores progress and correction 
   await page.getByLabel('CSV/XLSX (5 MB, 1,000 users)').setInputFiles({name:'synthetic.csv',mimeType:'text/csv',buffer:Buffer.from(rows.map(r=>r.join(',')).join('\n'))});
   await page.getByRole('button',{name:'Validate member workbook',exact:true}).click();
   await expect(page.getByRole('button',{name:'Start reviewed member import'})).toBeVisible();
+  const uploaded = page.getByRole('region', { name: 'Uploaded records' }).getByRole('table');
+  await expect(uploaded.getByRole('row')).toHaveCount(3);
+  const invalid = uploaded.getByRole('row').filter({ hasText: 'Browser Invalid' });
+  await expect(invalid).toContainText('Needs correction');
+  await invalid.getByText('Validation details', { exact: true }).click();
+  await expect(invalid.locator('details[open]')).toHaveCount(1);
   const previewId=new URL(page.url()).searchParams.get('id');expect(previewId).toBeTruthy();
   const download=page.waitForEvent('download');await page.getByRole('button',{name:'Download source correction template'}).click();const downloaded=await download;const csv=await readFile((await downloaded.path())!,'utf8');expect(csv).toContain('Original Source Row');expect(csv).toContain('Original Source Hash');
   await page.getByRole('button',{name:'Start reviewed member import'}).click();await expect(page.getByRole('status').filter({hasText:'records processed'})).toBeVisible();
