@@ -34,11 +34,7 @@ export async function GET(r: Request) {
     const actor = await authorized(r, "staff:manage");
     const url = new URL(r.url);
     if (url.searchParams.has("template")) {
-      const fields = ["members", "existing-members"].includes(
-        url.searchParams.get("mode") ?? "",
-      )
-        ? memberHeaders
-        : ["name", "email", "phone"];
+      const fields = memberHeaders;
       if (url.searchParams.get("template") === "xlsx") {
         const w = new ExcelJS.Workbook();
         w.addWorksheet("Accounts").addRow(fields);

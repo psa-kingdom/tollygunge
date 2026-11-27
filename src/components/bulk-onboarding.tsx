@@ -160,7 +160,7 @@ export function BulkOnboarding() {
       />
       <div className="workspace-import-layout">
       <WorkspacePanel title="Prepare your import" description="Download the template and upload your completed workbook." id="bulk-import-upload">
-      <p>Upload a name and email for each new Free member. Phone is optional. The import creates login accounts and holds invitations for staff review.</p>
+      <p>Use the member workbook to include names, membership numbers, contact details and addresses. Name and email are required. The import creates Free accounts and holds invitations for staff review.</p>
       <div className="action-row workspace-template-actions">
         <a className="button secondary"
           href="/api/staff/onboarding-import?template=csv&mode=invitation"
@@ -196,7 +196,7 @@ export function BulkOnboarding() {
         Preview uploaded records
       </button>
       </WorkspacePanel>
-      <WorkspacePanel title="Before you begin" className="workspace-help-panel"><ul className="workspace-guidance-list"><li><strong>Start with the right template</strong><span>Keep the name, email and phone column headers from the template.</span></li><li><strong>Validate before committing</strong><span>Review matched identities, duplicates and corrections before importing.</span></li><li><strong>Review invitations separately</strong><span>New account invitations remain held until recipients and the email are approved.</span></li></ul></WorkspacePanel>
+      <WorkspacePanel title="Before you begin" className="workspace-help-panel"><ul className="workspace-guidance-list"><li><strong>Start with the right template</strong><span>Keep the 13 column headers from the supplied member workbook.</span></li><li><strong>Validate before committing</strong><span>Review matched identities, duplicates and corrections before importing.</span></li><li><strong>Review invitations separately</strong><span>New account invitations remain held until recipients and the email are approved.</span></li></ul></WorkspacePanel>
       </div>
       <div className="workspace-import-review" hidden={!preview && !results.length}>
       {preview && (
