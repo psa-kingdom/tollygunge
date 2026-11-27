@@ -526,7 +526,12 @@
     grid-template-columns: 1fr;
   }
   .modalHeader {
+    flex-wrap: wrap;
+    gap: 12px;
     padding: 20px;
+  }
+  .modalHeaderActions {
+    margin-inline-start: auto;
   }
   .modalMeta,
   .tabs {

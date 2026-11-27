@@ -14,7 +14,7 @@ import { financeExport } from "@/lib/finance-export";
 export const runtime = "nodejs";
 export async function GET(r: Request) {
   try {
-    const actor = await authorized(r, "payments:manage"),
+    const actor = await authorized(r, "finance:read"),
       params = new URL(r.url).searchParams,
       format = params.get("format");
     if (format !== "pdf" && format !== "xlsx")

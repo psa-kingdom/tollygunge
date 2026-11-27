@@ -1,4 +1,5 @@
 "use client";
+import { canReviewFinanceEntry, type financeReviewScope } from "@/domain/access";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { api } from "./operations-client";
@@ -98,6 +99,8 @@ type Data = {
   }[];
   actorId: string;
   reviewer: boolean;
+  canWriteExpenses: boolean;
+  reviewScope: ReturnType<typeof financeReviewScope>;
   totals: {
     received: number;
     refunded: number;
@@ -205,6 +208,7 @@ export function FinanceWorkspace({
       event?.archived_at ||
       event?.status === "cancelled"
     );
+  const expenseWriter = !!data?.canWriteExpenses && !closed;
   const writer = !!data && !data.reviewer && !closed,
     formData = data,
     formReady = formData?.filters.eventId === eventId;
@@ -212,7 +216,7 @@ export function FinanceWorkspace({
     data?.entries.filter(
       (entry) =>
         ["submitted", "approved", "returned"].includes(entry.status) &&
-        (data.reviewer ? entry.source !== "member" : entry.source === "member"),
+        canReviewFinanceEntry(data.reviewScope, entry),
     ) ?? [];
   const pending = submissions.filter((entry) => entry.status === "submitted");
   const reviewed = submissions.filter((entry) => entry.status !== "submitted");
@@ -471,7 +475,7 @@ export function FinanceWorkspace({
         </div>
         {data && fixedEventId && (
           <div className={styles.headerActions}>
-            {fixedEventId && !data.reviewer && (
+            {data.canWriteExpenses && (
               <button
                 className="button"
                 onClick={() => {
@@ -799,7 +803,7 @@ export function FinanceWorkspace({
                   </label>
                 )}
                 <div className={styles.collectionActions}>
-                  <button className="button">Submit to super admin</button>
+                  <button className="button">Submit for approval</button>
                   <button
                     type="button"
                     onClick={() => {
@@ -1253,11 +1257,11 @@ export function FinanceWorkspace({
                 icon="wallet"
                 title="No expenses yet"
                 description={
-                  writer
-                    ? "Add the first expense and submit it for super-admin approval."
+                  expenseWriter
+                    ? "Add the first expense and submit it for approval."
                     : "Expense submissions will appear here once an admin adds them."
                 }
-                actionLabel={writer ? "Add first expense" : undefined}
+                actionLabel={expenseWriter ? "Add first expense" : undefined}
                 onAction={() => beginSheet()}
               />
             )}
@@ -1327,7 +1331,7 @@ export function FinanceWorkspace({
                   <span className={styles.sheetStatus}>
                     {approvalStatus(s)}
                   </span>
-                  {writer &&
+                  {expenseWriter &&
                     (s.status === "approved" ||
                       (["draft", "returned"].includes(s.status) &&
                         s.created_by === data?.actorId)) && (
@@ -1339,7 +1343,7 @@ export function FinanceWorkspace({
                     )}
                 </section>
               ))}
-            {sheet !== undefined && writer && (
+            {sheet !== undefined && expenseWriter && (
               <form
                 className="member-settings"
                 onSubmit={(e) => {
@@ -1457,7 +1461,9 @@ export function FinanceWorkspace({
           >
             <p>
               {data?.reviewer
-                ? "Review admin-created receipts, refunds, and complete expense sheets."
+                ? data.reviewScope === "expenses"
+                  ? "Review submitted expense sheets."
+                  : "Review admin-created receipts, refunds, and complete expense sheets."
                 : "Review the member’s payment proof before confirming receipt. No super-admin approval is needed."}
             </p>
             {submissions.length ? (
@@ -1657,9 +1663,7 @@ export function FinanceWorkspace({
             {review.status === "submitted" &&
               data &&
               review.created_by !== data.actorId &&
-              (data.reviewer
-                ? review.source !== "member"
-                : review.source === "member") && (
+              canReviewFinanceEntry(data.reviewScope, review) && (
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -1709,7 +1713,7 @@ export function FinanceWorkspace({
                   </fieldset>
                 </form>
               )}
-            {writer &&
+            {(review.kind === "expenses" ? expenseWriter : writer) &&
               !reviewClosed &&
               review.status === "approved" &&
               !review.registration_id && (
@@ -1743,7 +1747,7 @@ export function FinanceWorkspace({
                     });
                   }}
                 >
-                  Submit void for super-admin approval
+                  Submit void for approval
                 </button>
               )}
             {message && <p role="status">{message}</p>}

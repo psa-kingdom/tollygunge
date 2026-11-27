@@ -44,6 +44,7 @@ const roleDescriptions: Record<StaffRole, string> = {
   communications_operator: "Manage campaigns, conversations and inquiries.",
   finance_operator:
     "Manage collection accounts and verify member payment receipts.",
+  finance_approver: "Review and approve event and other expense submissions.",
 };
 const roleIcons: Record<StaffRole, string> = {
   super_administrator: "shield",
@@ -53,6 +54,7 @@ const roleIcons: Record<StaffRole, string> = {
   event_operator: "calendar",
   communications_operator: "message",
   finance_operator: "wallet",
+  finance_approver: "shield",
 };
 
 export function StaffAccess() {

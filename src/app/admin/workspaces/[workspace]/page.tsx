@@ -34,7 +34,7 @@ const permissions: Record<string, Permission> = {
   events: "events:manage",
   content: "content:publish",
   communications: "communications:manage",
-  payments: "payments:manage",
+  payments: "finance:read",
   "payment-details": "payments:manage",
   "membership-plans": "staff:manage",
   crm: "communications:manage",

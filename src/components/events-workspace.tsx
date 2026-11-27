@@ -756,10 +756,27 @@ function EventDetails({
     <Popup
       title={editing ? "Edit event" : event?.title || entry.title}
       close={() => { if (!deleting) close(); }}
-      action={canDelete && !editing && (event || entry.historical) && (
-        <button type="button" className="button danger" disabled={(!!entry.live && !loaded) || busy || deleting} onClick={() => void deleteEvent()}>
-          {deleting ? "Deleting…" : "Delete event"}
-        </button>
+      action={!editing && (
+        <>
+          {event && !frozen && (
+            <button
+              type="button"
+              className="button secondary"
+              disabled={!loaded || busy || deleting}
+              onClick={() => {
+                setPublishError("");
+                setEditing(true);
+              }}
+            >
+              Edit event
+            </button>
+          )}
+          {canDelete && (event || entry.historical) && (
+            <button type="button" className="button danger" disabled={(!!entry.live && !loaded) || busy || deleting} onClick={() => void deleteEvent()}>
+              {deleting ? "Deleting…" : "Delete event"}
+            </button>
+          )}
+        </>
       )}
     >
       {editing && event ? (
@@ -878,43 +895,31 @@ function EventDetails({
                   </section>
                 )}
                 {publishError && <p role="alert">{publishError}</p>}
-                {event && !frozen && (
+                {event?.status === "draft" && !frozen && (
                   <footer className={styles.actions}>
                     <button
-                      className="button secondary"
+                      className="button gold"
                       disabled={!loaded || busy || deleting}
-                      onClick={() => {
+                      onClick={async () => {
+                        setBusy(true);
                         setPublishError("");
-                        setEditing(true);
+                        try {
+                          await api("/api/staff/events", {
+                            action: "publish",
+                            id: event.id,
+                            version: event.version,
+                          });
+                          await load();
+                          await refresh();
+                        } catch (e) {
+                          setPublishError((e as Error).message);
+                        } finally {
+                          setBusy(false);
+                        }
                       }}
                     >
-                      Edit event
+                      {busy ? "Publishing…" : "Publish event"}
                     </button>
-                    {event.status === "draft" && (
-                      <button
-                        className="button gold"
-                        disabled={!loaded || busy || deleting}
-                        onClick={async () => {
-                          setBusy(true);
-                          setPublishError("");
-                          try {
-                            await api("/api/staff/events", {
-                              action: "publish",
-                              id: event.id,
-                              version: event.version,
-                            });
-                            await load();
-                            await refresh();
-                          } catch (e) {
-                            setPublishError((e as Error).message);
-                          } finally {
-                            setBusy(false);
-                          }
-                        }}
-                      >
-                        {busy ? "Publishing…" : "Publish event"}
-                      </button>
-                    )}
                   </footer>
                 )}
               </>

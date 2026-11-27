@@ -76,7 +76,7 @@ const groups: {
         label: "Finance",
         href: "/admin/workspaces/payments",
         icon: "wallet",
-        permission: "payments:manage",
+        permission: "finance:read",
       },
       {
         label: "Membership plans",

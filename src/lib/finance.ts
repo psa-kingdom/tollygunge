@@ -4,7 +4,7 @@ import type { PoolClient } from "pg";
 import { getDatabase } from "./database";
 import { audit, OperationError } from "./operation-api";
 import { editableEvent, lockOperationalEvent } from "./event-operations";
-import { hasPermission } from "@/domain/access";
+import { canReviewFinanceEntry, canWriteFinance, financeReviewScope, hasPermission } from "@/domain/access";
 import {
   expenseLines,
   financeAmount,
@@ -30,13 +30,11 @@ export async function financeHistory(
   );
   await audit(c, actor, "finance." + action, id);
 }
-export function financeWriter(actor: FinanceActor) {
-  if (
-    !hasPermission(actor.roles, "payments:manage") ||
-    hasPermission(actor.roles, "finance:approve")
-  )
+export function financeWriter(actor: FinanceActor, action?: unknown) {
+  const expenses = action === "sheet.save" || action === "sheet.add";
+  if (!canWriteFinance(actor.roles, expenses))
     throw new OperationError(
-      "Admins enter finances; the super admin reviews them.",
+      "Finance reviewers cannot enter submissions.",
       403,
     );
 }
@@ -175,7 +173,7 @@ export async function createReceipt(
     method = text(i.method, "Method", 80, 1),
     reference = text(i.reference, "Reference", 200, 3),
     note = text(i.note ?? "", "Note", 1000, member ? 0 : 3);
-  if (!member) await requireSuperAdmin(c);
+  if (!member) await requireFinanceReviewer(c);
   await c.query(
     `INSERT INTO tpa.finance_entries(id,event_id,kind,source,registration_id,label,amount_paise,entry_date,method,reference,note,status,created_by,manual_participant_name)
  VALUES($1,$2,'receipt',$3,$4,$5,$6,$7,$8,$9,$10,'submitted',$11,$12)`,
@@ -206,16 +204,19 @@ export async function createReceipt(
   });
   return { id };
 }
-async function requireSuperAdmin(c: PoolClient) {
+async function requireFinanceReviewer(c: PoolClient, expenses = false) {
   if (
     !(
       await c.query(
-        "SELECT 1 FROM tpa.staff_roles WHERE role='super_administrator'",
+        "SELECT 1 FROM tpa.staff_roles WHERE role='super_administrator' OR ($1 AND role='finance_approver') LIMIT 1",
+        [expenses],
       )
     ).rowCount
   )
     throw new OperationError(
-      "A super admin must be set up before you can submit finances for approval. You can save a draft now.",
+      expenses
+        ? "Assign a Finance Approver or set up a super admin before submitting expenses. You can save a draft now."
+        : "A super admin must be set up before you can submit finances for approval. You can save a draft now.",
       409,
     );
 }
@@ -353,11 +354,10 @@ export async function financeMutation(
         409,
       );
     const member = f.source === "member";
+    const scope = financeReviewScope(actor.roles);
     if (
-      member
-        ? !hasPermission(actor.roles, "payments:manage") ||
-          hasPermission(actor.roles, "finance:approve")
-        : !hasPermission(actor.roles, "finance:approve")
+      !canReviewFinanceEntry(scope, f) ||
+      (scope === "member" && !hasPermission(actor.roles, "payments:manage"))
     )
       throw new OperationError(
         "This submission requires its designated reviewer.",
@@ -398,9 +398,9 @@ export async function financeMutation(
     );
     return { saved: true };
   }
-  financeWriter(actor);
+  financeWriter(actor, action);
   if (action === "refund.create") {
-    await requireSuperAdmin(c);
+    await requireFinanceReviewer(c);
     const registrationId = uuid(i.registrationId),
       r = (
         await c.query(
@@ -583,7 +583,7 @@ export async function financeMutation(
   }
   const id = existing?.id ?? uuid(i.id),
     status = i.submit === true || kind !== "expenses" ? "submitted" : "draft";
-  if (status === "submitted") await requireSuperAdmin(c);
+  if (status === "submitted") await requireFinanceReviewer(c, kind === "expenses");
   if (existing)
     await c.query(
       `UPDATE tpa.finance_entries SET lines=$2,amount_paise=$3,entry_date=$4,label=$5,method=$6,reference=$7,note=$8,status=$9,manual_participant_name=$10,version=version+1 WHERE id=$1`,
