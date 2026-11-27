@@ -37,9 +37,18 @@ export async function POST(r: Request) {
           "Invitation is expired or already used. Ask TPA for a new invitation.",
           410,
         );
-      await c.query('SELECT id FROM public."user" WHERE id=$1 FOR UPDATE', [
-        row.user_id,
-      ]);
+      const { rows: [account] } = await c.query(
+        'SELECT id FROM public."user" WHERE id=$1 FOR UPDATE',
+        [row.user_id],
+      );
+      if (
+        !account ||
+        (await c.query(
+          "SELECT 1 FROM tpa.people WHERE user_id=$1 AND directory_deleted_at IS NOT NULL",
+          [row.user_id],
+        )).rowCount
+      )
+        throw new OperationError("This invitation is no longer available.", 410);
       if (
         (
           await c.query(

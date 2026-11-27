@@ -9,7 +9,7 @@ export const currentActor = cache(async function currentActor(requestHeaders?: H
   const session = await getAuth().api.getSession({
     headers: requestHeaders ?? (await headers()),
   });
-  if (!session) return null;
+  if (!session || session.user.email.endsWith("@accounts.invalid")) return null;
   const { rows } = await getDatabase().query<{ role: string }>(
     "SELECT role FROM tpa.staff_roles WHERE user_id=$1",
     [session.user.id],

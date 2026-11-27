@@ -12,6 +12,7 @@ import { personBody, type PersonBody } from "@/domain/people";
 import { validateAddresses } from "./member-address";
 import { OperationError } from "./operation-error";
 import { audit } from "./operation-audit";
+import { releasePreviouslyDeletedEmail } from "./member-deletion";
 import { createInvitedAccount } from "./account-provisioning";
 type DB = Pick<Pool | PoolClient, "query">;
 export type Match = {
@@ -299,6 +300,7 @@ export async function saveMember(
       false,
       source === "import" ? "as-entered" : "reference",
     );
+  if (!row && source === "staff") await releasePreviouslyDeletedEmail(c, actorId, input.email);
   if (
     !row &&
     (

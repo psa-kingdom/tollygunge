@@ -30,6 +30,7 @@ type Member = {
   user_id: string | null;
   account_created_at: string | null;
   login_ready: boolean;
+  protected_account?: boolean;
   person: {
     name: string;
     prefix?: string;
@@ -179,7 +180,7 @@ export function MemberRegister({
   async function resolveArchivedRecord(member: Member, action: "restore" | "delete-archived") {
     const restoring = action === "restore";
     if (!restoring && !window.confirm(
-      `Delete the archived record for ${member.person.name}? It will be removed from the directory and cannot be restored there. The login account, payments and history will be retained.`,
+      `Delete the archived record for ${member.person.name}? This removes sign-in access and frees the email for reuse. Payment records and history are retained.`,
     )) return;
 
     setBusy(true);
@@ -718,10 +719,12 @@ export function MemberRegister({
                           onClick={() => void resolveArchivedRecord(selected, "restore")}>
                           Restore member
                         </button>
-                        <button type="button" className="button danger" disabled={busy}
-                          onClick={() => void resolveArchivedRecord(selected, "delete-archived")}>
-                          Delete archived record
-                        </button>
+                        {!selected.protected_account && (
+                          <button type="button" className="button danger" disabled={busy}
+                            onClick={() => void resolveArchivedRecord(selected, "delete-archived")}>
+                            Delete archived record
+                          </button>
+                        )}
                       </div>
                     )}
                     {canManageDetails && (

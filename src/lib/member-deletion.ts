@@ -31,6 +31,66 @@ export async function deleteMember(
   return { deleted: true, recoverable: true };
 }
 
+async function retireArchivedLogin(
+  client: Pick<PoolClient, "query">,
+  actorId: string,
+  userId: string,
+  expectedEmail?: string,
+) {
+  const { rows: [account] } = await client.query(
+    'SELECT lower(btrim(email)) AS email FROM public."user" WHERE id=$1 FOR UPDATE',
+    [userId],
+  );
+  if (!account || (expectedEmail !== undefined && account.email !== expectedEmail)) return false;
+  const protectedAccount = await client.query(
+    `SELECT 1 WHERE EXISTS(SELECT FROM tpa.staff_roles WHERE user_id=$1)
+      OR EXISTS(SELECT FROM tpa.operator_approved_identities WHERE user_id=$1)`,
+    [userId],
+  );
+  if (userId === actorId || protectedAccount.rowCount)
+    throw new OperationError(
+      "This email belongs to a staff account. Restore the record from Archives to edit its membership, or have an authorized administrator remove staff access before deleting the account.",
+      409,
+      "staff_account_retained",
+    );
+
+  // Keep the user ID for historical references while releasing its sign-in email.
+  await client.query(
+    `UPDATE public."user" SET email=$2,"emailVerified"=false,"updatedAt"=now() WHERE id=$1`,
+    [userId, `deleted-${randomUUID()}@accounts.invalid`],
+  );
+  await client.query('DELETE FROM public."session" WHERE "userId"=$1', [userId]);
+  await client.query('DELETE FROM public."account" WHERE "userId"=$1', [userId]);
+  await client.query(
+    `DELETE FROM public."verification" WHERE value=$1 AND identifier LIKE 'reset-password:%'`,
+    [userId],
+  );
+  return true;
+}
+
+export async function releasePreviouslyDeletedEmail(
+  client: Pick<PoolClient, "query">,
+  actorId: string,
+  email: string,
+) {
+  const { rows } = await client.query(
+    `SELECT p.id,p.user_id,lower(btrim(u.email))=$1 AS matches_login
+     FROM tpa.people p LEFT JOIN public."user" u ON u.id=p.user_id
+     WHERE p.directory_deleted_at IS NOT NULL
+       AND (lower(btrim(p.contact_email))=$1 OR lower(btrim(u.email))=$1)
+     ORDER BY p.id FOR UPDATE OF p`,
+    [email],
+  );
+  for (const person of rows) {
+    if (person.matches_login && await retireArchivedLogin(client, actorId, person.user_id, email))
+      await audit(client as PoolClient, actorId, "member.archived_login_retired", person.id);
+    await client.query(
+      "UPDATE tpa.people SET contact_email=NULL WHERE id=$1 AND lower(btrim(contact_email))=$2",
+      [person.id, email],
+    );
+  }
+}
+
 export async function resolveArchivedMember(
   client: Pick<PoolClient, "query">,
   actorId: string,
@@ -40,10 +100,13 @@ export async function resolveArchivedMember(
   action: "restore" | "delete-archived",
 ) {
   const { rows: [person] } = await client.query(
-    "SELECT version,archived_at,directory_deleted_at FROM tpa.people WHERE id=$1 FOR UPDATE",
+    `SELECT version,archived_at,directory_deleted_at,user_id,
+       EXISTS(SELECT FROM tpa.staff_roles WHERE user_id=p.user_id)
+       OR EXISTS(SELECT FROM tpa.operator_approved_identities WHERE user_id=p.user_id) AS protected_account
+     FROM tpa.people p WHERE id=$1 FOR UPDATE`,
     [personId],
   );
-  if (!person || person.directory_deleted_at)
+  if (!person || (person.directory_deleted_at && (action !== "restore" || !person.protected_account)))
     throw new OperationError("Archived record not found.", 404);
 
   const { rows: [membership] } = await client.query(
@@ -54,10 +117,13 @@ export async function resolveArchivedMember(
     throw new OperationError("Member record changed. Reload before continuing.", 409);
 
   const restoring = action === "restore";
+  if (!restoring && person.user_id)
+    await retireArchivedLogin(client, actorId, person.user_id);
   await client.query(
     `UPDATE tpa.people SET
       archived_at=CASE WHEN $2 THEN NULL ELSE archived_at END,
       directory_deleted_at=CASE WHEN $2 THEN NULL ELSE now() END,
+      contact_email=CASE WHEN $2 THEN contact_email ELSE NULL END,
       published=NULL,version=version+1,updated_at=now()
       WHERE id=$1`,
     [personId, restoring],

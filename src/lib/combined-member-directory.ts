@@ -31,17 +31,20 @@ export async function combinedMemberDirectory(
     !["current", "archived", "all"].includes(archive)
   )
     throw new OperationError("Choose valid directory filters.");
+  const protectedAccount = (userId: string) => `(EXISTS(SELECT FROM tpa.staff_roles WHERE user_id=${userId})
+    OR EXISTS(SELECT FROM tpa.operator_approved_identities WHERE user_id=${userId}))`;
+  const visibleRecord = `(p.directory_deleted_at IS NULL OR ${protectedAccount("p.user_id")})`;
   const records = `WITH records AS (
  SELECT p.id AS person_id,p.user_id,p.version AS person_version,p.accepted AS person,
  p.contact_email AS email,p.mobile_normalized AS mobile,p.accepted_verified AS professional_verified,u."emailVerified" AS email_verified,
  coalesce(p.status,'unverified') AS profile_review,m.id AS membership_id,m.version AS membership_version,m.membership_number,coalesce(m.type,u."requestedMembershipPlan") AS type,m.status,'member'::text AS record_kind,p.archived_at,m.pending_plan
  FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id LEFT JOIN public."user" u ON u.id=p.user_id
- WHERE p.directory_deleted_at IS NULL
+ WHERE ${visibleRecord}
  UNION ALL
  SELECT p.id,u.id,coalesce(p.version,0),coalesce(p.accepted,'{}'::jsonb)||jsonb_build_object('name',coalesce(p.accepted->>'name',u.name),'organization',coalesce(p.accepted->>'organization',mp.organization,''),'jobTitle',coalesce(p.accepted->>'jobTitle',mp.job_title,'')),
  u.email,coalesce(nullif(p.mobile_normalized,''),mp.phone,''),coalesce(p.accepted_verified,false),u."emailVerified",coalesce(p.status,'unverified'),NULL::uuid,0,NULL::text,u."requestedMembershipPlan",NULL::text,'account'::text,p.archived_at,NULL::text
  FROM public."user" u LEFT JOIN tpa.people p ON p.user_id=u.id LEFT JOIN tpa.member_profiles mp ON mp.user_id=u.id
- WHERE p.directory_deleted_at IS NULL
+ WHERE ${visibleRecord}
  AND NOT EXISTS(SELECT 1 FROM tpa.people member_person JOIN tpa.memberships membership ON membership.person_id=member_person.id WHERE member_person.user_id=u.id)
  ), directory AS (
  SELECT r.*,
@@ -89,6 +92,7 @@ export async function combinedMemberDirectory(
       await client.query(
         records +
           ` SELECT r.*,
+   ${protectedAccount("r.user_id")} AS protected_account,
    (SELECT u."createdAt" FROM public."user" u WHERE u.id=r.user_id) AS account_created_at,
    CASE WHEN EXISTS(SELECT 1 FROM tpa.account_invitation_holds h WHERE h.user_id=r.user_id AND h.released_at IS NULL) THEN 'invitation held' WHEN EXISTS(SELECT 1 FROM tpa.onboarding_invitations i WHERE i.user_id=r.user_id AND i.redeemed_at IS NOT NULL) THEN 'accepted' WHEN EXISTS(SELECT 1 FROM public."account" a WHERE a."userId"=r.user_id AND a."providerId"='credential') THEN 'active account' ELSE coalesce((SELECT CASE WHEN i.expires_at<now() THEN 'expired' ELSE 'pending' END FROM tpa.onboarding_invitations i WHERE i.user_id=r.user_id ORDER BY expires_at DESC LIMIT 1),'not invited') END AS invitation_status,
    EXISTS(SELECT 1 FROM tpa.account_invitation_holds h WHERE h.user_id=r.user_id AND h.address_completion_required) AS address_completion_required,
