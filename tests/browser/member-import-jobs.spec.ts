@@ -4,6 +4,7 @@ import {randomUUID,randomBytes,createHmac} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {databaseOptions} from '../../src/lib/database-options';
 import {memberHeaders} from '../../src/domain/member-import';
+import { invitationDefaults } from '../../src/domain/invitation-template';
 test('member import runs independently, reload restores progress and correction download preserves lineage',async({page,context})=>{
  test.skip(!process.env.TPA_DATABASE_NAME?.startsWith('tpa_onboarding_test_jobs_'),'Requires isolated job API and worker');
  const db=new Pool(databaseOptions()),actor=randomUUID(),token=randomBytes(32).toString('hex'),base=process.env.TPA_TEST_URL!;
@@ -48,10 +49,9 @@ test('member import runs independently, reload restores progress and correction 
   const email = prefix + '-held@example.invalid';
   await page.getByLabel('CSV/XLSX (5 MB, 1,000 users)').setInputFiles({
     name: 'accounts.csv', mimeType: 'text/csv',
-    buffer: Buffer.from('name,email,phone\nHeld Account,' + email + ','),
+    buffer: Buffer.from('Prefix,First Name,Last Name,Membership No.,Email,Mobile,Designation,Organisation,Address,Country,State,City,Pin,District\nCA,Held,Account,' + prefix + '-held,' + email + ',,Partner,Example,12 Road,India,West Bengal,Custom City,700001,Custom District'),
   });
-  await page.getByRole('button', { name: 'Read columns', exact: true }).click();
-  await page.getByRole('button', { name: 'Validate preview', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview uploaded records', exact: true }).click();
   await expect(page.getByRole('table')).toContainText('Held Account');
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Confirm import', exact: true }).click();
@@ -61,7 +61,36 @@ test('member import runs independently, reload restores progress and correction 
     [email],
   );
   expect(hold.rows).toEqual([{ type: 'Free' }]);
+  const imported = await db.query('SELECT p.accepted,m.membership_number FROM public."user" u JOIN tpa.people p ON p.user_id=u.id JOIN tpa.memberships m ON m.person_id=p.id WHERE u.email=$1',[email]);
+  expect(imported.rows[0].membership_number).toBe(prefix + '-held');
+  expect(imported.rows[0].accepted.organization).toBe('Example');
+  expect(imported.rows[0].accepted.addresses.correspondence.city).toBe('Custom City');
+  expect(imported.rows[0].accepted.addresses.correspondence.district).toBe('Custom District');
+  const template = randomUUID();
+  await db.query(
+    'INSERT INTO tpa.invitation_templates(id,subject,body,created_by,approved_by,approved_at) VALUES($1,$2,$3,$4,$4,now())',
+    [template, invitationDefaults.subject, invitationDefaults.body, actor],
+  );
+  await db.query('UPDATE tpa.invitation_template_state SET latest_id=$1,approved_id=$1,revision=revision+1 WHERE singleton',[template]);
+  await expect(page.getByRole('heading', { name: 'Review & send invitations' })).toBeVisible();
+  await page.getByRole('button', { name: 'Review batch invitations' }).click();
+  const recipients = page.getByRole('region', { name: 'Invitation recipients', exact: true });
+  await expect(recipients.getByRole('row')).toHaveCount(2);
+  await expect(recipients).toContainText(email);
+  await expect(recipients).toContainText('On hold');
+  await expect(page.frameLocator('iframe[title="Reviewed invitation email"]').getByText('Hello Held Account,')).toBeVisible();
+  const send = page.getByRole('button', { name: 'Send 1 invitation', exact: true });
+  await expect(send).toBeDisabled();
+
   expect((await db.query('SELECT (SELECT count(*) FROM tpa.onboarding_invitations) invitations,(SELECT count(*) FROM tpa.onboarding_mail) mail')).rows[0]).toEqual(before);
+  await page.getByLabel('I verified the listed recipients and the approved email').check();
+  await send.click();
+  await expect(recipients).toContainText('Queued');
+  await page.reload();
+  await expect(recipients).toContainText('Queued');
+  await expect(send).toHaveCount(0);
+  expect((await db.query("SELECT count(*)::int AS count FROM tpa.onboarding_mail WHERE recipient=$1 AND kind='invitation'",[email])).rows[0].count).toBe(1);
+
 
  }finally{await db.end();}
 });

@@ -1102,3 +1102,9 @@
   .portal :global(.attendance-range-filter input) { width:100%; }
   .portal :global(.attendance-range-filter button), .portal :global(.attendance-range-filter [role=alert]) { grid-column:1 / -1; }
 }
+
+.portal :global(.invitation-release-review .table-scroll) { overflow-x:auto; border-radius:var(--radius-panel); margin-block:12px; }
+.portal :global(.invitation-release-review table) { width:100%; min-width:420px; }
+.portal :global(.invitation-email-preview) { margin-top:20px; }
+.portal :global(.invitation-email-preview iframe) { width:100%; height:420px; border:1px solid var(--line); border-radius:var(--radius-panel); background:white; }
+.portal :global(.invitation-email-preview .action-row) { align-items:center; justify-content:space-between; }

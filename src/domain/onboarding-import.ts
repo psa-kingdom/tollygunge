@@ -8,6 +8,8 @@ export type ImportRow = {
   category?: string;
   plan?: string;
   error?: string;
+  sourceRow?: number;
+  source?: Record<string, string>;
 };
 export function parseCsv(text: string) {
   const rows: ImportCells = [], sourceRows: number[] = [];
@@ -179,4 +181,37 @@ export function mapImport(
       ...(error ? { error } : {}),
     };
   });
+}
+
+/** Read the supplied account or member template directly by its column headings. */
+export function templateImport(cells: ImportCells, allowed: string[]): ImportRow[] {
+  const key = (value: string) => value.trim().toLowerCase().replace(/[ ._-]/g, "");
+  const headers = cells[0] ?? [];
+  const columns = new Map(headers.map((header, index) => [key(header), index]));
+  if (columns.size !== headers.length) throw Error("Column headings must be unique.");
+  const aliases: Record<string, string[]> = {
+    name: ["name", "fullname"], email: ["email"], phone: ["phone", "mobile"],
+    organization: ["organization", "organisation"], title: ["title", "prefix"],
+    membershipNumber: ["membershipno", "membershipnumber"], designation: ["designation"],
+    firstName: ["firstname"], lastName: ["lastname"],
+  };
+  const value = (row: string[], field: string) => {
+    const index = (aliases[field] ?? [key(field)]).map(alias => columns.get(alias)).find(index => index !== undefined);
+    return index === undefined ? "" : String(row[index] ?? "").trim();
+  };
+  if (!columns.has("email") || (!columns.has("name") && !columns.has("fullname") && !columns.has("firstname")))
+    throw Error("Use the template headers, including Email and Name or First Name.");
+  const details = [...new Set([...allowed, "phone", "organization", "title", "membershipNumber", "designation", "firstName", "lastName", "address", "country", "state", "city", "district", "pin", "postalLocality"])];
+  const target = ["name", "email", ...details.filter(field => field !== "fullName")];
+  const normalized = [target, ...cells.slice(1).map(row =>
+    target.map(field => field === "name"
+      ? value(row, "name") || [value(row, "firstName"), value(row, "lastName")].filter(Boolean).join(" ")
+      : value(row, field)),
+  )];
+  const rows = mapImport(normalized, Object.fromEntries(target.map(field => [field, field])), details);
+  return rows.map((row, index) => ({
+    ...row,
+    sourceRow: cells.sourceRows?.[index + 1] ?? index + 2,
+    source: Object.fromEntries(headers.map((header, column) => [header, String(cells[index + 1][column] ?? "")])),
+  }));
 }

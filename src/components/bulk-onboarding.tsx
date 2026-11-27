@@ -3,6 +3,7 @@ import { CopyValue } from "./portal-values";
 import { WorkspacePanel, WorkspaceSteps, WorkspaceEmptyState } from "./workspace-ui";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { api } from "./operations-client";
+import { InvitationReleaseReview } from "./invitation-release-review";
 import { MemberImportJobProgress } from "./member-import-job-progress";
 type Row = {
   name: string;
@@ -28,13 +29,11 @@ type Row = {
 };
 export function BulkOnboarding() {
   const [file, setFile] = useState<File | null>(null),
-    [headers, setHeaders] = useState<string[]>([]),
-    [fields, setFields] = useState<string[]>([]),
-    [mapping, setMapping] = useState<Record<string, string>>({}),
     [preview, setPreview] = useState<{
       id: string;
       rows: Row[];
       committed_at?: string | null;
+      invitationReviewId?: string;
       mode?: string;
       version?: number;
     } | null>(null),
@@ -61,6 +60,7 @@ export function BulkOnboarding() {
         rows: Row[];
         results: typeof results;
         committed_at: string | null;
+        invitationReviewId?: string;
         mode?: string;
         version?: number;
       }>("/api/staff/onboarding-import?id=" + id);
@@ -89,14 +89,13 @@ export function BulkOnboarding() {
       })
       .catch(() => setMessage("Unable to load batch history."));
   }, [restore]);
-  async function read(mapped = false) {
+  async function read() {
     if (!file) return;
     setBusy(true);
     try {
       const form = new FormData();
       form.set("file", file);
       form.set("mode", "invitation");
-      if (mapped) form.set("mapping", JSON.stringify(mapping));
       const r = await fetch(
         "/api/staff/onboarding-import",
         {
@@ -106,25 +105,10 @@ export function BulkOnboarding() {
       );
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
-      if (mapped) {
-        setPreview({
-          ...d,
-          mode: d.mode === "existing-members" ? "members" : d.mode,
-        });
-        const savedUrl = new URL(location.href);
-        savedUrl.searchParams.set("id", d.id);
-        history.replaceState(null, "", savedUrl);
-      } else {
-        setHeaders(d.headers);
-        setFields(d.fields);
-        setMapping(
-          Object.fromEntries(
-            d.fields
-              .filter((x: string) => d.headers.includes(x))
-              .map((x: string) => [x, x]),
-          ),
-        );
-      }
+      setPreview({ ...d, mode: d.mode === "existing-members" ? "members" : d.mode });
+      const savedUrl = new URL(location.href);
+      savedUrl.searchParams.set("id", d.id);
+      history.replaceState(null, "", savedUrl);
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Import failed.");
     } finally {
@@ -164,9 +148,16 @@ export function BulkOnboarding() {
     }
   }
   const workbookInput = useRef<HTMLInputElement>(null);
+  const accountImport = preview?.mode !== "members" && preview?.mode !== "approved-accounts";
+  const invitationStep = Boolean(preview?.committed_at && accountImport);
+  const heldResults = results.filter((row) => row.status === "created" && row.invitationStatus === "held");
+  const namesByEmail = new Map(preview?.rows.map((row) => [row.email, row.name]));
   return (
     <section className="bulk-onboarding-workspace">
-      <WorkspaceSteps steps={["Choose workbook", "Map & validate", "Review records", "Commit & track"]} current={preview?.committed_at ? 3 : preview ? 2 : headers.length ? 1 : 0} />
+      <WorkspaceSteps
+        steps={["Choose workbook", "Review records", "Create accounts", "Review & send invitations"]}
+        current={invitationStep ? 3 : preview?.committed_at || (busy && results.length) ? 2 : preview ? 1 : 0}
+      />
       <div className="workspace-import-layout">
       <WorkspacePanel title="Prepare your import" description="Download the template and upload your completed workbook." id="bulk-import-upload">
       <p>Upload a name and email for each new Free member. Phone is optional. The import creates login accounts and holds invitations for staff review.</p>
@@ -193,7 +184,6 @@ export function BulkOnboarding() {
           onChange={(e) => {
             setFile(e.target.files?.[0] ?? null);
             setPreview(null);
-            setHeaders([]);
             setResults([]);
           }}
         />
@@ -203,46 +193,12 @@ export function BulkOnboarding() {
         disabled={busy || !file}
         onClick={() => void read()}
       >
-        Read columns
+        Preview uploaded records
       </button>
       </WorkspacePanel>
       <WorkspacePanel title="Before you begin" className="workspace-help-panel"><ul className="workspace-guidance-list"><li><strong>Start with the right template</strong><span>Keep the name, email and phone column headers from the template.</span></li><li><strong>Validate before committing</strong><span>Review matched identities, duplicates and corrections before importing.</span></li><li><strong>Review invitations separately</strong><span>New account invitations remain held until recipients and the email are approved.</span></li></ul></WorkspacePanel>
       </div>
-      <div className="workspace-import-review" hidden={!headers.length && !preview && !results.length}>
-      {headers.length > 0 && (
-        <>
-          <div className="form-grid">
-            {fields.map((f) => (
-              <label key={f}>
-                {f}
-                {["name", "email"].includes(f) ? " *" : ""}
-                <select
-                  value={mapping[f] ?? ""}
-                  onChange={(e) => {
-                    const next = { ...mapping };
-                    if (e.target.value) next[f] = e.target.value;
-                    else delete next[f];
-                    setMapping(next);
-                    setPreview(null);
-                  }}
-                >
-                  <option value="">Do not import</option>
-                  {headers.map((h) => (
-                    <option key={h}>{h}</option>
-                  ))}
-                </select>
-              </label>
-            ))}
-          </div>
-          <button
-            className="button"
-            disabled={busy || !mapping.name || !mapping.email}
-            onClick={() => void read(true)}
-          >
-            Validate preview
-          </button>
-        </>
-      )}
+      <div className="workspace-import-review" hidden={!preview && !results.length}>
       {preview && (
         <>
           <div className="import-preview-heading">
@@ -380,7 +336,7 @@ export function BulkOnboarding() {
                       ? "Accounts created with invitation delivery held. Review every row outcome."
                       : preview.mode === "members"
                         ? "Member import committed without invitations. Review every row outcome."
-                        : "Accounts created with invitations held. Configure the template and review recipients in the member register.",
+                        : "Accounts created with invitations held. Review this batch before sending.",
                   );
                 } catch (e) {
                   setMessage(e instanceof Error ? e.message : "Commit failed.");
@@ -399,6 +355,26 @@ export function BulkOnboarding() {
           <MemberImportJobProgress key={preview.id} batchId={preview.id} version={preview.version ?? 1} />
         </div>
       )}
+      {invitationStep && preview && (
+        <div className="import-preview-footer">
+          <h2>Review &amp; send invitations</h2>
+          {heldResults.length > 0 || preview.invitationReviewId ? (
+            <InvitationReleaseReview
+              key={preview.id}
+              batchId={preview.id}
+              savedReviewId={preview.invitationReviewId}
+              canManage={true}
+              pendingRecipients={heldResults.map((row) => ({
+                email: row.email,
+                name: namesByEmail.get(row.email) || row.email,
+                status: row.emailStatus ?? "held",
+              }))}
+              onComplete={() => void restore(preview.id)}
+            />
+          ) : <p>No invitations are on hold for this batch.</p>}
+        </div>
+      )}
+      {invitationStep && results.some((row) => row.status !== "created") && <h3>Rows excluded from the import</h3>}
       <ul>
         {busy && preview && (
           <li>
@@ -413,7 +389,7 @@ export function BulkOnboarding() {
             </span>
           </li>
         )}
-        {results.map((r, i) => (
+        {(invitationStep ? results.filter((row) => row.status !== "created") : results).map((r, i) => (
           <li key={i}>
             {r.email}: {r.status} {r.reason}{" "}
             {r.emailStatus ? " · Email: " + r.emailStatus : ""}

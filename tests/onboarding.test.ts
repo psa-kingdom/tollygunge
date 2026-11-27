@@ -237,3 +237,18 @@ test("professional details accept membership number and optional designation", (
   }
   assert.ok(!missingFields(initialFields, { professionalBody: "CA" }, "Professional", true).includes("Professional registration number"));
 });
+
+
+test("template headers populate account and member fields automatically", async () => {
+  const { templateImport } = await import("../src/domain/onboarding-import");
+  const rows = templateImport([
+    ["Prefix", "First Name", "Last Name", "Membership No.", "Email", "Mobile", "Designation", "Organisation", "Address", "Country", "State", "City", "Pin", "District"],
+    ["CA", "Sample", "Member", "0012", "sample@example.invalid", "9876543210", "Partner", "Example", "12 Road", "India", "West Bengal", "Custom City", "700001", "Custom District"],
+  ], []);
+  assert.equal(rows[0].name, "Sample Member");
+  assert.equal(rows[0].details.membershipNumber, "0012");
+  assert.equal(rows[0].details.organization, "Example");
+  assert.equal(rows[0].details.city, "Custom City");
+  assert.equal(rows[0].details.district, "Custom District");
+  assert.equal(rows[0].error, undefined);
+});

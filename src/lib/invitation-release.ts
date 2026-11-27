@@ -31,7 +31,8 @@ export async function invitationTemplateAction(c:PoolClient,actor:string,input:R
 type Recipient={person_id:string;user_id:string;name:string;email:string;person_version:number;membership_version:number;hold_version:number|null;account_updated:string;held:boolean;reason:string|null};
 async function recipients(db:DB,ids:string[]):Promise<Recipient[]>{
  return (await db.query(`SELECT p.id AS person_id,p.user_id,p.accepted->>'name' AS name,p.contact_email AS email,p.version AS person_version,m.version AS membership_version,h.version AS hold_version,u."updatedAt"::text AS account_updated,(h.user_id IS NOT NULL AND h.released_at IS NULL) AS held,
- CASE WHEN p.user_id IS NULL THEN 'No linked account; create an account separately.'
+ CASE WHEN p.archived_at IS NOT NULL THEN 'Member record is archived.'
+ WHEN p.user_id IS NULL THEN 'No linked account; create an account separately.'
  WHEN lower(btrim(u.email)) IS DISTINCT FROM lower(btrim(p.contact_email)) OR coalesce(p.contact_email,'')='' THEN 'Account and member email do not agree.'
  WHEN EXISTS(SELECT 1 FROM public."account" a WHERE a."userId"=p.user_id AND a."providerId"='credential') OR EXISTS(SELECT 1 FROM tpa.onboarding_invitations i WHERE i.user_id=p.user_id AND i.redeemed_at IS NOT NULL) THEN 'Account is already activated; use password recovery.'
  WHEN EXISTS(SELECT 1 FROM tpa.onboarding_mail mail WHERE mail.user_id=p.user_id AND mail.kind='invitation' AND (mail.status IN ('queued','leased') OR mail.created_at>now()-interval '10 minutes' OR mail.reason='uncertain_send_expired')) THEN 'Invitation is queued, recently sent or requires delivery reconciliation.'
@@ -50,6 +51,33 @@ export async function createInvitationReview(c:PoolClient,actor:string,input:Rec
  const id=randomUUID(),key=randomUUID();
  await c.query('INSERT INTO tpa.invitation_release_reviews(id,actor_id,template_id,template_revision,recipients,exclusions,idempotency_key) VALUES($1,$2,$3,$4,$5,$6,$7)',[id,actor,state.approved_id,state.revision,JSON.stringify(eligible),JSON.stringify(exclusions),key]);
  await audit(c,actor,'invitation.review_created',id);return getInvitationReview(c,actor,id,template);
+}
+export async function createBatchInvitationReview(c: PoolClient, actor: string, batchId: unknown) {
+ const {rows:[batch]} = await c.query(
+  "SELECT id,choices,results FROM tpa.onboarding_batches WHERE id::text=$1 AND actor_id=$2 AND committed_at IS NOT NULL AND mode='accounts' FOR UPDATE",
+  [String(batchId ?? ''), actor],
+ );
+ if(!batch) throw new OperationError('Completed account import not found.',404);
+ const previousId = batch.choices.invitationReviewId;
+ if(previousId) {
+  const previous = await getInvitationReview(c,actor,previousId);
+  if(previous.confirmed_at) return previous;
+ }
+ const accountIds = (batch.results ?? []).flatMap(
+  (row: {status:string;accountId?:string}) => row.status==='created' && row.accountId ? [row.accountId] : [],
+ );
+ const {rows} = await c.query<{id:string}>(
+  `SELECT p.id FROM tpa.people p JOIN tpa.account_invitation_holds h ON h.user_id=p.user_id
+   WHERE p.user_id=ANY($1::text[]) AND h.released_at IS NULL AND (h.source_batch_id=$2 OR h.source_batch_id IS NULL)`,
+  [accountIds,batch.id],
+ );
+ if(!rows.length) throw new OperationError('This batch has no invitations on hold.',409);
+ const review = await createInvitationReview(c,actor,{personIds:rows.map(row=>row.id)});
+ await c.query(
+  "UPDATE tpa.onboarding_batches SET choices=jsonb_set(choices,'{invitationReviewId}',to_jsonb($2::text)) WHERE id=$1",
+  [batch.id,review.id],
+ );
+ return review;
 }
 export async function getInvitationReview(db:DB,actor:string,id:string,providedTemplate?:Record<string,string>){
  const review=(await db.query('SELECT * FROM tpa.invitation_release_reviews WHERE id::text=$1 AND actor_id=$2',[id,actor])).rows[0];

@@ -22,6 +22,7 @@ import { policy } from "@/lib/verification-service";
 import {
   importCells,
   mapImport,
+  templateImport,
   type ImportRow,
 } from "@/domain/onboarding-import";
 import { validateAnswers } from "@/domain/verification";
@@ -80,6 +81,7 @@ export async function GET(r: Request) {
         ).rows;
         return {
           ...batch,
+          invitationReviewId: batch.choices?.invitationReviewId,
           mode:
             batch.choices?.approval === approvedAccountPolicy.approval
               ? "approved-accounts"
@@ -198,24 +200,10 @@ export async function POST(r: Request) {
         );
       if (process.env.ONBOARDING_ENABLED !== "true")
         throw new OperationError("Onboarding is disabled.", 503);
-      if (!form.get("mapping"))
-        return {
-          headers: cells[0],
-          sample: cells.slice(1, 6),
-          fields: [
-            "name",
-            "email",
-            "category",
-            "plan",
-            ...p.fields.filter((f) => f.type !== "document").map((f) => f.id),
-          ],
-        };
-      const mapping = JSON.parse(String(form.get("mapping"))),
-        rows = mapImport(
-          cells,
-          mapping,
-          p.fields.filter((f) => f.type !== "document").map((f) => f.id),
-        );
+      const allowed = p.fields.filter((field) => field.type !== "document").map((field) => field.id);
+      const rows = form.get("mapping")
+        ? mapImport(cells, JSON.parse(String(form.get("mapping"))), allowed)
+        : templateImport(cells, allowed);
       for (const row of rows) {
         if (!row.error) {
           try {
@@ -309,12 +297,12 @@ export async function POST(r: Request) {
               "Only professional applications may be imported.",
             );
           row.details = validateAnswers(row.details, p.fields);
-          await validatePostalAddresses(row.details, {}, c, true);
+          await validatePostalAddresses(row.details, {}, c, true, "as-entered");
           const inserted = await createInvitedAccount(c, {
             name: row.name,
             email: row.email,
             freeMembership: true,
-          });
+          }, { batchId: b.id });
           if (!inserted) {
             results.push({
               email: row.email,
@@ -324,6 +312,30 @@ export async function POST(r: Request) {
             continue;
           }
           const user = inserted.accountId;
+          const details = row.details;
+          const profile = {
+            ...(details.firstName && { firstName: details.firstName }),
+            ...(details.lastName && { lastName: details.lastName }),
+            ...(details.title && { prefix: details.title }),
+            ...(details.organization && { organization: details.organization }),
+            ...(details.designation && { jobTitle: details.designation }),
+            ...(["address", "city", "district", "state", "pin", "country"].some(field => details[field]) && {
+              addresses: { correspondence: {
+                line1: details.address ?? "", line2: "", country: details.country ?? "",
+                state: details.state ?? "", district: details.district ?? "", city: details.city ?? "",
+                postalCode: details.pin ?? "", postalLocality: details.postalLocality ?? "",
+              } },
+            }),
+          };
+          await c.query(
+            "UPDATE tpa.people SET accepted=accepted||$2::jsonb,draft=draft||$2::jsonb WHERE user_id=$1",
+            [user, JSON.stringify(profile)],
+          );
+          if (details.membershipNumber) await c.query(
+            "UPDATE tpa.memberships m SET membership_number=$2 FROM tpa.people p WHERE m.person_id=p.id AND p.user_id=$1",
+            [user, details.membershipNumber],
+          );
+
           await c.query(
             "UPDATE tpa.people SET mobile_normalized=$2,accepted=accepted||jsonb_build_object('mobile',$2::text),draft=draft||jsonb_build_object('mobile',$2::text) WHERE user_id=$1",
             [user, row.details.phone ?? ""],
