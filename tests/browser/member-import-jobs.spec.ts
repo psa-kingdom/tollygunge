@@ -53,6 +53,13 @@ test('member import runs independently, reload restores progress and correction 
   });
   await page.getByRole('button', { name: 'Preview uploaded records', exact: true }).click();
   await expect(page.getByRole('table')).toContainText('Held Account');
+  const uploadedRow = page.getByRole('region', { name: 'Uploaded records', exact: true }).getByRole('row').filter({ hasText: email });
+  await expect(uploadedRow).toContainText(prefix + '-held');
+  await expect(uploadedRow).toContainText('Custom City');
+  await expect(uploadedRow).toContainText('Partner');
+  await expect(uploadedRow).toContainText('Example');
+  const actions = page.locator('.import-preview-actions');
+  await expect(actions.getByRole('button')).toHaveCount(2);
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Confirm import', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Accounts created with invitations held.');

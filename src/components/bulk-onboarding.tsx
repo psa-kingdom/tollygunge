@@ -8,6 +8,7 @@ import { MemberImportJobProgress } from "./member-import-job-progress";
 type Row = {
   name: string;
   email: string;
+  details?: Record<string, string>;
   error?: string;
   reason?: string;
   status?: string;
@@ -220,12 +221,16 @@ export function BulkOnboarding() {
                     <th scope="col">Row</th>
                     <th scope="col">Member</th>
                     <th scope="col">Membership no.</th>
+                    <th scope="col">Uploaded fields</th>
                     <th scope="col">Status</th>
                     <th scope="col">Validation</th>
                   </tr>
                 </thead>
                 <tbody>
                   {preview.rows.map((row, index) => {
+                    const uploadedFields = Object.entries(row.source ?? row.details ?? {})
+                      .filter(([, value]) => value.trim());
+                    const membershipNumber = row.membershipNumber || row.details?.membershipNumber || row.source?.["Membership No."];
                     const hasDetails = Boolean(
                       row.fieldErrors || row.diagnosticIssues?.length ||
                       row.normalizations?.length || row.member || row.match || row.proposedChanges,
@@ -242,7 +247,14 @@ export function BulkOnboarding() {
                           {row.name || sourceName || "Name missing"}
                           {row.email && <span className="import-preview-email">{row.email}</span>}
                         </th>
-                        <td>{row.membershipNumber || "—"}</td>
+                        <td>{membershipNumber || "Not supplied"}</td>
+                        <td>
+                          <dl className="import-uploaded-fields">
+                            {uploadedFields.map(([field, value]) => (
+                              <div key={field}><dt>{field}</dt><dd>{value}</dd></div>
+                            ))}
+                          </dl>
+                        </td>
                         <td><span className="import-preview-status">{status}</span></td>
                         <td>
                           {row.error ?? row.reason ?? "—"}
@@ -288,6 +300,7 @@ export function BulkOnboarding() {
               <p>Keep the original source row numbers and file hash when preparing corrections.</p>
             </details>
           )}
+          <div className="import-preview-actions">
           {preview.mode !== "members" && !preview.committed_at && (
             <button
               className="button"
@@ -348,6 +361,12 @@ export function BulkOnboarding() {
               Confirm import
             </button>
           )}
+          {preview.mode !== "members" && (
+            <button className="button secondary" disabled={busy} onClick={() => void restore(preview.id)}>
+              Refresh batch and email status
+            </button>
+          )}
+          </div>
         </>
       )}
       {preview?.mode === "members" && (
@@ -446,7 +465,7 @@ export function BulkOnboarding() {
           </li>
         ))}
       </ul>
-      {preview && (preview.mode !== "members" || results.length > 0) && (
+      {preview?.mode === "members" && results.length > 0 && (
         <button
           className="button secondary"
           disabled={busy}
