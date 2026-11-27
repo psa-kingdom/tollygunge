@@ -281,6 +281,11 @@
   }
 }
 
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .navigation > div:nth-child(4) {
   margin-top: 0 !important;
 }
@@ -295,6 +300,7 @@
 
 @media (max-width: 800px) {
   .navigation {
+    flex-direction: row;
     align-items: flex-start;
   }
   .navigation .tools {

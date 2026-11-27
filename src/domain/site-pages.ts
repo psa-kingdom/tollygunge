@@ -125,7 +125,7 @@ export const sitePages: Record<
         text: "Association articles and curated professional updates will be published following editorial review. Gathered news will link to its source and use attributed summaries.",
       },
       {
-        title: "Media",
+        title: "Gallery",
         text: "Published event photographs and videos will appear here. Private application photographs and certificates are never part of the public gallery.",
       },
       {

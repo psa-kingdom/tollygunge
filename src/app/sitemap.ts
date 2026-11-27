@@ -4,7 +4,7 @@ import { sitePages } from "@/domain/site-pages";
 import { getDatabase } from "@/lib/database";
 export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages: MetadataRoute.Sitemap = ["/", ...Object.keys(sitePages).map(key => `/${key}`), "/privacy"].map(path => ({ url: new URL(path, siteOrigin).href }));
+  const pages: MetadataRoute.Sitemap = ["/", ...Object.keys(sitePages).map(key => `/${key}`), "/privacy", "/blogs", "/media"].map(path => ({ url: new URL(path, siteOrigin).href }));
   if (!process.env.DATABASE_URL) return pages;
   const [events, resources] = await Promise.all([
     getDatabase().query("SELECT id FROM tpa.events WHERE status='published' AND visibility='public' AND archived_at IS NULL ORDER BY id"),

@@ -40,9 +40,9 @@ const sharedBaseDefaults = {
       links: ["Upcoming Events", "Past Events", "Event Registration"],
     },
     {
-      title: "Resources",
+      title: "Media",
       href: "/resources",
-      links: ["Insights", "Media", "Downloads", "Important Links"],
+      links: ["Insights", "Gallery", "Downloads", "Important Links"],
     },
   ],
   footer: {

@@ -27,7 +27,7 @@ export const pageSections: Record<string, string[]> = {
   ],
   membership: ["Why Become a Member", "Membership Plans", "Renew Membership"],
   events: ["Upcoming Events", "Past Events", "Event Registration"],
-  resources: ["Insights", "Media", "Downloads", "Important Links"],
+  resources: ["Insights", "Gallery", "Downloads", "Important Links"],
   contact: ["Contact TPA", "Office / Secretariat", "Location", "Enquiry"],
 };
 export function record(value: unknown): Record<string, unknown> {

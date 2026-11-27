@@ -7,7 +7,7 @@ import { publishedPeople } from "@/lib/public-people";
 import { PublicContentView } from "@/components/public-content-view";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
-import { publishedPage, publishedArticles } from "@/lib/public-content";
+import { publishedPage, publishedArticles, publishedMedia } from "@/lib/public-content";
 import { getDatabase } from "@/lib/database";
 import {publishedSettings,publishedResources} from '@/lib/website-content';
 import { type PublicGovernanceEntry } from "@/components/public-governance";
@@ -49,20 +49,13 @@ export default async function ContentPage({
         attribution: "",
         sections: fallback.sections.map((section) => ({ ...section })),
       };
-  const articles = page === "resources" ? await publishedArticles() : [];
+  const articles = page === "resources" ? await publishedArticles(4) : [];
   const people: PublicGovernanceEntry[] =
     ["about", "governance"].includes(page) && process.env.DATABASE_URL
       ? await publishedPeople()
       : [];
   if (!live) Object.assign(data, peopleFallback(page, data, people));
-  const media =
-    page === "resources" && process.env.DATABASE_URL
-      ? (
-          await getDatabase().query(
-            "SELECT id,published,width,height FROM tpa.public_media WHERE published IS NOT NULL ORDER BY coalesce((published->>'displayOrder')::int,0),created_at DESC,id",
-          )
-        ).rows
-      : [];
+  const media = page === "resources" ? await publishedMedia(4) : [];
   const allEvents =
     page === "events" && process.env.DATABASE_URL
       ? (

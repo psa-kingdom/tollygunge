@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { getDatabase } from "./database";
 import type { ContentBody } from "@/domain/operations";
+import type { ResourceImage } from "@/components/resource-collections";
 export const publishedPage = cache(async function publishedPage(slug: string): Promise<ContentBody | null> {
   if (!process.env.DATABASE_URL) return null;
   const { rows } = await getDatabase().query(
@@ -10,11 +11,12 @@ export const publishedPage = cache(async function publishedPage(slug: string): P
   );
   return rows[0]?.published ?? null;
 });
-export async function publishedArticles() {
+export async function publishedArticles(limit?: number) {
   if (!process.env.DATABASE_URL) return [];
   return (
     await getDatabase().query(
-      "SELECT slug,kind,published,published_at FROM tpa.content_entries WHERE kind IN ('insight','news') AND published IS NOT NULL AND archived_at IS NULL ORDER BY coalesce((published->>'displayOrder')::int,0),published_at DESC,slug",
+      "SELECT slug,kind,published,published_at FROM tpa.content_entries WHERE kind IN ('insight','news') AND published IS NOT NULL AND archived_at IS NULL ORDER BY published_at DESC NULLS LAST,slug LIMIT $1",
+      [limit ?? null],
     )
   ).rows as {
     slug: string;
@@ -22,4 +24,12 @@ export async function publishedArticles() {
     published: ContentBody;
     published_at: Date;
   }[];
+}
+
+export async function publishedMedia(limit?: number) {
+  if (!process.env.DATABASE_URL) return [];
+  return (await getDatabase().query<ResourceImage>(
+    "SELECT id,published,width,height FROM tpa.public_media WHERE published IS NOT NULL ORDER BY created_at DESC,id LIMIT $1",
+    [limit ?? null],
+  )).rows;
 }

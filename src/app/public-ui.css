@@ -383,7 +383,7 @@
   outline: 2px solid var(--accent-text);
   outline-offset: 4px;
 }
-.public-shell .public-information .public-section-body a:not(.button):not(:where([data-governance-contacts] a)) {
+.public-shell .public-information .public-section-body a:not(.button, .resource-link-chip):not(:where([data-governance-contacts] a)) {
   text-decoration: underline;
   text-underline-offset: 5px;
 }
@@ -697,6 +697,92 @@
   width: 100%;
   height: auto;
   border-radius: 10px;
+}
+
+.public-information .resource-link-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 20px 0 0;
+  list-style: none;
+}
+.public-information .resource-link-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+.public-information .resource-link-chip:hover {
+  background: var(--surface-muted);
+  border-color: var(--accent-text);
+  text-decoration: none;
+}
+.public-information .resource-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 245px), 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.public-information .resource-article-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.public-shell .article-cover {
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-block: 24px;
+}
+.public-information .resource-article-cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+.public-information .resource-article-card h3 {
+  margin: 0 0 8px;
+}
+.public-information .resource-article-card p {
+  margin: 0;
+  color: var(--muted);
+}
+.public-information .resource-gallery-tile {
+  min-width: 0;
+  margin: 0;
+}
+.public-information .resource-gallery-tile img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.public-information .resource-gallery-tile figcaption {
+  margin-top: 8px;
+  font-size: 0.875rem;
+}
+.public-information .resource-gallery-tile small {
+  display: block;
+  color: var(--muted);
+}
+.public-information .resource-view-all {
+  margin-top: 20px;
 }
 
 /* Contact details and the inquiry form stay in one readable content flow. */

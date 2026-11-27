@@ -1,6 +1,11 @@
 .workspace {
   min-width: 0;
 }
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .navigation a {
   display: flex;
   gap: 10px;
@@ -247,6 +252,7 @@
   border: 1px solid var(--line);
   border-radius: 8px;
 }
+.accessDetail .assignedRoles .role:has(> input[type="checkbox"]),
 .accessDetail .accessForm .role:has(> input[type="checkbox"]) {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -255,7 +261,7 @@
 label.role:has(input:checked) {
   background: var(--surface-muted);
 }
-label.role:has(input:disabled) {
+.role:has(input:disabled) {
   cursor: default;
 }
 .role input {
@@ -376,6 +382,7 @@ label.role:has(input:disabled) {
 }
 @media (max-width: 800px) {
   .navigation {
+    flex-direction: row;
     display: flex;
     gap: 6px;
     overflow-x: auto;

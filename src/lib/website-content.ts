@@ -31,15 +31,13 @@ export async function publicNavigation() {
   ).rows;
   return settings.navigation.map((n) => {
     const page = pages.find((p) => "/" + p.slug === n.href);
-    return {
-      ...n,
-      links: page
-        ? page.published.sections.map((s: { title: string }) => s.title)
-        : n.links,
-    };
+    const links: string[] = page ? page.published.sections.map((s: { title: string }) => s.title) : n.links;
+    if (n.href === "/resources")
+      return { ...n, title: "Media", links: links.map((title, index) => index === 1 ? "Gallery" : title) };
+    return { ...n, links };
   }) as SharedSettings["navigation"];
 }
-export async function publishedResources(kind: "link" | "document") {
+export const publishedResources = cache(async function publishedResources(kind: "link" | "document") {
   if (!process.env.DATABASE_URL) return [];
   return (
     await getDatabase().query(
@@ -47,4 +45,4 @@ export async function publishedResources(kind: "link" | "document") {
       [kind],
     )
   ).rows;
-}
+});

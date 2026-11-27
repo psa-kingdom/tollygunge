@@ -12,6 +12,7 @@ import {
 } from "./public-governance";
 import { RichContent } from "./rich-content";
 import type { ContentBody } from "@/domain/operations";
+import { ResourceArticleCards, ResourceMediaGallery, type ResourceArticle, type ResourceImage } from "./resource-collections";
 import { eventTime } from "@/domain/event-flow";
 import styles from "./public-events-hero.module.css";
 export type PublicContentContext = {
@@ -34,12 +35,7 @@ export type PublicContentContext = {
     };
   }[];
   people: PublicGovernanceEntry[];
-  media: {
-    id: string;
-    width: number;
-    height: number;
-    published: { title: string; altText: string; category: string };
-  }[];
+  media: ResourceImage[];
   events: {
     has_banner?: boolean;
     id: string;
@@ -48,7 +44,7 @@ export type PublicContentContext = {
     starts_at: string;
     location: string;
   }[];
-  articles: { slug: string; published: ContentBody }[];
+  articles: ResourceArticle[];
 };
 export const emptyContentContext: PublicContentContext = {
   people: [],
@@ -160,7 +156,10 @@ export function PublicContentView({
       </div>
       <div className="public-content-layout">
         <div className="content-page">
-          {visibleSections.filter(({ i }) => page !== "events" || i !== 0).map(({ section, i }) => (
+          {visibleSections.filter(({ i }) =>
+            (page !== "events" || i !== 0) &&
+            (readOnly || page !== "resources" || i !== 2 || Boolean(context.downloads?.length))
+          ).map(({ section, i }) => (
             <section
               id={`section-${i}`}
               className="content-section"
@@ -176,7 +175,7 @@ export function PublicContentView({
                     : undefined
                 }
               >
-                {section.title}
+                {page === "resources" && i === 1 && !readOnly ? "Gallery" : section.title}
               </h2>
               <div className="public-section-body">
                 {section.mediaId && (
@@ -210,29 +209,11 @@ export function PublicContentView({
                     )}
                   />
                 )}
-                {page === "resources" && i === 1 && (
-                  <div className="media-gallery">
-                    {media.map((asset) => (
-                      <figure
-                        key={asset.id}
-                        data-cms-record={
-                          readOnly ? `media:${asset.id}` : undefined
-                        }
-                      >
-                        <Image
-                          unoptimized
-                          src={`/media/${asset.id}`}
-                          width={asset.width}
-                          height={asset.height}
-                          alt={asset.published.altText}
-                        />
-                        <figcaption>
-                          <strong>{asset.published.title}</strong>
-                          <span>{asset.published.category}</span>
-                        </figcaption>
-                      </figure>
-                    ))}
-                  </div>
+                {page === "resources" && i === 1 && media.length > 0 && (
+                  <>
+                    <ResourceMediaGallery media={media.slice(0, 4)} preview={readOnly} />
+                    {!readOnly && <Link className="button secondary resource-view-all" href="/media">View all gallery photos</Link>}
+                  </>
                 )}
                 {page === "resources" && i === 2 && (
                   <div className="resource-row">
@@ -295,26 +276,12 @@ export function PublicContentView({
                     {context.allPast ? "Show recent events" : "View all past events"}
                   </Link>
                 )}
-                {page === "resources" &&
-                  i === 0 &&
-                  articles.map((article) => (
-                    <article className="event-row" key={article.slug}>
-                      <div>
-                        <h3>
-                          <Link href={`/resources/${article.slug}`}>
-                            {article.published.title}
-                          </Link>
-                        </h3>
-                        <p>{article.published.intro}</p>
-                      </div>
-                      <Link
-                        className="text-link"
-                        href={`/resources/${article.slug}`}
-                      >
-                        Read
-                      </Link>
-                    </article>
-                  ))}
+                {page === "resources" && i === 0 && articles.length > 0 && (
+                  <>
+                    <ResourceArticleCards articles={articles.slice(0, 4)} />
+                    {!readOnly && <Link className="button secondary resource-view-all" href="/blogs">View all blogs</Link>}
+                  </>
+                )}
                 {page === "contact" && i === 3 && (
                   <fieldset
                     disabled={readOnly}
@@ -358,26 +325,17 @@ export function PublicContentView({
                   </>
                 )}
                 {page === "resources" && i === 3 && (
-                  <div className="resource-row">
-                    <div>
-                      {(context.importantLinks ?? []).map(
-                        ({ id, published: link }) => (
-                          <p key={id}>
-                            <a
-                              href={link.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {link.title}
-                            </a>
-                            {link.description && (
-                              <small>{link.description}</small>
-                            )}
-                          </p>
-                        ),
-                      )}
-                    </div>
-                  </div>
+                  <ul className="resource-link-chips">
+                    {(context.importantLinks ?? []).map(({ id, published: link }) => (
+                      <li key={id}>
+                        <a className="resource-link-chip" href={link.url}
+                          target="_blank" rel="noopener noreferrer"
+                          title={link.description || undefined}>
+                          {link.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             </section>
@@ -398,12 +356,12 @@ export function ArticleContentView({
     <main id="main" className="page-content">
       {breadcrumbs && (
         <PublicBreadcrumbs
-          section="Resources"
+          section="Media"
           href="/resources"
           title={body.title}
         />
       )}
-      <span className="eyebrow">TPA RESOURCES</span>
+      <span className="eyebrow">TPA INSIGHTS</span>
       <h1
         className={
           body.titleSize ? `content-title-${body.titleSize}` : undefined
@@ -412,6 +370,10 @@ export function ArticleContentView({
         {body.title}
       </h1>
       <RichContent document={body.introRich} text={body.intro} />
+      {body.heroMediaId && (
+        <Image className="article-cover" unoptimized src={`/media/${body.heroMediaId}`}
+          width={1200} height={675} alt={body.heroAlt || ""} />
+      )}
       {body.sections.map((s, i) => (
         <section id={`section-${i}`} className="content-section" key={i}>
           <h2

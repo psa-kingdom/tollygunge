@@ -3,7 +3,7 @@ import Link from "./navigation-link";
 import { currentActor } from "@/lib/actor";
 import { AccountControls } from "./account-controls";
 import { StickyHeaderState } from "./sticky-header-state";
-import { publishedSettings, publicNavigation } from "@/lib/website-content";
+import { publishedSettings, publicNavigation, publishedResources } from "@/lib/website-content";
 import { sharedDefaults, type SharedSettings } from "@/domain/website-settings";
 import { TpaLogo } from "./tpa-logo";
 import { PublicFooter } from "./public-footer";
@@ -35,9 +35,9 @@ export const navigation = [
     links: ["Upcoming Events", "Past Events", "Event Registration"],
   },
   {
-    title: "Resources",
+    title: "Media",
     href: "/resources",
-    links: ["Insights", "Media", "Downloads", "Important Links"],
+    links: ["Insights", "Gallery", "Downloads", "Important Links"],
   },
 ];
 export function Brand({
@@ -174,7 +174,8 @@ export function PortalShell({
   );
 }
 export async function Footer() {
-  return <PublicFooter settings={await publishedSettings("shared")} />;
+  const [settings, downloads] = await Promise.all([publishedSettings("shared"), publishedResources("document")]);
+  return <PublicFooter settings={settings} showDownloads={downloads.length > 0} />;
 }
 export function SiteShell({
   children,

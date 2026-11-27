@@ -2,7 +2,7 @@ import { publishedPeople } from "@/lib/public-people";
 import "server-only";
 import { publicHistoricalEvents } from "./public-historical-events";
 import { getDatabase } from "./database";
-import { publishedArticles } from "./public-content";
+import { publishedArticles, publishedMedia } from "./public-content";
 import {publishedSettings,publishedResources} from './website-content';
 import {sitePages} from '@/domain/site-pages';
 import {peopleFallback} from '@/domain/people-placement';
@@ -17,14 +17,7 @@ export async function previewContext(
   const people = ["about", "governance"].includes(page)
     ? await publishedPeople()
     : [];
-  const media =
-    page === "resources"
-      ? (
-          await db.query(
-            "SELECT id,published,width,height FROM tpa.public_media WHERE published IS NOT NULL ORDER BY coalesce((published->>'displayOrder')::int,0),created_at DESC,id",
-          )
-        ).rows
-      : [];
+  const media = page === "resources" ? await publishedMedia(4) : [];
   const events =
     page === "events"
       ? (
@@ -42,6 +35,6 @@ export async function previewContext(
     media,
     events,
     pastEvents: page === "events" ? await publicHistoricalEvents() : [],
-    articles: page === "resources" ? await publishedArticles() : [],
+    articles: page === "resources" ? await publishedArticles(4) : [],
   };
 }

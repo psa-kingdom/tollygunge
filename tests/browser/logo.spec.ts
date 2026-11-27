@@ -83,19 +83,20 @@ test("logo reserves space, retains accessible links on failure and respects publ
   );
   await page.evaluate(() => document.fonts.ready);
   const before = await brand.boundingBox();
-  await page.route("**/design/tpa-logo.png", (route) => route.abort());
+  await page.route("**/design/tpa-logo-256.webp", (route) => route.abort());
   await page.reload();
   await page.evaluate(() => document.fonts.ready);
   await expect(brand).toHaveAccessibleName(
     /Tollygunge Professional Association homepage/i,
   );
+  await expect(brand.locator("img")).toHaveAttribute("src", "/design/tpa-logo.png");
   expect(await brand.boundingBox()).toEqual(before);
   await page.emulateMedia({ colorScheme: "light" });
   await expect(page.locator("html")).toHaveAttribute(
     "data-color-mode",
     "light",
   );
-  await page.unroute("**/design/tpa-logo.png");
+  await page.unroute("**/design/tpa-logo-256.webp");
   const actor = await staff(context);
   const db = new Pool(databaseOptions()),
     mediaId = randomUUID();
@@ -129,7 +130,7 @@ test("logo reserves space, retains accessible links on failure and respects publ
     await page.goto("/admin");
     await expect(
       page.locator(".portal-topbar img[data-tpa-logo]"),
-    ).toHaveAttribute("src", "/design/tpa-logo.png");
+    ).toHaveAttribute("src", "/design/tpa-logo-256.webp");
     await page.goto("/missing/phase8b-logo");
     await page.keyboard.press("Tab");
     await expect(

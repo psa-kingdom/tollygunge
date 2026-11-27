@@ -7,11 +7,19 @@ import { ReportIssueLink } from "./report-issue-link";
 export function PublicFooter({
   settings,
   preview = false,
+  showDownloads = true,
 }: {
   settings: SharedSettings;
   preview?: boolean;
+  showDownloads?: boolean;
 }) {
   const footer = settings.footer;
+  const groups = footerGroups(footer);
+  const archiveLinks = [
+    { label: "Blogs", href: "/blogs" },
+    { label: "Media", href: "/media" },
+  ].filter((link) => !groups.some((group) => group.links.some((existing) => existing.href === link.href)));
+  const archiveGroupIndex = groups.findIndex((group) => group.title.toLowerCase() === "explore");
   return (
     <footer className="site-footer footer-complete">
       <div className="footer-identity">
@@ -49,7 +57,7 @@ export function PublicFooter({
         </p>
       </div>
       <nav className="footer-groups" aria-label="Footer">
-        {footerGroups(footer).map((group, index) => (
+        {groups.map((group, index) => (
           <div className="footer-group" key={index}>
             <h2
               data-cms-field={
@@ -59,7 +67,7 @@ export function PublicFooter({
               {group.title}
             </h2>
             <ul>
-              {group.links.map((link, linkIndex) => (
+              {group.links.map((link, linkIndex) => (showDownloads || link.href !== "/resources#section-2") && (
                 <li key={linkIndex}>
                   <Link
                     data-cms-field={
@@ -73,6 +81,9 @@ export function PublicFooter({
                     {link.label.replace(/[→↗←↓]/g, "").trim()}
                   </Link>
                 </li>
+              ))}
+              {index === (archiveGroupIndex < 0 ? 0 : archiveGroupIndex) && archiveLinks.map((link) => (
+                <li key={link.href}><Link href={link.href}>{link.label}</Link></li>
               ))}
             </ul>
           </div>

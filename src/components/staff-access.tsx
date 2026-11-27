@@ -80,8 +80,9 @@ export function StaffAccess() {
   const canEdit = !!selected && !!directory?.canManageRoles &&
     !selected.roles.includes("super_administrator") &&
     selectedId !== directory.actorId && (selected.eligible || selected.roles.length > 0);
-  const accessNote = selected?.roles.includes("super_administrator")
-    ? "Super-admin access is managed through operator setup."
+  const isSuperAdmin = selected?.roles.includes("super_administrator");
+  const accessNote = isSuperAdmin
+    ? "Super Admin has the controls shown below. Access is managed through operator setup."
     : selectedId === directory?.actorId
       ? "Your own access must be changed by another authorized administrator."
       : !directory?.canManageRoles
@@ -351,10 +352,16 @@ export function StaffAccess() {
               <h3 id={`${roleId}-responsibilities`}>Staff responsibilities</h3>
               {selected.roles.length ? (
                 <ul className={styles.assignedRoles}>
-                  {selected.roles.map((role) => (
+                  {(isSuperAdmin ? Object.keys(roleDescriptions) as StaffRole[] : selected.roles).map((role) => (
                     <li className={styles.role} key={role}>
                       <span className={styles.roleIcon}><PortalIcon name={roleIcons[role]} /></span>
-                      <span><strong>{staffRoleLabel(role)}</strong><small>{roleDescriptions[role]}</small></span>
+                      <span>
+                        <strong>{staffRoleLabel(role)}</strong>
+                        <small>{isSuperAdmin && role === "finance_operator"
+                          ? "Manage collection accounts. Member receipt verification follows its separate approval workflow."
+                          : roleDescriptions[role]}</small>
+                      </span>
+                      {isSuperAdmin && <input type="checkbox" checked disabled aria-label={`${staffRoleLabel(role)} included`} />}
                     </li>
                   ))}
                 </ul>
