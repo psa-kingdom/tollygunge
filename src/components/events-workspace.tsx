@@ -690,6 +690,7 @@ function EventDetails({
     [attendance, setAttendance] = useState("All participants");
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [publishError, setPublishError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const load = useCallback(async () => {
@@ -876,12 +877,16 @@ function EventDetails({
                     <p>{event?.description || entry.historical?.description}</p>
                   </section>
                 )}
+                {publishError && <p role="alert">{publishError}</p>}
                 {event && !frozen && (
                   <footer className={styles.actions}>
                     <button
                       className="button secondary"
                       disabled={!loaded || busy || deleting}
-                      onClick={() => setEditing(true)}
+                      onClick={() => {
+                        setPublishError("");
+                        setEditing(true);
+                      }}
                     >
                       Edit event
                     </button>
@@ -891,7 +896,7 @@ function EventDetails({
                         disabled={!loaded || busy || deleting}
                         onClick={async () => {
                           setBusy(true);
-                          setError("");
+                          setPublishError("");
                           try {
                             await api("/api/staff/events", {
                               action: "publish",
@@ -901,7 +906,7 @@ function EventDetails({
                             await load();
                             await refresh();
                           } catch (e) {
-                            setError((e as Error).message);
+                            setPublishError((e as Error).message);
                           } finally {
                             setBusy(false);
                           }

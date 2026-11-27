@@ -43,7 +43,7 @@ export async function renderFlyer(event: FlyerEvent, speakers: Speaker[], link: 
     ctx.fillRect(x,top,width,speakers.length === 1 ? 280 : height-12);
     ctx.fillStyle = "#172a40";
     fitWrap(ctx,speaker.name.trim(),x+20,top+(speakers.length === 1 ? 50 : 30),width-40,speakers.length === 1 ? 44 : 28,2,speakers.length === 1 ? 38 : 26,18,true);
-    fitWrap(ctx,speaker.credentials.trim(),x+20,top+(speakers.length === 1 ? 130 : 82),width-40,speakers.length === 1 ? 28 : 20,4,speakers.length === 1 ? 26 : 20,16,false);
+    fitWrap(ctx,(speaker.designationOrganisation ?? speaker.credentials).trim(),x+20,top+(speakers.length === 1 ? 130 : 82),width-40,speakers.length === 1 ? 28 : 20,4,speakers.length === 1 ? 26 : 20,16,false);
   });
   ctx.fillStyle = "#172a40";
   ctx.fillRect(0, 1100, 1080, 250);

@@ -1,4 +1,8 @@
-export type Speaker = { name: string; credentials: string; designation?: string; organization?: string; description?: string };
+export type Speaker = { name: string; credentials: string; designation?: string; organization?: string; designationOrganisation?: string; description?: string };
+export const speakerDesignationLimit = 406;
+export function speakerDesignation(speaker: Speaker) {
+  return speaker.designationOrganisation ?? [speaker.credentials, speaker.designation, speaker.organization].filter(Boolean).join(" · ");
+}
 export type ReminderSettings = { enabled: boolean; offsets: number[]; includePending: boolean };
 export const defaultReminders: ReminderSettings = { enabled: true, offsets: [1440, 60], includePending: false };
 export const disabledReminders: ReminderSettings = { ...defaultReminders, enabled: false };
@@ -9,8 +13,8 @@ export function speakersInput(value: unknown): Speaker[] {
     const { name, credentials = "" } = entry;
     if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 60 || typeof credentials !== "string" || credentials.trim().length > 120)
       throw Error("Speaker names need 2–60 characters; credentials allow 120.");
-    const extra: Pick<Speaker,'designation'|'organization'|'description'> = {};
-    for(const [key,max] of [['designation',120],['organization',160],['description',500]] as const) {
+    const extra: Pick<Speaker,'designation'|'organization'|'designationOrganisation'|'description'> = {};
+    for(const [key,max] of [['designation',120],['organization',160],['designationOrganisation',speakerDesignationLimit],['description',500]] as const) {
       const value = (entry as Record<string, unknown>)[key] ?? '';
       if(typeof value !== 'string' || value.length>max || /[\u0000-\u001f]/.test(value)) throw Error('Check speaker professional details.');
       // Optional fields preserve the old wire shape when omitted.

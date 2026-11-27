@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { speakersInput, remindersInput, eventReturnPath, eventLink, bookingLabel, istInput, istInstant } from "../src/domain/event-flow";
+import { speakerDesignation, speakersInput, remindersInput, eventReturnPath, eventLink, bookingLabel, istInput, istInstant } from "../src/domain/event-flow";
 import { eventEmail } from "../src/domain/event-email";
 import { eventInput } from "../src/domain/operations";
 const event = { id:"00000000-0000-4000-8000-000000000001", title:"Design & <Learning>", starts_at:"2026-12-12T12:00:00Z", location:"Hall <A>", fee_paise:75000 };
@@ -13,6 +13,15 @@ test("event speakers and reminder settings enforce meaningful limits and types",
   const input={title:"Workshop",description:"",location:"Hall",startsAt:event.starts_at,endsAt:"2026-12-12T13:00:00Z",capacity:5,version:0};
   assert.equal(eventInput(input).reminders?.enabled,true);
   assert.equal(eventInput({...input,id:event.id}).reminders,undefined);
+});
+test("speaker designation accepts the combined field and displays legacy details", () => {
+  const [legacy, updated] = speakersInput([
+    { name: "Speaker", credentials: "CA", designation: "Partner", organization: "Example Firm" },
+    { name: "Speaker", designationOrganisation: " Partner, Example Firm ", description: "Speaker bio" },
+  ]);
+  assert.equal(speakerDesignation(legacy), "CA · Partner · Example Firm");
+  assert.equal(speakerDesignation(updated), "Partner, Example Firm");
+  assert.equal(updated.description, "Speaker bio");
 });
 test("event time inputs remain IST regardless of machine timezone and links respect visibility", () => {
   assert.equal(istInput(event.starts_at),"2026-12-12T17:30");

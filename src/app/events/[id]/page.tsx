@@ -5,7 +5,7 @@ import { Header } from "@/components/site-shell";
 import styles from "./registration.module.css";
 import { currentActor } from "@/lib/actor";
 import { EventRegistrationForm } from "./registration-form";
-import { bookingLabel, type Speaker } from "@/domain/event-flow";
+import { bookingLabel, speakerDesignation, type Speaker } from "@/domain/event-flow";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -125,8 +125,8 @@ export default async function Page({
                 <ul className={styles["speaker-list"]}>{event.speakers.map((speaker: Speaker, index: number) => (
                   <li key={index}>
                     {speaker.name}
-                    {[speaker.credentials, speaker.designation, speaker.organization].filter(Boolean).length > 0 && (
-                      <span className={styles["speaker-role"]}>{[speaker.credentials, speaker.designation, speaker.organization].filter(Boolean).join(" · ")}</span>
+                    {speakerDesignation(speaker) && (
+                      <span className={styles["speaker-role"]}>{speakerDesignation(speaker)}</span>
                     )}
                   </li>
                 ))}</ul>

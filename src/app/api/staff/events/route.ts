@@ -151,7 +151,9 @@ export async function POST(request: Request) {
         if(raw.action === "publish") {
 
           row=await syncOrganiserPayments(client,{...row,status:"draft"},actor.id);
-          if(row.fee_paise>0 && row.payment_account_ids !== null && !row.payment_account_ids.length) throw new OperationError("Choose a payment account.");
+          if(row.fee_paise>0 && row.payment_account_ids !== null && !row.payment_account_ids.length) throw new OperationError(row.organiser
+            ? `Add an active UPI ID for ${row.organiser} in Settings → Collection accounts → UPI IDs before publishing this paid event.`
+            : "Select an organiser with an active UPI ID before publishing this paid event.");
 
           await freezeEventPayment(client,row,actor.id,"Event publication");
 

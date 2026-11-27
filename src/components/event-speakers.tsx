@@ -1,18 +1,21 @@
 "use client";
-import type { Speaker } from "@/domain/event-flow";
+import { speakerDesignation, speakerDesignationLimit, type Speaker } from "@/domain/event-flow";
 export function EventSpeakers({ speakers, onChange }: { speakers: Speaker[]; onChange: (speakers: Speaker[]) => void }) {
   function move(i: number, step: number) {
     const next = [...speakers];
     [next[i], next[i + step]] = [next[i + step], next[i]];
     onChange(next);
   }
+  function update(index: number, speaker: Speaker) {
+    onChange(speakers.map((current, i) => i === index ? speaker : current));
+  }
   return <div className="event-speakers">
     {speakers.map((speaker, i) => <fieldset key={i}>
       <legend>Speaker {i + 1}</legend>
       <div className="form-grid">
-        <label>Name<input required minLength={2} maxLength={60} value={speaker.name} onChange={(e) => onChange(speakers.map((s, n) => n === i ? { ...s, name: e.target.value } : s))} /></label>
-        <label>Credentials / role<input maxLength={120} value={speaker.credentials} onChange={(e) => onChange(speakers.map((s, n) => n === i ? { ...s, credentials: e.target.value } : s))} /></label>
-        {(['designation','organization','description'] as const).map(field => <label key={field}>{field==='description'?'Short professional description':field==='designation'?'Designation / title':'Organization'}<input maxLength={field==='description'?500:field==='organization'?160:120} value={speaker[field]??''} onChange={e=>onChange(speakers.map((s,n)=>n===i?{...s,[field]:e.target.value}:s))}/></label>)}
+        <label>Name<input required minLength={2} maxLength={60} value={speaker.name} onChange={(e) => update(i, { ...speaker, name: e.target.value })} /></label>
+        <label>Designation / Organisation<input maxLength={speakerDesignationLimit} value={speakerDesignation(speaker)} onChange={(e) => update(i, { name: speaker.name, credentials: "", designationOrganisation: e.target.value, description: speaker.description })} /></label>
+        <label>Description<input maxLength={500} value={speaker.description ?? ""} onChange={(e) => update(i, { ...speaker, description: e.target.value })} /></label>
       </div>
       <div className="action-row">
         <button className="button secondary" type="button" aria-label={`Move speaker ${i+1} up`} disabled={i === 0} onClick={() => move(i,-1)}>Move up</button>

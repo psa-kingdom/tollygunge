@@ -2,7 +2,7 @@
 import { MemberReceipts } from "./member-receipts";
 import { upcomingMemberEvents } from "@/domain/member-upcoming-events";
 import { CopyValue } from "./portal-values";
-import { eventTime, type Speaker } from "@/domain/event-flow";
+import { eventTime, speakerDesignation, type Speaker } from "@/domain/event-flow";
 import { MemberEventResources } from "./event-operations";
 import { MemberEventJourney } from "./member-event-journey";
 import { MemberPaymentDetails } from "./payment-details";
@@ -147,11 +147,7 @@ export function MemberEvents() {
                 {event.speakers.map((speaker, i) => (
                   <p key={i}>
                     <strong>{speaker.name}</strong>
-                    {speaker.credentials && <span>{speaker.credentials}</span>}
-                    {speaker.designation && <span>{speaker.designation}</span>}
-                    {speaker.organization && (
-                      <span>{speaker.organization}</span>
-                    )}
+                    {speakerDesignation(speaker) && <span>{speakerDesignation(speaker)}</span>}
                     {speaker.description && <span>{speaker.description}</span>}
                   </p>
                 ))}
