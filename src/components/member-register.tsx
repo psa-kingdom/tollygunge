@@ -692,9 +692,9 @@ export function MemberRegister({
                           <button type="button" className="button secondary" disabled={busy || editorDirty}
                             onClick={() => setDetailTab("Edit details")}>Edit details</button>
                         )}
-                        {canManageDetails &&
-                          selected.person_id &&
-                          selected.record_kind !== "account" && (
+                        {(selected.record_kind === "account"
+                          ? selected.user_id
+                          : selected.person_id) && (
                             <button
                               type="button"
                               className="button secondary"
@@ -709,7 +709,8 @@ export function MemberRegister({
                                 setBusy(true);
                                 try {
                                   await api("/api/staff/member-actions", {
-                                    action: "delete",
+                                    action: selected.record_kind === "account" ? "delete-account-record" : "delete",
+                                    userId: selected.user_id,
                                     personId: selected.person_id,
                                     personVersion: selected.person_version,
                                     version: selected.membership_version,

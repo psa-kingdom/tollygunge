@@ -37,7 +37,7 @@ export async function eventRoster(
     if (
       !/^[a-f0-9-]{36}$/i.test(eventKey) ||
       !(
-        await db.query("SELECT 1 FROM tpa.events WHERE id::text=$1", [eventKey])
+        await db.query("SELECT 1 FROM tpa.events WHERE id::text=$1 AND deleted_at IS NULL", [eventKey])
       ).rowCount
     )
       throw new OperationError("Event not found.", 404);

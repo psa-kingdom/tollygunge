@@ -7,6 +7,7 @@ export async function eventPaymentAccess(eventId:string, actor:{id:string;roles:
  if(!e) throw new OperationError('Event not found.',404);
  const r=(await db.query('SELECT * FROM tpa.event_registrations WHERE event_id=$1 AND user_id=$2',[eventId,actor.id])).rows[0];
  const staff=hasPermission(actor.roles,'events:manage')||hasPermission(actor.roles,'payments:manage');
+ if(e.deleted_at && !staff) throw new OperationError('Event not found.',404);
  const member=(await db.query("SELECT 1 FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id WHERE p.user_id=$1 AND m.status='active' AND m.type IS DISTINCT FROM 'Free' AND (m.valid_from IS NULL OR m.valid_from<=current_date) AND (m.valid_until IS NULL OR m.valid_until>=current_date)",[actor.id])).rowCount;
  if(!staff && !r && (e.status!=='published' || (e.visibility==='members'&&!member))) throw new OperationError('Event not found.',404);
  const revision=r?r.payment_revision:e.payment_revision;

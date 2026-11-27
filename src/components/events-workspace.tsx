@@ -1,4 +1,5 @@
 "use client";
+import { useRouter } from "next/navigation";
 
 import {
   useCallback,
@@ -82,16 +83,20 @@ function Popup({
   title,
   close,
   children,
+  action,
 }: {
   title: string;
   close: () => void;
   children: ReactNode;
+  action?: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const dialog = ref.current;
     dialog?.showModal();
+    closeRef.current?.focus();
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -124,9 +129,12 @@ function Popup({
     >
       <header className={styles.modalHeader}>
         <h2 id="event-popup-title">{title}</h2>
-        <button type="button" onClick={close} aria-label="Close popup">
-          ✕
-        </button>
+        <div className={styles.modalHeaderActions}>
+          {action}
+          <button ref={closeRef} className={styles.closePopup} type="button" onClick={close} aria-label="Close popup">
+            ✕
+          </button>
+        </div>
       </header>
       {children}
     </dialog>
@@ -135,9 +143,12 @@ function Popup({
 
 export function EventsWorkspace({
   historicalEvents,
+  canDelete,
 }: {
   historicalEvents: WorkbookEvent[];
+  canDelete: boolean;
 }) {
+  const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [loaded, setLoaded] = useState(false),
     [error, setError] = useState("");
@@ -147,6 +158,7 @@ export function EventsWorkspace({
   const [selected, setSelected] = useState<Entry | null>(null),
     [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState("");
+  const [deletedDates, setDeletedDates] = useState<string[]>([]);
   const load = useCallback(async () => {
     try {
       setEvents(await api<Event[]>("/api/staff/events"));
@@ -176,7 +188,7 @@ export function EventsWorkspace({
       count: live.registrations,
       live,
     })),
-    ...historicalEvents.map((historical) => ({
+    ...historicalEvents.filter((event) => !deletedDates.includes(event.date)).map((historical) => ({
       key: historical.date,
       title: historical.title || "Association event",
       date: `${historical.date}T12:00:00+05:30`,
@@ -201,7 +213,7 @@ export function EventsWorkspace({
       params.get("id") || params.get("eventId") || params.get("eventDate");
     if (id) {
       const live = events.find((e) => e.id === id),
-        historical = historicalEvents.find((e) => e.date === id);
+        historical = historicalEvents.find((e) => e.date === id && !deletedDates.includes(e.date));
       if (live)
         queueMicrotask(() =>
           setSelected({
@@ -227,7 +239,7 @@ export function EventsWorkspace({
           }),
         );
     }
-  }, [loaded, events, historicalEvents]);
+  }, [loaded, events, historicalEvents, deletedDates]);
   return (
     <section className={styles.workspace}>
       <h1 className="sr-only">Events</h1>
@@ -401,6 +413,17 @@ export function EventsWorkspace({
           entry={selected}
           close={() => setSelected(null)}
           refresh={load}
+          canDelete={canDelete}
+          onDeleted={() => {
+            if (selected.historical) {
+              setDeletedDates((dates) => [...dates, selected.key]);
+              router.refresh();
+            } else {
+              setEvents((events) => events.filter((event) => event.id !== selected.key));
+            }
+            setSelected(null);
+            setNotice("Event deleted.");
+          }}
         />
       )}
     </section>
@@ -643,10 +666,14 @@ function EventDetails({
   entry,
   close,
   refresh,
+  canDelete,
+  onDeleted,
 }: {
   entry: Entry;
   close: () => void;
   refresh: () => Promise<void>;
+  canDelete: boolean;
+  onDeleted: () => void;
 }) {
   const [event, setEvent] = useState(entry.live),
     [tab, setTab] = useState("Details"),
@@ -663,6 +690,8 @@ function EventDetails({
     [attendance, setAttendance] = useState("All participants");
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const load = useCallback(async () => {
     setError("");
     try {
@@ -697,10 +726,40 @@ function EventDetails({
   const frozen =
     event &&
     (event.status === "cancelled" || event.completed_at || event.archived_at);
+  async function deleteEvent() {
+    if (!window.confirm(`Delete “${event?.title || entry.title}”? It will be removed from event listings. Existing attendance and payment records will be kept.`)) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      if (entry.historical) {
+        await api("/api/staff/historical-events", {
+          action: "delete",
+          date: entry.historical.date,
+          version: entry.historical.version ?? 0,
+        });
+      } else if (event) {
+        await api("/api/staff/events", {
+          action: "delete",
+          id: event.id,
+          version: event.version,
+        });
+      }
+      onDeleted();
+    } catch (e) {
+      setDeleteError((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  }
   return (
     <Popup
       title={editing ? "Edit event" : event?.title || entry.title}
-      close={close}
+      close={() => { if (!deleting) close(); }}
+      action={canDelete && !editing && (event || entry.historical) && (
+        <button type="button" className="button danger" disabled={(!!entry.live && !loaded) || busy || deleting} onClick={() => void deleteEvent()}>
+          {deleting ? "Deleting…" : "Delete event"}
+        </button>
+      )}
     >
       {editing && event ? (
         <EventForm
@@ -735,6 +794,7 @@ function EventDetails({
             ))}
           </div>
           <div className={styles.modalBody}>
+            {deleteError && <p role="alert">{deleteError}</p>}
             {error && (
               <p role="alert">
                 {error} <button onClick={() => void load()}>Retry</button>
@@ -820,7 +880,7 @@ function EventDetails({
                   <footer className={styles.actions}>
                     <button
                       className="button secondary"
-                      disabled={!loaded || busy}
+                      disabled={!loaded || busy || deleting}
                       onClick={() => setEditing(true)}
                     >
                       Edit event
@@ -828,7 +888,7 @@ function EventDetails({
                     {event.status === "draft" && (
                       <button
                         className="button gold"
-                        disabled={!loaded || busy}
+                        disabled={!loaded || busy || deleting}
                         onClick={async () => {
                           setBusy(true);
                           setError("");

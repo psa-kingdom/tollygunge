@@ -43,7 +43,7 @@ export async function GET(request: Request) {
 
       await getDatabase().query(
 
-        "SELECT e.*, EXISTS(SELECT 1 FROM tpa.event_banners b WHERE b.event_id=e.id) AS has_banner, ((SELECT count(*)::int FROM tpa.event_registrations r WHERE r.event_id=e.id AND r.status='registered') + (SELECT count(*)::int FROM tpa.event_participant_overrides o WHERE o.event_key=e.id::text AND o.data->>'source'='imported' AND o.data->>'registrationStatus'='registered')) AS registrations, EXISTS(SELECT 1 FROM tpa.event_registrations r WHERE r.event_id=e.id) AS has_registrations FROM tpa.events e WHERE ($1::uuid IS NULL OR e.id=$1) ORDER BY starts_at DESC LIMIT 200",
+        "SELECT e.*, EXISTS(SELECT 1 FROM tpa.event_banners b WHERE b.event_id=e.id) AS has_banner, ((SELECT count(*)::int FROM tpa.event_registrations r WHERE r.event_id=e.id AND r.status='registered') + (SELECT count(*)::int FROM tpa.event_participant_overrides o WHERE o.event_key=e.id::text AND o.data->>'source'='imported' AND o.data->>'registrationStatus'='registered')) AS registrations, EXISTS(SELECT 1 FROM tpa.event_registrations r WHERE r.event_id=e.id) AS has_registrations FROM tpa.events e WHERE e.deleted_at IS NULL AND ($1::uuid IS NULL OR e.id=$1) ORDER BY starts_at DESC LIMIT 200",
 
         [id],
 
@@ -80,6 +80,26 @@ export async function POST(request: Request) {
       banner = { type: file.type, image };
     } else {
       raw = record(await jsonBody(request, 16000));
+    }
+
+    if (raw.action === "delete") {
+      await authorized(request, "events:delete", true);
+      const id = uuid(raw.id);
+      const expected = version(raw.version);
+      return transaction(async (client) => {
+        const event = await lockOperationalEvent(client, id);
+        if (event.deleted_at) return { deleted: true };
+        if (event.version !== expected)
+          throw new OperationError("Event changed. Reload before deleting.", 409);
+        // Retain attendance and payment history. Existing booking and publication
+        // checks already close access when the event is cancelled.
+        await client.query(
+          "UPDATE tpa.events SET deleted_at=now(),status='cancelled',booking_closed=true,version=version+1,updated_by=$2 WHERE id=$1",
+          [id, actor.id],
+        );
+        await audit(client, actor.id, "event.delete", id);
+        return { deleted: true };
+      });
     }
 
     return transaction(async (client) => {

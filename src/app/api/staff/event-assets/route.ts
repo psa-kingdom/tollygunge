@@ -34,7 +34,7 @@ export async function POST(request:Request) {return operation(async()=>{
  if(file&&!privateStorageConfigured()) throw new OperationError('Private storage is unavailable.',503);
  const c=await getDatabase().connect();
  try {await c.query('BEGIN');
-  const event=(await c.query('SELECT * FROM tpa.events WHERE id=$1 FOR UPDATE',[eventId])).rows[0];if(!event) throw new OperationError('Event not found.',404);
+  const event=(await c.query('SELECT * FROM tpa.events WHERE id=$1 AND deleted_at IS NULL FOR UPDATE',[eventId])).rows[0];if(!event) throw new OperationError('Event not found.',404);
   if(event.completed_at||event.archived_at) throw new OperationError('Reopen the event before changing resources.',409);
   if(body.id) {const prior=(await c.query('SELECT eligibility FROM tpa.event_assets WHERE id=$1 AND event_id=$2 FOR UPDATE',[id,eventId])).rows[0];if(prior?.eligibility==='finance'&&!hasPermission(actor.roles,'payments:manage')) throw new OperationError('Financial resources require finance permission.',403);}
   if(input.selectedMembers.length && (await c.query(`SELECT DISTINCT p.user_id FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id WHERE p.user_id=ANY($1::text[])`,[input.selectedMembers])).rowCount!==input.selectedMembers.length) throw new OperationError('Select existing member accounts.');

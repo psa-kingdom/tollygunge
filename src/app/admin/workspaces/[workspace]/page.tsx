@@ -127,7 +127,10 @@ export default async function Workspace({
         ) : workspace === "content" ? (
           <ContentWorkspace />
         ) : workspace === "events" ? (
-          <EventsWorkspace historicalEvents={await loadWorkbookAttendance()} />
+          <EventsWorkspace
+            historicalEvents={await loadWorkbookAttendance()}
+            canDelete={hasPermission(actor.roles, "events:delete")}
+          />
         ) : workspace === "crm" ? (
           <CrmWorkspace />
         ) : workspace === "reports" ? (

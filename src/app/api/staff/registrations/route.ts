@@ -26,10 +26,11 @@ export async function POST(r: Request) {
       ).rows[0];
       if (!match) throw new OperationError("Registration not found.", 404);
       const event = (
-        await c.query("SELECT * FROM tpa.events WHERE id=$1 FOR UPDATE", [
+        await c.query("SELECT * FROM tpa.events WHERE id=$1 AND deleted_at IS NULL FOR UPDATE", [
           match.event_id,
         ])
       ).rows[0];
+      if (!event) throw new OperationError("Event not found.", 404);
       editableEvent(event);
       const row = (
         await c.query(

@@ -51,7 +51,7 @@ export const searchSources: SearchSource[] = [
   {
     group: "Events",
     permission: "events:manage",
-    sql: `SELECT id::text id,title,location summary FROM tpa.events WHERE (coalesce(title,'') || ' ' || coalesce(description,'') || ' ' || coalesce(location,'') || ' ' || coalesce(id::text,'')) ILIKE $1 ESCAPE '\\' ORDER BY starts_at DESC LIMIT 4`,
+    sql: `SELECT id::text id,title,location summary FROM tpa.events WHERE deleted_at IS NULL AND (coalesce(title,'') || ' ' || coalesce(description,'') || ' ' || coalesce(location,'') || ' ' || coalesce(id::text,'')) ILIKE $1 ESCAPE '\\' ORDER BY starts_at DESC LIMIT 4`,
     path: "/admin/workspaces/events",
   },
   {

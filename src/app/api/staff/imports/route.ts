@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     ).rows as { id: string; email: string }[];
     const events = (
       await getDatabase().query(
-        "SELECT id,starts_at,ends_at FROM tpa.events WHERE id=ANY($1::uuid[])",
+        "SELECT id,starts_at,ends_at FROM tpa.events WHERE id=ANY($1::uuid[]) AND deleted_at IS NULL",
         [eventIds],
       )
     ).rows;

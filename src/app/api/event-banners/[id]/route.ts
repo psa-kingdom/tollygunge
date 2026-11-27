@@ -9,7 +9,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const actor = await currentActor(request.headers);
   const { rows: [banner] } = await getDatabase().query(
     `SELECT b.content_type,b.image FROM tpa.event_banners b JOIN tpa.events e ON e.id=b.event_id
-     WHERE e.id=$1 AND ($2 OR (e.status='published' AND
+     WHERE e.id=$1 AND e.deleted_at IS NULL AND ($2 OR (e.status='published' AND
        (e.visibility='public' OR EXISTS(
          SELECT 1 FROM tpa.people p JOIN tpa.memberships m ON m.person_id=p.id
          WHERE p.user_id=$3 AND m.status='active' AND m.type IS DISTINCT FROM 'Free'

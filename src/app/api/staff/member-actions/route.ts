@@ -8,7 +8,7 @@ import {
   OperationError,
 } from "@/lib/operation-api";
 import { uuid, version } from "@/domain/operations";
-import { deleteMember } from "@/lib/member-deletion";
+import { archiveAccountRecord, deleteMember } from "@/lib/member-deletion";
 export async function POST(request: Request) {
   return operation(async () => {
     const actor = await authorized(request, "staff:manage", true),
@@ -88,6 +88,14 @@ export async function POST(request: Request) {
         await audit(client, actor.id, "membership.plan_assigned", person?.id ?? userId);
         return { saved: true, plan: input.plan, membershipVersion: membership ? membership.version + 1 : 0 };
       });
+    }
+    if (input.action === "delete-account-record") {
+      if (typeof input.userId !== "string" || !input.userId || input.userId.length > 200)
+        throw new OperationError("Choose a directory account.");
+      const personVersion = input.personVersion === 0 ? 0 : version(input.personVersion);
+      return transaction((client) =>
+        archiveAccountRecord(client, actor.id, input.userId, personVersion),
+      );
     }
     const id = uuid(input.personId);
     if (["invite", "resend", "release"].includes(input.action))

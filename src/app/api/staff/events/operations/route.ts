@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
   const actor=await authorized(request,'events:manage'), id=uuid(new URL(request.url).searchParams.get('eventId')), db=getDatabase();
 
-  const event=(await db.query('SELECT * FROM tpa.events WHERE id=$1',[id])).rows[0];
+  const event=(await db.query('SELECT * FROM tpa.events WHERE id=$1 AND deleted_at IS NULL',[id])).rows[0];
 
   if (!event) throw new OperationError('Event not found.',404);
 
@@ -63,6 +63,7 @@ export async function POST(request: Request) {
   return transaction(async c=> {
 
    const e=await lockOperationalEvent(c,id,version(i.version));
+   if(e.deleted_at) throw new OperationError('Event not found.',404);
 
    if(action==='reopen') {
 

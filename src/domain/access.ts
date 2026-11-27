@@ -12,6 +12,7 @@ export type Permission =
   | "members:review"
   | "content:publish"
   | "events:manage"
+  | "events:delete"
   | "communications:manage"
   | "payments:manage"
   | "documents:review"
@@ -19,11 +20,12 @@ export type Permission =
   | "staff:roles"
   | "finance:approve";
 const grants: Record<StaffRole, readonly Permission[]> = {
-  super_administrator: ["members:review", "content:publish", "events:manage", "communications:manage", "payments:manage", "documents:review", "staff:manage", "staff:roles", "finance:approve"],
+  super_administrator: ["members:review", "content:publish", "events:manage", "events:delete", "communications:manage", "payments:manage", "documents:review", "staff:manage", "staff:roles", "finance:approve"],
   administrator: [
     "members:review",
     "content:publish",
     "events:manage",
+    "events:delete",
     "communications:manage",
     "payments:manage",
     "documents:review",

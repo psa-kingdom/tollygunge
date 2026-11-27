@@ -4,8 +4,8 @@
   padding: 8px 0 40px;
   color: var(--ink);
 }
-.workspace :global(.button):not(:global(.secondary)),
-.dialog :global(.button):not(:global(.secondary)) {
+.workspace :global(.button):not(:global(.secondary), :global(.danger)),
+.dialog :global(.button):not(:global(.secondary), :global(.danger)) {
   background: var(--gold);
   color: #172033;
   border-color: var(--gold);
@@ -230,7 +230,13 @@
   letter-spacing: -0.4px;
   overflow-wrap: anywhere;
 }
-.modalHeader button {
+.modalHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.closePopup {
   flex-shrink: 0;
   border: 1px solid var(--line);
   border-radius: 8px;

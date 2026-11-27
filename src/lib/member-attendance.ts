@@ -25,5 +25,5 @@ export async function memberWorkbookAttendance(db: Pool | PoolClient, userId: st
   // Do not fall back to a membership number when a recorded phone is shared.
   if (people.some(person => attendanceMobileKey(person.mobile_normalized || "")) && !mobiles.length) return [];
   if (!rows.length && !mobiles.length) return [];
-  return ownWorkbookAttendance(await loadWorkbookAttendance(), rows.map(row => row.membership_number), mobiles);
+  return ownWorkbookAttendance(await loadWorkbookAttendance({ includeDeleted: true }), rows.map(row => row.membership_number), mobiles);
 }

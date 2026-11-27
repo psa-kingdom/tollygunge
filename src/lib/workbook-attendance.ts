@@ -11,8 +11,8 @@ export type WorkbookAttendee = { number: string; name: string; email: string; mo
 export type WorkbookEvent = { date: string; sheet: string; rows: WorkbookAttendee[]; title?: string; description?: string; location?: string; speakers?: string; version?: number; attendanceAvailable?: boolean };
 const normalize = (value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 const memberKey = (value: string) => value.trim().replace(/^0+(?=\d)/, "");
-export async function loadWorkbookAttendance(): Promise<WorkbookEvent[]> {
-  const events = await applyHistoricalEventDetails(await readWorkbookAttendance());
+export async function loadWorkbookAttendance({ includeDeleted = false } = {}): Promise<WorkbookEvent[]> {
+  const events = await applyHistoricalEventDetails(await readWorkbookAttendance(), includeDeleted);
   if (!process.env.DATABASE_URL) return events;
   const overrides = (await getDatabase().query("SELECT event_key,data FROM tpa.event_participant_overrides WHERE event_key=ANY($1::text[]) ORDER BY event_key,identity", [events.map(event=>event.date)])).rows;
   for (const override of overrides) {
