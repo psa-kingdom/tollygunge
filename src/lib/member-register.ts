@@ -296,6 +296,8 @@ export async function saveMember(
       c,
       input.addresses,
       row?.accepted.addresses ?? {},
+      false,
+      source === "import" ? "as-entered" : "reference",
     );
   if (
     !row &&

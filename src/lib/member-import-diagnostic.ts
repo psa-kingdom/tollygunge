@@ -14,7 +14,6 @@ export async function diagnoseMembers(db:DB,cells:string[][],sourceRows?:number[
  const version=(await db.query('SELECT id FROM tpa.postal_versions WHERE active')).rows[0];
  const pins=mapped.map(r=>r.source.Pin.trim()).filter(p=>/^[1-9]\d{5}$/.test(p));
  const postal=version?(await db.query('SELECT pin,state,district,locality FROM tpa.postal_locations WHERE version_id=$1 AND pin=ANY($2::text[])',[version.id,pins])).rows:[];
- const aliases=version?(await db.query('SELECT state,district,alias,city FROM tpa.postal_city_aliases WHERE version_id=$1',[version.id])).rows:[];
  for(const original of mapped){const row:DiagnosticRow={sourceRow:original.sourceRow,source:original.source,normalized:{},issues:[],status:'valid',action:'Review before importing.',normalizations:[]};
   const add=(code:string,field:string,reason:string,severity:ImportIssue['severity']='invalid')=>row.issues.push({code,field,reason,severity});
   const field=(header:string,code:string,normalize:(v:string)=>string,required=false)=>{const raw=original.source[header]??'';
@@ -32,23 +31,16 @@ export async function diagnoseMembers(db:DB,cells:string[][],sourceRows?:number[
   if(present){for(const h of ['Address','Country','Pin']) if(!n[h]) add('address_completeness',h,'Complete line 1, country and postal code.');
    if(n.Country==='IN'){
     if(n.Pin && !/^[1-9]\d{5}$/.test(n.Pin)) add('malformed_pin','Pin','Use a six-digit Indian PIN.');
-    if(!n.District) add('missing_district','District','Supply an authoritative district; no derivation is permitted.','conflict');
     if(!version) add('postal_reference_unavailable','Pin','Postal checks require provisioned local reference data.','blocked');
     else if(/^[1-9]\d{5}$/.test(n.Pin??'')){
      let matches=postal.filter(p=>p.pin===n.Pin);
      if(!matches.length) add('invalid_pin','Pin','PIN does not occur in the reference snapshot.');
      if(n.State){const valid=matches.filter(p=>p.state.toLowerCase()===n.State.toLowerCase());if(matches.length && !valid.length) add('postal_contradiction','State','Supplied state contradicts the PIN reference.');matches=valid;}
-     if(n.District){const valid=matches.filter(p=>p.district.toLowerCase()===n.District.toLowerCase());if(matches.length && !valid.length) add('postal_contradiction','District','Supplied district contradicts the PIN reference.');matches=valid;}
-     const districts=[...new Set(matches.map(p=>p.district))];
-     if(!n.District && districts.length>1) add('postal_ambiguity','District','PIN has multiple matching districts.');
      if(!n.State && new Set(matches.map(p=>p.state)).size>1) add('postal_ambiguity','State','PIN has multiple matching states.');
      if(n['Postal Locality'] && matches.length && !matches.some(p=>p.locality.toLowerCase()===n['Postal Locality'].toLowerCase())) add('postal_contradiction','Postal Locality','Supplied locality contradicts the PIN hierarchy.');
-     if(n.City){const contexts=matches.filter(p=>aliases.some(a=>a.state.toLowerCase()===p.state.toLowerCase() && a.district.toLowerCase()===p.district.toLowerCase() && a.alias.toLowerCase()===n.City.toLowerCase()));
-      if(matches.length && !contexts.length) add('unsupported_reference_value','City','City is not covered by a reviewed alias in the PIN administrative context; this does not prove the source city is wrong.');
-      else if(!matches.length) add('dependent_check_blocked','City','Resolve PIN/state/district contradictions before checking the city.','blocked');
-     }
-    }else add('dependent_check_blocked','State / District / City','Correct or supply the PIN before checking the postal hierarchy.','blocked');
-   }else if(n.Country){if(!n.City) add('address_completeness','City','Supply the international city.');if(n.Pin && !internationalPostalCode(n.Country,n.Pin)) add('malformed_pin','Pin','Postal format does not match the selected country.');}
+
+    }else add('dependent_check_blocked','State','Correct or supply the PIN before checking the postal hierarchy.','blocked');
+   }else if(n.Country){if(n.Pin && !internationalPostalCode(n.Country,n.Pin)) add('malformed_pin','Pin','Postal format does not match the selected country.');}
   }
   for(const [key,reason] of Object.entries(original.fieldErrors)){if(key==='file' || reason.includes('Formula')) add('unsafe_spreadsheet_cell',key,reason);
    else if(reason.startsWith('Duplicate')){const membership=key==='membershipNumber';const value=membership?membershipKey(original.membershipNumber):original.email;

@@ -14,9 +14,14 @@ test('member import runs independently, reload restores progress and correction 
   await context.addCookies([{name:'better-auth.session_token',value:encodeURIComponent(token+'.'+createHmac('sha256',process.env.BETTER_AUTH_SECRET!).update(token).digest('base64')),url:base}]);
   const prefix=randomUUID(),rows=[memberHeaders,['CA','Browser','Valid',prefix+'-001',prefix+'@example.invalid','9876543210','','','','','','',''],['CA','Browser','Invalid',prefix+'-002','bad','9876543210','','','','','','','']];
   const before=(await db.query('SELECT (SELECT count(*) FROM tpa.onboarding_invitations) invitations,(SELECT count(*) FROM tpa.onboarding_mail) mail')).rows[0];
-  await page.goto('/admin/workspaces/onboarding');await page.getByLabel('Import mode').selectOption('existing-members');
-  await page.getByLabel('CSV/XLSX (5 MB, 1,000 users)').setInputFiles({name:'synthetic.csv',mimeType:'text/csv',buffer:Buffer.from(rows.map(r=>r.join(',')).join('\n'))});
-  await page.getByRole('button',{name:'Validate member workbook',exact:true}).click();
+  const fixture = await context.request.post('/api/staff/member-import-jobs', {
+    headers: { Origin: base },
+    multipart: { file: { name: 'synthetic.csv', mimeType: 'text/csv', buffer: Buffer.from(rows.map(r=>r.join(',')).join('\n')) } },
+  });
+  expect(fixture.ok()).toBeTruthy();
+  const { id } = await fixture.json();
+  await page.goto('/admin/workspaces/onboarding?id=' + id);
+  await expect(page.getByLabel('Import mode')).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Start reviewed member import'})).toBeVisible();
   const uploaded = page.getByRole('region', { name: 'Uploaded records' }).getByRole('table');
   await expect(uploaded.getByRole('row')).toHaveCount(3);
@@ -39,5 +44,24 @@ test('member import runs independently, reload restores progress and correction 
   expect((await db.query('SELECT count(*)::int n FROM tpa.memberships WHERE membership_number=$1',[prefix+'-001'])).rows[0].n).toBe(1);
   expect((await db.query('SELECT (SELECT count(*) FROM tpa.onboarding_invitations) invitations,(SELECT count(*) FROM tpa.onboarding_mail) mail')).rows[0]).toEqual(before);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
+  await page.goto('/admin/workspaces/onboarding');
+  const email = prefix + '-held@example.invalid';
+  await page.getByLabel('CSV/XLSX (5 MB, 1,000 users)').setInputFiles({
+    name: 'accounts.csv', mimeType: 'text/csv',
+    buffer: Buffer.from('name,email,phone\nHeld Account,' + email + ','),
+  });
+  await page.getByRole('button', { name: 'Read columns', exact: true }).click();
+  await page.getByRole('button', { name: 'Validate preview', exact: true }).click();
+  await expect(page.getByRole('table')).toContainText('Held Account');
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Confirm import', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Accounts created with invitations held.');
+  const hold = await db.query(
+    'SELECT m.type FROM public."user" u JOIN tpa.account_invitation_holds h ON h.user_id=u.id JOIN tpa.people p ON p.user_id=u.id JOIN tpa.memberships m ON m.person_id=p.id WHERE u.email=$1 AND h.released_at IS NULL',
+    [email],
+  );
+  expect(hold.rows).toEqual([{ type: 'Free' }]);
+  expect((await db.query('SELECT (SELECT count(*) FROM tpa.onboarding_invitations) invitations,(SELECT count(*) FROM tpa.onboarding_mail) mail')).rows[0]).toEqual(before);
+
  }finally{await db.end();}
 });

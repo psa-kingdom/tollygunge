@@ -28,8 +28,6 @@ type Row = {
 };
 export function BulkOnboarding() {
   const [file, setFile] = useState<File | null>(null),
-    [parentBatchId, setParentBatchId] = useState(""),
-    [mode, setMode] = useState("existing-members"),
     [headers, setHeaders] = useState<string[]>([]),
     [fields, setFields] = useState<string[]>([]),
     [mapping, setMapping] = useState<Record<string, string>>({}),
@@ -70,16 +68,6 @@ export function BulkOnboarding() {
         ...batch,
         mode: batch.mode === "existing-members" ? "members" : batch.mode,
       });
-      setParentBatchId(
-        batch.mode === "approved-accounts" ? '' : batch.id,
-      );
-      setMode(
-        batch.mode === "approved-accounts"
-          ? "approved-accounts"
-          : ["members", "existing-members"].includes(batch.mode ?? "")
-            ? "existing-members"
-            : "invitation",
-      );
       setResults(batch.results ?? []);
       setMessage(
         batch.committed_at
@@ -107,14 +95,10 @@ export function BulkOnboarding() {
     try {
       const form = new FormData();
       form.set("file", file);
-      form.set("mode", mode);
-      if (mode === "existing-members" && (preview?.id || parentBatchId))
-        form.set("parentBatchId", preview?.id ?? parentBatchId);
+      form.set("mode", "invitation");
       if (mapped) form.set("mapping", JSON.stringify(mapping));
       const r = await fetch(
-        mode === "existing-members"
-          ? "/api/staff/member-import-jobs"
-          : "/api/staff/onboarding-import",
+        "/api/staff/onboarding-import",
         {
           method: "POST",
           body: form,
@@ -122,7 +106,7 @@ export function BulkOnboarding() {
       );
       const d = await r.json();
       if (!r.ok) throw Error(d.error);
-      if (mapped || mode === "existing-members") {
+      if (mapped) {
         setPreview({
           ...d,
           mode: d.mode === "existing-members" ? "members" : d.mode,
@@ -130,7 +114,6 @@ export function BulkOnboarding() {
         const savedUrl = new URL(location.href);
         savedUrl.searchParams.set("id", d.id);
         history.replaceState(null, "", savedUrl);
-        setParentBatchId(d.id);
       } else {
         setHeaders(d.headers);
         setFields(d.fields);
@@ -185,45 +168,17 @@ export function BulkOnboarding() {
     <section className="bulk-onboarding-workspace">
       <WorkspaceSteps steps={["Choose workbook", "Map & validate", "Review records", "Commit & track"]} current={preview?.committed_at ? 3 : preview ? 2 : headers.length ? 1 : 0} />
       <div className="workspace-import-layout">
-      <WorkspacePanel title="Prepare your import" description="Choose the import type, download its template and upload your completed workbook." id="bulk-import-upload">
-      <label>
-        Import mode
-        <select
-          value={mode}
-          onChange={(e) => {
-            setMode(e.target.value);
-            setPreview(null);
-            setHeaders([]);
-            setResults([]);
-          }}
-        >
-          {mode === "approved-accounts" && (
-            <option value="approved-accounts" disabled>
-              Approved account batch � invitations held
-            </option>
-          )}
-          <option value="invitation">New Free members — invitations held</option>
-          <option value="existing-members">
-            Existing members — no invitations
-          </option>
-        </select>
-      </label>
-      <p>
-        {mode === "existing-members"
-          ? "Use the supplied 13-column member workbook. All ambiguous duplicate groups are held. No emails, passwords, paid status or verification are created."
-          : "Upload name, email and phone to create Free members with password setup pending. Other profile fields can be completed after sign-in. Invitations are held until you review the recipients and approved email template."}
-        Existing accounts are skipped. No passwords or verification badges can
-        be imported.
-      </p>
+      <WorkspacePanel title="Prepare your import" description="Download the template and upload your completed workbook." id="bulk-import-upload">
+      <p>Upload a name and email for each new Free member. Phone is optional. The import creates login accounts and holds invitations for staff review.</p>
       <div className="action-row workspace-template-actions">
         <a className="button secondary"
-          href={`/api/staff/onboarding-import?template=csv&mode=${mode}`}
+          href="/api/staff/onboarding-import?template=csv&mode=invitation"
           download
         >
           CSV template
         </a>
         <a className="button secondary"
-          href={`/api/staff/onboarding-import?template=xlsx&mode=${mode}`}
+          href="/api/staff/onboarding-import?template=xlsx&mode=invitation"
           download
         >
           XLSX template
@@ -236,7 +191,6 @@ export function BulkOnboarding() {
           type="file"
           accept=".csv,.xlsx"
           onChange={(e) => {
-            if (preview?.mode === "members") setParentBatchId(preview.id);
             setFile(e.target.files?.[0] ?? null);
             setPreview(null);
             setHeaders([]);
@@ -249,12 +203,10 @@ export function BulkOnboarding() {
         disabled={busy || !file}
         onClick={() => void read()}
       >
-        {mode === "existing-members"
-          ? "Validate member workbook"
-          : "Read columns"}
+        Read columns
       </button>
       </WorkspacePanel>
-      <WorkspacePanel title="Before you begin" className="workspace-help-panel"><ul className="workspace-guidance-list"><li><strong>Start with the right template</strong><span>The workbook format depends on the import mode.</span></li><li><strong>Validate before committing</strong><span>Review matched identities, duplicates and corrections before importing.</span></li><li><strong>Review invitations separately</strong><span>New account invitations remain held until recipients and the email are approved.</span></li></ul></WorkspacePanel>
+      <WorkspacePanel title="Before you begin" className="workspace-help-panel"><ul className="workspace-guidance-list"><li><strong>Start with the right template</strong><span>Keep the name, email and phone column headers from the template.</span></li><li><strong>Validate before committing</strong><span>Review matched identities, duplicates and corrections before importing.</span></li><li><strong>Review invitations separately</strong><span>New account invitations remain held until recipients and the email are approved.</span></li></ul></WorkspacePanel>
       </div>
       <div className="workspace-import-review" hidden={!headers.length && !preview && !results.length}>
       {headers.length > 0 && (
@@ -377,7 +329,7 @@ export function BulkOnboarding() {
           {preview.mode === "members" && (
             <details className="import-correction-help">
               <summary>How to upload corrections</summary>
-              <p>Keep this preview open while uploading the corrected template. Keep the original source row numbers and file hash.</p>
+              <p>Keep the original source row numbers and file hash when preparing corrections.</p>
             </details>
           )}
           {preview.mode !== "members" && !preview.committed_at && (

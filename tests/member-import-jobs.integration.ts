@@ -26,7 +26,7 @@ async function protectedCounts(){return (await pool.query(`SELECT (SELECT count(
 test('10, 50 and 250 members commit durable chunks and repeated jobs/files never duplicate or invite',{skip:!enabled},async()=>{
  const protectedBefore=await protectedCounts();
  for(const size of [10,50,250]){
-  const cells=data(size);if(size===10){cells[0]=extendedMemberHeaders;for(const r of cells.slice(1))r.push('','');Object.assign(cells[1],{8:'12 Road',9:'India',10:'West Bengal',11:'Kolkata',12:'700001',13:'Kolkata',14:'Kolkata GPO'});}
+  const cells=data(size);if(size===10){cells[0]=extendedMemberHeaders;for(const r of cells.slice(1))r.push('','');Object.assign(cells[1],{8:'12 Road',9:'India',10:'West Bengal',11:'User Entered City',12:'700001',13:'User Entered District',14:'Kolkata GPO'});Object.assign(cells[2],{8:'13 Road',9:'India',10:'West Bengal',12:'700002'});}
   const batch=await preview(cells),job=await enqueue(batch);assert.equal((await enqueue(batch)).id,job.id);
   await assert.rejects(transaction(c=>memberBatchAction(c,actor,{action:'commit',id:batch.id,version:1})),/durable import job/);
   const outcome=await finish(job.id);assert.equal(outcome.totals.created,size);assert.equal(outcome.processed,size);
@@ -34,7 +34,12 @@ test('10, 50 and 250 members commit durable chunks and repeated jobs/files never
   const numbers=cells.slice(1).map(r=>r[3]);const audit=(await pool.query('SELECT m.membership_number,p.contact_email,p.mobile_normalized,p.accepted,p.user_id,m.person_id FROM tpa.memberships m JOIN tpa.people p ON p.id=m.person_id WHERE m.membership_number=ANY($1::text[]) ORDER BY m.membership_number',[numbers])).rows;
   assert.equal(audit.length,size);assert.equal(new Set(audit.map(r=>r.membership_number)).size,size);assert.equal(new Set(audit.map(r=>r.contact_email)).size,size);
   for(const index of [0,Math.floor(size/2),size-1]){assert.ok(audit[index].person_id);assert.equal(audit[index].user_id,null);assert.equal(audit[index].mobile_normalized,'+919876543210');}
-  if(size===10) assert.equal(audit[0].accepted.addresses.correspondence.district,'Kolkata');
+  if(size===10) {
+   assert.equal(audit[0].accepted.addresses.correspondence.city,'User Entered City');
+   assert.equal(audit[0].accepted.addresses.correspondence.district,'User Entered District');
+   assert.equal(audit[1].accepted.addresses.correspondence.city,'');
+   assert.equal(audit[1].accepted.addresses.correspondence.district,'');
+  }
   console.log(JSON.stringify({size,created:outcome.totals.created,repeatedSkipped:repeated.totals.skipped}));
  }
  assert.deepEqual(await protectedCounts(),protectedBefore);
@@ -71,8 +76,9 @@ test('leases fence stale workers; concurrent claims recover after restart and re
 test('diagnostic collects secondary address issues, duplicate groups and blocked checks without personal inference',{skip:!enabled},async()=>{
  const cells=data(3);cells[1][4]=cells[2][4];Object.assign(cells[1],{9:'India',10:'West Bengal',11:'Unsupported city',12:'700002'});Object.assign(cells[3],{8:'Road',9:'India',10:'Wrong State',11:'Kolkata',12:'700001'});
  const result=await diagnoseMembers(pool,cells);const codes=result.rows[0].issues.map(i=>i.code);
- for(const code of ['duplicate_email','address_completeness','missing_district','postal_ambiguity','unsupported_reference_value'])assert.ok(codes.includes(code));
- assert.equal(result.rows[0].normalized.District,'');assert.ok(result.rows[2].issues.some(i=>i.code==='dependent_check_blocked'));assert.equal(result.source,3);
+ for(const code of ['duplicate_email','address_completeness'])assert.ok(codes.includes(code));
+ for(const code of ['missing_district','postal_ambiguity','unsupported_reference_value'])assert.ok(!codes.includes(code));
+ assert.equal(result.rows[0].normalized.District,'');assert.ok(result.rows[2].issues.some(i=>i.code==='postal_contradiction' && i.field==='State'));assert.equal(result.source,3);
  await assert.rejects(transaction(c=>enqueueMemberJob(c,actor,{batchId:randomUUID(),version:1,provisionAccounts:true})),/cannot provision/);
 });
 test('individual creation racing a durable row retains one person and membership with an explicit outcome',{skip:!enabled},async()=>{

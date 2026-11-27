@@ -169,7 +169,7 @@ test("event, flyer and import empty states lead to the correct next task", async
   await page.goto("/admin/workspaces/onboarding");
   await expect(page.getByRole("heading", { name: "Prepare your import", exact: true })).toBeVisible();
   await expect(page.getByRole("list", { name: "Workflow progress" }).locator('li[aria-current="step"]')).toHaveText(/Choose workbook/);
-  await page.getByRole("combobox", { name: "Import mode", exact: true }).selectOption("invitation");
+  await expect(page.getByRole("combobox", { name: "Import mode", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "CSV template", exact: true })).toHaveAttribute("href", /mode=invitation/);
   await layoutFits(page);
   await page.screenshot({ path: info.outputPath("bulk-onboarding.png"), fullPage: true });

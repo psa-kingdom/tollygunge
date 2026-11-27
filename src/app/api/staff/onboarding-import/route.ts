@@ -224,7 +224,7 @@ export async function POST(r: Request) {
                 "Only professional applications may be imported.",
               );
             row.details = validateAnswers(row.details, p.fields);
-            await validatePostalAddresses(row.details, {}, db, true);
+            await validatePostalAddresses(row.details, {}, db, true, "as-entered");
           } catch {
             row.error = "Mapped values do not match field rules.";
           }

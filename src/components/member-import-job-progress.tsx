@@ -8,7 +8,7 @@ export function MemberImportJobProgress({batchId,version}:{batchId:string;versio
   void load();const interval=setInterval(()=>void load(),5000);return()=>{active=false;clearInterval(interval);};},[batchId]);
  async function action(retry=false){setBusy(true);try{const result=await api<{id:string}>('/api/staff/member-import-jobs',retry?{action:'retry',id:job?.id}:{action:'enqueue',batchId,version});setJob(await api<Job>('/api/staff/member-import-jobs?id='+result.id));setError('');}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
  return <section aria-label="Saved member import progress">
-  <p>Import creates people and memberships. It sends no invitations and creates no login accounts. Missing districts and conflicting records remain held.</p>
+  <p>Import creates people and memberships. It sends no invitations and creates no login accounts. Conflicting records remain held.</p>
   {!job && <button className="button" disabled={busy} onClick={()=>void action()}>Start reviewed member import</button>}
   {error && <p role="alert">{error}</p>}
   {job && <><p role="status">{job.state}: {job.processed} of {job.total} records processed. You can leave this page and return to the saved batch.</p>

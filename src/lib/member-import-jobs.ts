@@ -67,9 +67,7 @@ async function processRow(c:PoolClient,actorId:string,row:MemberRow) {
  if(row.status==='conflict') return {status:'conflict',reason:row.reason,fieldErrors:row.fieldErrors,retryable:false};
  if(!row.member) throw new MemberValidationError({row:'Member input is missing.'});
  const input=memberInput(row.member);
- for(const [kind,address] of Object.entries(input.addresses)) if(address.country==='IN' && Object.values(address).some(Boolean) && !address.district)
-  return {status:'conflict',reason:'District is missing; authoritative correction required.',fieldErrors:{['addresses.'+kind+'.district']:'Missing district; no derivation is permitted.'},retryable:false};
- input.addresses=await validateAddresses(c,input.addresses);
+ input.addresses=await validateAddresses(c,input.addresses,{},false,'as-entered');
  const match=await matchMember(c,input);
  if(row.match && (!match || match.personId!==row.match.personId || match.personVersion!==row.match.personVersion || match.membershipVersion!==row.match.membershipVersion))
   throw new OperationError('Member changed since preview. Create a fresh preview.',409,'stale_member');

@@ -8,7 +8,7 @@ export async function postalVersion(db: DB) {
   if (!row) throw new OperationError("Postal reference data has not been provisioned.", 503, "postal_unavailable");
   return row;
 }
-export async function validateAddresses(db: DB, input: Addresses, previous: Addresses = {}, partial = false): Promise<Addresses> {
+export async function validateAddresses(db: DB, input: Addresses, previous: Addresses = {}, partial = false, locationMode: "reference" | "as-entered" = "reference"): Promise<Addresses> {
   const result: Addresses = { ...previous };
   for (const [kind, supplied] of Object.entries(input)) {
     const old = previous[kind as keyof Addresses];
@@ -43,12 +43,13 @@ export async function validateAddresses(db: DB, input: Addresses, previous: Addr
             if (value.length > 120 || /[\x00-\x1f\x7f]/.test(value)) fail(key, "Enter a location of up to 120 characters.");
             a[key] = value;
           }
-          if (!partial && (!a.state || !a.district)) fail("state", "Enter your state and district when the PIN cannot be found.");
+          if (!partial && (!a.state || (locationMode === "reference" && !a.district))) fail("state", locationMode === "reference" ? "Enter your state and district when the PIN cannot be found." : "Enter your state when the PIN cannot be found.");
           result[kind as keyof Addresses] = a;
           continue;
         }
         let matches = all;
         for (const [key, column] of [["state", "state"], ["district", "district"]] as const) {
+          if (key === "district" && locationMode === "as-entered") continue;
           if (a[key]) {
             matches = matches.filter((r) => r[column].toLowerCase() === a[key].toLowerCase());
             if (!matches.length) fail(key, "Value does not match the selected postal hierarchy.");
@@ -56,6 +57,7 @@ export async function validateAddresses(db: DB, input: Addresses, previous: Addr
           }
         }
         for (const key of ["state", "district"] as const) {
+          if (key === "district" && locationMode === "as-entered") continue;
           const values = [...new Set(matches.map((r) => r[key]))];
           if (!a[key] && values.length === 1) a[key] = values[0];
           if (!a[key] && !partial) fail(key, "Choose a value; the postal result is ambiguous.");
@@ -67,7 +69,7 @@ export async function validateAddresses(db: DB, input: Addresses, previous: Addr
         }
       }
     } else {
-      if(!partial && !a.city) fail("city","Provide the city for an international address.");
+      if(!partial && locationMode === "reference" && !a.city) fail("city","Provide the city for an international address.");
       if (a.postalCode && !internationalPostalCode(a.country,a.postalCode,partial)) fail("postalCode", "Check the postal code for the selected country.");
     }
     result[kind as keyof Addresses] = a;

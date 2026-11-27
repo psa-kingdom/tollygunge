@@ -88,6 +88,8 @@ export async function previewMembers(c: PoolClient, rows: MemberRow[]) {
         c,
         prepared.addresses,
         prior?.addresses,
+        false,
+        "as-entered",
       );
       for (const [kind, address] of Object.entries(prepared.addresses))
         for (const [field, after] of Object.entries(address)) {
@@ -170,25 +172,7 @@ export async function createMemberPreview(
         row.reason =
           "Existing member differs from the source. This preservation import cannot overwrite it.";
       }
-      for (const change of row.normalizations.filter(
-        (n) => n.field.endsWith(".district") && !n.before && n.after,
-      )) {
-        const kind = change.field.split(
-          ".",
-        )[1] as keyof MemberInput["addresses"];
-        if (row.member?.addresses[kind])
-          row.member.addresses[kind]!.district = "";
-        row.status = "conflict";
-        row.fieldErrors[change.field] =
-          "District is missing. Preservation imports keep it blank and hold the row rather than deriving it.";
-        row.reason = Object.values(row.fieldErrors).join(" ");
-        row.warnings.push(
-          `Postal reference suggests ${change.after}; no district was retained or approved.`,
-        );
-      }
-      row.normalizations = row.normalizations.filter(
-        (n) => !(n.field.endsWith(".district") && !n.before && n.after),
-      );
+
     }
   await c.query(
     "INSERT INTO tpa.onboarding_batches(id,actor_id,rows,mode,choices) VALUES($1,$2,$3,'members',$4)",
