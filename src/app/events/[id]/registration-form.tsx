@@ -32,6 +32,28 @@ const fieldCopy: Record<string, [string, string]> = {
 
 type RegistrationResult = { payment_status: string; firstRegistration?: boolean; alreadyRegistered?: boolean };
 
+function PaymentQr({ src, payee }: { src: string; payee: string }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const alt = `UPI payment QR for ${payee}`;
+
+  return (
+    <div className={styles["upi-qr"]}>
+      <button type="button" className={styles["upi-qr-trigger"]} aria-haspopup="dialog"
+        onClick={() => dialog.current?.showModal()}>
+        <Image unoptimized src={src} alt={alt} width={320} height={320} />
+        <span>Click on the image to enlarge it</span>
+      </button>
+      <dialog ref={dialog} className={styles["upi-qr-dialog"]} aria-label="UPI payment QR code"
+        onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
+        <div className={styles["upi-qr-view"]}>
+          <button type="button" onClick={() => dialog.current?.close()}>Close</button>
+          <Image unoptimized src={src} alt={alt} width={640} height={640} />
+        </div>
+      </dialog>
+    </div>
+  );
+}
+
 export function EventRegistrationForm({ id, email, verified, profile, fee, studyCircle, freePlanName, upiAccounts }: {
   id: string;
   email?: string;
@@ -237,10 +259,9 @@ export function EventRegistrationForm({ id, email, verified, profile, fee, study
                         {account.details.qrId && <p>Scan with your UPI app and enter the event fee shown above.</p>}
                       </div>
                       {account.details.qrId && (
-                        <Image unoptimized className={styles["upi-qr"]}
+                        <PaymentQr
                           src={`/api/payment-qr/${account.details.qrId}?eventId=${id}&registration=1`}
-                          alt={`UPI payment QR for ${account.details.payee || account.details.upiId}`}
-                          width={280} height={280} />
+                          payee={account.details.payee || account.details.upiId} />
                       )}
                     </div>
                   ))}

@@ -624,7 +624,7 @@
   overflow-wrap: anywhere;
 }
 .upi-account:has(.upi-qr) {
-  grid-template-columns: minmax(0, 1fr) min(42%, 280px);
+  grid-template-columns: minmax(0, 1fr) min(47%, 320px);
 }
 .upi-details h3 {
   margin: 0 0 12px;
@@ -654,21 +654,63 @@
   display: inline-flex;
   max-width: 100%;
 }
-.upi-qr {
+.upi-qr-trigger {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  cursor: zoom-in;
+}
+.upi-qr-trigger img {
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 1;
   object-fit: contain;
-  object-position: right center;
+}
+.upi-qr-dialog {
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 24px);
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #f4efe2;
+}
+.upi-qr-dialog::backdrop {
+  background: rgb(10 20 35 / 75%);
+}
+.upi-qr-view {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  padding: 12px;
+}
+.upi-qr-view button {
+  padding: 6px 12px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.upi-qr-view img {
+  display: block;
+  width: min(640px, calc(100vw - 48px));
+  height: min(640px, calc(100dvh - 94px));
+  object-fit: contain;
 }
 @media (max-width: 560px) {
   .upi-account:has(.upi-qr) {
     grid-template-columns: minmax(0, 1fr);
   }
   .upi-qr {
-    width: min(100%, 280px);
+    width: min(100%, 320px);
     justify-self: center;
-    object-position: center;
   }
 }
