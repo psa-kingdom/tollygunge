@@ -634,3 +634,10 @@ form.memberDetailsEditor:global(.member-settings) {
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
 }
+
+.tagFilters .clearFilters {
+  min-width: 40px;
+  padding-inline: 8px;
+  font-size: 20px;
+  line-height: 1;
+}

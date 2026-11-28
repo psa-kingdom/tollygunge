@@ -174,6 +174,33 @@ export function MemberRegister({
       if (request === requestSerial.current) setMessage((e as Error).message);
     }
   }
+  function clearFilters() {
+    editorGuard.proceed(() => {
+      if (editorDirty) {
+        setEditorDirty(false);
+        setApplicationDirty(false);
+        setSelected(undefined);
+        setIsCreating(false);
+      }
+      setQ("");
+      setStatus("all");
+      setInvitation("all");
+      setAccountSetup("all");
+      setArchive("all");
+      setPlan("all");
+      setContact("all");
+      void load(0, {
+        q: "",
+        status: "all",
+        invitation: "all",
+        accountSetup: "all",
+        archive: "all",
+        plan: "all",
+        contact: "all",
+        tag: "",
+      }, true);
+    });
+  }
   const requestSerial = useRef(0);
   const detailHeading = useRef<HTMLHeadingElement>(null);
   const selectedButton = useRef<HTMLButtonElement | null>(null);
@@ -289,9 +316,19 @@ export function MemberRegister({
         <button className="button" disabled={busy}>
           Search register
         </button>
-        {!personId && !!data?.tags?.length && (
-          <div className={styles.tagFilters} role="group" aria-label="Filter by profile tag">
-            {[{ id: "", name: "All tags" }, ...data.tags].map((item) => (
+        {!personId && (
+          <div className={styles.tagFilters} role="group" aria-label="Quick filters">
+            <button
+              type="button"
+              className={`${styles.tagFilter} ${styles.clearFilters}`}
+              aria-label="Clear all filters"
+              title="Clear all filters"
+              disabled={busy}
+              onClick={clearFilters}
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+            {data?.tags?.map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -537,26 +574,7 @@ export function MemberRegister({
                         title="No records match these filters"
                         description="Try another search or reset the filters to browse the association directory."
                         actionLabel="Reset member filters"
-                        onAction={() => {
-                          setQ("");
-                          setStatus("all");
-                          setInvitation("all");
-                          setAccountSetup("all");
-                          setArchive("current");
-                          setPlan("all");
-                          setContact("all");
-                          setTag("");
-                          void load(0, {
-                            q: "",
-                            status: "all",
-                            invitation: "all",
-                            accountSetup: "all",
-                            archive: "current",
-                            plan: "all",
-                            contact: "all",
-                            tag: "",
-                          });
-                        }}
+                        onAction={clearFilters}
                       />
                     </td>
                   </tr>
