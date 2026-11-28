@@ -162,6 +162,7 @@ export function MemberRegister({
       );
       if (request !== requestSerial.current) return;
       setData(result);
+      setTag(filters.tag);
       setSelected((current) =>
         current
           ? result.rows.find((row) => recordKey(row) === recordKey(current)) ??
@@ -288,6 +289,22 @@ export function MemberRegister({
         <button className="button" disabled={busy}>
           Search register
         </button>
+        {!personId && !!data?.tags?.length && (
+          <div className={styles.tagFilters} role="group" aria-label="Filter by profile tag">
+            {[{ id: "", name: "All tags" }, ...data.tags].map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={styles.tagFilter}
+                aria-pressed={tag === item.id}
+                disabled={busy}
+                onClick={() => void load(0, { q, status, invitation, accountSetup, plan, contact, archive, tag: item.id })}
+              >
+                {item.name}
+              </button>
+            ))}
+          </div>
+        )}
         <details className="directory-extra-filters">
           <summary>More filters{archive === "archived" ? " (archived)" : archive === "all" ? " (all records)" : ""}</summary>
           <div className="form-grid">
@@ -310,19 +327,6 @@ export function MemberRegister({
                 <option value="no-phone">No phone</option>
               </select>
             </label>
-            {!personId && (
-              <label>
-                Profile tag
-                <select value={tag} onChange={event => {
-                  const nextTag = event.target.value;
-                  setTag(nextTag);
-                  void load(0, { q, status, invitation, accountSetup, plan, contact, archive, tag: nextTag });
-                }}>
-                  <option value="">All tags</option>
-                  {data?.tags?.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}
-                </select>
-              </label>
-            )}
           </div>
         </details>
       </form>

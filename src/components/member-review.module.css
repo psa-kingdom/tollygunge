@@ -601,3 +601,36 @@ form.memberDetailsEditor:global(.member-settings) {
     font-size: 12px;
   }
 }
+
+.tagFilters {
+  grid-column: 1 / -1;
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tagFilters .tagFilter {
+  max-width: 100%;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.tagFilters .tagFilter:hover {
+  border-color: var(--accent-text);
+}
+.tagFilters .tagFilter[aria-pressed="true"] {
+  border-color: var(--accent-text);
+  background: var(--portal-active, var(--surface-muted));
+  color: var(--accent-text);
+}
+.tagFilter:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
