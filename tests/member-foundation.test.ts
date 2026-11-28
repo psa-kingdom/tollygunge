@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import ExcelJS from "exceljs";
-import { memberInput,mobile,MemberValidationError,internationalPostalCode,memberDisplayName } from "../src/domain/member-foundation";
+import { memberInput,mobile,MemberValidationError,internationalPostalCode,memberDisplayName,memberEditorIdentity } from "../src/domain/member-foundation";
 import { mapMembers,memberHeaders } from "../src/domain/member-import";
 import { importCells,parseCsv } from "../src/domain/onboarding-import";
 import { publicPerson,personBody,redactPerson } from "../src/domain/people";
@@ -58,4 +58,14 @@ test("6–12 password boundaries and Professional-only policy writes",()=>{
   assert.equal(validateAnswers({phone:"9876543210"},initialFields).phone,memberInput(valid).mobile);
   const legacy=validateAnswers({phone:"1234567890",fullName:" Alice   Example ",organization:"Example  & Co"},initialFields,{phone:"1234567890"});assert.equal(legacy.phone,"1234567890");assert.equal(legacy.fullName,"Alice Example");assert.equal(legacy.organization,"Example & Co");
   assert.throws(()=>validateAnswers({phone:"22345"},initialFields,{phone:"1234567890"}),MemberValidationError);
+});
+
+test("member editor fills blank identity fields from the submitted application", () => {
+  const application = { fullName: "CA Anil Kumar Example", membershipNumber: "000123" };
+  assert.deepEqual(memberEditorIdentity({ name: "Older display name" }, null, application), {
+    firstName: "Anil", lastName: "Kumar Example", membershipNumber: "000123",
+  });
+  assert.deepEqual(memberEditorIdentity({ name: "Older display name", firstName: "Anil Kumar" }, "A-42", application), {
+    firstName: "Anil Kumar", lastName: "Example", membershipNumber: "A-42",
+  });
 });

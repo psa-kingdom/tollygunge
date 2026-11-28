@@ -262,6 +262,35 @@ export function MemberRegister({
       active = false;
     };
   }, [personId]);
+  function renderMemberEditor(applicationDetails?: Record<string, string>) {
+    if (!canManageDetails || !selected?.person_id || selected.record_kind === "account" || detailTab !== "Edit details")
+      return null;
+    return (
+      <MemberEditor
+        key={selected.person_id + selected.person_version}
+        member={{ ...selected, person_id: selected.person_id }}
+        applicationDetails={applicationDetails}
+        onDirtyChange={setEditorDirty}
+        onSaved={() => {
+          setEditorDirty(false);
+          void load(
+            data?.offset ?? 0,
+            {
+              q,
+              status,
+              invitation,
+              accountSetup,
+              plan,
+              contact,
+              archive,
+              tag,
+            },
+            true,
+          );
+        }}
+      />
+    );
+  }
   return (
     <section className="member-register-workspace" data-portal-primary>
       <h2 className="sr-only">Association directory</h2>
@@ -1020,32 +1049,7 @@ export function MemberRegister({
                   >
                     Back to member details
                   </button>
-                  {canManageDetails &&
-                    selected.person_id &&
-                    selected.record_kind !== "account" && (
-                      <MemberEditor
-                        key={selected.person_id + selected.person_version}
-                        member={{ ...selected, person_id: selected.person_id }}
-                        onDirtyChange={setEditorDirty}
-                        onSaved={() => {
-                          setEditorDirty(false);
-                          void load(
-                            data?.offset ?? 0,
-                            {
-                              q,
-                              status,
-                              invitation,
-                              accountSetup,
-                              plan,
-                              contact,
-                              archive,
-                              tag,
-                            },
-                            true,
-                          );
-                        }}
-                      />
-                    )}
+                  {(!selected.user_id || !canManageDetails) && renderMemberEditor()}
                 </section>
               )}
               {canManageDetails &&
@@ -1056,6 +1060,7 @@ export function MemberRegister({
                     key={selected.user_id + detailTab}
                     userId={selected.user_id}
                     editing={detailTab === "Edit details"}
+                    renderBefore={renderMemberEditor}
                     onDirtyChange={setApplicationDirty}
                   />
                 )}

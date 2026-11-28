@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { addressKeys, formatAddress, parseAddress } from "@/domain/address";
 import {
   applicable,
@@ -57,10 +57,12 @@ function answer(field: VerificationField, value: string) {
 export function MemberApplicationDetails({
   userId,
   editing,
+  renderBefore,
   onDirtyChange,
 }: {
   userId: string;
   editing: boolean;
+  renderBefore?: (details?: Application["details"]) => ReactNode;
   onDirtyChange: (dirty: boolean) => void;
 }) {
   const [application, setApplication] = useState<Application | null>();
@@ -87,12 +89,15 @@ export function MemberApplicationDetails({
 
   if (!application)
     return (
-      <p role="status">
-        {message ||
-          (application === null
-            ? "No profile details submitted yet. The member’s application details will appear here once they complete their profile."
-            : "Loading onboarding details…")}
-      </p>
+      <>
+        {(application === null || message) && renderBefore?.()}
+        <p role="status">
+          {message ||
+            (application === null
+              ? "No profile details submitted yet. The member’s application details will appear here once they complete their profile."
+              : "Loading onboarding details…")}
+        </p>
+      </>
     );
 
   const details = { ...application.details, ...changes };
@@ -206,7 +211,7 @@ export function MemberApplicationDetails({
     );
   }
 
-  return (
+  const form = (
     <form
       className={styles.applicationDetails}
       onSubmit={async (event) => {
@@ -336,4 +341,5 @@ export function MemberApplicationDetails({
       {message && <p role="status">{message}</p>}
     </form>
   );
+  return <>{renderBefore?.(application.details)}{form}</>;
 }

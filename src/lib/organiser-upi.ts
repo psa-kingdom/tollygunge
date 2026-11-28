@@ -132,7 +132,7 @@ export async function eventOrganiserUpis(
   }
   return accounts.flatMap(({ id, details }) =>
     details.method === "upi" && typeof details.upiId === "string" && details.upiId
-      ? [{ id, details: { upiId: details.upiId, payee: String(details.payee ?? ""), organiser: String(details.organiser ?? details.label ?? "") } }]
+      ? [{ id, details: { upiId: details.upiId, payee: String(details.payee ?? ""), organiser: String(details.organiser ?? details.label ?? ""), qrId: typeof details.qrId === "string" ? details.qrId : null } }]
       : [],
   );
 }

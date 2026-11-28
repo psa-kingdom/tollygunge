@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CopyValue } from "@/components/portal-values";
@@ -38,7 +40,7 @@ export function EventRegistrationForm({ id, email, verified, profile, fee, study
   fee: number;
   studyCircle: boolean;
   freePlanName: string;
-  upiAccounts: { id: string; details: { upiId: string; payee: string; organiser: string } }[];
+  upiAccounts: { id: string; details: { upiId: string; payee: string; organiser: string; qrId: string | null } }[];
 }) {
   const [busy, setBusy] = useState(false);
   const [registration, setRegistration] = useState<RegistrationResult>();
@@ -226,6 +228,15 @@ export function EventRegistrationForm({ id, email, verified, profile, fee, study
                       {account.details.organiser && <p><strong>{account.details.organiser}</strong></p>}
                       <p>UPI ID <CopyValue value={account.details.upiId} label="UPI ID" /></p>
                       {account.details.payee && <p>Payee {account.details.payee}</p>}
+                      {account.details.qrId && (
+                        <>
+                          <p>Scan with your UPI app and enter the event fee shown above.</p>
+                          <Image unoptimized className={styles["upi-qr"]}
+                            src={`/api/payment-qr/${account.details.qrId}?eventId=${id}&registration=1`}
+                            alt={`UPI payment QR for ${account.details.payee || account.details.upiId}`}
+                            width={192} height={192} />
+                        </>
+                      )}
                     </div>
                   ))}
                   {upiAccounts.length > 0 ? (

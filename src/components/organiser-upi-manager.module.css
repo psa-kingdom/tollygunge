@@ -107,3 +107,12 @@
     flex-direction: column;
   }
 }
+
+.qrHelp {
+  color: var(--muted);
+  font-size: 12px;
+}
+.qr {
+  object-fit: contain;
+  background: white;
+}

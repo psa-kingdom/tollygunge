@@ -63,6 +63,29 @@ export type MemberInput = {
   prefix: string; firstName: string; lastName: string; email: string; mobile: string;
   designation: string; organization: string; membershipNumber: string; addresses: Addresses;
 };
+export function memberEditorIdentity(
+  person: { name: string; firstName?: string; lastName?: string },
+  directoryNumber: string | null,
+  application?: { fullName?: string; membershipNumber?: string },
+) {
+  const parts = (application?.fullName?.trim() || person.name.trim()).split(/\s+/);
+  if (parts.length > 1 && prefixes.some((prefix) => prefix.toLowerCase() === parts[0].replace(/\.$/, "").toLowerCase()))
+    parts.shift();
+  const [first = "", ...remaining] = parts;
+  const fullName = parts.join(" ");
+  const firstName = person.firstName?.trim() ?? "";
+  const lastName = person.lastName?.trim() ?? "";
+  return {
+    firstName: firstName || (fullName === lastName ? "" : lastName && fullName.endsWith(" " + lastName)
+      ? fullName.slice(0, -lastName.length - 1)
+      : first),
+    lastName: lastName || (fullName === firstName ? "" : firstName && fullName.startsWith(firstName + " ")
+      ? fullName.slice(firstName.length + 1)
+      : remaining.join(" ")),
+    membershipNumber: directoryNumber?.trim() || application?.membershipNumber?.trim() || "",
+  };
+}
+
 export function memberDisplayName(input:Pick<MemberInput,"prefix"|"firstName"|"lastName">,previous?:{name?:string;prefix?:string;firstName?:string;lastName?:string}) {
   const next=[input.prefix,input.firstName,input.lastName].filter(Boolean).join(" ");
   if(!previous?.name) return next;

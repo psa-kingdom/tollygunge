@@ -10,7 +10,10 @@ import {
 } from "@/lib/operation-api";
 import { getDatabase } from "@/lib/database";
 import { paymentDetails } from "@/domain/payment-details";
-import { eventOrganisers } from "@/domain/organiser-upi";
+import sharp from "sharp";
+import jsQR from "jsqr";
+import { paymentQrStorage } from "@/lib/private-storage";
+import { eventOrganisers, matchesOrganiserUpiQr } from "@/domain/organiser-upi";
 
 export async function GET(request: Request) {
   return operation(async () => {
@@ -69,12 +72,31 @@ export async function POST(request: Request) {
           payee: body.payee,
           upiId: body.upiId,
           phone: "",
-          qrId: null,
+          qrId: body.qrId,
         }),
         organiser: body.organiser,
       };
     } catch (error) {
       throw new OperationError((error as Error).message);
+    }
+    if (details.qrId) {
+      const image = await getDatabase().query(
+        "SELECT 1 FROM tpa.payment_qr_images WHERE id=$1",
+        [details.qrId],
+      );
+      if (!image.rowCount) throw new OperationError("Upload a valid UPI QR image.");
+      let decoded: string | undefined;
+      try {
+        const bytes = await paymentQrStorage(details.qrId, "read");
+        const { data, info } = await sharp(bytes).resize({
+          width: 1200, height: 1200, fit: "inside", withoutEnlargement: true,
+        }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+        decoded = jsQR(new Uint8ClampedArray(data), info.width, info.height)?.data;
+      } catch {
+        throw new OperationError("Could not read the uploaded QR image. Try again.");
+      }
+      if (!matchesOrganiserUpiQr(decoded, details.upiId))
+        throw new OperationError("Upload a scannable UPI QR for this UPI ID without a fixed amount.");
     }
     return transaction(async (client) => {
       const id = body.id ?? randomUUID();
@@ -82,6 +104,14 @@ export async function POST(request: Request) {
         "SELECT pg_advisory_xact_lock(hashtextextended($1,7621))",
         [JSON.stringify([body.organiser, details.upiId.toLowerCase()])],
       );
+      if (body.id && body.qrId === undefined) {
+        const { rows: [current] } = await client.query(
+          "SELECT active_snapshot FROM tpa.payment_details WHERE id::text=$1 AND version=$2 AND organiser IS NOT NULL FOR UPDATE",
+          [id, body.version],
+        );
+        if (current?.active_snapshot?.upiId?.toLowerCase() === details.upiId.toLowerCase())
+          details.qrId = current.active_snapshot.qrId ?? null;
+      }
       const duplicate = (
         await client.query(
           "SELECT id,version,active_snapshot FROM tpa.payment_details WHERE organiser=$1 AND status='active' AND lower(active_snapshot->>'upiId')=lower($2) AND id<>$3",
@@ -96,6 +126,7 @@ export async function POST(request: Request) {
           return { saved: true, id: duplicate.id, version: duplicate.version };
         if (
           !body.id &&
+          (duplicate.active_snapshot.qrId ?? null) === details.qrId &&
           duplicate.active_snapshot.payee === details.payee &&
           duplicate.active_snapshot.upiId.toLowerCase() ===
             details.upiId.toLowerCase()

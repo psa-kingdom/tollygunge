@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { speakerDesignation, speakersInput, remindersInput, eventReturnPath, eventLink, bookingLabel, istInput, istInstant } from "../src/domain/event-flow";
+import { matchesOrganiserUpiQr } from "../src/domain/organiser-upi";
 import { eventEmail } from "../src/domain/event-email";
 import { eventInput } from "../src/domain/operations";
 const event = { id:"00000000-0000-4000-8000-000000000001", title:"Design & <Learning>", starts_at:"2026-12-12T12:00:00Z", location:"Hall <A>", fee_paise:75000 };
@@ -44,4 +45,14 @@ test("event continuation rejects external URLs and unrelated destinations", () =
   assert.equal(eventReturnPath(`/member/events?eventId=${event.id}`),`/member/events?eventId=${event.id}`);
   assert.equal(eventReturnPath(`/events/${event.id}`), `/events/${event.id}`);
   for(const value of ["https://evil.invalid","//evil.invalid","/admin","/member/events?eventId=bad","/member/events?eventId="+event.id+"&next=//evil.invalid",["/member/events"]]) assert.equal(eventReturnPath(value),undefined);
+});
+
+test("organiser payment QR must match the UPI ID and leave the event fee variable", () => {
+  assert.equal(matchesOrganiserUpiQr("upi://pay?pa=team%40bank&cu=INR", "Team@bank"), true);
+  assert.equal(matchesOrganiserUpiQr("upi://pay?pa=team@bank&am=0.00", "team@bank"), true);
+  for (const code of [
+    undefined, "https://example.org/pay", "upi://pay?pa=other@bank",
+    "upi://pay?pa=team@bank&pa=other@bank", "upi://pay?pa=team@bank&am=100",
+    "upi://pay?pa=team@bank&cu=USD",
+  ]) assert.equal(matchesOrganiserUpiQr(code, "team@bank"), false);
 });

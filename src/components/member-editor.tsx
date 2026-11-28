@@ -3,7 +3,7 @@ import { useMembershipPlans } from "./use-membership-plans";
 import styles from "./member-review.module.css";
 import { useState, type FormEvent } from "react";
 import { api, ApiError } from "./operations-client";
-import { prefixes } from "@/domain/member-foundation";
+import { memberEditorIdentity, prefixes } from "@/domain/member-foundation";
 
 type Editable = {
   person_id: string;
@@ -307,22 +307,22 @@ export function MemberCreator({
 
 export function MemberEditor({
   member,
+  applicationDetails,
   onSaved,
   onDirtyChange,
 }: {
   member: Editable;
+  applicationDetails?: { fullName?: string; membershipNumber?: string };
   onSaved: () => void;
   onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [form, setForm] = useState({
       prefix: member.person.prefix || "",
-      firstName: member.person.firstName || "",
-      lastName: member.person.lastName || "",
+      ...memberEditorIdentity(member.person, member.membership_number, applicationDetails),
       email: member.email,
       mobile: member.mobile || "",
       organization: member.person.organization || "",
       designation: member.person.jobTitle || "",
-      membershipNumber: member.membership_number ?? "",
       addresses: member.person.addresses || {},
 
     }),

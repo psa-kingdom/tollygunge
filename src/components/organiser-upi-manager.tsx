@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { api } from "./operations-client";
 import { CopyValue } from "./portal-values";
@@ -19,6 +20,8 @@ export function OrganiserUpiManager() {
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
     [error, setError] = useState("");
+  const [qrId, setQrId] = useState<string | null>(null);
+  const [qrFile, setQrFile] = useState<File>();
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let active = true;
@@ -41,6 +44,8 @@ export function OrganiserUpiManager() {
     setOrganiser(record?.organiser ?? "TPA");
     setPayee(record?.details.payee ?? payeeNames.TPA);
     setUpi(record?.details.upiId ?? "");
+    setQrId(record?.details.qrId ?? null);
+    setQrFile(undefined);
     setMessage("");
     setError("");
   }
@@ -68,12 +73,24 @@ export function OrganiserUpiManager() {
             setBusy(true);
             setError("");
             try {
+              let savedQr = qrId;
+              if (qrFile) {
+                const upload = new FormData();
+                upload.set("file", qrFile);
+                const response = await fetch("/api/staff/payment-qr", { method: "POST", body: upload });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error ?? "QR upload failed.");
+                savedQr = result.id;
+                setQrId(savedQr);
+                setQrFile(undefined);
+              }
               await api("/api/staff/organiser-upi", {
                 id: editing === "new" ? undefined : editing.id,
                 version: editing === "new" ? undefined : editing.version,
                 organiser,
                 payee,
                 upiId: upi,
+                qrId: savedQr,
               });
               setEditing(undefined);
               setRevision((value) => value + 1);
@@ -107,7 +124,11 @@ export function OrganiserUpiManager() {
             UPI ID
             <input
               value={upi}
-              onChange={(event) => setUpi(event.target.value)}
+              onChange={(event) => {
+                const next = event.target.value;
+                if (next.trim().toLowerCase() !== upi.trim().toLowerCase()) setQrId(null);
+                setUpi(next);
+              }}
               required
               maxLength={120}
               placeholder="name@bank"
@@ -127,6 +148,20 @@ export function OrganiserUpiManager() {
               disabled={busy}
             />
           </label>
+          <div className={styles.wide}>
+            <label>
+              UPI QR image (optional)
+              <input type="file" accept="image/jpeg,image/png" disabled={busy}
+                onChange={(event) => setQrFile(event.target.files?.[0])} />
+            </label>
+            <p className={styles.qrHelp}>Use a JPEG or PNG up to 5 MB for this UPI ID, with no fixed amount.</p>
+            {qrId && (
+              <div className={styles.actions}>
+                <Image unoptimized src={`/api/payment-qr/${qrId}`} alt="Saved UPI payment QR" width={104} height={104} className={styles.qr} />
+                <button type="button" className="button secondary" disabled={busy} onClick={() => setQrId(null)}>Remove saved QR</button>
+              </div>
+            )}
+          </div>
           <div className={styles.actions}>
             <button className="button" disabled={busy}>
               {busy ? "Saving…" : "Save UPI ID"}
@@ -152,6 +187,7 @@ export function OrganiserUpiManager() {
                     <CopyValue value={record.details.upiId} label="UPI ID" />
                   </strong>
                   <p>{record.details.payee}</p>
+                  {record.details.qrId && <p>Payment QR attached</p>}
                 </div>
                 <div className={styles.actions}>
                   <button
