@@ -225,17 +225,22 @@ export function EventRegistrationForm({ id, email, verified, profile, fee, study
                   <p className={styles["payment-instructions"]}>Event fee <strong>₹{(fee / 100).toFixed(2)}</strong></p>
                   {upiAccounts.map(account => (
                     <div className={styles["upi-account"]} key={account.id}>
-                      {account.details.organiser && <p><strong>{account.details.organiser}</strong></p>}
-                      <p>UPI ID <CopyValue value={account.details.upiId} label="UPI ID" /></p>
-                      {account.details.payee && <p>Payee {account.details.payee}</p>}
+                      <div className={styles["upi-details"]}>
+                        {account.details.organiser && <h3>{account.details.organiser}</h3>}
+                        <dl>
+                          <div>
+                            <dt>UPI ID</dt>
+                            <dd><CopyValue value={account.details.upiId} label="UPI ID" /></dd>
+                          </div>
+                          {account.details.payee && <div><dt>Payee</dt><dd>{account.details.payee}</dd></div>}
+                        </dl>
+                        {account.details.qrId && <p>Scan with your UPI app and enter the event fee shown above.</p>}
+                      </div>
                       {account.details.qrId && (
-                        <>
-                          <p>Scan with your UPI app and enter the event fee shown above.</p>
-                          <Image unoptimized className={styles["upi-qr"]}
-                            src={`/api/payment-qr/${account.details.qrId}?eventId=${id}&registration=1`}
-                            alt={`UPI payment QR for ${account.details.payee || account.details.upiId}`}
-                            width={192} height={192} />
-                        </>
+                        <Image unoptimized className={styles["upi-qr"]}
+                          src={`/api/payment-qr/${account.details.qrId}?eventId=${id}&registration=1`}
+                          alt={`UPI payment QR for ${account.details.payee || account.details.upiId}`}
+                          width={280} height={280} />
                       )}
                     </div>
                   ))}

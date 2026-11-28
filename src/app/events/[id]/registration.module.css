@@ -615,16 +615,60 @@
 }
 
 
-.upi-account { margin-top:16px;overflow-wrap:anywhere; }
-.upi-account p { margin:6px 0;font-size:13px;line-height:1.6; }
-.upi-account :global(.copy-value) { display:inline-flex; }
-
+.upi-account {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px 24px;
+  align-items: start;
+  margin-block: 16px 20px;
+  overflow-wrap: anywhere;
+}
+.upi-account:has(.upi-qr) {
+  grid-template-columns: minmax(0, 1fr) min(42%, 280px);
+}
+.upi-details h3 {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-size: 15px;
+}
+.upi-details dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+.upi-details dt {
+  font-size: 12px;
+  font-weight: 600;
+}
+.upi-details dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--ink);
+}
+.upi-details p {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.upi-account :global(.copy-value) {
+  display: inline-flex;
+  max-width: 100%;
+}
 .upi-qr {
   display: block;
-  width: min(100%, 192px);
+  width: 100%;
   height: auto;
   aspect-ratio: 1;
   object-fit: contain;
-  padding: 8px;
-  background: white;
+  object-position: right center;
+}
+@media (max-width: 560px) {
+  .upi-account:has(.upi-qr) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .upi-qr {
+    width: min(100%, 280px);
+    justify-self: center;
+    object-position: center;
+  }
 }
