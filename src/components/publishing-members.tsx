@@ -140,7 +140,7 @@ export function PublishingMembers({
           : current,
       );
       setNotice(
-        `Group updated for ${person.draft.name}. Saved as a draft; review and publish the profile to update the website.`,
+        `Group updated for ${person.draft.name}. Saved as a draft. Open the profile to publish the new group.`,
       );
     } catch (e) {
       setError((e as Error).message);

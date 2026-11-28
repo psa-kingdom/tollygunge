@@ -1,6 +1,6 @@
 import { getDatabase } from "@/lib/database";
-import { personBody, redactPerson } from "@/domain/people";
-import { uuid } from "@/domain/operations";
+import { editorialProfileFields, personBody, redactPerson } from "@/domain/people";
+import { record, uuid } from "@/domain/operations";
 import {publishedSettings} from '@/lib/website-content';
 import { publishedPeople } from "@/lib/public-people";
 import {
@@ -115,6 +115,19 @@ export async function POST(request: Request) {
     const input = await jsonBody(request, 1048576);
     if (["approve", "approve_editorial", "reject"].includes(input.action))
       throw new OperationError("Use the administrator review endpoint.");
-    return transaction((client) => changePerson(client, actor, input));
+    return transaction(async (client) => {
+      if (input.action !== "publish" || input.body === undefined)
+        return changePerson(client, actor, input);
+      if (!admin(actor))
+        throw new OperationError("Only administrators can publish unsaved website changes.", 403);
+      if (input.confirmPublication !== true)
+        throw new OperationError("Confirm publication of the website profile.");
+      const body = Object.fromEntries(Object.entries(record(input.body))
+        .filter(([field]) => field === "name" || editorialProfileFields.has(field)));
+      const saved = await changePerson(client, actor, { ...input, action: "save", body });
+      if (!("id" in saved) || !("version" in saved))
+        throw new OperationError("Could not save the website profile.");
+      return changePerson(client, actor, { ...input, id: saved.id, version: saved.version });
+    });
   });
 }

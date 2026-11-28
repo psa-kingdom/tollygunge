@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { api } from "./operations-client";
 import { GovernanceContacts } from "./governance-card";
 import { RichContent } from "./rich-content";
@@ -10,7 +9,6 @@ import { useUnsavedProfile } from "./use-unsaved-profile";
 import {
   emptyPerson,
   personBody,
-  editorialProfileFields,
   type PersonBody,
   type PersonEntry,
 } from "@/domain/people";
@@ -35,7 +33,6 @@ export function PublicProfileEditor({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
-    [reason, setReason] = useState(""),
     [confirmed, setConfirmed] = useState(false),
     [portraits, setPortraits] = useState<{
       uploadEnabled: boolean;
@@ -75,39 +72,29 @@ export function PublicProfileEditor({
   const publicEmail = body.publicEmail ?? initial?.websiteContacts?.email ?? "";
   const publicMobile = body.publicMobile ?? initial?.websiteContacts?.mobile ?? "";
   const pending = entry?.reviews?.find((r) => r.status === "pending");
-  const needsMemberReview =
-    entry &&
-    [
-      ...new Set([...Object.keys(entry.draft), ...Object.keys(entry.accepted)]),
-    ].some(
-      (k) =>
-        !editorialProfileFields.has(k) &&
-        JSON.stringify(entry.draft[k as keyof PersonBody]) !==
-          JSON.stringify(entry.accepted[k as keyof PersonBody]),
-    );
   const savedMatches =
     !!entry && JSON.stringify(entry.draft) === JSON.stringify(entry.accepted);
+  const canPublishDirectly = data.canReview && data.canPublish;
   const canPublishSaved =
-    savedMatches &&
-    ((entry?.accepted_verified && entry.status === "verified") ||
-      entry?.reviews?.some((r) => r.status === "approved"));
+    canPublishDirectly ||
+    (savedMatches &&
+      ((entry?.accepted_verified && entry.status === "verified") ||
+        entry?.reviews?.some((r) => r.status === "approved")));
   const locked = busy || !!entry?.archived_at || !data.canPublish;
   async function action(action: string) {
     setBusy(true);
     setError("");
     try {
       const row = await api<PersonEntry>(
-        action === "approve_editorial"
-          ? "/api/staff/profile-reviews"
-          : "/api/staff/governance",
+        "/api/staff/governance",
         {
           action,
           id: entry?.id,
           version: entry?.version ?? 0,
-          ...(action === "save" ? { body: publicProfilePatch(body) } : {}),
-          reviewId: pending?.id,
-          reason,
-          confirmPublication: confirmed,
+          ...(action === "save" || (action === "publish" && canPublishDirectly && dirty)
+            ? { body: publicProfilePatch(body) }
+            : {}),
+          confirmPublication: canPublishDirectly && action === "publish" ? true : confirmed,
         },
       );
       if (action === "delete-public-profile") {
@@ -117,16 +104,13 @@ export function PublicProfileEditor({
       setEntry(row);
       setBody(row.draft);
       setConfirmed(false);
-      setReason("");
       onDirty?.(false);
       setNotice(
         action === "save"
-          ? "Profile draft saved. Submit it for review when ready."
+          ? canPublishDirectly ? "Profile draft saved. You can publish it when ready." : "Profile draft saved. Submit it for review when ready."
           : action === "submit"
             ? "Saved profile submitted for review."
-            : action === "approve_editorial"
-              ? "Public profile approved. You can now publish it."
-              : action === "publish"
+            : action === "publish"
                 ? "Profile published on the website."
                 : action === "unpublish"
                   ? "Profile removed from the website."
@@ -177,20 +161,29 @@ export function PublicProfileEditor({
           >
             {busy ? "Working…" : "Save draft"}
           </button>
-          <button
-            className="button gold"
-            disabled={
-              locked ||
-              dirty ||
-              !entry ||
-              !!validation ||
-              entry.status === "pending" ||
-              !!canPublishSaved
-            }
-            onClick={() => void action("submit")}
-          >
-            Submit for review
-          </button>
+          {canPublishDirectly ? (
+            <button type="button" className="button gold"
+              title="Publish the profile, contact details and photo to the website"
+              disabled={locked || !!validation || !body.assignments.length}
+              onClick={() => void action("publish")}>
+              {busy ? "Working…" : "Publish to site"}
+            </button>
+          ) : (
+            <button
+              className="button gold"
+              disabled={
+                locked ||
+                dirty ||
+                !entry ||
+                !!validation ||
+                entry.status === "pending" ||
+                !!canPublishSaved
+              }
+              onClick={() => void action("submit")}
+            >
+              Submit for review
+            </button>
+          )}
         </div>
       </header>
       {error && (
@@ -436,110 +429,70 @@ export function PublicProfileEditor({
             <p>
               {!entry
                 ? "Save the profile before uploading a photo."
-                : "JPEG or PNG, up to 5 MB. Published after profile review."}
+                : "JPEG or PNG, up to 5 MB. The photo appears when you publish the profile."}
             </p>
           </section>
-          <section>
-            <h3>Review & publication</h3>
-            {pending ? (
-              <>
-                <p>
-                  A saved profile is awaiting review. Check the website preview
-                  before approving it.
-                </p>
-                {needsMemberReview ? (
-                  <p>
-                    Name or member details changed and need administrator review before publishing.
-                    {data.canReview && (
-                      <>
-                        {" "}<Link href="/admin?review=profile-reviews">Open profile reviews</Link>
-                      </>
-                    )}
-                  </p>
-                ) : data.canReview ? (
-                  <>
-                    <label>
-                      Review note
-                      <textarea
-                        disabled={busy || dirty}
-                        rows={3}
-                        maxLength={2000}
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                      />
-                    </label>
+          {!canPublishDirectly && (
+            <section>
+              <h3>Review & publication</h3>
+              <p>{pending
+                ? "An administrator needs to approve these changes."
+                : canPublishSaved
+                  ? "This public profile is approved. Confirm permission below, then publish it when ready."
+                  : "Save the profile, submit it for review, then publish the approved version."}</p>
+              {data.canPublish && entry && (
+                <>
+                  <label className={styles.check}>
+                    <input
+                      type="checkbox"
+                      disabled={dirty || busy}
+                      checked={confirmed}
+                      onChange={(e) => setConfirmed(e.target.checked)}
+                    />
+                    I have permission to publish this profile, its contact details and photo.
+                  </label>
+                  <button
+                    className="button gold"
+                    disabled={
+                      busy ||
+                      dirty ||
+                      !confirmed ||
+                      !body.assignments.length ||
+                      !canPublishSaved ||
+                      !!pending ||
+                      !!entry.archived_at
+                    }
+                    onClick={() => void action("publish")}
+                  >
+                    Publish profile
+                  </button>
+                  {entry.published && (
                     <button
                       className="button secondary"
-                      disabled={busy || dirty || !reason.trim()}
-                      onClick={() => {
-                        setMode("preview");
-                        void action("approve_editorial");
-                      }}
+                      disabled={busy || dirty}
+                      onClick={() => void action("unpublish")}
                     >
-                      Approve public profile
+                      Unpublish profile
                     </button>
-                    <p>
-                      This approves website presentation. Membership
-                      verification is managed separately.
-                    </p>
-                  </>
-                ) : (
-                  <p>An administrator needs to approve these changes.</p>
-                )}
-              </>
-            ) : (
-              <p>
-                {canPublishSaved
-                  ? "This public profile is approved. Confirm permission below, then publish it when ready."
-                  : "Save the profile, submit it for review, then publish the approved version."}
-              </p>
-            )}
-            {data.canPublish && entry && (
-              <>
-                <label className={styles.check}>
-                  <input
-                    type="checkbox"
-                    disabled={dirty || busy}
-                    checked={confirmed}
-                    onChange={(e) => setConfirmed(e.target.checked)}
-                  />
-                  I have permission to publish this profile and photo.
-                </label>
-                <button
-                  className="button gold"
-                  disabled={
-                    busy ||
-                    dirty ||
-                    !confirmed ||
-                    !body.assignments.length ||
-                    !canPublishSaved ||
-                    !!pending ||
-                    !!entry.archived_at
-                  }
-                  onClick={() => void action("publish")}
-                >
-                  Publish profile
-                </button>
-                {entry.published && (
-                  <button
-                    className="button secondary"
-                    disabled={busy || dirty}
-                    onClick={() => void action("unpublish")}
-                  >
-                    Unpublish profile
-                  </button>
-                )}
-              </>
-            )}
-            {entry && !entry.archived_at && !body.assignments.length && (
-              <p>Choose a website group in Member profiles before publishing.</p>
-            )}
-            {validation && <p>{validation}</p>}
-          </section>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+          {entry && !entry.archived_at && !body.assignments.length && (
+            <p>Choose a website group in Member profiles before publishing.</p>
+          )}
+          {validation && <p>{validation}</p>}
           {entry && (
             <section>
               <details>
                 <summary>Archive & history</summary>
+                {canPublishDirectly && entry.published && (
+                  <button type="button" className="button secondary"
+                    disabled={locked || dirty} onClick={() => void action("unpublish")}>
+                    Unpublish profile
+                  </button>
+                )}
                 <p>
                   Archiving removes this profile from the website. Its member
                   record is retained.

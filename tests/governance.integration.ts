@@ -167,7 +167,7 @@ test(
       assert.ok(!(await (await req("/governance")).text()).includes(label));
       assert.equal(
         (
-          await req("/api/staff/governance", 0, {
+          await req("/api/staff/governance", 2, {
             action: "publish",
             id: row.id,
             version: row.version,
@@ -176,6 +176,30 @@ test(
         ).status,
         400,
       );
+      row = await ok("/api/staff/governance", 0, {
+        action: "publish",
+        id: row.id,
+        version: row.version,
+        confirmPublication: true,
+        body: { publicEmail: "website@example.invalid", email: "private@example.invalid" },
+      });
+      assert.equal(row.published.name, label);
+      assert.equal(row.published.publicEmail, "website@example.invalid");
+      assert.equal(row.accepted.publicEmail, undefined);
+      assert.notEqual(row.draft.email, "private@example.invalid");
+      assert.equal(row.accepted_verified, false);
+      assert.equal(row.status, "unverified");
+      row = await ok("/api/staff/governance", 0, {
+        action: "unpublish",
+        id: row.id,
+        version: row.version,
+      });
+      row = await ok("/api/staff/governance", 0, {
+        action: "save",
+        id: row.id,
+        version: row.version,
+        body: { publicEmail: "" },
+      });
       row = await ok("/api/staff/governance", 0, {
         action: "submit",
         id: row.id,

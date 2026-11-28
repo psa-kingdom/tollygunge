@@ -9,6 +9,7 @@ import {
   publicPerson,
   redactPerson,
   websiteContactFields,
+  editorialProfileFields,
   type PersonBody,
   type PersonEntry,
 } from "@/domain/people";
@@ -466,34 +467,46 @@ export async function changePerson(
     const editorialSnapshot = (
       row as PersonEntry & { editorial_approved_snapshot?: PersonBody }
     ).editorial_approved_snapshot;
+    const directPublication = admin(actor);
     if (
-      (!(row.accepted_verified && row.status === "verified") &&
+      !directPublication &&
+      ((!(row.accepted_verified && row.status === "verified") &&
         !isDeepStrictEqual(
           editorialSnapshot,
           publicPerson(personBody(row.accepted)),
         )) ||
-      JSON.stringify(row.draft) !== JSON.stringify(row.accepted)
+        JSON.stringify(row.draft) !== JSON.stringify(row.accepted))
     )
       throw new OperationError(
         "Only the verified, unchanged profile can be published, or its unchanged editorial snapshot must be approved.",
       );
-    if (!row.accepted.assignments?.length)
+    // Publish the saved website fields without approving changes to the member record.
+    const publication = directPublication
+      ? personBody({
+          ...row.accepted,
+          ...Object.fromEntries(
+            [...editorialProfileFields].map((field) => [field, row.draft[field]]),
+          ),
+          name: row.draft.name,
+        })
+      : personBody(row.accepted);
+    if (!publication.assignments.length)
       throw new OperationError(
         "Assign an association group before publishing.",
       );
     if (input.confirmPublication !== true)
       throw new OperationError(
-        "Confirm permission to publish this profile and portrait.",
+        "Confirm permission to publish this profile, contact details and portrait.",
       );
-    await validateReferences(client, id, row.accepted, true);
+    await validateReferences(client, id, publication, true);
     await client.query(
       "UPDATE tpa.people SET published=$2,version=version+1,updated_at=now() WHERE id=$1",
       [
         id,
         {
-          ...publicPerson(row.accepted),
+          ...publicPerson(publication),
           verified: row.accepted_verified,
-          editorialReviewed: !!editorialSnapshot,
+          editorialReviewed: !!editorialSnapshot && (!directPublication || isDeepStrictEqual(editorialSnapshot, publicPerson(publication))),
         },
       ],
     );
